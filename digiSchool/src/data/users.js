@@ -128,8 +128,8 @@ export const USERS = [
   { username: 'LIBRARIAN', password: '7777', role: 'librarian', name: 'Ms. Ruth Atieno', dept: 'Library' },
   { username: 'NURSE001', password: '7777', role: 'nurse', name: 'Sr. Mary Wairimu', dept: 'Nursing' },
   { username: 'STF5169', password: '7777', role: 'teacher', name: 'Mr. Omondi', dept: 'Mathematics', link: 't1' },
-  { username: 'STU2640494', password: '7777', role: 'student', name: 'Student', dept: 'Form 1A', link: 'student' },
-  { username: 'PAR90215', password: '7777', role: 'parent', name: 'Parent / Guardian', dept: 'Parent', link: 'student' },
+  { username: 'STU2640494', password: '7777', role: 'student', name: 'Student', dept: 'Form 1A', link: '1A-1' },
+  { username: 'PAR90215', password: '7777', role: 'parent', name: 'Parent / Guardian', dept: 'Parent', link: '1A-1' },
 ];
 
 export function authenticate(username, password) {

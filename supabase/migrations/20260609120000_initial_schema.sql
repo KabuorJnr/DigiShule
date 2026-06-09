@@ -267,19 +267,118 @@ create policy profiles_select on public.profiles
   for select to authenticated
   using (id = auth.uid() or public.is_staff());
 
--- Reference / domain tables: readable by any authenticated user, writable by staff.
+-- The student record linked to the caller's profile (parent or student
+-- accounts). Security definer so policies can resolve it regardless of RLS.
+create or replace function public.linked_student_id()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select student_id from public.profiles where id = auth.uid();
+$$;
+
+-- The admission number of the caller's linked student. Used to scope a
+-- parent/student to their own child's operational records.
+create or replace function public.linked_adm()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select s.adm
+  from public.students s
+  join public.profiles p on p.student_id = s.id
+  where p.id = auth.uid();
+$$;
+
+-- Reference / domain tables: readable by any authenticated user, writable by
+-- staff. The sensitive, per-child tables below are excluded here and get
+-- narrower SELECT policies so a parent/student only sees their own child.
 do $$
 declare t text;
 begin
   foreach t in array array[
-    'app_config','teachers','students','exam_schedules','exam_sessions',
-    'timetables','library_books','library_loans','finance_payments',
-    'fee_summary','admissions','clinic_visits','staff','facilities','notifications',
-    'disciplinary_records'
+    'app_config','teachers','exam_schedules','exam_sessions',
+    'timetables','library_books','fee_summary','admissions','staff',
+    'facilities','notifications'
   ] loop
     execute format(
       'create policy %1$s_select on public.%1$s for select to authenticated using (true);', t);
     execute format(
       'create policy %1$s_write on public.%1$s for all to authenticated using (public.is_staff()) with check (public.is_staff());', t);
   end loop;
+
+  -- Writes on the per-child tables are still staff-only.
+  foreach t in array array[
+    'students','library_loans','finance_payments','clinic_visits','disciplinary_records'
+  ] loop
+    execute format(
+      'create policy %1$s_write on public.%1$s for all to authenticated using (public.is_staff()) with check (public.is_staff());', t);
+  end loop;
 end $$;
+
+-- Per-child SELECT policies: staff see everything; a parent/student sees only
+-- the record(s) tied to their own linked student.
+create policy students_select on public.students
+  for select to authenticated
+  using (public.is_staff() or id = public.linked_student_id());
+
+create policy library_loans_select on public.library_loans
+  for select to authenticated
+  using (public.is_staff() or adm = public.linked_adm());
+
+create policy finance_payments_select on public.finance_payments
+  for select to authenticated
+  using (public.is_staff() or adm = public.linked_adm());
+
+create policy clinic_visits_select on public.clinic_visits
+  for select to authenticated
+  using (public.is_staff() or adm = public.linked_adm());
+
+create policy disciplinary_records_select on public.disciplinary_records
+  for select to authenticated
+  using (public.is_staff() or adm = public.linked_adm());
+
+-- Class position for the caller's linked student. Security definer so a
+-- student can see their own rank without being able to read classmates' rows.
+-- Returns the 1-based position (by overall average, descending) and class size.
+create or replace function public.my_class_rank()
+returns table(student_position int, class_size int)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with me as (
+    select s.id, s.class
+    from public.students s
+    join public.profiles p on p.student_id = s.id
+    where p.id = auth.uid()
+  ),
+  scored as (
+    select s.id,
+      avg(
+        ( coalesce((sub.value->>'cat1')::numeric, 0)
+        + coalesce((sub.value->>'cat2')::numeric, 0)
+        + coalesce((sub.value->>'midterm')::numeric, 0)
+        + coalesce((sub.value->>'endterm')::numeric, 0)
+        ) / 260.0 * 100
+      ) as overall
+    from public.students s
+    cross join lateral jsonb_each(s.scores) as sub(key, value)
+    where s.class = (select class from me)
+    group by s.id
+  ),
+  ranked as (
+    select id,
+      rank() over (order by overall desc) as rnk,
+      count(*) over () as cnt
+    from scored
+  )
+  select r.rnk::int, r.cnt::int
+  from ranked r
+  where r.id = (select id from me);
+$$;

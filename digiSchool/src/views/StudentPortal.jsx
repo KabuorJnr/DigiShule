@@ -1,15 +1,26 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
+import { fetchClassRank } from '../lib/api';
 
 export default function StudentPortal({ store }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  // Demo student = first student of 1A
-  const me = students.find((s) => s.class === '1A') || students[0];
+  // RLS scopes a student to their own record, so it's the only row returned.
+  const me = students[0];
+
+  const [rank, setRank] = useState(null);
+  useEffect(() => {
+    let active = true;
+    fetchClassRank()
+      .then((r) => { if (active) setRank(r); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const subjects = useMemo(() => {
+    if (!me) return [];
     return SUBJECTS.map((sub) => {
       const scores = me.scores[sub];
       if (!scores) return null;
@@ -23,21 +34,13 @@ export default function StudentPortal({ store }) {
     ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1)
     : 0;
 
-  // Position in class (simplistic)
-  const classmates = students.filter((s) => s.class === me.class);
-  const averages = classmates.map((s) => {
-    const sum = SUBJECTS.reduce((a, sub) => {
-      const sc = s.scores[sub];
-      return sc ? a + computeRow(sc).average : a;
-    }, 0);
-    return { id: s.id, avg: sum / SUBJECTS.length };
-  }).sort((a, b) => b.avg - a.avg);
-  const pos = averages.findIndex((a) => a.id === me.id) + 1;
 
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
   const paid = Math.round(termFees * 0.73); // demo: 73% paid
+
+  if (!me) return null;
 
   return (
     <div>
@@ -45,7 +48,7 @@ export default function StudentPortal({ store }) {
 
       <div className="stat-tiles">
         <KpiCard icon="📊" label="Overall Average" value={`${overallAvg}%`} accent="#1D4ED8" />
-        <KpiCard icon="🏆" label="Class Position" value={`${pos} / ${classmates.length}`} />
+        <KpiCard icon="🏆" label="Class Position" value={rank ? `${rank.position} / ${rank.classSize}` : '—'} />
         <KpiCard icon="📝" label="Upcoming Exams" value={upcomingExams.length} accent="#F59E0B" />
         <KpiCard icon="💰" label="Fees Paid" value={`KES ${paid.toLocaleString()}`} accent="#10B981">
           <div style={{ marginTop: 6 }}><ProgressBar value={73} color="#10B981" /></div>

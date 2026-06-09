@@ -59,6 +59,16 @@ export async function fetchStudents() {
   return data;
 }
 
+// Class position for the signed-in student, computed server-side so a student
+// can see their rank without being able to read classmates' rows (RLS).
+export async function fetchClassRank() {
+  const { data, error } = await supabase.rpc('my_class_rank');
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return { position: row.student_position, classSize: row.class_size };
+}
+
 export async function upsertStudent(student) {
   const { error } = await supabase.from('students').upsert({
     id: student.id,
