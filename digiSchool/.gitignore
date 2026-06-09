@@ -17,6 +17,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Bulk-import data: keep the *.example.csv templates, never commit real
+# (PII-containing) student/parent/staff CSVs.
+data-import/*.csv
+!data-import/*.example.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
