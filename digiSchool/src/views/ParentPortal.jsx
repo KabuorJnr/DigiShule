@@ -1,13 +1,35 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS, ATTENDANCE_RECORDS } from '../data/seed';
+import { fetchTable } from '../lib/api';
+
+const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
+const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 
 export default function ParentPortal({ store }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
   // Demo parent's child = first student of 1A
   const child = students.find((s) => s.class === '1A') || students[0];
+
+  const [healthRecords, setHealthRecords] = useState([]);
+  const [disciplinary, setDisciplinary] = useState([]);
+
+  useEffect(() => {
+    if (!child?.adm) return;
+    let active = true;
+    Promise.all([fetchTable('clinicVisits'), fetchTable('disciplinaryRecords')])
+      .then(([visits, cases]) => {
+        if (!active) return;
+        setHealthRecords((visits || []).filter((v) => v.adm === child.adm));
+        setDisciplinary((cases || []).filter((c) => c.adm === child.adm));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [child?.adm]);
 
   const subjects = useMemo(() => {
     return SUBJECTS.map((sub) => {
@@ -89,6 +111,62 @@ export default function ParentPortal({ store }) {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-2" style={{ alignItems: 'start', marginTop: 14 }}>
+        <div className="card card-pad">
+          <div className="section-title">Health Records</div>
+          <div className="scroll-x">
+            <table className="table">
+              <thead>
+                <tr><th>Date</th><th>Complaint</th><th>Treatment</th><th>Outcome</th></tr>
+              </thead>
+              <tbody>
+                {healthRecords.length === 0 ? (
+                  <tr><td colSpan={4} className="muted">No clinic visits on record.</td></tr>
+                ) : (
+                  healthRecords.map((v) => (
+                    <tr key={v.id}>
+                      <td>{v.date}</td>
+                      <td style={{ fontWeight: 600 }}>{v.complaint}</td>
+                      <td>{v.treatment}</td>
+                      <td><Badge color={v.outcome === 'Referred to hospital' ? 'red' : v.outcome === 'Sent home' ? 'amber' : 'green'}>{v.outcome}</Badge></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card card-pad">
+          <div className="section-title">Disciplinary Records</div>
+          <div className="scroll-x">
+            <table className="table">
+              <thead>
+                <tr><th>Date</th><th>Category</th><th>Details</th><th>Severity</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {disciplinary.length === 0 ? (
+                  <tr><td colSpan={5} className="muted">No disciplinary cases on record.</td></tr>
+                ) : (
+                  disciplinary.map((c) => (
+                    <tr key={c.id}>
+                      <td>{c.date}</td>
+                      <td style={{ fontWeight: 600 }}>{c.category}</td>
+                      <td>
+                        <div>{c.description}</div>
+                        {c.action && <div className="muted" style={{ fontSize: 12 }}>Action: {c.action}</div>}
+                      </td>
+                      <td><Badge color={severityColor(c.severity)}>{c.severity}</Badge></td>
+                      <td><Badge color={statusColor(c.status)}>{c.status}</Badge></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
   FEE_SUMMARY,
   ADMISSIONS,
   CLINIC_VISITS,
+  DISCIPLINARY_RECORDS,
   STAFF,
   FACILITIES,
 } from '../src/data/modules.js';
@@ -150,6 +151,7 @@ async function seedModules() {
   await upsert('fee_summary', FEE_SUMMARY);
   await upsert('admissions', ADMISSIONS);
   await upsert('clinic_visits', CLINIC_VISITS);
+  await upsert('disciplinary_records', DISCIPLINARY_RECORDS);
   await upsert('staff', STAFF.map((s) => ({
     id: s.id, name: s.name, role: s.role, dept: s.dept, status: s.status, check_in: s.checkIn,
   })));

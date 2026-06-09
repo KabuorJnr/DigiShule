@@ -52,7 +52,15 @@ export const CLINIC_VISITS = [
   { id: 'c2', date: '2026-06-09', student: 'Dennis Ochieng', adm: '3B-007', complaint: 'Sprained ankle (games)', treatment: 'Cold compress, bandage', outcome: 'Referred to hospital' },
   { id: 'c3', date: '2026-06-08', student: 'Joy Wanjiru', adm: '2A-014', complaint: 'Stomach upset', treatment: 'ORS, observation', outcome: 'Sent home' },
   { id: 'c4', date: '2026-06-08', student: 'Victor Achieng', adm: '1B-018', complaint: 'Allergic rash', treatment: 'Antihistamine', outcome: 'Returned to class' },
-  { id: 'c5', date: '2026-06-05', student: 'Brian Mwangi', adm: '1A-001', complaint: 'Routine asthma check', treatment: 'Inhaler refill', outcome: 'Returned to class' },
+  { id: 'c5', date: '2026-06-05', student: 'Beatrice Wairimu', adm: '1A-001', complaint: 'Routine asthma check', treatment: 'Inhaler refill', outcome: 'Returned to class' },
+];
+
+export const DISCIPLINARY_RECORDS = [
+  { id: 'd1', date: '2026-05-28', student: 'Beatrice Wairimu', adm: '1A-001', class: '1A', category: 'Lateness', description: 'Late to morning assembly (3rd instance this term).', action: 'Verbal warning + guardian notified', severity: 'Low', status: 'Resolved' },
+  { id: 'd2', date: '2026-06-04', student: 'Beatrice Wairimu', adm: '1A-001', class: '1A', category: 'Uniform', description: 'Incomplete uniform — missing school sweater.', action: 'Counselled by class teacher', severity: 'Low', status: 'Open' },
+  { id: 'd3', date: '2026-06-02', student: 'Eric Omondi', adm: '1A-002', class: '1A', category: 'Misconduct', description: 'Noise-making during prep time.', action: 'Detention (1 day)', severity: 'Medium', status: 'Resolved' },
+  { id: 'd4', date: '2026-06-06', student: 'Dennis Ochieng', adm: '3B-007', class: '3B', category: 'Absenteeism', description: 'Skipped afternoon classes without permission.', action: 'Guardian meeting scheduled', severity: 'High', status: 'Open' },
+  { id: 'd5', date: '2026-05-30', student: 'Joy Wanjiru', adm: '2A-014', class: '2A', category: 'Property', description: 'Damaged a classroom desk.', action: 'Repair cost billed; warning issued', severity: 'Medium', status: 'Resolved' },
 ];
 
 export const STAFF = [
