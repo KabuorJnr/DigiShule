@@ -11,24 +11,45 @@ import {
   SEED_NOTIFICATIONS,
   TEACHERS,
 } from './data/seed';
+import { ROLES } from './data/users';
+import Login from './views/Login';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
 import ExamSchedules from './views/ExamSchedules';
 import Gradebook from './views/Gradebook';
 import Settings from './views/Settings';
+import Library from './views/Library';
+import Finance from './views/Finance';
+import Admissions from './views/Admissions';
+import Clinic from './views/Clinic';
+import StaffAttendance from './views/StaffAttendance';
+import Facilities from './views/Facilities';
+import TeacherPortal from './views/TeacherPortal';
+import StudentPortal from './views/StudentPortal';
+import ParentPortal from './views/ParentPortal';
 
-const NAV = [
-  { id: 'overview', icon: '🏠', label: 'Overview' },
-  { id: 'timetable', icon: '📅', label: 'Timetable Management' },
-  { id: 'exams', icon: '📝', label: 'Exam Schedules' },
-  { id: 'gradebook', icon: '📊', label: 'Gradebook Review' },
-  { id: 'settings', icon: '⚙️', label: 'School Settings' },
-];
+const VIEW_MAP = {
+  overview: Overview,
+  timetable: Timetable,
+  exams: ExamSchedules,
+  gradebook: Gradebook,
+  settings: Settings,
+  library: Library,
+  finance: Finance,
+  admissions: Admissions,
+  clinic: Clinic,
+  staff: StaffAttendance,
+  facilities: Facilities,
+  teacher: TeacherPortal,
+  student: StudentPortal,
+  parent: ParentPortal,
+};
 
 let toastId = 0;
 
 export default function App() {
-  const [view, setView] = useState('overview');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [view, setView] = useState(null); // set on login
   const [collapsed, setCollapsed] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -47,22 +68,13 @@ export default function App() {
 
   const notify = useCallback((message, type = 'success', title) => {
     const id = ++toastId;
-    const defaultTitles = {
-      success: 'Success',
-      error: 'Error',
-      info: 'Notice',
-      warning: 'Warning',
-    };
+    const defaultTitles = { success: 'Success', error: 'Error', info: 'Notice', warning: 'Warning' };
     setToasts((t) => [...t, { id, message, type, title: title || defaultTitles[type] }]);
-    setTimeout(() => {
-      setToasts((t) => t.filter((x) => x.id !== id));
-    }, 3000);
+    setTimeout(() => { setToasts((t) => t.filter((x) => x.id !== id)); }, 3000);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markRead = (id) =>
-    setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const markRead = (id) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllRead = () => setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
 
   const store = useMemo(
@@ -82,30 +94,78 @@ export default function App() {
     [settings, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify]
   );
 
+  // ---- Auth handlers ----
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    const role = ROLES[user.role];
+    setView(role?.home || 'overview');
+    notify(`Welcome, ${user.name}`, 'success', 'Signed In');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setView(null);
+    notify('You have been logged out.', 'info', 'Logout');
+  };
+
+  // ---- If not logged in, show Login ----
+  if (!currentUser) {
+    return (
+      <>
+        <Login onLogin={handleLogin} />
+        {/* Toasts render even on login page */}
+        <div className="toast-wrap">
+          {toasts.map((t) => (
+            <div key={t.id} className={`toast ${t.type}`}>
+              <span style={{ fontSize: 16 }}>
+                {t.type === 'success' ? '✅' : t.type === 'error' ? '⛔' : t.type === 'warning' ? '⚠️' : 'ℹ️'}
+              </span>
+              <div>
+                <div className="toast-title">{t.title}</div>
+                <div className="toast-msg">{t.message}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  // ---- Logged-in shell ----
+  const role = ROLES[currentUser.role] || ROLES.principal;
+  const nav = role.nav;
+  const activeView = view || role.home;
+
+  // Resolve component
+  const ViewComponent = VIEW_MAP[activeView];
+
+  // Initials for avatar
+  const initials = currentUser.name
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('');
+
   return (
     <div className="layout">
       {/* Sidebar */}
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-brand">
           <div className="logo-box">
-            {settings.logo ? (
-              <img src={settings.logo} alt="logo" />
-            ) : (
-              <span>WS</span>
-            )}
+            {settings.logo ? <img src={settings.logo} alt="logo" /> : <span>WS</span>}
           </div>
           {!collapsed && (
             <div className="brand-text">
               <strong>DigiShule</strong>
-              <span className="muted">Principal Portal</span>
+              <span className="muted">{role.portal}</span>
             </div>
           )}
         </div>
         <nav className="sidebar-nav">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <button
               key={item.id}
-              className={`nav-item${view === item.id ? ' active' : ''}`}
+              className={`nav-item${activeView === item.id ? ' active' : ''}`}
               onClick={() => setView(item.id)}
               title={item.label}
             >
@@ -124,30 +184,20 @@ export default function App() {
         <header className="topbar">
           <div className="topbar-title">{settings.name}</div>
           <div className="topbar-actions">
-            <button
-              className="bell"
-              onClick={() => setNotifOpen(true)}
-              aria-label="Notifications"
-            >
-              🔔
-              {unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
+            <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
+              🔔{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
             </button>
-            <div className="avatar" title={settings.principal}>
-              {settings.principal.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+            <div className="avatar" title={currentUser.name}>{initials}</div>
+            <div className="user-meta">
+              <span className="principal-name">{currentUser.name}</span>
+              <span className="user-role">{role.label}</span>
             </div>
-            <span className="principal-name">{settings.principal}</span>
-            <button className="btn btn-sm" onClick={() => notify('You have been logged out (demo)', 'info', 'Logout')}>
-              Logout
-            </button>
+            <button className="btn btn-sm" onClick={handleLogout}>Logout</button>
           </div>
         </header>
 
         <main className="content">
-          {view === 'overview' && <Overview store={store} />}
-          {view === 'timetable' && <Timetable store={store} />}
-          {view === 'exams' && <ExamSchedules store={store} />}
-          {view === 'gradebook' && <Gradebook store={store} />}
-          {view === 'settings' && <Settings store={store} />}
+          {ViewComponent ? <ViewComponent store={store} user={currentUser} /> : <p>View not found.</p>}
         </main>
       </div>
 
@@ -176,18 +226,11 @@ export default function App() {
               <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
-              <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>
-                Mark all as read
-              </button>
+              <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="notif-item"
-                  style={{ background: n.read ? '#fff' : '#f0f6ff' }}
-                  onClick={() => markRead(n.id)}
-                >
+                <div key={n.id} className="notif-item" style={{ background: n.read ? '#fff' : '#f0f6ff' }} onClick={() => markRead(n.id)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                     <strong style={{ fontSize: 13 }}>{n.title}</strong>
                     {!n.read && <span className="dot" />}
