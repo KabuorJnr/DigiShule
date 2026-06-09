@@ -10,8 +10,8 @@ const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 export default function ParentPortal({ store }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  // Demo parent's child = first student of 1A
-  const child = students.find((s) => s.class === '1A') || students[0];
+  // RLS scopes a parent to their own child, so it's the only row returned.
+  const child = students[0];
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
@@ -32,6 +32,7 @@ export default function ParentPortal({ store }) {
   }, [child?.adm]);
 
   const subjects = useMemo(() => {
+    if (!child) return [];
     return SUBJECTS.map((sub) => {
       const scores = child.scores[sub];
       if (!scores) return null;
@@ -53,6 +54,8 @@ export default function ParentPortal({ store }) {
   const balance = termFees - paid;
 
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
+
+  if (!child) return null;
 
   return (
     <div>

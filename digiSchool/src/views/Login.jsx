@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import { USERS, ROLES } from '../data/users';
 import { signInWithUsername } from '../lib/supabaseClient';
-
-// Distinct accounts to surface as quick-fill chips (one per role; the second
-// librarian login is reachable by typing it manually).
-const QUICK = [
-  'Principal', 'Deputyacademic', 'Deputyadmin', 'FINANCE', 'Registrar',
-  'Librarian', 'STF5169', 'STU2640494', 'PAR90215', 'NURSE001',
-];
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -27,14 +19,6 @@ export default function Login() {
       return;
     }
     // On success the App's auth listener loads the profile and navigates.
-  };
-
-  const quickFill = (uname) => {
-    const u = USERS.find((x) => x.username === uname);
-    if (!u) return;
-    setUsername(u.username);
-    setPassword(u.password);
-    setError('');
   };
 
   return (
@@ -107,33 +91,6 @@ export default function Login() {
           <button className="btn btn-primary login-submit" type="submit" disabled={busy}>
             {busy ? 'Signing in…' : 'Sign In'}
           </button>
-
-          <div className="login-quick">
-            <div className="muted" style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
-              Demo accounts — click to fill
-            </div>
-            <div className="login-chips">
-              {QUICK.map((uname) => {
-                const u = USERS.find((x) => x.username === uname);
-                if (!u) return null;
-                return (
-                  <button
-                    type="button"
-                    key={uname}
-                    className="login-chip"
-                    onClick={() => quickFill(uname)}
-                    title={`${u.username} · ${ROLES[u.role].label}`}
-                  >
-                    <span className="login-chip-role">{ROLES[u.role].label}</span>
-                    <span className="login-chip-user">{u.username}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="muted" style={{ fontSize: 11, marginTop: 10 }}>
-              Principal password is <code>Zulu@254</code>; all other demo accounts use <code>7777</code>.
-            </p>
-          </div>
         </form>
       </div>
     </div>
