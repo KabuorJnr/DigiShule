@@ -202,6 +202,7 @@ const TABLES = {
   feeSummary: 'fee_summary',
   admissions: 'admissions',
   clinicVisits: 'clinic_visits',
+  disciplinaryRecords: 'disciplinary_records',
   staff: 'staff',
   facilities: 'facilities',
   notifications: 'notifications',

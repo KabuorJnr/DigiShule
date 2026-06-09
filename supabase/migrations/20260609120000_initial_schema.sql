@@ -206,6 +206,20 @@ create table public.staff (
   check_in  text
 );
 
+create table public.disciplinary_records (
+  id           text primary key,
+  date         date,
+  student      text,
+  adm          text,
+  class        text,
+  category     text,
+  description  text,
+  action       text,
+  severity     text not null default 'Low',
+  status       text not null default 'Open'
+);
+create index disciplinary_records_adm_idx on public.disciplinary_records (adm);
+
 create table public.facilities (
   id        text primary key,
   name      text not null,
@@ -244,6 +258,7 @@ alter table public.fee_summary       enable row level security;
 alter table public.admissions        enable row level security;
 alter table public.clinic_visits     enable row level security;
 alter table public.staff             enable row level security;
+alter table public.disciplinary_records enable row level security;
 alter table public.facilities        enable row level security;
 alter table public.notifications     enable row level security;
 
@@ -259,7 +274,8 @@ begin
   foreach t in array array[
     'app_config','teachers','students','exam_schedules','exam_sessions',
     'timetables','library_books','library_loans','finance_payments',
-    'fee_summary','admissions','clinic_visits','staff','facilities','notifications'
+    'fee_summary','admissions','clinic_visits','staff','facilities','notifications',
+    'disciplinary_records'
   ] loop
     execute format(
       'create policy %1$s_select on public.%1$s for select to authenticated using (true);', t);
