@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { authenticate, USERS, ROLES } from '../data/users';
+import { USERS, ROLES } from '../data/users';
+import { signInWithUsername } from '../lib/supabaseClient';
 
 // Distinct accounts to surface as quick-fill chips (one per role; the second
 // librarian login is reachable by typing it manually).
@@ -8,27 +9,24 @@ const QUICK = [
   'Librarian', 'STF5169', 'STU2640494', 'PAR90215', 'NURSE001',
 ];
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setError('');
     setBusy(true);
-    // tiny delay so the button shows a working state
-    setTimeout(() => {
-      const user = authenticate(username, password);
-      setBusy(false);
-      if (!user) {
-        setError('Invalid username or password. Please try again.');
-        return;
-      }
-      onLogin(user);
-    }, 400);
+    const { error: signInError } = await signInWithUsername(username, password);
+    setBusy(false);
+    if (signInError) {
+      setError(signInError.message || 'Invalid username or password. Please try again.');
+      return;
+    }
+    // On success the App's auth listener loads the profile and navigates.
   };
 
   const quickFill = (uname) => {

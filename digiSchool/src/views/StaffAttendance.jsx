@@ -1,13 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
-import { STAFF } from '../data/modules';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 
 export default function StaffAttendance({ store }) {
   const { notify } = store;
-  const [staff, setStaff] = useState(STAFF);
+  const [staff, setStaff] = useState([]);
   const [filter, setFilter] = useState('All');
+
+  useEffect(() => {
+    fetchTable('staff')
+      .then((rows) => setStaff(rows
+        .map((s) => ({ ...s, checkIn: s.check_in }))
+        .sort((a, b) => a.name.localeCompare(b.name))))
+      .catch((e) => notify(`Failed to load staff: ${e.message}`, 'error'));
+  }, [notify]);
 
   const totals = useMemo(() => ({
     total: staff.length,
@@ -16,13 +24,22 @@ export default function StaffAttendance({ store }) {
     leave: staff.filter((s) => s.status === 'On Leave').length,
   }), [staff]);
 
-  const toggleStatus = (id) => {
-    setStaff((ss) => ss.map((s) => {
-      if (s.id !== id) return s;
-      const cycle = ['Present', 'Absent', 'On Leave'];
-      const next = cycle[(cycle.indexOf(s.status) + 1) % cycle.length];
-      return { ...s, status: next };
-    }));
+  const toggleStatus = async (id) => {
+    const member = staff.find((s) => s.id === id);
+    if (!member) return;
+    const cycle = ['Present', 'Absent', 'On Leave'];
+    const next = cycle[(cycle.indexOf(member.status) + 1) % cycle.length];
+    const updated = { ...member, status: next };
+    try {
+      await upsertRow('staff', {
+        id: updated.id, name: updated.name, role: updated.role,
+        dept: updated.dept, status: updated.status, check_in: updated.checkIn,
+      });
+    } catch (e) {
+      notify(`Could not update status: ${e.message}`, 'error');
+      return;
+    }
+    setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
     notify('Staff status updated.', 'info', 'Attendance');
   };
 

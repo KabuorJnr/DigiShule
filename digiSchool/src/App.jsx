@@ -1,16 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import './App.css';
-import {
-  buildStudents,
-  buildExamSchedules,
-  DEFAULT_SETTINGS,
-  DEFAULT_GRADE_BOUNDARIES,
-  DEFAULT_FEE_STRUCTURE,
-  DEFAULT_NOTIF_TOGGLES,
-  DEFAULT_VENUES,
-  SEED_NOTIFICATIONS,
-  TEACHERS,
-} from './data/seed';
+import { supabase } from './lib/supabaseClient';
+import * as api from './lib/api';
 import { ROLES } from './data/users';
 import Login from './views/Login';
 import Overview from './views/Overview';
@@ -48,23 +39,44 @@ const VIEW_MAP = {
 let toastId = 0;
 
 export default function App() {
+  const [authChecked, setAuthChecked] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
+  const [dataLoading, setDataLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState(SEED_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
 
-  // Domain state
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [students, setStudents] = useState(() => buildStudents());
-  const [teachers, setTeachers] = useState(TEACHERS);
-  const [examSchedules, setExamSchedules] = useState(() => buildExamSchedules());
-  const [venues, setVenues] = useState(DEFAULT_VENUES);
-  const [gradeBoundaries, setGradeBoundaries] = useState(DEFAULT_GRADE_BOUNDARIES);
-  const [feeStructure, setFeeStructure] = useState(DEFAULT_FEE_STRUCTURE);
-  const [notifToggles, setNotifToggles] = useState(DEFAULT_NOTIF_TOGGLES);
+  // Domain state (loaded from Supabase after sign-in)
+  const [settings, setSettings] = useState({});
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [examSchedules, setExamSchedules] = useState([]);
+  const [venues, setVenues] = useState([]);
+  const [gradeBoundaries, setGradeBoundaries] = useState([]);
+  const [feeStructure, setFeeStructure] = useState([]);
+  const [notifToggles, setNotifToggles] = useState({});
   const [timetables, setTimetables] = useState({});
+
+  // Refs mirror the latest state so wrapped setters can compute the next value
+  // outside React's updater and persist it without double-firing under StrictMode.
+  const settingsRef = useRef(settings);
+  const feeRef = useRef(feeStructure);
+  const boundsRef = useRef(gradeBoundaries);
+  const togglesRef = useRef(notifToggles);
+  const venuesRef = useRef(venues);
+  const studentsRef = useRef(students);
+  const examsRef = useRef(examSchedules);
+  const timetablesRef = useRef(timetables);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+  useEffect(() => { feeRef.current = feeStructure; }, [feeStructure]);
+  useEffect(() => { boundsRef.current = gradeBoundaries; }, [gradeBoundaries]);
+  useEffect(() => { togglesRef.current = notifToggles; }, [notifToggles]);
+  useEffect(() => { venuesRef.current = venues; }, [venues]);
+  useEffect(() => { studentsRef.current = students; }, [students]);
+  useEffect(() => { examsRef.current = examSchedules; }, [examSchedules]);
+  useEffect(() => { timetablesRef.current = timetables; }, [timetables]);
 
   const notify = useCallback((message, type = 'success', title) => {
     const id = ++toastId;
@@ -73,46 +85,148 @@ export default function App() {
     setTimeout(() => { setToasts((t) => t.filter((x) => x.id !== id)); }, 3000);
   }, []);
 
+  const onSaveError = useCallback((e) => notify(`Save failed: ${e.message || e}`, 'error'), [notify]);
+
+  // Resolve an updater (value or function) against the latest ref value.
+  const resolve = (updater, current) => (typeof updater === 'function' ? updater(current) : updater);
+
+  // ---- Persisted store setters ----
+  const setSettingsP = useCallback((u) => {
+    const next = resolve(u, settingsRef.current); settingsRef.current = next; setSettings(next);
+    api.saveConfig({ settings: next }).catch(onSaveError);
+  }, [onSaveError]);
+  const setFeeP = useCallback((u) => {
+    const next = resolve(u, feeRef.current); feeRef.current = next; setFeeStructure(next);
+    api.saveConfig({ feeStructure: next }).catch(onSaveError);
+  }, [onSaveError]);
+  const setBoundsP = useCallback((u) => {
+    const next = resolve(u, boundsRef.current); boundsRef.current = next; setGradeBoundaries(next);
+    api.saveConfig({ gradeBoundaries: next }).catch(onSaveError);
+  }, [onSaveError]);
+  const setTogglesP = useCallback((u) => {
+    const next = resolve(u, togglesRef.current); togglesRef.current = next; setNotifToggles(next);
+    api.saveConfig({ notifToggles: next }).catch(onSaveError);
+  }, [onSaveError]);
+  const setVenuesP = useCallback((u) => {
+    const next = resolve(u, venuesRef.current); venuesRef.current = next; setVenues(next);
+    api.saveConfig({ venues: next }).catch(onSaveError);
+  }, [onSaveError]);
+  const setExamsP = useCallback((u) => {
+    const next = resolve(u, examsRef.current); examsRef.current = next; setExamSchedules(next);
+    api.replaceAllExams(next).catch(onSaveError);
+  }, [onSaveError]);
+  const setTimetablesP = useCallback((u) => {
+    const next = resolve(u, timetablesRef.current); timetablesRef.current = next; setTimetables(next);
+    api.saveTimetables(next, settingsRef.current.currentTerm).catch(onSaveError);
+  }, [onSaveError]);
+  // Single-student persistence (gradebook edits one row at a time).
+  const updateStudent = useCallback((student) => {
+    setStudents((prev) => prev.map((s) => (s.id === student.id ? student : s)));
+    api.upsertStudent(student).catch(onSaveError);
+  }, [onSaveError]);
+
+  const markRead = (id) => {
+    setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    api.setNotificationRead(id, true).catch(onSaveError);
+  };
+  const markAllRead = () => {
+    setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
+    api.markAllNotificationsRead().catch(onSaveError);
+  };
   const unreadCount = notifications.filter((n) => !n.read).length;
-  const markRead = (id) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const markAllRead = () => setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
 
   const store = useMemo(
     () => ({
-      settings, setSettings,
-      students, setStudents,
+      settings, setSettings: setSettingsP,
+      students, setStudents, updateStudent,
       teachers, setTeachers,
-      examSchedules, setExamSchedules,
-      venues, setVenues,
-      gradeBoundaries, setGradeBoundaries,
-      feeStructure, setFeeStructure,
-      notifToggles, setNotifToggles,
-      timetables, setTimetables,
+      examSchedules, setExamSchedules: setExamsP,
+      venues, setVenues: setVenuesP,
+      gradeBoundaries, setGradeBoundaries: setBoundsP,
+      feeStructure, setFeeStructure: setFeeP,
+      notifToggles, setNotifToggles: setTogglesP,
+      timetables, setTimetables: setTimetablesP,
       notify,
       navigate: setView,
     }),
-    [settings, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify]
+    [settings, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
+      setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent]
   );
 
-  // ---- Auth handlers ----
-  const handleLogin = (user) => {
-    setCurrentUser(user);
-    const role = ROLES[user.role];
-    setView(role?.home || 'overview');
-    notify(`Welcome, ${user.name}`, 'success', 'Signed In');
-  };
+  // ---- Load all domain data after a user is known ----
+  const loadAllData = useCallback(async () => {
+    setDataLoading(true);
+    try {
+      const [cfg, st, tch, ex, tt, notifs] = await Promise.all([
+        api.fetchConfig(),
+        api.fetchStudents(),
+        api.fetchTeachers(),
+        api.fetchExamSchedules(),
+        api.fetchTimetables(),
+        api.fetchTable('notifications'),
+      ]);
+      setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
+      setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
+      setVenues(cfg.venues);
+      setStudents(st); setTeachers(tch); setExamSchedules(ex); setTimetables(tt);
+      setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+    } catch (e) {
+      notify(`Failed to load data: ${e.message || e}`, 'error');
+    } finally {
+      setDataLoading(false);
+    }
+  }, [notify]);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setView(null);
+  const loadUser = useCallback(async (userId, greet) => {
+    try {
+      const profile = await api.fetchProfile(userId);
+      setCurrentUser(profile);
+      setView(ROLES[profile.role]?.home || 'overview');
+      if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
+      await loadAllData();
+    } catch (e) {
+      notify(`Could not load your account: ${e.message || e}`, 'error');
+      await supabase.auth.signOut();
+    } finally {
+      setAuthChecked(true);
+    }
+  }, [loadAllData, notify]);
+
+  // ---- Auth bootstrap ----
+  useEffect(() => {
+    let active = true;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (session?.user) {
+        loadUser(session.user.id, event === 'SIGNED_IN');
+      } else {
+        setCurrentUser(null);
+        setView(null);
+        setAuthChecked(true);
+      }
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, [loadUser]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     notify('You have been logged out.', 'info', 'Logout');
   };
+
+  // ---- Splash while we check the session ----
+  if (!authChecked) {
+    return (
+      <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh' }}>
+        <div className="muted">Loading DigiShule…</div>
+      </div>
+    );
+  }
 
   // ---- If not logged in, show Login ----
   if (!currentUser) {
     return (
       <>
-        <Login onLogin={handleLogin} />
+        <Login />
         {/* Toasts render even on login page */}
         <div className="toast-wrap">
           {toasts.map((t) => (
@@ -197,7 +311,13 @@ export default function App() {
         </header>
 
         <main className="content">
-          {ViewComponent ? <ViewComponent store={store} user={currentUser} /> : <p>View not found.</p>}
+          {dataLoading ? (
+            <p className="muted">Loading…</p>
+          ) : ViewComponent ? (
+            <ViewComponent store={store} user={currentUser} />
+          ) : (
+            <p>View not found.</p>
+          )}
         </main>
       </div>
 

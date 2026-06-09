@@ -1,16 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { LIBRARY_BOOKS, LIBRARY_LOANS } from '../data/modules';
+import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 
 export default function Library({ store }) {
   const { notify } = store;
   const [tab, setTab] = useState('catalog');
-  const [books, setBooks] = useState(LIBRARY_BOOKS);
-  const [loans, setLoans] = useState(LIBRARY_LOANS);
+  const [books, setBooks] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [search, setSearch] = useState('');
   const [issueOpen, setIssueOpen] = useState(false);
   const [form, setForm] = useState({ book: '', student: '', adm: '', due: '' });
+
+  useEffect(() => {
+    Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')])
+      .then(([bks, lns]) => {
+        setBooks(bks.sort((a, b) => a.title.localeCompare(b.title)));
+        setLoans(lns.sort((a, b) => String(b.borrowed).localeCompare(String(a.borrowed))));
+      })
+      .catch((e) => notify(`Failed to load library data: ${e.message}`, 'error'));
+  }, [notify]);
 
   const totals = useMemo(() => {
     const copies = books.reduce((s, b) => s + b.copies, 0);
@@ -25,7 +34,7 @@ export default function Library({ store }) {
       b.author.toLowerCase().includes(search.toLowerCase())
   );
 
-  const issueBook = () => {
+  const issueBook = async () => {
     if (!form.book || !form.student || !form.adm) {
       notify('Book, student and admission no. are required.', 'error');
       return;
@@ -35,29 +44,42 @@ export default function Library({ store }) {
       notify('No available copies of this title.', 'error');
       return;
     }
-    setBooks((bs) => bs.map((b) => (b.id === form.book ? { ...b, available: b.available - 1 } : b)));
-    setLoans((ls) => [
-      {
-        id: `l${Date.now()}`,
-        book: bk.title,
-        student: form.student,
-        adm: form.adm,
-        borrowed: new Date().toISOString().slice(0, 10),
-        due: form.due || '2026-06-30',
-        status: 'Borrowed',
-      },
-      ...ls,
-    ]);
+    const updatedBook = { ...bk, available: bk.available - 1 };
+    const loan = {
+      id: `l${Date.now()}`,
+      book: bk.title,
+      student: form.student,
+      adm: form.adm,
+      borrowed: new Date().toISOString().slice(0, 10),
+      due: form.due || '2026-06-30',
+      status: 'Borrowed',
+    };
+    try {
+      await upsertRow('libraryBooks', updatedBook);
+      await upsertRow('libraryLoans', loan);
+    } catch (e) {
+      notify(`Could not issue book: ${e.message}`, 'error');
+      return;
+    }
+    setBooks((bs) => bs.map((b) => (b.id === form.book ? updatedBook : b)));
+    setLoans((ls) => [loan, ...ls]);
     setIssueOpen(false);
     setForm({ book: '', student: '', adm: '', due: '' });
     notify(`"${bk.title}" issued to ${form.student}.`);
   };
 
-  const returnLoan = (loan) => {
+  const returnLoan = async (loan) => {
+    const bk = books.find((b) => b.title === loan.book);
+    const updatedBook = bk ? { ...bk, available: Math.min(bk.copies, bk.available + 1) } : null;
+    try {
+      await deleteRow('libraryLoans', loan.id);
+      if (updatedBook) await upsertRow('libraryBooks', updatedBook);
+    } catch (e) {
+      notify(`Could not record return: ${e.message}`, 'error');
+      return;
+    }
     setLoans((ls) => ls.filter((l) => l.id !== loan.id));
-    setBooks((bs) =>
-      bs.map((b) => (b.title === loan.book ? { ...b, available: Math.min(b.copies, b.available + 1) } : b))
-    );
+    if (updatedBook) setBooks((bs) => bs.map((b) => (b.id === updatedBook.id ? updatedBook : b)));
     notify(`"${loan.book}" returned by ${loan.student}.`, 'info', 'Returned');
   };
 

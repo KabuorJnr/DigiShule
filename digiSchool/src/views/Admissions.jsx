@@ -1,17 +1,23 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { ADMISSIONS } from '../data/modules';
 import { CLASSES } from '../data/seed';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const STATUS_COLOR = { Admitted: 'green', Pending: 'amber', Waitlisted: 'blue', Rejected: 'red' };
 const STATUS_CYCLE = ['Pending', 'Admitted', 'Waitlisted', 'Rejected'];
 
 export default function Admissions({ store }) {
   const { notify, students } = store;
-  const [apps, setApps] = useState(ADMISSIONS);
+  const [apps, setApps] = useState([]);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', kcpe: '', gender: 'M', form: 'Form 1' });
+
+  useEffect(() => {
+    fetchTable('admissions')
+      .then((rows) => setApps(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))))
+      .catch((e) => notify(`Failed to load admissions: ${e.message}`, 'error'));
+  }, [notify]);
 
   const totals = useMemo(() => ({
     applicants: apps.length,
@@ -20,23 +26,36 @@ export default function Admissions({ store }) {
     enrolled: students.length,
   }), [apps, students]);
 
-  const cycleStatus = (id) => {
-    setApps((as) => as.map((a) => {
-      if (a.id !== id) return a;
-      const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(a.status) + 1) % STATUS_CYCLE.length];
-      return { ...a, status: next };
-    }));
+  const cycleStatus = async (id) => {
+    const app = apps.find((a) => a.id === id);
+    if (!app) return;
+    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(app.status) + 1) % STATUS_CYCLE.length];
+    const updated = { ...app, status: next };
+    try {
+      await upsertRow('admissions', updated);
+    } catch (e) {
+      notify(`Could not update status: ${e.message}`, 'error');
+      return;
+    }
+    setApps((as) => as.map((a) => (a.id === id ? updated : a)));
   };
 
-  const addApplicant = () => {
+  const addApplicant = async () => {
     if (!form.name || !form.kcpe) {
       notify('Name and KCPE marks are required.', 'error');
       return;
     }
-    setApps((as) => [
-      { id: `ad${Date.now()}`, name: form.name, kcpe: Number(form.kcpe), gender: form.gender, form: form.form, date: new Date().toISOString().slice(0, 10), status: 'Pending' },
-      ...as,
-    ]);
+    const applicant = {
+      id: `ad${Date.now()}`, name: form.name, kcpe: Number(form.kcpe), gender: form.gender,
+      form: form.form, date: new Date().toISOString().slice(0, 10), status: 'Pending',
+    };
+    try {
+      await upsertRow('admissions', applicant);
+    } catch (e) {
+      notify(`Could not add application: ${e.message}`, 'error');
+      return;
+    }
+    setApps((as) => [applicant, ...as]);
     setAddOpen(false);
     setForm({ name: '', kcpe: '', gender: 'M', form: 'Form 1' });
     notify(`Application for ${form.name} added.`);

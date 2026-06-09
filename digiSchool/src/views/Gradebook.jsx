@@ -12,7 +12,7 @@ const GRADE_COLORS = { A: '#10B981', B: '#3B82F6', C: '#F59E0B', D: '#F97316', E
 const ASSESS_OPTIONS = ['All', 'CAT 1', 'CAT 2', 'Midterm', 'End-Term'];
 
 export default function Gradebook({ store }) {
-  const { students, setStudents, gradeBoundaries, settings, notify } = store;
+  const { students, updateStudent, gradeBoundaries, settings, notify } = store;
   const [cls, setCls] = useState('1A');
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
@@ -57,12 +57,16 @@ export default function Gradebook({ store }) {
 
   function saveScore(id, field, value) {
     const v = Math.max(0, Math.min(field === 'cat1' || field === 'cat2' ? 30 : 100, Number(value) || 0));
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, scores: { ...s.scores, [subject]: { ...s.scores[subject], [field]: v } } } : s)));
+    const target = students.find((s) => s.id === id);
+    if (target) {
+      updateStudent({ ...target, scores: { ...target.scores, [subject]: { ...target.scores[subject], [field]: v } } });
+    }
     setEditing(null);
   }
 
   function flagStudent(id) {
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, flagged: true } : s)));
+    const target = students.find((s) => s.id === id);
+    if (target) updateStudent({ ...target, flagged: true });
     notify('Student flagged for support', 'success', 'Gradebook');
   }
 

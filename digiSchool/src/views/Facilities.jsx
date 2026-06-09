@@ -1,16 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { FACILITIES } from '../data/modules';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const STATUS_COLOR = { Operational: 'green', Maintenance: 'amber', 'Out of Service': 'red' };
 const STATUS_CYCLE = ['Operational', 'Maintenance', 'Out of Service'];
 
 export default function Facilities({ store }) {
   const { notify } = store;
-  const [facilities, setFacilities] = useState(FACILITIES);
+  const [facilities, setFacilities] = useState([]);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', type: 'Room', capacity: '', note: '' });
+
+  useEffect(() => {
+    fetchTable('facilities')
+      .then((rows) => setFacilities(rows.sort((a, b) => a.name.localeCompare(b.name))))
+      .catch((e) => notify(`Failed to load facilities: ${e.message}`, 'error'));
+  }, [notify]);
 
   const totals = useMemo(() => ({
     total: facilities.length,
@@ -19,21 +25,34 @@ export default function Facilities({ store }) {
     cap: facilities.reduce((s, f) => s + (f.capacity || 0), 0),
   }), [facilities]);
 
-  const cycleStatus = (id) => {
-    setFacilities((fs) => fs.map((f) => {
-      if (f.id !== id) return f;
-      const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(f.status) + 1) % STATUS_CYCLE.length];
-      return { ...f, status: next };
-    }));
+  const cycleStatus = async (id) => {
+    const facility = facilities.find((f) => f.id === id);
+    if (!facility) return;
+    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(facility.status) + 1) % STATUS_CYCLE.length];
+    const updated = { ...facility, status: next };
+    try {
+      await upsertRow('facilities', updated);
+    } catch (e) {
+      notify(`Could not update facility: ${e.message}`, 'error');
+      return;
+    }
+    setFacilities((fs) => fs.map((f) => (f.id === id ? updated : f)));
     notify('Facility status updated.', 'info', 'Facilities');
   };
 
-  const addFacility = () => {
+  const addFacility = async () => {
     if (!form.name) { notify('Name is required.', 'error'); return; }
-    setFacilities((fs) => [
-      ...fs,
-      { id: `f${Date.now()}`, name: form.name, type: form.type, capacity: Number(form.capacity) || 0, status: 'Operational', note: form.note },
-    ]);
+    const facility = {
+      id: `f${Date.now()}`, name: form.name, type: form.type,
+      capacity: Number(form.capacity) || 0, status: 'Operational', note: form.note,
+    };
+    try {
+      await upsertRow('facilities', facility);
+    } catch (e) {
+      notify(`Could not add facility: ${e.message}`, 'error');
+      return;
+    }
+    setFacilities((fs) => [...fs, facility]);
     setAddOpen(false);
     setForm({ name: '', type: 'Room', capacity: '', note: '' });
     notify(`Facility "${form.name}" added.`);
