@@ -1,47 +1,65 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
-import { FINANCE_PAYMENTS, FEE_SUMMARY, fmtKES } from '../data/modules';
+import { fmtKES } from '../data/modules';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const pct = (c, e) => (e ? Math.round((c / e) * 100) : 0);
 const barColor = (v) => (v >= 80 ? '#10B981' : v >= 60 ? '#F59E0B' : '#EF4444');
 
 export default function Finance({ store }) {
   const { notify } = store;
-  const [payments, setPayments] = useState(FINANCE_PAYMENTS);
+  const [payments, setPayments] = useState([]);
+  const [feeSummary, setFeeSummary] = useState([]);
   const [recordOpen, setRecordOpen] = useState(false);
   const [form, setForm] = useState({ student: '', adm: '', method: 'M-Pesa', ref: '', amount: '' });
 
+  useEffect(() => {
+    Promise.all([fetchTable('financePayments'), fetchTable('feeSummary')])
+      .then(([pay, fees]) => {
+        setPayments(pay.map((p) => ({ ...p, amount: Number(p.amount) }))
+          .sort((a, b) => String(b.date).localeCompare(String(a.date))));
+        setFeeSummary(fees.map((f) => ({
+          ...f, billed: Number(f.billed), collected: Number(f.collected), expected: Number(f.expected),
+        })));
+      })
+      .catch((e) => notify(`Failed to load finance data: ${e.message}`, 'error'));
+  }, [notify]);
+
   const totals = useMemo(() => {
-    const collected = FEE_SUMMARY.reduce((s, f) => s + f.collected, 0);
-    const expected = FEE_SUMMARY.reduce((s, f) => s + f.expected, 0);
+    const collected = feeSummary.reduce((s, f) => s + f.collected, 0);
+    const expected = feeSummary.reduce((s, f) => s + f.expected, 0);
     const today = payments.filter((p) => p.date === '2026-06-08').reduce((s, p) => s + p.amount, 0);
     return { collected, expected, rate: pct(collected, expected), today, outstanding: expected - collected };
-  }, [payments]);
+  }, [payments, feeSummary]);
 
-  const chartData = FEE_SUMMARY.map((f) => ({ form: f.form, collected: pct(f.collected, f.expected) }));
+  const chartData = feeSummary.map((f) => ({ form: f.form, collected: pct(f.collected, f.expected) }));
 
-  const record = () => {
+  const record = async () => {
     const amt = Number(form.amount);
     if (!form.student || !form.adm || !amt) {
       notify('Student, admission no. and amount are required.', 'error');
       return;
     }
-    setPayments((ps) => [
-      {
-        id: `p${Date.now()}`,
-        date: new Date().toISOString().slice(0, 10),
-        student: form.student,
-        adm: form.adm,
-        method: form.method,
-        ref: form.ref || '—',
-        amount: amt,
-      },
-      ...ps,
-    ]);
+    const payment = {
+      id: `p${Date.now()}`,
+      date: new Date().toISOString().slice(0, 10),
+      student: form.student,
+      adm: form.adm,
+      method: form.method,
+      ref: form.ref || '—',
+      amount: amt,
+    };
+    try {
+      await upsertRow('financePayments', payment);
+    } catch (e) {
+      notify(`Could not record payment: ${e.message}`, 'error');
+      return;
+    }
+    setPayments((ps) => [payment, ...ps]);
     setRecordOpen(false);
     setForm({ student: '', adm: '', method: 'M-Pesa', ref: '', amount: '' });
     notify(`Payment of ${fmtKES(amt)} recorded for ${form.student}.`);
@@ -88,7 +106,7 @@ export default function Finance({ store }) {
                 <tr><th>Form</th><th>Billed/Student</th><th>Collected</th><th>Expected</th><th>Rate</th></tr>
               </thead>
               <tbody>
-                {FEE_SUMMARY.map((f) => (
+                {feeSummary.map((f) => (
                   <tr key={f.form}>
                     <td style={{ fontWeight: 600 }}>{f.form}</td>
                     <td>{fmtKES(f.billed)}</td>

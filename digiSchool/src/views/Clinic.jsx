@@ -1,15 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { CLINIC_VISITS } from '../data/modules';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const OUTCOME_COLOR = { 'Returned to class': 'green', 'Sent home': 'amber', 'Referred to hospital': 'red' };
 
 export default function Clinic({ store }) {
   const { notify } = store;
-  const [visits, setVisits] = useState(CLINIC_VISITS);
+  const [visits, setVisits] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const [form, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
+
+  useEffect(() => {
+    fetchTable('clinicVisits')
+      .then((rows) => setVisits(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))))
+      .catch((e) => notify(`Failed to load clinic visits: ${e.message}`, 'error'));
+  }, [notify]);
 
   const totals = useMemo(() => ({
     total: visits.length,
@@ -17,12 +23,12 @@ export default function Clinic({ store }) {
     referred: visits.filter((v) => v.outcome === 'Referred to hospital').length,
   }), [visits]);
 
-  const logVisit = () => {
+  const logVisit = async () => {
     if (!form.student || !form.complaint) {
       notify('Student name and complaint are required.', 'error');
       return;
     }
-    setVisits((vs) => [{
+    const visit = {
       id: `c${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
       student: form.student,
@@ -30,7 +36,14 @@ export default function Clinic({ store }) {
       complaint: form.complaint,
       treatment: form.treatment,
       outcome: form.outcome,
-    }, ...vs]);
+    };
+    try {
+      await upsertRow('clinicVisits', visit);
+    } catch (e) {
+      notify(`Could not log visit: ${e.message}`, 'error');
+      return;
+    }
+    setVisits((vs) => [visit, ...vs]);
     setLogOpen(false);
     setForm({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
     notify(`Clinic visit logged for ${form.student}.`);
