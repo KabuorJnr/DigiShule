@@ -133,49 +133,7 @@ export default function Overview({ store }) {
         </div>
       </div>
 
-      {/* Access by Principal */}
-      <div style={{ marginTop: 32 }}>
-        <h3 className="section-title" style={{ fontSize: 18, marginBottom: 16 }}>Access by Principal</h3>
-        <div className="grid grid-4">
-          
-          <div className="card card-pad">
-            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Deputy Offices</h4>
-            <div className="list-flex">
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>D. Academics</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>D. Administration</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Registrar Office</button>
-            </div>
-          </div>
 
-          <div className="card card-pad">
-            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Staff Management</h4>
-            <div className="list-flex">
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Teaching Staff</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Performance</button>
-            </div>
-          </div>
-
-          <div className="card card-pad">
-            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Student Management</h4>
-            <div className="list-flex">
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>All Students</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Admissions</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Boarding</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Transfers</button>
-            </div>
-          </div>
-
-          <div className="card card-pad">
-            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Academic</h4>
-            <div className="list-flex">
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Subjects</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('timetable')}>Timetable</button>
-              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('exams')}>Exams</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
 
       {alertModal && (
         <Modal

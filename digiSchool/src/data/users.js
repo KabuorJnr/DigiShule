@@ -12,18 +12,104 @@ export const ROLES = {
     accent: '#1E3A5F',
     home: 'overview',
     nav: [
-      { id: 'overview', icon: '🏠', label: 'Overview' },
-      { id: 'timetable', icon: '📅', label: 'Timetable Management' },
-      { id: 'exams', icon: '📝', label: 'Exam Schedules' },
-      { id: 'create_exam', icon: '⊕', label: 'Create Exam' },
-      { id: 'gradebook', icon: '📊', label: 'Gradebook Review' },
-      { id: 'library', icon: '📚', label: 'Library' },
-      { id: 'finance', icon: '💰', label: 'Finance' },
-      { id: 'admissions', icon: '🧾', label: 'Admissions' },
-      { id: 'staff', icon: '👥', label: 'Staff Attendance' },
-      { id: 'facilities', icon: '🏛️', label: 'Facilities' },
-      { id: 'clinic', icon: '🏥', label: 'Clinic' },
-      { id: 'settings', icon: '⚙️', label: 'School Settings' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'overview', icon: '🏠', label: 'Dashboard' }
+        ]
+      },
+      {
+        section: 'MANAGEMENT',
+        items: [
+          {
+            id: 'deputy_offices', icon: '🏢', label: 'Deputy Offices',
+            sub: [
+              { id: 'deputy_academic', label: 'Deputy Academics', view: 'overview' },
+              { id: 'deputy_admin', label: 'Deputy Administration', view: 'overview' },
+              { id: 'registrar', label: 'Registrar Office', view: 'admissions' }
+            ]
+          },
+          {
+            id: 'staff_management', icon: '👥', label: 'Staff Management',
+            sub: [
+              { id: 'teaching_staff', label: 'Teaching Staff', view: 'staff' },
+              { id: 'performance', label: 'Performance', view: 'overview' }
+            ]
+          },
+          {
+            id: 'student_management', icon: '🎓', label: 'Student Management',
+            sub: [
+              { id: 'all_students', label: 'All Students', view: 'overview' },
+              { id: 'admissions', label: 'Admissions', view: 'admissions' },
+              { id: 'boarding', label: 'Boarding', view: 'overview' },
+              { id: 'transfers', label: 'Transfers', view: 'overview' }
+            ]
+          },
+          {
+            id: 'academic', icon: '📚', label: 'Academic',
+            sub: [
+              { id: 'subjects', label: 'Subjects', view: 'overview' },
+              { id: 'timetable', label: 'Timetable', view: 'timetable' },
+              { id: 'examinations', label: 'Examinations', view: 'exams' }
+            ]
+          },
+          {
+            id: 'finance_mgmt', icon: '💰', label: 'Finance',
+            sub: [
+              { id: 'accounts', label: 'Accounts Office', view: 'finance' },
+              { id: 'fin_reports', label: 'Financial Reports', view: 'finance' },
+              { id: 'fee_structures', label: 'Fee Structures', view: 'finance' },
+              { id: 'expenses', label: 'Expenses', view: 'finance' }
+            ]
+          },
+          {
+            id: 'reports', icon: '📈', label: 'Report Analytics',
+            sub: [
+              { id: 'acad_reports', label: 'Academic reports', view: 'overview' },
+              { id: 'attendance_reports', label: 'Attendance', view: 'overview' },
+              { id: 'behaviour', label: 'Behaviour', view: 'overview' },
+              { id: 'audit', label: 'Audit logs', view: 'overview' }
+            ]
+          },
+          { id: 'downloads', icon: '📥', label: 'Downloads', view: 'overview' }
+        ]
+      },
+      {
+        section: 'SUPPORT OFFICES',
+        items: [
+          { id: 'clinic', icon: '🏥', label: 'Visit Health Center', view: 'clinic' },
+          { id: 'library', icon: '📚', label: 'Visit Library', view: 'library' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'overview' },
+          { id: 'parent_meetings', icon: '👪', label: 'Parent meetings', view: 'overview' }
+        ]
+      },
+      {
+        section: 'SYSTEM',
+        items: [
+          { id: 'notifications', icon: '🔔', label: 'Notifications', view: 'overview', action: 'notif' }
+        ]
+      },
+      {
+        section: 'QUICK ACTIONS',
+        items: [
+          { id: 'new_admission', icon: '➕', label: 'New Admission', view: 'admissions' },
+          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },
+          { id: 'schedule_meeting', icon: '🗓️', label: 'Schedule Meeting', view: 'overview' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'profile', icon: '👤', label: 'My profile', view: 'overview' },
+          { id: 'settings', icon: '⚙️', label: 'System setting', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+        ]
+      }
     ],
   },
   deputy_academic: {
@@ -32,11 +118,16 @@ export const ROLES = {
     accent: '#2563EB',
     home: 'overview',
     nav: [
-      { id: 'overview', icon: '🏠', label: 'Overview' },
-      { id: 'timetable', icon: '📅', label: 'Timetable Management' },
-      { id: 'exams', icon: '📝', label: 'Exam Schedules' },
-      { id: 'create_exam', icon: '⊕', label: 'Create Exam' },
-      { id: 'gradebook', icon: '📊', label: 'Gradebook Review' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'overview', icon: '🏠', label: 'Overview', view: 'overview' },
+          { id: 'timetable', icon: '📅', label: 'Timetable Management', view: 'timetable' },
+          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
+          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },
+          { id: 'gradebook', icon: '📊', label: 'Gradebook Review', view: 'gradebook' }
+        ]
+      }
     ],
   },
   deputy_admin: {
@@ -45,11 +136,16 @@ export const ROLES = {
     accent: '#0F766E',
     home: 'overview',
     nav: [
-      { id: 'overview', icon: '🏠', label: 'Overview' },
-      { id: 'staff', icon: '👥', label: 'Staff Attendance' },
-      { id: 'facilities', icon: '🏛️', label: 'Facilities' },
-      { id: 'finance', icon: '💰', label: 'Finance' },
-      { id: 'settings', icon: '⚙️', label: 'School Settings' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'overview', icon: '🏠', label: 'Overview', view: 'overview' },
+          { id: 'staff', icon: '👥', label: 'Staff Attendance', view: 'staff' },
+          { id: 'facilities', icon: '🏛️', label: 'Facilities', view: 'facilities' },
+          { id: 'finance', icon: '💰', label: 'Finance', view: 'finance' },
+          { id: 'settings', icon: '⚙️', label: 'School Settings', view: 'settings' }
+        ]
+      }
     ],
   },
   finance: {
@@ -58,7 +154,12 @@ export const ROLES = {
     accent: '#047857',
     home: 'finance',
     nav: [
-      { id: 'finance', icon: '💰', label: 'Fee Collection' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'finance', icon: '💰', label: 'Fee Collection', view: 'finance' },
+        ]
+      }
     ],
   },
   registrar: {
@@ -67,7 +168,12 @@ export const ROLES = {
     accent: '#7C3AED',
     home: 'admissions',
     nav: [
-      { id: 'admissions', icon: '🧾', label: 'Admissions & Registry' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'admissions', icon: '🧾', label: 'Admissions & Registry', view: 'admissions' },
+        ]
+      }
     ],
   },
   librarian: {
@@ -76,7 +182,12 @@ export const ROLES = {
     accent: '#B45309',
     home: 'library',
     nav: [
-      { id: 'library', icon: '📚', label: 'Library' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'library', icon: '📚', label: 'Library', view: 'library' },
+        ]
+      }
     ],
   },
   teacher: {
@@ -85,8 +196,13 @@ export const ROLES = {
     accent: '#0369A1',
     home: 'teacher',
     nav: [
-      { id: 'teacher', icon: '🧑‍🏫', label: 'My Classes' },
-      { id: 'timetable', icon: '📅', label: 'My Timetable' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'teacher', icon: '🧑‍🏫', label: 'My Classes', view: 'teacher' },
+          { id: 'timetable', icon: '📅', label: 'My Timetable', view: 'timetable' },
+        ]
+      }
     ],
   },
   student: {
@@ -95,7 +211,12 @@ export const ROLES = {
     accent: '#1D4ED8',
     home: 'student',
     nav: [
-      { id: 'student', icon: '🎓', label: 'My Dashboard' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'student', icon: '🎓', label: 'My Dashboard', view: 'student' },
+        ]
+      }
     ],
   },
   parent: {
@@ -104,7 +225,12 @@ export const ROLES = {
     accent: '#BE185D',
     home: 'parent',
     nav: [
-      { id: 'parent', icon: '👪', label: 'My Child' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'parent', icon: '👪', label: 'My Child', view: 'parent' },
+        ]
+      }
     ],
   },
   nurse: {
@@ -113,7 +239,12 @@ export const ROLES = {
     accent: '#DC2626',
     home: 'clinic',
     nav: [
-      { id: 'clinic', icon: '🏥', label: 'Clinic' },
+      {
+        section: 'CORE',
+        items: [
+          { id: 'clinic', icon: '🏥', label: 'Clinic', view: 'clinic' },
+        ]
+      }
     ],
   },
 };
