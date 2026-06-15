@@ -24,7 +24,7 @@ export const ROLES = {
           {
             id: 'deputy_offices', icon: '🏢', label: 'Deputy Offices',
             sub: [
-              { id: 'deputy_academic', label: 'Deputy Academics', view: 'overview' },
+              { id: 'deputy_academic', label: 'Deputy Academics', action: 'visit_academics' },
               { id: 'deputy_admin', label: 'Deputy Administration', view: 'overview' },
               { id: 'registrar', label: 'Registrar Office', view: 'admissions' }
             ]
@@ -116,12 +116,12 @@ export const ROLES = {
     label: 'Deputy Academics',
     portal: 'Academics Portal',
     accent: '#2563EB',
-    home: 'overview',
+    home: 'academics_dashboard',
     nav: [
       {
         section: 'CORE',
         items: [
-          { id: 'overview', icon: '🏠', label: 'Overview', view: 'overview' },
+          { id: 'overview', icon: '🏠', label: 'Overview', view: 'academics_dashboard' },
           { id: 'timetable', icon: '📅', label: 'Timetable Management', view: 'timetable' },
           { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
           { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },

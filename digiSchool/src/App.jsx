@@ -19,12 +19,14 @@ import TeacherPortal from './views/TeacherPortal';
 import StudentPortal from './views/StudentPortal';
 import ParentPortal from './views/ParentPortal';
 import CreateExam from './views/CreateExam';
+import AcademicsDashboard from './views/AcademicsDashboard';
 
 const VIEW_MAP = {
   overview: Overview,
   timetable: Timetable,
   exams: ExamSchedules,
   create_exam: CreateExam,
+  academics_dashboard: AcademicsDashboard,
   gradebook: Gradebook,
   settings: Settings,
   library: Library,
@@ -50,6 +52,7 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
 
   // Domain state (loaded from Supabase after sign-in)
   const [settings, setSettings] = useState({});
@@ -308,6 +311,7 @@ export default function App() {
                         if (hasSub) toggleNav(item.id);
                         else if (item.action === 'logout') handleLogout();
                         else if (item.action === 'notif') setNotifOpen(true);
+                        else if (item.action === 'visit_academics') setOfficeVisitWarning('academics');
                         else if (item.view) setView(item.view);
                       }}
                       title={item.label}
@@ -323,7 +327,10 @@ export default function App() {
                             key={subItem.id}
                             className={`nav-item${activeView === subItem.view ? ' active' : ''}`}
                             style={{ padding: '6px 20px 6px 16px', minHeight: 32, fontSize: 13, opacity: activeView === subItem.view ? 1 : 0.7 }}
-                            onClick={() => setView(subItem.view)}
+                            onClick={() => {
+                              if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
+                              else if (subItem.view) setView(subItem.view);
+                            }}
                           >
                             {subItem.label}
                           </button>
@@ -410,6 +417,38 @@ export default function App() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Office Visit Warning Modal */}
+      {officeVisitWarning === 'academics' && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
+            <div style={{ background: '#9333ea', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
+                🏢 🖥️ Deputy Academics Office
+              </div>
+              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
+            </div>
+            <div style={{ padding: 24, textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 16 }}>🏢</div>
+              <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
+                You are about to visit the Deputy Academics Office. This will open the Academics dashboard where you can manage exams, subjects, and academic performance.
+              </p>
+              <div style={{ background: '#e0f2fe', color: '#0369a1', padding: 12, borderRadius: 6, fontSize: 13, textAlign: 'left', display: 'flex', gap: 8, marginBottom: 24 }}>
+                <div>ℹ️</div>
+                <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>✕ Cancel</button>
+                <button className="btn btn-primary" style={{ background: '#2563EB', borderColor: '#2563EB' }} onClick={() => {
+                  setOfficeVisitWarning(null);
+                  setView('academics_dashboard');
+                  notify('Entered Deputy Academics Office', 'success', 'Office Visit');
+                }}>→ Continue to Office</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

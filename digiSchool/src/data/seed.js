@@ -263,4 +263,24 @@ export const UPCOMING_EVENTS = [
   { id: 'e4', date: 'Jul 15', title: 'BOM Review Meeting', desc: 'Board Room' },
 ];
 
+export const CLASS_PERFORMANCE_DATA = [
+  { name: 'Form 1', average: 58.4, passRate: 72.0 },
+  { name: 'Form 2', average: 62.1, passRate: 78.5 },
+  { name: 'Form 3', average: 66.8, passRate: 88.5 },
+  { name: 'Form 4', average: 51.2, passRate: 42.0 },
+];
+
+export const TOP_SUBJECTS_DATA = [
+  { name: 'Mathematics', score: 68.3, fill: '#2563EB' },
+  { name: 'Physics', score: 64.5, fill: '#10B981' },
+  { name: 'Chemistry', score: 64.4, fill: '#F59E0B' },
+];
+
+export const CLASS_PERFORMANCE_SUMMARY = [
+  { id: 'f3', class: 'Form 3', students: 28, streams: 3, avg: 66.8, passRate: 88.5, marks: 78, perf: 'good' },
+  { id: 'f2', class: 'Form 2', students: 32, streams: 3, avg: 62.1, passRate: 78.5, marks: 84, perf: 'good' },
+  { id: 'f1', class: 'Form 1', students: 35, streams: 3, avg: 58.4, passRate: 72.0, marks: 91, perf: 'average' },
+  { id: 'f4', class: 'Form 4', students: 25, streams: 2, avg: 51.2, passRate: 42.0, marks: 45, perf: 'poor' },
+];
+
 export { ASSESSMENTS };
