@@ -18,11 +18,13 @@ import Facilities from './views/Facilities';
 import TeacherPortal from './views/TeacherPortal';
 import StudentPortal from './views/StudentPortal';
 import ParentPortal from './views/ParentPortal';
+import CreateExam from './views/CreateExam';
 
 const VIEW_MAP = {
   overview: Overview,
   timetable: Timetable,
   exams: ExamSchedules,
+  create_exam: CreateExam,
   gradebook: Gradebook,
   settings: Settings,
   library: Library,
