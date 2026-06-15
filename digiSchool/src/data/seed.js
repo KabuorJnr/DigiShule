@@ -240,4 +240,27 @@ export function buildExamSchedules() {
   ];
 }
 
+export const MONTHLY_REVENUE_TREND = [
+  { month: 'Jan', revenue: 1200000 },
+  { month: 'Feb', revenue: 1500000 },
+  { month: 'Mar', revenue: 900000 },
+  { month: 'Apr', revenue: 800000 },
+  { month: 'May', revenue: 1600000 },
+  { month: 'Jun', revenue: 1400000 },
+];
+
+export const CLASS_DISTRIBUTION = [
+  { name: 'Form 1', value: 240 },
+  { name: 'Form 2', value: 210 },
+  { name: 'Form 3', value: 205 },
+  { name: 'Form 4', value: 192 },
+];
+
+export const UPCOMING_EVENTS = [
+  { id: 'e1', date: 'Jun 18', title: 'PTA Meeting', desc: 'Main Hall, 10:00 AM' },
+  { id: 'e2', date: 'Jun 21', title: 'End-Term Exams Begin', desc: 'All Forms' },
+  { id: 'e3', date: 'Jul 04', title: 'Inter-School Sports', desc: 'Sports Field' },
+  { id: 'e4', date: 'Jul 15', title: 'BOM Review Meeting', desc: 'Board Room' },
+];
+
 export { ASSESSMENTS };

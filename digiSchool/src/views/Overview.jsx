@@ -1,34 +1,23 @@
 import { useState, useMemo } from 'react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  BarChart, Bar, Cell,
+  PieChart, Pie, Cell,
 } from 'recharts';
-import { KpiCard, Sparkline, ProgressBar, Badge } from '../components/widgets';
+import { KpiCard, Sparkline, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { buildAttendanceTrend, FEE_BY_CLASS, SEED_ALERTS } from '../data/seed';
+import { buildAttendanceTrend, SEED_ALERTS, MONTHLY_REVENUE_TREND, CLASS_DISTRIBUTION, UPCOMING_EVENTS } from '../data/seed';
 
 const QUICK_ACTIONS = [
-  { icon: '📅', label: 'Generate Timetable', desc: 'Build class timetables', view: 'timetable' },
-  { icon: '📝', label: 'Create Exam Schedule', desc: 'Plan upcoming exams', view: 'exams' },
-  { icon: '📊', label: 'Review Gradebook', desc: 'Inspect student scores', view: 'gradebook' },
-  { icon: '👥', label: 'View Staff Attendance', desc: 'Track teacher presence', view: 'overview' },
-  { icon: '⚠️', label: 'Disciplinary Records', desc: 'Manage open cases', view: 'overview' },
-  { icon: '🏛️', label: 'Facility Management', desc: 'Rooms & resources', view: 'settings' },
+  { icon: '📝', label: 'New Admission', desc: 'Enroll a new student', view: 'admissions' },
+  { icon: '📢', label: 'Post Notice', desc: 'Broadcast to staff/parents', view: 'overview' },
+  { icon: '🗓️', label: 'Schedule a Meeting', desc: 'Staff or parent meeting', view: 'overview' },
+  { icon: '💰', label: 'Fee Structure', desc: 'Update school fees', view: 'finance' },
 ];
-
-const feeColor = (v) => (v >= 80 ? '#10B981' : v >= 60 ? '#F59E0B' : '#EF4444');
 
 export default function Overview({ store }) {
   const { navigate, notify } = store;
   const fullTrend = useMemo(() => buildAttendanceTrend(), []);
-  const [range, setRange] = useState('month');
   const [alertModal, setAlertModal] = useState(null);
-
-  const trend = useMemo(() => {
-    if (range === 'week') return fullTrend.slice(-7);
-    if (range === 'term') return fullTrend;
-    return fullTrend.slice(-30);
-  }, [range, fullTrend]);
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
 
@@ -44,84 +33,84 @@ export default function Overview({ store }) {
         <KpiCard icon="🎓" label="Total Students" value="847" sub="+23 from last term">
           <Sparkline data={sparkData} color="#10B981" />
         </KpiCard>
-        <KpiCard icon="👨‍🏫" label="Total Teachers" value="42" sub="38 active, 4 on leave" />
+        <KpiCard icon="👨‍🏫" label="Teaching Staff" value="42" sub="38 active, 4 on leave" />
         <KpiCard icon="✅" label="Today's Attendance" value="91.3%" accent="#10B981" sub="Above target (90%)" />
-        <KpiCard icon="💰" label="Fee Collection (Month)" value="73%" accent="#F59E0B">
-          <div style={{ marginTop: 8 }}>
-            <ProgressBar value={73} color="#F59E0B" />
-          </div>
-        </KpiCard>
+        <KpiCard icon="💵" label="Monthly Revenue" value="KES 1.4M" accent="#0EA5E9" sub="Up 12% from last month" />
       </div>
 
       {/* KPI Row 2 */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <KpiCard icon="⚠️" label="Pending Disciplinary Cases" value="5" sub={<Badge color="red">Needs attention</Badge>} />
-        <KpiCard icon="📝" label="Upcoming Exams" value="3" sub="Nearest: End-Term in 12 days" />
-        <KpiCard icon="📚" label="Overdue Library Books" value="17" sub="Across all classes" />
-        <KpiCard icon="🪑" label="Unfilled Staff Positions" value="2" sub={<Badge color="amber">Recruiting</Badge>} />
+        <KpiCard icon="📉" label="Outstanding Fees" value="KES 450K" sub={<Badge color="amber">Follow-up needed</Badge>} />
+        <KpiCard icon="⏳" label="Pending Applications" value="12" sub="Admissions portal" />
+        <KpiCard icon="🚻" label="Gender Ratio" value="52% M / 48% F" sub="Balanced" />
+        <KpiCard icon="🛏️" label="Boarding / Day" value="620 / 227" sub="73% Boarding" />
       </div>
 
       {/* Charts */}
       <div className="grid grid-2" style={{ marginBottom: 24 }}>
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Student Attendance Trend</h3>
-            <div className="seg">
-              <button className={range === 'week' ? 'active' : ''} onClick={() => setRange('week')}>This Week</button>
-              <button className={range === 'month' ? 'active' : ''} onClick={() => setRange('month')}>This Month</button>
-              <button className={range === 'term' ? 'active' : ''} onClick={() => setRange('term')}>This Term</button>
-            </div>
+            <h3 className="section-title" style={{ margin: 0 }}>Monthly Revenue Trend</h3>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={trend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+            <LineChart data={MONTHLY_REVENUE_TREND} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
+              <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
               <Legend />
-              <Line type="monotone" dataKey="present" name="Present" stroke="#10B981" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="absent" name="Absent" stroke="#EF4444" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#0EA5E9" strokeWidth={2} dot={true} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         <div className="card card-pad">
-          <h3 className="section-title">Fee Collection by Class</h3>
+          <h3 className="section-title">Class Distribution</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={FEE_BY_CLASS} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-              <YAxis type="category" dataKey="class" tick={{ fontSize: 12 }} width={60} />
-              <Tooltip formatter={(v) => `${v}% collected`} />
-              <Bar dataKey="collected" radius={[0, 6, 6, 0]} barSize={26}>
-                {FEE_BY_CLASS.map((d) => (
-                  <Cell key={d.class} fill={feeColor(d.collected)} />
+            <PieChart>
+              <Pie data={CLASS_DISTRIBUTION} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                {CLASS_DISTRIBUTION.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={['#0052CC', '#0EA5E9', '#10B981', '#F59E0B'][index % 4]} />
                 ))}
-              </Bar>
-            </BarChart>
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Alerts + Quick actions */}
-      <div className="grid grid-2">
+      <div className="grid grid-3" style={{ marginBottom: 24 }}>
         <div className="card card-pad">
-          <h3 className="section-title">System Alerts</h3>
-          {SEED_ALERTS.map((a) => (
+          <h3 className="section-title">Recent Activity & Alerts</h3>
+          {SEED_ALERTS.slice(0, 4).map((a) => (
             <div key={a.id} className="alert-row">
               <div className="alert-icon">{a.icon}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{a.message}</div>
                 <div className="muted" style={{ fontSize: 11 }}>{a.time}</div>
               </div>
-              <button className="btn btn-sm" onClick={() => setAlertModal(a)}>View Details</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="card card-pad">
+          <h3 className="section-title">Upcoming Events</h3>
+          {UPCOMING_EVENTS.map((e) => (
+            <div key={e.id} className="alert-row">
+              <div className="alert-icon" style={{ background: '#eef4ff', color: '#0052CC' }}>🗓️</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{e.title}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{e.date} • {e.desc}</div>
+              </div>
             </div>
           ))}
         </div>
 
         <div>
           <h3 className="section-title">Quick Actions</h3>
-          <div className="grid grid-3">
+          <div className="list-flex">
             {QUICK_ACTIONS.map((qa) => (
               <button
                 key={qa.label}
@@ -131,12 +120,60 @@ export default function Overview({ store }) {
                   notify(`Opening ${qa.label}`, 'info', 'Navigation');
                 }}
               >
-                <span className="qa-icon">{qa.icon}</span>
-                <span className="qa-label">{qa.label}</span>
-                <span className="qa-desc">{qa.desc}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span className="qa-icon">{qa.icon}</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div className="qa-label">{qa.label}</div>
+                    <div className="qa-desc">{qa.desc}</div>
+                  </div>
+                </div>
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Access by Principal */}
+      <div style={{ marginTop: 32 }}>
+        <h3 className="section-title" style={{ fontSize: 18, marginBottom: 16 }}>Access by Principal</h3>
+        <div className="grid grid-4">
+          
+          <div className="card card-pad">
+            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Deputy Offices</h4>
+            <div className="list-flex">
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>D. Academics</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>D. Administration</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Registrar Office</button>
+            </div>
+          </div>
+
+          <div className="card card-pad">
+            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Staff Management</h4>
+            <div className="list-flex">
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Teaching Staff</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Performance</button>
+            </div>
+          </div>
+
+          <div className="card card-pad">
+            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Student Management</h4>
+            <div className="list-flex">
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>All Students</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Admissions</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Boarding</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Transfers</button>
+            </div>
+          </div>
+
+          <div className="card card-pad">
+            <h4 style={{ marginBottom: 12, color: 'var(--primary)' }}>Academic</h4>
+            <div className="list-flex">
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('overview')}>Subjects</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('timetable')}>Timetable</button>
+              <button className="btn btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('exams')}>Exams</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
