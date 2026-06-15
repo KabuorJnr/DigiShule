@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #1E3A5F;
-  --primary-700: #16304f;
-  --accent: #F59E0B;
+  --primary: #0052CC;
+  --primary-700: #0043A6;
+  --accent: #0EA5E9;
   --success: #10B981;
   --danger: #EF4444;
   --surface: #F8FAFC;

@@ -1,6 +1,6 @@
 # Bulk data import
 
-Populate DigiShule with real school data (students, teachers, staff, parents)
+Populate EduOne with real school data (students, teachers, staff, parents)
 from CSV files instead of typing everything by hand.
 
 ## How it works

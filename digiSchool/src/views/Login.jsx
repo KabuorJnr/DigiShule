@@ -25,11 +25,11 @@ export default function Login() {
     <div className="login-shell">
       <div className="login-brand">
         <div className="login-brand-inner">
-          <div className="login-logo">WS</div>
+          <img src="/logo.png" alt="EduOne Logo" className="login-logo-img" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 16 }} />
           <h1>Westlands Secondary School</h1>
           <p className="login-motto">“Knowledge is Power”</p>
           <p className="login-tagline">
-            DigiShule — one secure portal for principals, teachers, students,
+            EduOne — one secure portal for principals, teachers, students,
             parents and support staff.
           </p>
           <ul className="login-points">
@@ -43,7 +43,7 @@ export default function Login() {
       <div className="login-panel">
         <form className="login-card" onSubmit={submit}>
           <div className="login-card-head">
-            <div className="logo-box" style={{ width: 44, height: 44 }}>WS</div>
+            <img src="/logo.png" alt="EduOne Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <h2 style={{ fontSize: 20 }}>Sign in</h2>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>

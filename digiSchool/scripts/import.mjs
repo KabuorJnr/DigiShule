@@ -1,4 +1,4 @@
-// Bulk-import real school data into DigiShule from CSV files.
+// Bulk-import real school data into EduOne from CSV files.
 //
 // Reads CSVs from a folder (default: ./data-import) and:
 //   - upserts students / teachers / staff data rows
@@ -46,7 +46,7 @@ const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const emailFor = (username) => `${String(username).trim().toLowerCase()}@digishule.app`;
+const emailFor = (username) => `${String(username).trim().toLowerCase()}@EduOne.app`;
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24);
 
 // ---- Minimal CSV parser (handles quoted fields and embedded commas) --------
@@ -313,7 +313,7 @@ async function importParents(existing) {
 }
 
 async function main() {
-  console.log(`Importing DigiShule data from ${FOLDER} ...`);
+  console.log(`Importing EduOne data from ${FOLDER} ...`);
   const existing = await listAuthUsersByEmail();
   await importStudents(existing);
   await importTeachers(existing);

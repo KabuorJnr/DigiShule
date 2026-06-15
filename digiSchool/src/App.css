@@ -375,7 +375,7 @@
   min-height: 100vh;
 }
 .login-brand {
-  background: linear-gradient(160deg, #1E3A5F 0%, #16304f 55%, #0c2238 100%);
+  background: linear-gradient(160deg, #0052CC 0%, #0043A6 55%, #002D7A 100%);
   color: #e2e8f0;
   display: flex;
   align-items: center;
@@ -390,7 +390,7 @@
   width: 460px;
   height: 460px;
   border-radius: 50%;
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(14, 165, 233, 0.15);
   top: -120px;
   right: -120px;
 }

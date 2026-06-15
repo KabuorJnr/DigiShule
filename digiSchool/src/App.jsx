@@ -217,7 +217,7 @@ export default function App() {
   if (!authChecked) {
     return (
       <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh' }}>
-        <div className="muted">Loading DigiShule…</div>
+        <div className="muted">Loading EduOne…</div>
       </div>
     );
   }
@@ -266,11 +266,11 @@ export default function App() {
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-brand">
           <div className="logo-box">
-            {settings.logo ? <img src={settings.logo} alt="logo" /> : <span>WS</span>}
+            {settings.logo ? <img src={settings.logo} alt="logo" /> : <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
           </div>
           {!collapsed && (
             <div className="brand-text">
-              <strong>DigiShule</strong>
+              <strong>EduOne</strong>
               <span className="muted">{role.portal}</span>
             </div>
           )}

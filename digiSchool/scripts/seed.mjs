@@ -1,4 +1,4 @@
-// Seeds the DigiShule Supabase project: creates auth users for every demo
+// Seeds the EduOne Supabase project: creates auth users for every demo
 // account, their profiles, and loads all reference data. Idempotent — safe to
 // re-run. Reuses the exact seed data the frontend shipped with so the DB-backed
 // app looks identical to the old mock-data version.
@@ -42,7 +42,7 @@ const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const emailFor = (username) => `${username.trim().toLowerCase()}@digishule.app`;
+const emailFor = (username) => `${username.trim().toLowerCase()}@EduOne.app`;
 
 async function listAllUsers() {
   const map = new Map();
@@ -162,7 +162,7 @@ async function seedModules() {
 }
 
 async function main() {
-  console.log('Seeding DigiShule database...');
+  console.log('Seeding EduOne database...');
   await seedConfig();
   await seedAuthAndProfiles();
   await seedAcademics();
