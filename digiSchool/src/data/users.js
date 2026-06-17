@@ -223,7 +223,7 @@ export const ROLES = {
     label: 'Parent',
     portal: 'Parent Portal',
     accent: '#BE185D',
-    home: 'parent',
+    home: 'Parent',
     nav: [
       {
         section: 'CORE',

@@ -165,12 +165,12 @@ export const SEED_NOTIFICATIONS = [
 ];
 
 export const DEFAULT_SETTINGS = {
-  name: 'Westlands Secondary School',
+  name: 'EduOne School System',
   motto: 'Knowledge is Power',
   address: 'P.O. Box 1234-00100, Westlands, Nairobi',
-  phone: '+254 712 345 678',
+  phone: '+254 701402265',
   email: 'info@westlands-sec.ac.ke',
-  principal: 'Dr. Jane Kamau',
+  principal: 'Denford Musvosvi',
   logo: null,
   currentTerm: 'Term 2',
   termStart: '2026-05-04',
@@ -281,6 +281,14 @@ export const CLASS_PERFORMANCE_SUMMARY = [
   { id: 'f2', class: 'Form 2', students: 32, streams: 3, avg: 62.1, passRate: 78.5, marks: 84, perf: 'good' },
   { id: 'f1', class: 'Form 1', students: 35, streams: 3, avg: 58.4, passRate: 72.0, marks: 91, perf: 'average' },
   { id: 'f4', class: 'Form 4', students: 25, streams: 2, avg: 51.2, passRate: 42.0, marks: 45, perf: 'poor' },
+];
+
+export const LEAVE_REQUESTS = [
+  { id: 'lr1', staff: 'Ms. Achieng', dept: 'Sciences', type: 'Sick', start: '2026-06-10', end: '2026-06-12', days: 3, reason: 'Medical appointment and recovery', status: 'Approved', approvedBy: 'Dr. Jane Kamau', date: '2026-06-09' },
+  { id: 'lr2', staff: 'Ms. Otieno', dept: 'Humanities', type: 'Annual', start: '2026-06-14', end: '2026-06-20', days: 5, reason: 'Family vacation', status: 'Approved', approvedBy: 'Mrs. Lucy Wambui', date: '2026-06-11' },
+  { id: 'lr3', staff: 'Mr. Kipchoge', dept: 'Languages', type: 'Personal', start: '2026-06-18', end: '2026-06-19', days: 2, reason: 'Personal matters to attend to', status: 'Pending', approvedBy: null, date: '2026-06-15' },
+  { id: 'lr4', staff: 'Mr. Kamau', dept: 'Humanities', type: 'Emergency', start: '2026-06-17', end: '2026-06-17', days: 1, reason: 'Family emergency', status: 'Pending', approvedBy: null, date: '2026-06-16' },
+  { id: 'lr5', staff: 'Ms. Wanjiku', dept: 'Languages', type: 'Sick', start: '2026-05-28', end: '2026-05-29', days: 2, reason: 'Flu symptoms', status: 'Rejected', approvedBy: 'Dr. Jane Kamau', date: '2026-05-27' },
 ];
 
 export { ASSESSMENTS };
