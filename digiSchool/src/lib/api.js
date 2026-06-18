@@ -53,18 +53,20 @@ export async function updateSchool(schoolId, patch) {
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('username, full_name, role, dept, teacher_id, student_id, school_id')
+    .select('*')
     .eq('id', userId)
     .single();
+  
   if (error) throw error;
+  
   return {
     username: data.username,
-    name: data.full_name,
+    name: data.full_name || data.name,
     role: data.role,
     dept: data.dept,
-    teacherId: data.teacher_id,
-    studentId: data.student_id,
-    schoolId: data.school_id,
+    teacherId: data.teacher_id || null,
+    studentId: data.student_id || null,
+    schoolId: data.school_id || null,
   };
 }
 
