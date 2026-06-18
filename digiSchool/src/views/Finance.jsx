@@ -65,8 +65,8 @@ export default function Finance({ store, user, params = {} }) {
             style={{
               background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer',
               fontWeight: activeTab === t.id ? 600 : 400,
-              color: activeTab === t.id ? '#047857' : '#64748b',
-              borderBottom: activeTab === t.id ? '2px solid #047857' : '2px solid transparent'
+              color: activeTab === t.id ? '#000000' : '#64748b',
+              borderBottom: activeTab === t.id ? '2px solid #000000' : '2px solid transparent'
             }}
           >
             {t.label}
@@ -77,7 +77,7 @@ export default function Finance({ store, user, params = {} }) {
       {activeTab === 'invoices' && <BillingTab invoices={invoices} setInvoices={setInvoices} notify={notify} params={params} students={students} />}
       {activeTab === 'payments' && <PaymentsTab payments={payments} invoices={invoices} setPayments={setPayments} notify={notify} params={params} students={students} />}
       {activeTab === 'fee_structure' && <StatementsTab students={students} invoices={invoices} payments={payments} store={store} />}
-      {activeTab === 'expenses' && <ExpensesTab expenses={expenses} setExpenses={setExpenses} user={user} notify={notify} params={params} />}
+      {activeTab === 'expenses' && <ExpensesTab expenses={expenses} setExpenses={setExpenses} user={user} notify={notify} params={params} store={store} />}
       {activeTab === 'reports' && <ReportsTab invoices={invoices} payments={payments} expenses={expenses} />}
 
     </div>
@@ -451,17 +451,29 @@ function StatementsTab({ students, invoices, payments, store }) {
 // -----------------------------------------------------------------------------
 // EXPENSES TAB
 // -----------------------------------------------------------------------------
-function ExpensesTab({ expenses, setExpenses, user, notify, params }) {
+function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'record_expense');
-  const [form, setForm] = useState({ category: 'Office Supplies', amount: '', description: '' });
+  const [catModalOpen, setCatModalOpen] = useState(params.action === 'categories');
+  const [form, setForm] = useState({ category: '', amount: '', description: '' });
+
+  const defaultCategories = ['Office Supplies', 'Maintenance', 'Utilities', 'Staff Welfare', 'Other'];
+  const categories = store.settings.expenseCategories || defaultCategories;
+
+  // Initialize form category when categories load
+  useEffect(() => {
+    if (!form.category && categories.length > 0) {
+      setForm(f => ({ ...f, category: categories[0] }));
+    }
+  }, [categories, form.category]);
 
   useEffect(() => {
     if (params.action === 'record_expense') setModalOpen(true);
+    if (params.action === 'categories') setCatModalOpen(true);
   }, [params.action]);
 
   const handleRecord = async () => {
-    if (!form.amount || !form.description) {
-      notify('Amount and description are required.', 'error');
+    if (!form.amount || !form.description || !form.category) {
+      notify('Category, amount and description are required.', 'error');
       return;
     }
     const expense = {
@@ -479,9 +491,27 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params }) {
       setExpenses(prev => [expense, ...prev]);
       notify(`Expense of ${fmtKES(form.amount)} submitted for approval.`);
       setModalOpen(false);
-      setForm({ category: 'Office Supplies', amount: '', description: '' });
+      setForm({ category: categories[0] || '', amount: '', description: '' });
     } catch (e) {
       notify(`Failed to record expense: ${e.message}`, 'error');
+    }
+  };
+
+  const handleAddCategory = () => {
+    const newCat = prompt('Enter new expense category:');
+    if (newCat && !categories.includes(newCat)) {
+      const newCategories = [...categories, newCat];
+      store.setSettings({ ...store.settings, expenseCategories: newCategories });
+      notify('Category added successfully.', 'success');
+    }
+  };
+
+  const handleDeleteCategory = (catToRemove) => {
+    if (confirm(`Remove category "${catToRemove}"?`)) {
+      const newCategories = categories.filter(c => c !== catToRemove);
+      store.setSettings({ ...store.settings, expenseCategories: newCategories });
+      if (form.category === catToRemove) setForm(f => ({ ...f, category: newCategories[0] || '' }));
+      notify('Category removed.', 'info');
     }
   };
 
@@ -489,7 +519,10 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params }) {
     <div className="card card-pad">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div className="section-title">Expense Management</div>
-        <button className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Record Expense</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn" onClick={() => setCatModalOpen(true)}>Manage Categories</button>
+          <button className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Record Expense</button>
+        </div>
       </div>
 
       <div className="scroll-x">
@@ -526,11 +559,7 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params }) {
             <div>
               <label className="field-label">Category</label>
               <select className="select" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                <option>Office Supplies</option>
-                <option>Maintenance</option>
-                <option>Utilities</option>
-                <option>Staff Welfare</option>
-                <option>Other</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
@@ -542,6 +571,26 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params }) {
             <label className="field-label">Description / Purpose</label>
             <input className="input" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>This will be visible to the Principal for approval.</div>
+          </div>
+        </Modal>
+      )}
+
+      {catModalOpen && (
+        <Modal title="Expense Categories" onClose={() => setCatModalOpen(false)} footer={
+          <button className="btn btn-primary" onClick={() => setCatModalOpen(false)}>Done</button>
+        }>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="muted" style={{ fontSize: 13 }}>Manage categories for logging expenses.</span>
+            <button className="btn btn-sm btn-primary" onClick={handleAddCategory}>+ Add Category</button>
+          </div>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+            {categories.map((c, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderBottom: i < categories.length - 1 ? '1px solid var(--border-light)' : 'none', alignItems: 'center' }}>
+                <span style={{ fontWeight: 500 }}>{c}</span>
+                <button className="btn btn-sm" style={{ padding: '2px 8px', color: '#dc2626', borderColor: '#fca5a5' }} onClick={() => handleDeleteCategory(c)}>Remove</button>
+              </div>
+            ))}
+            {categories.length === 0 && <div style={{ padding: 16, textAlign: 'center', color: '#666' }}>No categories configured.</div>}
           </div>
         </Modal>
       )}

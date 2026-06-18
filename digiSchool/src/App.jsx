@@ -401,7 +401,7 @@ export default function App() {
         <nav className="sidebar-nav">
           {!collapsed && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
-              <div className="avatar" style={{ width: 48, height: 48, fontSize: 18, background: '#2563EB' }}>{initials}</div>
+              <div className="avatar" style={{ width: 48, height: 48, fontSize: 18, background: '#000000' }}>{initials}</div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: 11, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 0.5 }}>Logged in as</span>
                 <strong style={{ fontSize: 14 }}>{role.label}</strong>
@@ -577,7 +577,7 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                 <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
-                <button className="btn btn-primary" style={{ background: '#2563EB', borderColor: '#2563EB' }} onClick={() => {
+                <button className="btn btn-primary" style={{ background: '#000000', borderColor: '#000000' }} onClick={() => {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_academic');
                   setView('academics_dashboard');

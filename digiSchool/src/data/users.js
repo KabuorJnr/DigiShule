@@ -7,7 +7,7 @@ export const ROLES = {
   principal: {
     label: 'Principal',
     portal: 'Principal Portal',
-    accent: '#0078D4',
+    accent: '#000000',
     home: 'overview',
     nav: [
       {
@@ -93,7 +93,7 @@ export const ROLES = {
   deputy_academic: {
     label: 'Deputy Academics',
     portal: 'Academics Portal',
-    accent: '#2563EB',
+    accent: '#000000',
     home: 'academics_dashboard',
     nav: [
       {
@@ -127,7 +127,7 @@ export const ROLES = {
   deputy_admin: {
     label: 'Deputy Admin',
     portal: 'Administration Portal',
-    accent: '#0F766E',
+    accent: '#000000',
     home: 'admin_dashboard',
     nav: [
       {
@@ -162,7 +162,7 @@ export const ROLES = {
   finance: {
     label: 'Finance Officer',
     portal: 'Finance Portal',
-    accent: '#047857',
+    accent: '#000000',
     home: 'finance_dashboard',
     nav: [
       {
@@ -221,7 +221,7 @@ export const ROLES = {
   registrar: {
     label: 'Registrar',
     portal: 'Registrar Office',
-    accent: '#7C3AED',
+    accent: '#000000',
     home: 'registrar',
     nav: [
       {
@@ -251,7 +251,7 @@ export const ROLES = {
   librarian: {
     label: 'Librarian',
     portal: 'Library Desk',
-    accent: '#B45309',
+    accent: '#000000',
     home: 'library',
     nav: [
       {
@@ -273,7 +273,7 @@ export const ROLES = {
   teacher: {
     label: 'Teacher',
     portal: 'Teacher Portal',
-    accent: '#0369A1',
+    accent: '#000000',
     home: 'teacher',
     nav: [
       {
@@ -306,7 +306,7 @@ export const ROLES = {
   student: {
     label: 'Student',
     portal: 'Student Portal',
-    accent: '#1D4ED8',
+    accent: '#000000',
     home: 'student',
     nav: [
       {
@@ -327,7 +327,7 @@ export const ROLES = {
   parent: {
     label: 'Parent',
     portal: 'Parent Portal',
-    accent: '#BE185D',
+    accent: '#000000',
     home: 'parent',
     nav: [
       {
@@ -349,7 +349,7 @@ export const ROLES = {
   nurse: {
     label: 'Nurse',
     portal: 'Health & Nursing',
-    accent: '#DC2626',
+    accent: '#000000',
     home: 'clinic',
     nav: [
       {

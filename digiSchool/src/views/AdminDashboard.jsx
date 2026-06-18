@@ -56,7 +56,7 @@ export default function AdminDashboard({ store, user }) {
         <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
       </div>
 
-      <div style={{ background: '#0f766e', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ background: '#000000', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 18 }}>Administration Office</h3>
           <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.9 }}>
@@ -70,7 +70,7 @@ export default function AdminDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Staff" value={STAFF.length} sub={`${presentStaff} present today`} color="#0f766e" />
+        <Stat label="Total Staff" value={STAFF.length} sub={`${presentStaff} present today`} color="#000000" />
         <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#FFB900" />
         <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#D13438" />
         <Stat label="Facilities" value={`${operationalFac}/${FACILITIES.length}`} sub="Operational" color="#107C10" />
@@ -94,7 +94,7 @@ export default function AdminDashboard({ store, user }) {
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         {/* Discipline Cases */}
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e' }}>Discipline Cases</h3>
+          <h3 className="section-title" style={{ color: '#000000' }}>Discipline Cases</h3>
           {DISCIPLINARY_RECORDS.map(d => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
               <div style={{ flex: 1 }}>
@@ -109,7 +109,7 @@ export default function AdminDashboard({ store, user }) {
 
         {/* Facilities */}
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e' }}>Facilities Overview</h3>
+          <h3 className="section-title" style={{ color: '#000000' }}>Facilities Overview</h3>
           {FACILITIES.map(f => (
             <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <div>
@@ -129,7 +129,7 @@ export default function AdminDashboard({ store, user }) {
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#0f766e' }}>Pending Leave Requests</h3>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
             <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
           </div>
           {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => {

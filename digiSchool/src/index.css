@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #0078D4;
-  --primary-700: #005BA1;
-  --primary-900: #003A6A;
-  --accent: #0EA5E9;
+  --primary: #000000;
+  --primary-700: #1a1a1a;
+  --primary-900: #333333;
+  --accent: #000000;
   --success: #107C10;
   --warning: #FFB900;
   --danger: #D13438;
@@ -33,7 +33,7 @@ html, body, #root {
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--surface);
   color: var(--text);
   font-size: 14px;
