@@ -127,7 +127,19 @@ export default function StudentPortal({ store, user }) {
     notify('Message sent to school administration', 'success', 'Messages');
   };
 
-  if (!me) return null;
+  if (!me) {
+    return (
+      <div style={{ padding: '40px 20px', textAlign: 'center', marginTop: 40 }}>
+        <div style={{ width: 80, height: 80, background: '#f8d7da', color: '#dc3545', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <AlertTriangle size={32} />
+        </div>
+        <h2 style={{ margin: '0 0 10px' }}>No Student Profile Found</h2>
+        <p className="muted" style={{ maxWidth: 400, margin: '0 auto' }}>
+          Your account is not linked to any student record, or there are no students registered in the database yet.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
