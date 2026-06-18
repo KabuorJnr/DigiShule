@@ -37,15 +37,25 @@ export default function Login({ onDemoLogin }) {
     setBusy(true);
     const { data, error: signInError } = await signInWithUsername(username, password);
     setBusy(false);
+    
+    console.log('[Login] signInWithUsername returned:', { data, signInError });
+
     if (signInError) {
       setError(signInError.message || 'Invalid credentials. Please try again.');
       return;
     }
     // Seed / demo login — call App.jsx directly via prop
-    if (data?.demoUser && onDemoLogin) {
-      onDemoLogin(data.demoUser);
+    if (data?.demoUser) {
+      console.log('[Login] Found demo user, calling onDemoLogin:', data.demoUser);
+      if (onDemoLogin) {
+        onDemoLogin(data.demoUser);
+      } else {
+        console.error('[Login] ERROR: onDemoLogin prop is undefined!');
+        setError('System error: login handler missing. Please refresh the page.');
+      }
+    } else {
+      console.log('[Login] Real Supabase user detected, waiting for onAuthStateChange to fire.');
     }
-    // Real Supabase login is handled by App.jsx's onAuthStateChange
   };
 
   return (
@@ -209,16 +219,16 @@ export default function Login({ onDemoLogin }) {
                 opacity: busy ? 0.7 : 1,
                 background: 'linear-gradient(135deg, #0078D4, #0369A1)',
                 border: 'none',
-                boxShadow: '0 4px 14px rgba(0,120,212,0.35)',
+                boxShadow: busy ? 'none' : '0 4px 12px rgba(0, 120, 212, 0.3)'
               }}
             >
               {busy ? (
-                <>
-                  <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                  Signing in…
-                </>
+                <div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               ) : (
-                <><LogIn size={17} /> Sign In</>
+                <>
+                  <LogIn size={20} />
+                  <span>Sign In to EduOne</span>
+                </>
               )}
             </button>
           </form>
