@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { PageHeader } from '../components/widgets';
 import { CLASSES, SUBJECTS, DEPARTMENTS } from '../data/seed';
 
-const TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar'];
+const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
 
-export default function Settings({ store }) {
+export default function Settings({ store, user }) {
   const { settings, setSettings, feeStructure, setFeeStructure, gradeBoundaries, setGradeBoundaries, notifToggles, setNotifToggles, notify } = store;
-  const [tab, setTab] = useState('General');
+  
+  const TABS = user?.role === 'finance' ? ['Fee Structure'] : ALL_TABS;
+  const [tab, setTab] = useState(TABS[0]);
 
   // local copies for editing
   const [form, setForm] = useState(settings);

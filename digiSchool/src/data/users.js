@@ -241,7 +241,6 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
           { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
@@ -296,7 +295,6 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
           { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
