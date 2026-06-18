@@ -74,6 +74,7 @@ export default function App() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
+  const [activeRoleOverride, setActiveRoleOverride] = useState(null);
 
   // Domain state (loaded from Supabase after sign-in)
   const [settings, setSettings] = useState({});
@@ -311,6 +312,7 @@ export default function App() {
     isDemoRef.current = false;
     localStorage.removeItem('eduone_demo_user');
     setCurrentUser(null);
+    setActiveRoleOverride(null);
     setView(null);
     await signOutAll();
     notify('You have been logged out.', 'info', 'Logout');
@@ -363,7 +365,7 @@ export default function App() {
   }
 
   // ---- Logged-in shell ----
-  const role = ROLES[currentUser.role] || ROLES.principal;
+  const role = ROLES[activeRoleOverride || currentUser.role] || ROLES.principal;
   const nav = role.nav;
   const activeView = view || role.home;
 
@@ -466,6 +468,19 @@ export default function App() {
         <header className="topbar">
           <div className="topbar-title">{settings.name}</div>
           <div className="topbar-actions">
+            {activeRoleOverride && (
+              <button 
+                className="btn btn-primary" 
+                style={{ background: '#D13438', borderColor: '#D13438', marginRight: 16, height: 32, fontSize: 13 }}
+                onClick={() => {
+                  setActiveRoleOverride(null);
+                  setView(ROLES[currentUser.role].home || 'overview');
+                  notify('Returned to Principal Office', 'info', 'Office Visit');
+                }}
+              >
+                Return to Principal Office
+              </button>
+            )}
             <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
               <Bell size={18} />{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
             </button>
@@ -552,12 +567,13 @@ export default function App() {
                 <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>✕ Cancel</button>
+                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
                 <button className="btn btn-primary" style={{ background: '#2563EB', borderColor: '#2563EB' }} onClick={() => {
                   setOfficeVisitWarning(null);
+                  setActiveRoleOverride('deputy_academic');
                   setView('academics_dashboard');
                   notify('Entered Deputy Academics Office', 'success', 'Office Visit');
-                }}>→ Continue to Office</button>
+                }}>Continue to Office</button>
               </div>
             </div>
           </div>
@@ -584,12 +600,13 @@ export default function App() {
                 <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>✕ Cancel</button>
+                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
                 <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e' }} onClick={() => {
                   setOfficeVisitWarning(null);
+                  setActiveRoleOverride('deputy_admin');
                   setView('admin_dashboard');
                   notify('Entered Deputy Administration Office', 'success', 'Office Visit');
-                }}>→ Continue to Office</button>
+                }}>Continue to Office</button>
               </div>
             </div>
           </div>
