@@ -265,68 +265,60 @@ export default function App() {
   useEffect(() => {
     let active = true;
 
-    // If a demo session is already stored, kill any stale Supabase session FIRST
-    // so onAuthStateChange doesn't re-trigger loadUser unnecessarily.
-    if (localStorage.getItem('eduone_demo_user')) {
-      supabase.auth.signOut().catch(() => {});
-    }
+    // STEP 1: Set demo flag BEFORE registering Supabase listener so
+    // onAuthStateChange ignores events when in demo mode.
+    const storedDemo = localStorage.getItem('eduone_demo_user');
+    if (storedDemo) isDemoRef.current = true;
 
-    // Re-hydrate demo session if page was refreshed
-    const stored = localStorage.getItem('eduone_demo_user');
-    if (stored) {
+    // STEP 2: Re-hydrate demo session on page refresh
+    if (storedDemo) {
       try {
-        const seedUser = JSON.parse(stored);
+        const seedUser = JSON.parse(storedDemo);
         const mockProfile = {
-          username: seedUser.username,
-          name: seedUser.name,
-          role: seedUser.role,
-          dept: seedUser.dept,
-          teacherId: seedUser.link || null,
-          studentId: seedUser.link || null,
+          username: seedUser.username, name: seedUser.name,
+          role: seedUser.role, dept: seedUser.dept,
+          teacherId: seedUser.link || null, studentId: seedUser.link || null,
           schoolId: localStorage.getItem('eduone_school_id') || null,
         };
-        isDemoRef.current = true;
         setCurrentUser(mockProfile);
         setView(ROLES[seedUser.role]?.home || 'overview');
         setAuthChecked(true);
         loadAllData().catch(() => {});
-      } catch { localStorage.removeItem('eduone_demo_user'); }
+      } catch {
+        localStorage.removeItem('eduone_demo_user');
+        isDemoRef.current = false;
+      }
     }
 
-    // Listen for demo login events (triggered by signInWithUsername fallback)
+    // STEP 3: Fresh demo login listener
     const onDemoLogin = (e) => {
       if (!active) return;
+      isDemoRef.current = true; // Set FIRST — before any async work
       const seedUser = e.detail;
       const mockProfile = {
-        username: seedUser.username,
-        name: seedUser.name,
-        role: seedUser.role,
-        dept: seedUser.dept,
-        teacherId: seedUser.link || null,
-        studentId: seedUser.link || null,
+        username: seedUser.username, name: seedUser.name,
+        role: seedUser.role, dept: seedUser.dept,
+        teacherId: seedUser.link || null, studentId: seedUser.link || null,
         schoolId: localStorage.getItem('eduone_school_id') || null,
       };
-      isDemoRef.current = true;
-      // Sign out any stale Supabase session silently
-      supabase.auth.signOut().catch(() => {});
       setCurrentUser(mockProfile);
       setView(ROLES[seedUser.role]?.home || 'overview');
       notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
       setAuthChecked(true);
       loadAllData();
+      // No supabase.auth.signOut() here — it caused a race condition
     };
     window.addEventListener('eduone:demo_login', onDemoLogin);
 
-    // Supabase real-auth listener
+    // STEP 4: Supabase real-auth listener
+    // When isDemoRef is true, this is a no-op — demo session owns the UI.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      if (session?.user && !localStorage.getItem('eduone_demo_user')) {
-        // Real Supabase user — clear demo mode
-        isDemoRef.current = false;
-        localStorage.removeItem('eduone_demo_user');
+      if (isDemoRef.current) return; // Demo mode — ignore ALL Supabase auth events
+
+      if (session?.user) {
         loadUser(session.user.id, event === 'SIGNED_IN');
-      } else if (!localStorage.getItem('eduone_demo_user')) {
-        // Only reset to login if there's no demo session either
+      } else {
         setCurrentUser(null);
         setView(null);
         setAuthChecked(true);
