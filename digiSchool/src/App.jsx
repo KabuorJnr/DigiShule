@@ -226,8 +226,23 @@ export default function App() {
 
   const loadUser = useCallback(async (userId, greet) => {
     try {
-      const profile = await api.fetchProfile(userId);
-      // Set school context for all subsequent API calls
+      let profile;
+      try {
+        profile = await api.fetchProfile(userId);
+      } catch {
+        // Profile row doesn't exist yet — use a safe default and seed data
+        console.warn('No profile row found for', userId, '— using defaults');
+        isDemoRef.current = true;
+        profile = {
+          username: 'admin',
+          name: 'School Admin',
+          role: 'principal',
+          dept: 'Administration',
+          teacherId: null,
+          studentId: null,
+          schoolId: localStorage.getItem('eduone_school_id') || null,
+        };
+      }
       const sid = profile.schoolId || localStorage.getItem('eduone_school_id');
       if (sid) {
         setActiveSchoolId(sid);
@@ -249,6 +264,12 @@ export default function App() {
   // ---- Auth bootstrap ----
   useEffect(() => {
     let active = true;
+
+    // If a demo session is already stored, kill any stale Supabase session FIRST
+    // so onAuthStateChange doesn't re-trigger loadUser unnecessarily.
+    if (localStorage.getItem('eduone_demo_user')) {
+      supabase.auth.signOut().catch(() => {});
+    }
 
     // Re-hydrate demo session if page was refreshed
     const stored = localStorage.getItem('eduone_demo_user');
