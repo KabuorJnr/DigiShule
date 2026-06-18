@@ -48,7 +48,7 @@ function StepIndicator({ current }) {
   );
 }
 
-export default function SetupWizard({ onComplete }) {
+export default function SetupWizard({ onComplete, onSkip }) {
   const [step, setStep] = useState(1);
 
   // Step 1: School Identity
@@ -230,6 +230,14 @@ export default function SetupWizard({ onComplete }) {
                   </div>
                 </div>
               </div>
+
+              {onSkip && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #e2e8f0', textAlign: 'center' }}>
+                  <button className="btn" style={{ width: '100%', justifyContent: 'center', color: '#0078D4', fontWeight: 600, border: '1px solid #0078D4' }} onClick={onSkip}>
+                    Already have a school account? Sign in here
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

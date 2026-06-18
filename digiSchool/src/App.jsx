@@ -318,13 +318,16 @@ export default function App() {
 
   // ---- Show Setup Wizard on first run ----
   if (!setupDone) {
-    return <SetupWizard onComplete={(config, sid) => {
-      if (sid) {
-        setActiveSchoolId(sid);
-        setSchoolId(sid);
-      }
-      setSetupDone(true);
-    }} />;
+    return <SetupWizard 
+      onComplete={(config, sid) => {
+        if (sid) {
+          setActiveSchoolId(sid);
+          setSchoolId(sid);
+        }
+        setSetupDone(true);
+      }}
+      onSkip={() => setSetupDone(true)}
+    />;
   }
 
   // ---- Splash while we check the session ----
