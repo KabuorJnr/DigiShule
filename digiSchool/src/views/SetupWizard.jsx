@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { School, Users, BookOpen, Calendar, CheckCircle, ChevronRight, ChevronLeft, Upload } from 'lucide-react';
+import { School, Users, BookOpen, Calendar, CheckCircle, ChevronRight, ChevronLeft, Upload, Loader, AlertCircle } from 'lucide-react';
+import { registerSchool } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 
 const SCHOOL_TYPES = ['National School', 'Extra-County School', 'County School', 'Sub-County School', 'Private School', 'International School'];
 const COUNTIES = ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Kiambu', 'Machakos', 'Meru', 'Nyeri', 'Kakamega', 'Kisii', 'Bungoma', 'Garissa', 'Embu', 'Other'];
@@ -84,7 +86,12 @@ export default function SetupWizard({ onComplete }) {
     reader.readAsDataURL(file);
   }
 
-  function handleLaunch() {
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState('');
+
+  async function handleLaunch() {
+    setLaunching(true);
+    setLaunchError('');
     const streamList = streamNames.slice(0, streamsPerForm);
     const classes = [];
     for (let f = 1; f <= forms; f++) {
@@ -99,9 +106,46 @@ export default function SetupWizard({ onComplete }) {
       currentTerm,
       staff: { principal, depAcademic, depAdmin, financeOfficer, registrar },
     };
-    localStorage.setItem('eduone_school_config', JSON.stringify(config));
-    localStorage.setItem('eduone_setup_done', '1');
-    onComplete(config);
+
+    try {
+      // Check if user is logged into Supabase (principal must create account first)
+      const { data: { user } } = await supabase.auth.getUser();
+
+      let schoolId = null;
+      if (user) {
+        // Register school in Supabase — returns UUID
+        schoolId = await registerSchool({
+          name: school.name,
+          motto: school.motto,
+          type: school.type,
+          county: school.county,
+          address: school.address,
+          phone: school.phone,
+          email: school.email,
+          website: school.website,
+          logoUrl: null, // logo is base64 only; can be uploaded separately
+        });
+      }
+
+      // Persist locally regardless
+      localStorage.setItem('eduone_school_config', JSON.stringify(config));
+      localStorage.setItem('eduone_setup_done', '1');
+      if (schoolId) localStorage.setItem('eduone_school_id', schoolId);
+
+      onComplete(config, schoolId);
+    } catch (e) {
+      setLaunchError(
+        e.message?.includes('auth') || e.message?.includes('JWT')
+          ? 'You must be signed into your principal account before launching. Please log in first, then run the setup wizard.'
+          : `Registration failed: ${e.message}. Your settings have been saved locally — you can retry or contact support.`
+      );
+      // Save locally anyway so the wizard isn't lost
+      localStorage.setItem('eduone_school_config', JSON.stringify(config));
+      localStorage.setItem('eduone_setup_done', '1');
+      onComplete(config, null);
+    } finally {
+      setLaunching(false);
+    }
   }
 
   const genClasses = () => {
@@ -323,8 +367,15 @@ export default function SetupWizard({ onComplete }) {
                   ))}
                 </div>
 
+                {launchError && (
+                  <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 14, fontSize: 13, color: '#991b1b', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                    {launchError}
+                  </div>
+                )}
+
                 <div style={{ background: '#d1fae5', border: '1px solid #6ee7b7', borderRadius: 8, padding: 14, fontSize: 13, color: '#065f46' }}>
-                  <strong>You can always change these settings</strong> from the Settings panel after launching. You can also reset the setup wizard by clearing the app data.
+                  <strong>Registering on Supabase</strong> — your school will be created as an isolated tenant in the cloud database. All data (students, teachers, files) will be scoped to your school only.
                 </div>
               </div>
             </div>
@@ -351,8 +402,13 @@ export default function SetupWizard({ onComplete }) {
                 Next <ChevronRight size={16} />
               </button>
             ) : (
-              <button className="btn btn-primary" style={{ background: '#107C10', borderColor: '#107C10' }} onClick={handleLaunch}>
-                <CheckCircle size={16} /> Launch School Portal
+              <button
+                className="btn btn-primary"
+                disabled={launching}
+                style={{ background: launching ? '#64748b' : '#107C10', borderColor: launching ? '#64748b' : '#107C10', gap: 6 }}
+                onClick={handleLaunch}
+              >
+                {launching ? <><Loader size={15} /> Registering School…</> : <><CheckCircle size={16} /> Launch School Portal</>}
               </button>
             )}
           </div>

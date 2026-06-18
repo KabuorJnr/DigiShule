@@ -1,14 +1,59 @@
 import { supabase } from './supabaseClient';
 
-// Maps between the app's camelCase shapes and the database's snake_case columns.
-// Read helpers return data already shaped the way the views expect; write
-// helpers accept app-shaped objects and persist them.
+/**
+ * api.js — Supabase query layer, multi-tenant edition.
+ *
+ * After login, call setActiveSchoolId(id) so write operations can tag rows.
+ * All reads are automatically scoped by RLS via the my_school_id() function.
+ */
 
-// ---- Profile / current user ----------------------------------------------
+// Module-level school context — set once after login, used by all writes.
+let _schoolId = null;
+export function setActiveSchoolId(id) { _schoolId = id; }
+export function getActiveSchoolId() { return _schoolId; }
+
+// ---- School registration (called by SetupWizard) --------------------------
+export async function registerSchool({
+  name, motto, type, county, address, phone, email, website, logoUrl
+}) {
+  const { data, error } = await supabase.rpc('register_school', {
+    p_name: name || '',
+    p_motto: motto || null,
+    p_type: type || null,
+    p_county: county || null,
+    p_address: address || null,
+    p_phone: phone || null,
+    p_email: email || null,
+    p_website: website || null,
+    p_logo_url: logoUrl || null,
+  });
+  if (error) throw error;
+  return data; // returns school UUID
+}
+
+export async function fetchSchool(schoolId) {
+  const { data, error } = await supabase
+    .from('schools')
+    .select('*')
+    .eq('id', schoolId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateSchool(schoolId, patch) {
+  const { error } = await supabase
+    .from('schools')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', schoolId);
+  if (error) throw error;
+}
+
+// ---- Profile / current user -----------------------------------------------
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('username, full_name, role, dept, teacher_id, student_id')
+    .select('username, full_name, role, dept, teacher_id, student_id, school_id')
     .eq('id', userId)
     .single();
   if (error) throw error;
@@ -19,12 +64,31 @@ export async function fetchProfile(userId) {
     dept: data.dept,
     teacherId: data.teacher_id,
     studentId: data.student_id,
+    schoolId: data.school_id,
   };
 }
 
-// ---- App config (singleton) -----------------------------------------------
+// ---- App config (school-scoped) -------------------------------------------
 export async function fetchConfig() {
-  const { data, error } = await supabase.from('app_config').select('*').eq('id', 1).single();
+  // Fetch the config row for the current user's school (RLS ensures isolation)
+  const { data, error } = await supabase
+    .from('app_config')
+    .select('*')
+    .limit(1)
+    .single();
+  if (error && error.code === 'PGRST116') {
+    // No config row yet — return defaults
+    return {
+      settings: {},
+      gradeBoundaries: [
+        { grade: 'A', min: 75 }, { grade: 'B', min: 60 }, { grade: 'C', min: 50 },
+        { grade: 'D', min: 40 }, { grade: 'E', min: 0 },
+      ],
+      feeStructure: [],
+      notifToggles: { email: true, sms: false, attendance: true, fees: true, exams: true },
+      venues: [],
+    };
+  }
   if (error) throw error;
   return {
     settings: data.settings || {},
@@ -36,13 +100,16 @@ export async function fetchConfig() {
 }
 
 export async function saveConfig(patch) {
-  const row = { id: 1, updated_at: new Date().toISOString() };
-  if (patch.settings) row.settings = patch.settings;
-  if (patch.gradeBoundaries) row.grade_boundaries = patch.gradeBoundaries;
-  if (patch.feeStructure) row.fee_structure = patch.feeStructure;
-  if (patch.notifToggles) row.notif_toggles = patch.notifToggles;
-  if (patch.venues) row.venues = patch.venues;
-  const { error } = await supabase.from('app_config').update(row).eq('id', 1);
+  if (!_schoolId) return; // safety guard
+  const args = {
+    p_school_id: _schoolId,
+    p_settings: patch.settings ? JSON.parse(JSON.stringify(patch.settings)) : null,
+    p_grade_boundaries: patch.gradeBoundaries ?? null,
+    p_fee_structure: patch.feeStructure ?? null,
+    p_notif_toggles: patch.notifToggles ?? null,
+    p_venues: patch.venues ?? null,
+  };
+  const { error } = await supabase.rpc('upsert_school_config', args);
   if (error) throw error;
 }
 
@@ -59,8 +126,6 @@ export async function fetchStudents() {
   return data;
 }
 
-// Class position for the signed-in student, computed server-side so a student
-// can see their rank without being able to read classmates' rows (RLS).
 export async function fetchClassRank() {
   const { data, error } = await supabase.rpc('my_class_rank');
   if (error) throw error;
@@ -78,6 +143,7 @@ export async function upsertStudent(student) {
     gender: student.gender,
     scores: student.scores,
     flagged: student.flagged,
+    school_id: _schoolId,
   });
   if (error) throw error;
 }
@@ -93,47 +159,28 @@ export async function fetchExamSchedules() {
   const byExam = {};
   (sessions || []).forEach((s) => {
     (byExam[s.exam_id] ||= []).push({
-      id: s.id,
-      date: s.date,
-      classes: s.classes,
-      subject: s.subject,
-      start: s.start_time,
-      end: s.end_time,
-      venue: s.venue,
-      invigilator: s.invigilator,
-      status: s.status,
+      id: s.id, date: s.date, classes: s.classes, subject: s.subject,
+      start: s.start_time, end: s.end_time, venue: s.venue,
+      invigilator: s.invigilator, status: s.status,
     });
   });
   return (exams || []).map((e) => ({
-    id: e.id,
-    name: e.name,
-    type: e.type,
-    startDate: e.start_date,
-    endDate: e.end_date,
-    sessions: byExam[e.id] || [],
+    id: e.id, name: e.name, type: e.type, startDate: e.start_date,
+    endDate: e.end_date, sessions: byExam[e.id] || [],
   }));
 }
 
 export async function saveExamSchedule(exam) {
   const { error: e1 } = await supabase.from('exam_schedules').upsert({
-    id: exam.id,
-    name: exam.name,
-    type: exam.type,
-    start_date: exam.startDate || null,
-    end_date: exam.endDate || null,
+    id: exam.id, name: exam.name, type: exam.type,
+    start_date: exam.startDate || null, end_date: exam.endDate || null,
+    school_id: _schoolId,
   });
   if (e1) throw e1;
   const rows = (exam.sessions || []).map((s) => ({
-    id: s.id,
-    exam_id: exam.id,
-    date: s.date || null,
-    classes: s.classes,
-    subject: s.subject,
-    start_time: s.start,
-    end_time: s.end,
-    venue: s.venue,
-    invigilator: s.invigilator,
-    status: s.status,
+    id: s.id, exam_id: exam.id, date: s.date || null, classes: s.classes,
+    subject: s.subject, start_time: s.start, end_time: s.end, venue: s.venue,
+    invigilator: s.invigilator, status: s.status, school_id: _schoolId,
   }));
   if (rows.length) {
     const { error: e2 } = await supabase.from('exam_sessions').upsert(rows);
@@ -151,26 +198,22 @@ export async function deleteExamSession(sessionId) {
   if (error) throw error;
 }
 
-// Replace the entire exam set (handles edits and deletions of sessions in one
-// shot). The data is tiny (a few exams / sessions), so a wipe-and-insert keeps
-// the local array and the database in exact sync without per-row diffing.
 export async function replaceAllExams(exams) {
-  const { error: delErr } = await supabase
-    .from('exam_schedules')
-    .delete()
-    .not('id', 'is', null);
+  // Delete all this school's exams (RLS prevents touching other schools)
+  const { error: delErr } = await supabase.from('exam_schedules').delete().not('id', 'is', null);
   if (delErr) throw delErr;
   if (!exams.length) return;
   const examRows = exams.map((e) => ({
     id: e.id, name: e.name, type: e.type,
     start_date: e.startDate || null, end_date: e.endDate || null,
+    school_id: _schoolId,
   }));
   const { error: e1 } = await supabase.from('exam_schedules').insert(examRows);
   if (e1) throw e1;
   const sessionRows = exams.flatMap((e) => (e.sessions || []).map((s) => ({
     id: s.id, exam_id: e.id, date: s.date || null, classes: s.classes,
-    subject: s.subject, start_time: s.start, end_time: s.end,
-    venue: s.venue, invigilator: s.invigilator, status: s.status,
+    subject: s.subject, start_time: s.start, end_time: s.end, venue: s.venue,
+    invigilator: s.invigilator, status: s.status, school_id: _schoolId,
   })));
   if (sessionRows.length) {
     const { error: e2 } = await supabase.from('exam_sessions').insert(sessionRows);
@@ -188,34 +231,29 @@ export async function fetchTimetables() {
 }
 
 export async function saveTimetable(cls, term, data) {
-  const { error } = await supabase
-    .from('timetables')
-    .upsert({ class: cls, term, data, updated_at: new Date().toISOString() });
+  const { error } = await supabase.from('timetables').upsert({
+    class: cls, term, data, updated_at: new Date().toISOString(), school_id: _schoolId,
+  });
   if (error) throw error;
 }
 
-// Persist a whole { className: gridData } map (used after generate / cell edits).
 export async function saveTimetables(map, term) {
   const rows = Object.entries(map).map(([cls, data]) => ({
-    class: cls, term: term || null, data, updated_at: new Date().toISOString(),
+    class: cls, term: term || null, data,
+    updated_at: new Date().toISOString(), school_id: _schoolId,
   }));
   if (!rows.length) return;
   const { error } = await supabase.from('timetables').upsert(rows);
   if (error) throw error;
 }
 
-// ---- Generic module tables (shape matches columns directly) ---------------
+// ---- Generic module tables ------------------------------------------------
 const TABLES = {
-  libraryBooks: 'library_books',
-  libraryLoans: 'library_loans',
-  financePayments: 'finance_payments',
-  feeSummary: 'fee_summary',
-  admissions: 'admissions',
-  clinicVisits: 'clinic_visits',
-  disciplinaryRecords: 'disciplinary_records',
-  staff: 'staff',
-  facilities: 'facilities',
-  notifications: 'notifications',
+  libraryBooks: 'library_books', libraryLoans: 'library_loans',
+  financePayments: 'finance_payments', feeSummary: 'fee_summary',
+  admissions: 'admissions', clinicVisits: 'clinic_visits',
+  disciplinaryRecords: 'disciplinary_records', staff: 'staff',
+  facilities: 'facilities', notifications: 'notifications',
 };
 
 export async function fetchTable(key) {
@@ -225,7 +263,7 @@ export async function fetchTable(key) {
 }
 
 export async function upsertRow(key, row) {
-  const { error } = await supabase.from(TABLES[key]).upsert(row);
+  const { error } = await supabase.from(TABLES[key]).upsert({ ...row, school_id: _schoolId });
   if (error) throw error;
 }
 

@@ -1,36 +1,24 @@
 /**
- * fileStore.js — Supabase Storage backend for PDFs.
+ * fileStore.js — Supabase Storage backend for PDFs (multi-tenant edition).
  *
- * Storage bucket : eduone-files  (create via Supabase Dashboard → Storage)
- *   Bucket policy: authenticated users can INSERT/SELECT; teachers own their uploads.
+ * Storage paths: {school_id}/{type}/{file_id}.pdf
+ * This ensures RLS on storage.objects isolates files per school.
  *
- * Metadata table : file_metadata  (see SQL below)
- *   CREATE TABLE IF NOT EXISTS file_metadata (
- *     id          TEXT PRIMARY KEY,
- *     name        TEXT NOT NULL,
- *     storage_path TEXT NOT NULL,
- *     type        TEXT NOT NULL,          -- 'assignments' | 'materials'
- *     subject     TEXT NOT NULL,
- *     target_class TEXT,
- *     description TEXT,
- *     due_date    TEXT,
- *     uploaded_by TEXT NOT NULL,
- *     uploaded_at TIMESTAMPTZ DEFAULT now()
- *   );
- *   ALTER TABLE file_metadata ENABLE ROW LEVEL SECURITY;
- *   CREATE POLICY "all read" ON file_metadata FOR SELECT USING (true);
- *   CREATE POLICY "auth insert" ON file_metadata FOR INSERT WITH CHECK (auth.role() = 'authenticated');
- *   CREATE POLICY "auth delete" ON file_metadata FOR DELETE USING (auth.role() = 'authenticated');
+ * Metadata table: file_metadata (with school_id column)
+ * RLS on file_metadata automatically scopes reads/writes to the current school.
  */
 
 import { supabase } from './supabaseClient';
+import { getActiveSchoolId } from './api';
 
 const BUCKET = 'eduone-files';
 
 /** Upload a File object to Supabase Storage and save metadata to DB. */
 export async function saveFile({ id, file, type, subject, targetClass, description, dueDate, uploadedBy }) {
+  const schoolId = getActiveSchoolId();
   const ext = file.name.split('.').pop();
-  const storagePath = `${type}/${id}.${ext}`;
+  // Path format: {school_id}/{type}/{id}.ext — matches storage RLS policy
+  const storagePath = `${schoolId}/${type}/${id}.${ext}`;
 
   // 1. Upload the actual file
   const { error: upErr } = await supabase.storage
@@ -38,7 +26,7 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
     .upload(storagePath, file, { contentType: 'application/pdf', upsert: true });
   if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
-  // 2. Persist metadata
+  // 2. Persist metadata with school_id
   const { error: dbErr } = await supabase.from('file_metadata').upsert({
     id,
     name: file.name,
@@ -50,13 +38,14 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
     due_date: dueDate || null,
     uploaded_by: uploadedBy,
     uploaded_at: new Date().toISOString(),
+    school_id: schoolId,
   });
   if (dbErr) throw new Error(`Metadata save failed: ${dbErr.message}`);
 
   return storagePath;
 }
 
-/** List files by type (and optionally subject) from the metadata table. */
+/** List files by type (and optionally subject). RLS auto-scopes to school. */
 export async function listFiles(type, subject) {
   let query = supabase.from('file_metadata').select('*').order('uploaded_at', { ascending: false });
   if (type) query = query.eq('type', type);

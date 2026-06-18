@@ -2,9 +2,11 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
+import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
 import { Icon, NAV_ICON_MAP } from './components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
+
 import Login from './views/Login';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
@@ -68,6 +70,7 @@ export default function App() {
 
   // Domain state (loaded from Supabase after sign-in)
   const [settings, setSettings] = useState({});
+  const [schoolId, setSchoolId] = useState(() => localStorage.getItem('eduone_school_id') || null);
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [examSchedules, setExamSchedules] = useState([]);
@@ -156,6 +159,7 @@ export default function App() {
   const store = useMemo(
     () => ({
       settings, setSettings: setSettingsP,
+      schoolId,
       students, setStudents, updateStudent,
       teachers, setTeachers,
       examSchedules, setExamSchedules: setExamsP,
@@ -167,7 +171,7 @@ export default function App() {
       notify,
       navigate: setView,
     }),
-    [settings, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
+    [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
       setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent]
   );
 
@@ -198,6 +202,13 @@ export default function App() {
   const loadUser = useCallback(async (userId, greet) => {
     try {
       const profile = await api.fetchProfile(userId);
+      // Set school context for all subsequent API calls
+      const sid = profile.schoolId || localStorage.getItem('eduone_school_id');
+      if (sid) {
+        setActiveSchoolId(sid);
+        setSchoolId(sid);
+        localStorage.setItem('eduone_school_id', sid);
+      }
       setCurrentUser(profile);
       setView(ROLES[profile.role]?.home || 'overview');
       if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
@@ -233,8 +244,11 @@ export default function App() {
 
   // ---- Show Setup Wizard on first run ----
   if (!setupDone) {
-    return <SetupWizard onComplete={(config) => {
-      // merge wizard school name into settings if needed
+    return <SetupWizard onComplete={(config, sid) => {
+      if (sid) {
+        setActiveSchoolId(sid);
+        setSchoolId(sid);
+      }
       setSetupDone(true);
     }} />;
   }
