@@ -10,9 +10,8 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import {
   BarChart3, Trophy, FileText, Wallet, CreditCard, Mail, ClipboardList,
   Calendar, CheckCircle2, Clock, XCircle, DollarSign, AlertTriangle,
-  BookOpen, Download, Eye, Send
+  BookOpen, Download, Eye, Send, Loader
 } from 'lucide-react';
-
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -41,12 +40,47 @@ export default function StudentPortal({ store, user }) {
   const [msgForm, setMsgForm] = useState({ subject: '', body: '' });
   const [subFilter, setSubFilter] = useState('All');
   const [resTab, setResTab] = useState('library');
+  // Supabase cloud files
+  const [cloudMaterials, setCloudMaterials] = useState([]);
+  const [cloudAssignments, setCloudAssignments] = useState([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [actionId, setActionId] = useState(null);
 
   useEffect(() => {
     let active = true;
     fetchClassRank().then(r => { if (active) setRank(r); }).catch(() => {});
     return () => { active = false; };
   }, []);
+
+  // Load cloud files when resources tab is active
+  useEffect(() => {
+    if (tab !== 'resources') return;
+    let active = true;
+    setCloudLoading(true);
+    Promise.all([
+      listFiles('materials').catch(() => []),
+      listFiles('assignments').catch(() => []),
+    ]).then(([mats, assigns]) => {
+      if (!active) return;
+      setCloudMaterials(mats);
+      setCloudAssignments(assigns);
+    }).finally(() => { if (active) setCloudLoading(false); });
+    return () => { active = false; };
+  }, [tab]);
+
+  const handleCloudOpen = async (f) => {
+    setActionId(f.id + '_o');
+    try { await openFilePDF(f.storage_path); }
+    catch (e) { notify(`Cannot open: ${e.message}`, 'error'); }
+    finally { setActionId(null); }
+  };
+
+  const handleCloudDownload = async (f) => {
+    setActionId(f.id + '_d');
+    try { await downloadFilePDF(f.storage_path, f.name); }
+    catch (e) { notify(`Cannot download: ${e.message}`, 'error'); }
+    finally { setActionId(null); }
+  };
 
   const subjects = useMemo(() => {
     if (!me) return [];
@@ -362,82 +396,99 @@ export default function StudentPortal({ store, user }) {
             </div>
           )}
 
-          {resTab === 'materials' && (() => {
-            const uploaded = listFiles('materials');
-            const allMaterials = [
-              ...STUDY_MATERIALS.map(m => ({ ...m, isUploaded: false })),
-              ...uploaded.map(m => ({ id: m.id, title: m.description || m.name, subject: m.subject, uploadedBy: m.uploadedBy, date: m.uploadedAt?.slice(0,10), size: 'PDF', isUploaded: true }))
-            ];
-            return (
-              <div className="card card-pad">
-                <h3 className="section-title">Study Materials ({allMaterials.length})</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {allMaterials.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontWeight: 600, fontSize: 13 }}>{m.title}</span>
-                          {m.isUploaded && <Badge color="green">New</Badge>}
-                        </div>
-                        <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploadedBy} · {m.date}</div>
+          {resTab === 'materials' && (
+            <div className="card card-pad">
+              <h3 className="section-title">
+                Study Materials ({STUDY_MATERIALS.length + cloudMaterials.length})
+                {cloudLoading && <Loader size={14} style={{ marginLeft: 8, opacity: 0.5 }} />}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Teacher cloud uploads */}
+                {cloudMaterials.map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>{m.description || m.name}</span>
+                        <Badge color="green">New</Badge>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="muted" style={{ fontSize: 11 }}>{m.size}</span>
-                        {m.isUploaded
-                          ? <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => openFilePDF(m.id)}><Eye size={14} /> View</button>
-                          : <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => notify(`Opening ${m.title}`, 'info')}><Eye size={14} /> View</button>
-                        }
+                      <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploaded_by} · {m.uploaded_at?.slice(0,10)}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span className="muted" style={{ fontSize: 11 }}>PDF · Cloud</span>
+                      <button className="btn btn-sm btn-primary" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudOpen(m)}>
+                        {actionId === m.id + '_o' ? <Loader size={13} /> : <Eye size={14} />} View
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {/* Seed study materials */}
+                {STUDY_MATERIALS.map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{m.title}</div>
+                      <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploadedBy} · {m.date}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="muted" style={{ fontSize: 11 }}>{m.size}</span>
+                      <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => notify(`Opening ${m.title}`, 'info')}><Eye size={14} /> View</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resTab === 'downloads' && (
+            <div className="card card-pad">
+              <h3 className="section-title">
+                Assignments & Revision Downloads
+                {cloudLoading && <Loader size={14} style={{ marginLeft: 8, opacity: 0.5 }} />}
+              </h3>
+              {/* Teacher-uploaded assignments from Supabase */}
+              {cloudAssignments.length > 0 && (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: 12, color: '#0078D4', marginBottom: 8, letterSpacing: 0.5 }}>TEACHER UPLOADS — CLOUD</div>
+                  {cloudAssignments.map(d => (
+                    <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{d.description || d.name}</span>
+                          <Badge color="green">New</Badge>
+                        </div>
+                        <div className="muted" style={{ fontSize: 12 }}>{d.subject} · Due: {d.due_date || '—'} · by {d.uploaded_by}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-sm" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudOpen(d)}>
+                          {actionId === d.id + '_o' ? <Loader size={13} /> : <Eye size={13} />} View
+                        </button>
+                        <button className="btn btn-sm" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudDownload(d)}>
+                          {actionId === d.id + '_d' ? <Loader size={13} /> : <Download size={13} />} Download
+                        </button>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {resTab === 'downloads' && (() => {
-            const uploadedAssignments = listFiles('assignments');
-            return (
-              <div className="card card-pad">
-                <h3 className="section-title">Revision Papers & Teacher Downloads</h3>
-                {uploadedAssignments.length > 0 && (
-                  <>
-                    <div style={{ fontWeight: 600, fontSize: 12, color: '#0078D4', marginBottom: 8 }}>TEACHER UPLOADS</div>
-                    {uploadedAssignments.map(d => (
-                      <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                        <div>
-                          <div style={{ display: 'flex', gap: 6 }}><span style={{ fontWeight: 600, fontSize: 13 }}>{d.description || d.name}</span><Badge color="green">New</Badge></div>
-                          <div className="muted" style={{ fontSize: 12 }}>{d.subject} · Due: {d.dueDate} · by {d.uploadedBy}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-sm" style={{ gap: 4 }} onClick={() => openFilePDF(d.id)}><Eye size={13} /> View</button>
-                          <button className="btn btn-sm" style={{ gap: 4 }} onClick={() => downloadFilePDF(d.id)}><Download size={13} /> Download</button>
-                        </div>
-                      </div>
+                  <div style={{ fontWeight: 600, fontSize: 12, color: '#64748b', margin: '16px 0 8px', letterSpacing: 0.5 }}>PAST PAPERS & REVISION</div>
+                </>
+              )}
+              <div className="scroll-x">
+                <table className="table">
+                  <thead><tr><th>Title</th><th>Subject</th><th>Year</th><th>Type</th><th>Size</th><th></th></tr></thead>
+                  <tbody>
+                    {REVISION_DOWNLOADS.map(d => (
+                      <tr key={d.id}>
+                        <td style={{ fontWeight: 600 }}>{d.title}</td>
+                        <td>{d.subject}</td>
+                        <td>{d.year}</td>
+                        <td><Badge color={d.type === 'Past Paper' ? 'blue' : 'green'}>{d.type}</Badge></td>
+                        <td className="muted">{d.size}</td>
+                        <td><button className="btn btn-sm" style={{ gap: 4 }} onClick={() => notify(`Downloading ${d.title}...`, 'info')}><Download size={14} /> Download</button></td>
+                      </tr>
                     ))}
-                    <div style={{ fontWeight: 600, fontSize: 12, color: '#64748b', margin: '16px 0 8px' }}>PAST PAPERS & REVISION</div>
-                  </>
-                )}
-                <div className="scroll-x">
-                  <table className="table">
-                    <thead><tr><th>Title</th><th>Subject</th><th>Year</th><th>Type</th><th>Size</th><th></th></tr></thead>
-                    <tbody>
-                      {REVISION_DOWNLOADS.map(d => (
-                        <tr key={d.id}>
-                          <td style={{ fontWeight: 600 }}>{d.title}</td>
-                          <td>{d.subject}</td>
-                          <td>{d.year}</td>
-                          <td><Badge color={d.type === 'Past Paper' ? 'blue' : 'green'}>{d.type}</Badge></td>
-                          <td className="muted">{d.size}</td>
-                          <td><button className="btn btn-sm" style={{ gap: 4 }} onClick={() => notify(`Downloading ${d.title}...`, 'info')}><Download size={14} /> Download</button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  </tbody>
+                </table>
               </div>
-            );
-          })()}
+            </div>
+          )}
         </>
       )}
 
