@@ -1,20 +1,25 @@
 // Small reusable presentational widgets.
 
-export function KpiCard({ icon, label, value, sub, accent, children }) {
+export function KpiCard({ icon, iconComponent, label, value, sub, accent, children }) {
   return (
     <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <span className="muted" style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
-        <span style={{ fontSize: 20 }}>{icon}</span>
+        {iconComponent ? (
+          <span style={{ color: accent || 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, background: accent ? `${accent}12` : 'rgba(0,120,212,0.08)' }}>{iconComponent}</span>
+        ) : (
+          <span style={{ fontSize: 20 }}>{icon}</span>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 26, fontWeight: 800, color: accent || 'var(--text)' }}>{value}</span>
+        <span style={{ fontSize: 26, fontWeight: 700, color: accent || 'var(--text)' }}>{value}</span>
       </div>
       {sub && <div className="muted" style={{ fontSize: 12 }}>{sub}</div>}
       {children}
     </div>
   );
 }
+
 
 export function Sparkline({ data, color = '#1E3A5F', width = 120, height = 32 }) {
   if (!data || data.length === 0) return null;

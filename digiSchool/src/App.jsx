@@ -3,6 +3,8 @@ import './App.css';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { ROLES } from './data/users';
+import { Icon, NAV_ICON_MAP } from './components/icons';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
 import Login from './views/Login';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
@@ -21,6 +23,7 @@ import ParentPortal from './views/ParentPortal';
 import CreateExam from './views/CreateExam';
 import AcademicsDashboard from './views/AcademicsDashboard';
 import AdminDashboard from './views/AdminDashboard';
+import Notices from './views/Notices';
 
 const VIEW_MAP = {
   overview: Overview,
@@ -40,6 +43,7 @@ const VIEW_MAP = {
   teacher: TeacherPortal,
   student: StudentPortal,
   parent: ParentPortal,
+  notices: Notices,
 };
 
 let toastId = 0;
@@ -319,9 +323,9 @@ export default function App() {
                       }}
                       title={item.label}
                     >
-                      <span className="nav-icon">{item.icon}</span>
+                      <span className="nav-icon">{NAV_ICON_MAP[item.icon] ? <Icon name={NAV_ICON_MAP[item.icon]} size={16} /> : item.icon}</span>
                       {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
-                      {!collapsed && hasSub && <span style={{ fontSize: 10, opacity: 0.5 }}>{isExpanded ? '▼' : '▶'}</span>}
+                      {!collapsed && hasSub && (isExpanded ? <ChevronDown size={14} style={{ opacity: 0.5 }} /> : <ChevronRight size={14} style={{ opacity: 0.5 }} />)}
                     </button>
                     {!collapsed && hasSub && isExpanded && (
                       <div style={{ background: 'rgba(0,0,0,0.15)', padding: '4px 0', borderLeft: '2px solid rgba(255,255,255,0.1)', marginLeft: 30, marginTop: 2, marginBottom: 4 }}>
@@ -348,7 +352,7 @@ export default function App() {
           ))}
         </nav>
         <button className="collapse-btn" onClick={() => setCollapsed((c) => !c)}>
-          {collapsed ? '»' : '« Collapse'}
+          {collapsed ? <PanelLeft size={16} /> : <><PanelLeftClose size={16} /> Collapse</>}
         </button>
       </aside>
 
@@ -358,7 +362,7 @@ export default function App() {
           <div className="topbar-title">{settings.name}</div>
           <div className="topbar-actions">
             <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
-              🔔{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
+              <Bell size={18} />{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
             </button>
             <div className="avatar" title={currentUser.name}>{initials}</div>
             <div className="user-meta">
@@ -429,17 +433,17 @@ export default function App() {
           <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
             <div style={{ background: '#9333ea', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
-                🏢 Deputy Academics Office
+                <Building2 size={20} /> Deputy Academics Office
               </div>
               <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 16 }}>🏢</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Building2 size={40} style={{ color: '#9333ea' }} /></div>
               <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
                 You are about to visit the Deputy Academics Office. This will open the Academics dashboard where you can manage exams, subjects, and academic performance.
               </p>
               <div style={{ background: '#e0f2fe', color: '#0369a1', padding: 12, borderRadius: 6, fontSize: 13, textAlign: 'left', display: 'flex', gap: 8, marginBottom: 24 }}>
-                <div>ℹ️</div>
+                <div style={{ fontWeight: 700 }}>i</div>
                 <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
@@ -461,17 +465,17 @@ export default function App() {
           <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
             <div style={{ background: '#0f766e', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
-                🏛️ Deputy Administration Office
+                <Landmark size={20} /> Deputy Administration Office
               </div>
               <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 16 }}>🏛️</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Landmark size={40} style={{ color: '#0f766e' }} /></div>
               <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
                 You are about to visit the Deputy Administration Office. This will open the Admin dashboard where you can manage student affairs, facilities, and staff welfare.
               </p>
               <div style={{ background: '#d1fae5', color: '#065f46', padding: 12, borderRadius: 6, fontSize: 13, textAlign: 'left', display: 'flex', gap: 8, marginBottom: 24 }}>
-                <div>ℹ️</div>
+                <div style={{ fontWeight: 700 }}>i</div>
                 <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>

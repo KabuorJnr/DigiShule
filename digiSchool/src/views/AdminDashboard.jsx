@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Badge } from '../components/widgets';
+import { useState } from 'react';
+import { Badge, ProgressBar } from '../components/widgets';
 import { STAFF, FACILITIES, DISCIPLINARY_RECORDS } from '../data/modules';
 import { LEAVE_REQUESTS } from '../data/seed';
+import Modal from '../components/Modal';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -13,139 +14,152 @@ function Stat({ label, value, color, sub }) {
   );
 }
 
-export default function AdminDashboard({ store }) {
+export default function AdminDashboard({ store, user }) {
   const { navigate, notify } = store;
+  const [disciplineModal, setDisciplineModal] = useState(null);
+  const [leaveActions, setLeaveActions] = useState({});
 
   const presentStaff = STAFF.filter(s => s.status === 'Present').length;
-  const onLeaveStaff = STAFF.filter(s => s.status === 'On Leave').length;
   const operationalFac = FACILITIES.filter(f => f.status === 'Operational').length;
   const pendingLeave = LEAVE_REQUESTS.filter(l => l.status === 'Pending').length;
   const openDiscipline = DISCIPLINARY_RECORDS.filter(d => d.status === 'Open').length;
 
+  const handleLeaveAction = (id, action) => {
+    setLeaveActions(prev => ({ ...prev, [id]: action }));
+    notify(`Leave request ${action.toLowerCase()}`, action === 'Approved' ? 'success' : 'warning', 'Leave');
+  };
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <div style={{ background: '#d1fae5', color: '#0f766e', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏛️</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22 }}>Deputy Admin Dashboard</h2>
-          <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>Administration overview and management</p>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Administration overview — student affairs, facilities, staff welfare</p>
         </div>
+        <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
       </div>
 
       <div style={{ background: '#0f766e', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <span style={{ fontSize: 28, background: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 8 }}>🏛️</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: 18 }}>Administration Office</h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-              Role: Deputy Administration | Student Affairs & Facilities<br />
-              Managing discipline, boarding, facilities, and staff welfare
-            </p>
-          </div>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 18 }}>Administration Office</h3>
+          <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.9 }}>
+            Managing discipline, boarding, facilities, and staff welfare
+          </p>
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
-          <div style={{ marginBottom: 4 }}>📅 {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>🏫 Term: Term 2</div>
+          <div>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div>Term 2 · Academic Year 2026</div>
         </div>
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
         <Stat label="Total Staff" value={STAFF.length} sub={`${presentStaff} present today`} color="#0f766e" />
-        <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#F59E0B" />
-        <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#EF4444" />
-        <Stat label="Facilities" value={`${operationalFac}/${FACILITIES.length}`} sub="Operational" color="#10B981" />
+        <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#FFB900" />
+        <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#D13438" />
+        <Stat label="Facilities" value={`${operationalFac}/${FACILITIES.length}`} sub="Operational" color="#107C10" />
       </div>
 
-      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        {/* Student Affairs */}
-        <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🎓 Student Affairs
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button className="btn" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>
-              👥 All Students
-            </button>
-            <button className="btn" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>
-              🏠 Boarding Management
-            </button>
-            <button className="btn" style={{ justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>
-              ⚖️ Discipline Records
-              {openDiscipline > 0 && <Badge color="red" style={{ marginLeft: 'auto' }}>{openDiscipline} open</Badge>}
-            </button>
-          </div>
-        </div>
-
-        {/* Facilities */}
-        <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🏛️ Facilities Overview
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {FACILITIES.slice(0, 5).map(f => (
-              <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{f.name}</div>
-                  <div className="muted" style={{ fontSize: 11 }}>{f.type} • Capacity: {f.capacity}</div>
-                </div>
-                <Badge color={f.status === 'Operational' ? 'green' : 'amber'}>{f.status}</Badge>
-              </div>
-            ))}
-            <button className="btn btn-sm" style={{ alignSelf: 'flex-start', marginTop: 4 }} onClick={() => navigate('facilities')}>
-              View All Facilities →
-            </button>
-          </div>
+      {/* Quick Actions */}
+      <div className="card card-pad" style={{ marginBottom: 24 }}>
+        <h3 className="section-title">Quick Actions</h3>
+        <div className="grid grid-4" style={{ gap: 10 }}>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Staff Attendance</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('facilities')}>Facilities Management</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('finance')}>Finance Overview</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('clinic')}>Health / Clinic</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('library')}>Library</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>Settings</button>
         </div>
       </div>
 
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        {/* Recent Discipline */}
+        {/* Discipline Cases */}
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e' }}>📋 Recent Discipline Cases</h3>
-          {DISCIPLINARY_RECORDS.slice(0, 4).map(d => (
-            <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+          <h3 className="section-title" style={{ color: '#0f766e' }}>Discipline Cases</h3>
+          {DISCIPLINARY_RECORDS.map(d => (
+            <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{d.student} — {d.category}</div>
                 <div className="muted" style={{ fontSize: 12 }}>{d.description}</div>
-                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{d.date} • {d.class}</div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{d.date} · {d.class}</div>
               </div>
               <Badge color={d.status === 'Open' ? 'red' : 'green'}>{d.status}</Badge>
             </div>
           ))}
         </div>
 
-        {/* Leave Requests */}
+        {/* Facilities */}
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0f766e' }}>📋 Pending Leave Requests</h3>
-          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => (
-            <div key={l.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{l.staff} — {l.type} Leave</div>
-                <div className="muted" style={{ fontSize: 12 }}>{l.start} to {l.end} ({l.days} day{l.days > 1 ? 's' : ''})</div>
-                <div className="muted" style={{ fontSize: 11 }}>{l.reason}</div>
+          <h3 className="section-title" style={{ color: '#0f766e' }}>Facilities Overview</h3>
+          {FACILITIES.map(f => (
+            <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{f.name}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{f.type} · Capacity: {f.capacity}</div>
               </div>
-              <Badge color="amber">Pending</Badge>
+              <Badge color={f.status === 'Operational' ? 'green' : 'amber'}>{f.status}</Badge>
             </div>
           ))}
-          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').length === 0 && (
-            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
-          )}
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('staff')}>
-            Manage Leave →
+          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('facilities')}>
+            Manage Facilities
           </button>
         </div>
       </div>
 
-      {/* Quick Access */}
-      <div className="card card-pad">
-        <h3 className="section-title" style={{ color: '#0f766e' }}>⚡ Quick Access</h3>
-        <div className="grid grid-4" style={{ gap: 12 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>👥 Staff Attendance</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('facilities')}>🏛️ Facilities</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>🎓 Student Records</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>⚙️ Settings</button>
+      {/* Leave Requests */}
+      <div className="card card-pad" style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h3 className="section-title" style={{ margin: 0, color: '#0f766e' }}>Pending Leave Requests</h3>
+          <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
         </div>
+        {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => {
+          const action = leaveActions[l.id];
+          return (
+            <div key={l.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{l.staff} — {l.type} Leave</div>
+                <div className="muted" style={{ fontSize: 12 }}>{l.start} to {l.end} ({l.days} days)</div>
+                <div className="muted" style={{ fontSize: 11 }}>{l.reason}</div>
+              </div>
+              {action ? (
+                <Badge color={action === 'Approved' ? 'green' : 'red'}>{action}</Badge>
+              ) : (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}>Approve</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}>Reject</button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {LEAVE_REQUESTS.filter(l => l.status === 'Pending').length === 0 && (
+          <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
+        )}
       </div>
+
+      {/* Discipline Modal */}
+      {disciplineModal && (
+        <Modal title="Discipline Case Details" onClose={() => setDisciplineModal(null)} footer={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" onClick={() => setDisciplineModal(null)}>Close</button>
+            {disciplineModal.status === 'Open' && (
+              <button className="btn btn-primary" onClick={() => { setDisciplineModal(null); notify('Case marked as resolved', 'success'); }}>Mark Resolved</button>
+            )}
+          </div>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div><span className="field-label">Student</span><div style={{ fontWeight: 600 }}>{disciplineModal.student}</div></div>
+            <div><span className="field-label">Class</span><div>{disciplineModal.class}</div></div>
+            <div><span className="field-label">Category</span><div><Badge color="red">{disciplineModal.category}</Badge></div></div>
+            <div><span className="field-label">Date</span><div>{disciplineModal.date}</div></div>
+            <div><span className="field-label">Description</span><div style={{ lineHeight: 1.5 }}>{disciplineModal.description}</div></div>
+            <div><span className="field-label">Action Taken</span><div>{disciplineModal.action || 'Pending review'}</div></div>
+            <div><span className="field-label">Status</span><div><Badge color={disciplineModal.status === 'Open' ? 'red' : 'green'}>{disciplineModal.status}</Badge></div></div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

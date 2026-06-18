@@ -3,19 +3,17 @@
 // frontend-only demo artifact with no backend. Do NOT use this pattern with a
 // real database — use Supabase auth (auth.users) + RLS instead.
 
-// Role definitions: label, portal subtitle, accent color, allowed nav items,
-// and the landing view for each role.
 export const ROLES = {
   principal: {
     label: 'Principal',
     portal: 'Principal Portal',
-    accent: '#1E3A5F',
+    accent: '#0078D4',
     home: 'overview',
     nav: [
       {
         section: 'CORE',
         items: [
-          { id: 'overview', icon: '🏠', label: 'Dashboard' }
+          { id: 'overview', icon: '🏠', label: 'Dashboard', view: 'overview' }
         ]
       },
       {
@@ -25,93 +23,72 @@ export const ROLES = {
             id: 'deputy_offices', icon: '🏢', label: 'Deputy Offices',
             sub: [
               { id: 'deputy_academic', label: 'Deputy Academics', action: 'visit_academics' },
-              { id: 'deputy_admin', label: 'Deputy Administration', view: 'overview' },
+              { id: 'deputy_admin', label: 'Deputy Administration', action: 'visit_admin' },
               { id: 'registrar', label: 'Registrar Office', view: 'admissions' }
             ]
           },
           {
             id: 'staff_management', icon: '👥', label: 'Staff Management',
             sub: [
-              { id: 'teaching_staff', label: 'Teaching Staff', view: 'staff' },
-              { id: 'performance', label: 'Performance', view: 'overview' }
+              { id: 'teaching_staff', label: 'Staff Attendance', view: 'staff' },
+              { id: 'leave_management', label: 'Leave Management', view: 'staff' }
             ]
           },
           {
             id: 'student_management', icon: '🎓', label: 'Student Management',
             sub: [
-              { id: 'all_students', label: 'All Students', view: 'overview' },
               { id: 'admissions', label: 'Admissions', view: 'admissions' },
-              { id: 'boarding', label: 'Boarding', view: 'overview' },
-              { id: 'transfers', label: 'Transfers', view: 'overview' }
+              { id: 'boarding', label: 'Class Rolls', view: 'admissions' }
             ]
           },
           {
             id: 'academic', icon: '📚', label: 'Academic',
             sub: [
-              { id: 'subjects', label: 'Subjects', view: 'overview' },
               { id: 'timetable', label: 'Timetable', view: 'timetable' },
-              { id: 'examinations', label: 'Examinations', view: 'exams' }
+              { id: 'examinations', label: 'Examinations', view: 'exams' },
+              { id: 'gradebook', label: 'Gradebook', view: 'gradebook' }
             ]
           },
           {
             id: 'finance_mgmt', icon: '💰', label: 'Finance',
             sub: [
               { id: 'accounts', label: 'Accounts Office', view: 'finance' },
-              { id: 'fin_reports', label: 'Financial Reports', view: 'finance' },
-              { id: 'fee_structures', label: 'Fee Structures', view: 'finance' },
-              { id: 'expenses', label: 'Expenses', view: 'finance' }
+              { id: 'fee_structures', label: 'Fee Structures', view: 'finance' }
             ]
-          },
-          {
-            id: 'reports', icon: '📈', label: 'Report Analytics',
-            sub: [
-              { id: 'acad_reports', label: 'Academic reports', view: 'overview' },
-              { id: 'attendance_reports', label: 'Attendance', view: 'overview' },
-              { id: 'behaviour', label: 'Behaviour', view: 'overview' },
-              { id: 'audit', label: 'Audit logs', view: 'overview' }
-            ]
-          },
-          { id: 'downloads', icon: '📥', label: 'Downloads', view: 'overview' }
+          }
         ]
       },
       {
         section: 'SUPPORT OFFICES',
         items: [
-          { id: 'clinic', icon: '🏥', label: 'Visit Health Center', view: 'clinic' },
-          { id: 'library', icon: '📚', label: 'Visit Library', view: 'library' }
+          { id: 'clinic', icon: '🏥', label: 'Health Center', view: 'clinic' },
+          { id: 'library', icon: '📚', label: 'Library', view: 'library' },
+          { id: 'facilities', icon: '🏛️', label: 'Facilities', view: 'facilities' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'overview' },
-          { id: 'parent_meetings', icon: '👪', label: 'Parent meetings', view: 'overview' }
-        ]
-      },
-      {
-        section: 'SYSTEM',
-        items: [
-          { id: 'notifications', icon: '🔔', label: 'Notifications', view: 'overview', action: 'notif' }
+          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'notices' }
         ]
       },
       {
         section: 'QUICK ACTIONS',
         items: [
           { id: 'new_admission', icon: '➕', label: 'New Admission', view: 'admissions' },
-          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },
-          { id: 'schedule_meeting', icon: '🗓️', label: 'Schedule Meeting', view: 'overview' }
+          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'profile', icon: '👤', label: 'My profile', view: 'overview' },
-          { id: 'settings', icon: '⚙️', label: 'System setting', view: 'settings' },
+          { id: 'settings', icon: '⚙️', label: 'System Settings', view: 'settings' },
           { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   deputy_academic: {
     label: 'Deputy Academics',
     portal: 'Academics Portal',
@@ -121,33 +98,64 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'overview', icon: '🏠', label: 'Overview', view: 'academics_dashboard' },
-          { id: 'timetable', icon: '📅', label: 'Timetable Management', view: 'timetable' },
+          { id: 'acad_dash', icon: '🏠', label: 'Dashboard', view: 'academics_dashboard' },
+          { id: 'timetable', icon: '📅', label: 'Timetable', view: 'timetable' },
           { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
           { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },
-          { id: 'gradebook', icon: '📊', label: 'Gradebook Review', view: 'gradebook' }
+          { id: 'gradebook', icon: '📊', label: 'Gradebook', view: 'gradebook' },
+          { id: 'staff', icon: '👥', label: 'Staff', view: 'staff' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   deputy_admin: {
     label: 'Deputy Admin',
     portal: 'Administration Portal',
     accent: '#0F766E',
-    home: 'overview',
+    home: 'admin_dashboard',
     nav: [
       {
         section: 'CORE',
         items: [
-          { id: 'overview', icon: '🏠', label: 'Overview', view: 'overview' },
+          { id: 'admin_dash', icon: '🏠', label: 'Dashboard', view: 'admin_dashboard' },
           { id: 'staff', icon: '👥', label: 'Staff Attendance', view: 'staff' },
+          { id: 'admissions', icon: '🎓', label: 'Student Registry', view: 'admissions' },
           { id: 'facilities', icon: '🏛️', label: 'Facilities', view: 'facilities' },
           { id: 'finance', icon: '💰', label: 'Finance', view: 'finance' },
-          { id: 'settings', icon: '⚙️', label: 'School Settings', view: 'settings' }
+          { id: 'clinic', icon: '🏥', label: 'Health Center', view: 'clinic' },
+          { id: 'library', icon: '📚', label: 'Library', view: 'library' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   finance: {
     label: 'Finance',
     portal: 'Finance Portal',
@@ -158,10 +166,25 @@ export const ROLES = {
         section: 'CORE',
         items: [
           { id: 'finance', icon: '💰', label: 'Fee Collection', view: 'finance' },
+          { id: 'admissions', icon: '🎓', label: 'Student Registry', view: 'admissions' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   registrar: {
     label: 'Registrar',
     portal: 'Admissions Office',
@@ -171,11 +194,20 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'admissions', icon: '🧾', label: 'Admissions & Registry', view: 'admissions' },
+          { id: 'admissions', icon: '📋', label: 'Admissions & Registry', view: 'admissions' },
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   librarian: {
     label: 'Librarian',
     portal: 'Library Desk',
@@ -186,10 +218,18 @@ export const ROLES = {
         section: 'CORE',
         items: [
           { id: 'library', icon: '📚', label: 'Library', view: 'library' },
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   teacher: {
     label: 'Teacher',
     portal: 'Teacher Portal',
@@ -197,14 +237,30 @@ export const ROLES = {
     home: 'teacher',
     nav: [
       {
-        section: 'CORE',
+        section: 'TEACHING',
         items: [
-          { id: 'teacher', icon: '🧑‍🏫', label: 'My Classes', view: 'teacher' },
+          { id: 'teacher', icon: '🏠', label: 'My Dashboard', view: 'teacher' },
           { id: 'timetable', icon: '📅', label: 'My Timetable', view: 'timetable' },
+          { id: 'gradebook', icon: '📊', label: 'Gradebook', view: 'gradebook' },
+          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   student: {
     label: 'Student',
     portal: 'Student Portal',
@@ -214,25 +270,40 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'student', icon: '🎓', label: 'My Dashboard', view: 'student' },
+          { id: 'student', icon: '🎓', label: 'My Portal', view: 'student' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   parent: {
     label: 'Parent',
     portal: 'Parent Portal',
     accent: '#BE185D',
-    home: 'Parent',
+    home: 'parent',
     nav: [
       {
         section: 'CORE',
         items: [
           { id: 'parent', icon: '👪', label: 'My Child', view: 'parent' },
+          { id: 'notices', icon: '📢', label: 'Notices & Messages', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
   },
+
   nurse: {
     label: 'Nurse',
     portal: 'Health & Nursing',
@@ -243,6 +314,13 @@ export const ROLES = {
         section: 'CORE',
         items: [
           { id: 'clinic', icon: '🏥', label: 'Clinic', view: 'clinic' },
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -250,7 +328,6 @@ export const ROLES = {
 };
 
 // The seeded accounts. `username` is case-insensitive on login.
-// `link` ties portal users to a seeded record (teacher id / student id).
 export const USERS = [
   { username: 'Principal', password: 'Zulu@254', role: 'principal', name: 'Dr. Jane Kamau', dept: 'Principal' },
   { username: 'Deputyacademic', password: '7777', role: 'deputy_academic', name: 'Mr. Peter Mwangi', dept: 'Deputy Academics' },
@@ -258,7 +335,6 @@ export const USERS = [
   { username: 'FINANCE', password: '7777', role: 'finance', name: 'Mr. Daniel Kerubo', dept: 'Finance' },
   { username: 'Registrar', password: '7777', role: 'registrar', name: 'Ms. Agnes Chebet', dept: 'Admissions Office' },
   { username: 'Librarian', password: '7777', role: 'librarian', name: 'Mr. Joseph Njoroge', dept: 'Library' },
-  { username: 'LIBRARIAN', password: '7777', role: 'librarian', name: 'Ms. Ruth Atieno', dept: 'Library' },
   { username: 'NURSE001', password: '7777', role: 'nurse', name: 'Sr. Mary Wairimu', dept: 'Nursing' },
   { username: 'STF5169', password: '7777', role: 'teacher', name: 'Mr. Omondi', dept: 'Mathematics', link: 't1' },
   { username: 'STU2640494', password: '7777', role: 'student', name: 'Student', dept: 'Form 1A', link: '1A-1' },

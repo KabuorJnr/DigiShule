@@ -291,4 +291,87 @@ export const LEAVE_REQUESTS = [
   { id: 'lr5', staff: 'Ms. Wanjiku', dept: 'Languages', type: 'Sick', start: '2026-05-28', end: '2026-05-29', days: 2, reason: 'Flu symptoms', status: 'Rejected', approvedBy: 'Dr. Jane Kamau', date: '2026-05-27' },
 ];
 
+
+export const NOTICES = [
+  { id: 'n1', title: 'End of Term Exams Schedule Released', body: 'The end-of-term examination timetable has been published. All students should prepare accordingly. Exams begin on June 21st, 2026. Please check the exam schedules module for your specific timetable.', postedBy: 'Mr. Peter Mwangi', role: 'Deputy Academics', date: '2026-06-10', audience: ['all'] },
+  { id: 'n2', title: 'School Fees Deadline Reminder', body: 'This is a reminder that all outstanding school fees for Term 2 must be cleared by June 20th, 2026. Students with outstanding balances will not be allowed to sit for exams. Please contact the finance office for any queries.', postedBy: 'Mr. Daniel Kerubo', role: 'Finance', date: '2026-06-09', audience: ['students', 'parents'] },
+  { id: 'n3', title: 'PTA Meeting Notice', body: 'A Parents-Teachers Association meeting is scheduled for June 18th, 2026 at 10:00 AM in the Main Hall. All parents and guardians are encouraged to attend. Agenda includes academic performance review and infrastructure development.', postedBy: 'Mrs. Lucy Wambui', role: 'Deputy Admin', date: '2026-06-08', audience: ['parents', 'teachers'] },
+  { id: 'n4', title: 'Holiday Assignment Guidelines', body: 'All teachers are required to submit holiday assignments for their respective subjects by June 19th. Assignments should cover topics taught during the term and be appropriate for the level of students.', postedBy: 'Mr. Peter Mwangi', role: 'Deputy Academics', date: '2026-06-07', audience: ['teachers'] },
+  { id: 'n5', title: 'Sports Day Announcement', body: 'The annual inter-class sports day will be held on July 4th, 2026 at the school sports field. Students should register for events through their class teachers. Categories include athletics, football, and volleyball.', postedBy: 'Mrs. Lucy Wambui', role: 'Deputy Admin', date: '2026-06-06', audience: ['all'] },
+  { id: 'n6', title: 'Library Roof Repair Update', body: 'The library will remain closed until June 15th due to ongoing roof repairs. Students can access reading materials from the temporary reading room in Block C. We apologize for the inconvenience.', postedBy: 'Mrs. Lucy Wambui', role: 'Deputy Admin', date: '2026-06-05', audience: ['all'] },
+];
+
+export const ASSIGNMENTS_LIST = [
+  { id: 'a1', subject: 'Mathematics', teacher: 'Mr. Omondi', title: 'Holiday Revision — Quadratic Equations', description: 'Complete Exercise 12A and 12B from the textbook. Show all working. Also attempt the 5 challenge problems on the worksheet provided.', dueDate: '2026-07-20', class: '1A', status: 'Active', datePosted: '2026-06-10' },
+  { id: 'a2', subject: 'English', teacher: 'Ms. Wanjiku', title: 'Essay Writing — "My Role Model"', description: 'Write a 500-word essay on "My Role Model". Use proper paragraph structure, introduction, body, and conclusion. Pay attention to grammar and punctuation.', dueDate: '2026-07-18', class: '1A', status: 'Active', datePosted: '2026-06-09' },
+  { id: 'a3', subject: 'Biology', teacher: 'Ms. Achieng', title: 'Cell Biology Diagrams', description: 'Draw and label the following diagrams: Animal cell, Plant cell, and Bacterial cell. Use A4 paper. Include at least 10 labels per diagram.', dueDate: '2026-07-22', class: '1A', status: 'Active', datePosted: '2026-06-08' },
+  { id: 'a4', subject: 'Chemistry', teacher: 'Mr. Muthoni', title: 'Periodic Table — Groups I-IV', description: 'Study the properties of elements in Groups I to IV. Answer questions 1-20 in the revision booklet. Prepare for a test on this topic next term.', dueDate: '2026-07-15', class: '1A', status: 'Active', datePosted: '2026-06-07' },
+  { id: 'a5', subject: 'History', teacher: 'Mr. Kamau', title: 'Research Project — East African Trade', description: 'Research and write a 2-page report on the East African coastal trade in the 19th century. Include at least 3 references.', dueDate: '2026-07-25', class: '1A', status: 'Active', datePosted: '2026-06-06' },
+  { id: 'a6', subject: 'Kiswahili', teacher: 'Mr. Kipchoge', title: 'Insha — Siku Yangu Bora', description: 'Andika insha kuhusu "Siku Yangu Bora Shuleni" kwa maneno yasiyopungua 400. Tumia lugha safi na sahihi.', dueDate: '2026-07-19', class: '1A', status: 'Active', datePosted: '2026-06-05' },
+];
+
+export const STUDENT_ATTENDANCE_LOG = (() => {
+  const log = [];
+  const statuses = ['Present', 'Present', 'Present', 'Present', 'Present', 'Present', 'Present', 'Present', 'Late', 'Absent'];
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(2026, 3, 14); // Start from April 14
+    d.setDate(d.getDate() + i);
+    if (d.getDay() === 0 || d.getDay() === 6) continue; // Skip weekends
+    log.push({
+      id: `att-s-${i}`,
+      date: d.toISOString().slice(0, 10),
+      day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+    });
+  }
+  return log;
+})();
+
+export const STUDY_MATERIALS = [
+  { id: 'sm1', subject: 'Mathematics', title: 'Form 1 — Algebra Notes', type: 'PDF', size: '2.4 MB', uploadedBy: 'Mr. Omondi', date: '2026-05-20' },
+  { id: 'sm2', subject: 'Mathematics', title: 'Quadratic Equations Worksheet', type: 'PDF', size: '1.1 MB', uploadedBy: 'Mr. Omondi', date: '2026-06-01' },
+  { id: 'sm3', subject: 'English', title: 'A Doll\'s House — Study Guide', type: 'PDF', size: '3.8 MB', uploadedBy: 'Ms. Wanjiku', date: '2026-05-15' },
+  { id: 'sm4', subject: 'English', title: 'Essay Writing Tips & Examples', type: 'PDF', size: '1.5 MB', uploadedBy: 'Ms. Wanjiku', date: '2026-06-05' },
+  { id: 'sm5', subject: 'Biology', title: 'Cell Biology — Illustrated Notes', type: 'PDF', size: '5.2 MB', uploadedBy: 'Ms. Achieng', date: '2026-05-18' },
+  { id: 'sm6', subject: 'Chemistry', title: 'Periodic Table Reference Sheet', type: 'PDF', size: '0.8 MB', uploadedBy: 'Mr. Muthoni', date: '2026-05-22' },
+  { id: 'sm7', subject: 'Physics', title: 'Force & Motion — Summary Notes', type: 'PDF', size: '2.1 MB', uploadedBy: 'Ms. Njeri', date: '2026-05-25' },
+  { id: 'sm8', subject: 'History', title: 'East African History — Timeline', type: 'PDF', size: '1.9 MB', uploadedBy: 'Mr. Kamau', date: '2026-05-28' },
+  { id: 'sm9', subject: 'Kiswahili', title: 'Sarufi — Muhtasari', type: 'PDF', size: '1.3 MB', uploadedBy: 'Mr. Kipchoge', date: '2026-06-02' },
+  { id: 'sm10', subject: 'Geography', title: 'Map Reading Skills Guide', type: 'PDF', size: '4.0 MB', uploadedBy: 'Ms. Otieno', date: '2026-05-30' },
+];
+
+export const REVISION_DOWNLOADS = [
+  { id: 'rd1', subject: 'Mathematics', title: 'KCSE 2024 Mathematics Paper 1', year: '2024', type: 'Past Paper', size: '1.2 MB' },
+  { id: 'rd2', subject: 'Mathematics', title: 'KCSE 2024 Mathematics Paper 2', year: '2024', type: 'Past Paper', size: '1.4 MB' },
+  { id: 'rd3', subject: 'English', title: 'KCSE 2024 English Paper 1 & 2', year: '2024', type: 'Past Paper', size: '2.1 MB' },
+  { id: 'rd4', subject: 'Biology', title: 'KCSE 2024 Biology Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '3.5 MB' },
+  { id: 'rd5', subject: 'Chemistry', title: 'KCSE 2024 Chemistry Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '3.2 MB' },
+  { id: 'rd6', subject: 'Physics', title: 'KCSE 2024 Physics Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '2.8 MB' },
+  { id: 'rd7', subject: 'Mathematics', title: 'Form 1 End-Term Revision Booklet', year: '2026', type: 'Revision', size: '1.8 MB' },
+  { id: 'rd8', subject: 'English', title: 'Comprehension Practice Set', year: '2026', type: 'Revision', size: '0.9 MB' },
+  { id: 'rd9', subject: 'History', title: 'KCSE 2024 History Paper 1 & 2', year: '2024', type: 'Past Paper', size: '2.0 MB' },
+  { id: 'rd10', subject: 'Kiswahili', title: 'KCSE 2024 Kiswahili Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '2.5 MB' },
+];
+
+export const STUDENT_FEE_ACCOUNT = {
+  totalBilled: 49500,
+  totalPaid: 36135,
+  outstanding: 13365,
+  dueDate: '2026-06-20',
+  payments: [
+    { id: 'fp1', date: '2026-04-15', method: 'M-Pesa', ref: 'QGA3KT42', amount: 15000, status: 'Confirmed' },
+    { id: 'fp2', date: '2026-05-02', method: 'Bank Transfer', ref: 'EQB-66891', amount: 12000, status: 'Confirmed' },
+    { id: 'fp3', date: '2026-05-20', method: 'M-Pesa', ref: 'QGC7NM19', amount: 5135, status: 'Confirmed' },
+    { id: 'fp4', date: '2026-06-08', method: 'M-Pesa', ref: 'QGH4TX91', amount: 4000, status: 'Confirmed' },
+  ],
+  structure: [
+    { item: 'Tuition Fee', amount: 25000 },
+    { item: 'Boarding Fee', amount: 15000 },
+    { item: 'Activity Fee', amount: 3000 },
+    { item: 'Lab & Materials', amount: 2500 },
+    { item: 'Exam Fee', amount: 2000 },
+    { item: 'Development Levy', amount: 2000 },
+  ],
+};
+
 export { ASSESSMENTS };
