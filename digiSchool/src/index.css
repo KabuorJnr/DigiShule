@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #000000;
-  --primary-700: #1a1a1a;
-  --primary-900: #333333;
-  --accent: #000000;
+  --primary: #0D9488;
+  --primary-700: #0F766E;
+  --primary-900: #115E59;
+  --accent: #0D9488;
   --success: #107C10;
   --warning: #FFB900;
   --danger: #D13438;
-  --surface: #F5F5F5;
+  --surface: #F8FAFC;
   --card: #FFFFFF;
-  --text: #242424;
-  --text-secondary: #616161;
+  --text: #000000;
+  --text-secondary: #333333;
   --muted: #707070;
   --border: #E0E0E0;
   --border-light: #F0F0F0;
@@ -164,16 +164,25 @@ textarea.input {
   margin-bottom: 4px;
 }
 
-/* ---------- Cards ---------- */
+/* ---------- Cards & Claymorphism ---------- */
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease;
+  background: #fdfdfd;
+  border-radius: 16px;
+  box-shadow: 
+    6px 6px 12px #e2e8f0, 
+    -6px -6px 12px #ffffff, 
+    inset 2px 2px 4px rgba(255,255,255,0.9),
+    inset -2px -2px 4px rgba(0,0,0,0.03);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .card:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: 
+    8px 8px 16px #cbd5e1, 
+    -8px -8px 16px #ffffff, 
+    inset 2px 2px 4px rgba(255,255,255,0.9),
+    inset -2px -2px 4px rgba(0,0,0,0.03);
 }
 .card-pad {
   padding: 20px;

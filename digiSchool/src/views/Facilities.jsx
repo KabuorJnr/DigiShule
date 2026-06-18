@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
+import { Icon } from '../components/icons';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 
@@ -67,10 +68,10 @@ export default function Facilities({ store }) {
       />
 
       <div className="stat-tiles">
-        <KpiCard icon="🏛️" label="Total Facilities" value={totals.total} />
-        <KpiCard icon="✅" label="Operational" value={totals.operational} accent="#10B981" />
-        <KpiCard icon="🔧" label="Under Maintenance" value={totals.maintenance} accent="#F59E0B" />
-        <KpiCard icon="🪑" label="Total Capacity" value={totals.cap} />
+        <KpiCard iconComponent={<Icon name="building" size={24} />} label="Total Spaces" value={totals.total} />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Available" value={totals.operational} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="tool" size={24} />} label="Maintenance" value={totals.maintenance} accent="#F59E0B" />
+        <KpiCard iconComponent={<Icon name="users" size={24} />} label="Total Capacity" value={totals.cap} />
       </div>
 
       <div className="card card-pad">

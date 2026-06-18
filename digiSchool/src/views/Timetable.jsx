@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
+import { Icon } from '../components/icons';
 import { SUBJECTS, TEACHERS, DEPARTMENTS, DEPT_COLORS, CLASSES } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
@@ -197,10 +198,10 @@ export default function Timetable({ store }) {
         subtitle="Generate, edit and export class & teacher timetables"
         actions={
           <>
-            <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}>⚙️ Generate Timetable</button>
-            <button className="btn" onClick={exportPDF}>📄 Export PDF</button>
-            <button className="btn" onClick={exportExcel}>📊 Export Excel</button>
-            <button className="btn" onClick={() => setImportOpen(true)}>📥 Import CSV</button>
+            <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}><Icon name="settings" size={16} /> Generate Timetable</button>
+            <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
+            <button className="btn" onClick={exportExcel}><Icon name="chart" size={16} /> Export Excel</button>
+            <button className="btn" onClick={() => setImportOpen(true)}><Icon name="download" size={16} /> Import CSV</button>
           </>
         }
       />
@@ -258,7 +259,7 @@ export default function Timetable({ store }) {
                 onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, period: e.target.value } : x)))} />
               <input className="input" placeholder="Label" value={b.label} style={{ maxWidth: 240 }}
                 onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-              <button className="btn btn-icon" onClick={() => setBreaks((bs) => bs.filter((_, j) => j !== i))}>✕</button>
+              <button className="btn btn-icon" onClick={() => setBreaks((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button>
             </div>
           ))}
           <button className="btn btn-sm" onClick={() => setBreaks((bs) => [...bs, { period: '', label: 'Break' }])}>+ Add Break</button>
@@ -363,7 +364,7 @@ export default function Timetable({ store }) {
                         >
                           <div className="tt-cell-sub">{cell.subject}</div>
                           <div className="tt-cell-teacher">{cell.teacher}</div>
-                          {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}>⚠ Conflict</div>}
+                          {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
                         </td>
                       );
                     })}
@@ -496,7 +497,7 @@ function ImportModal({ onClose, notify }) {
           onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }}
           onClick={() => fileRef.current?.click()}
         >
-          <div style={{ fontSize: 28 }}>📥</div>
+          <div style={{ fontSize: 28, color: 'var(--primary)', marginBottom: 8 }}><Icon name="download" size={32} /></div>
           <p>Drag & drop a CSV file here, or click to browse.</p>
           <p style={{ fontSize: 12 }}>Expected columns: Subject, Teacher, Period, Day</p>
           <input ref={fileRef} type="file" accept=".csv" hidden onChange={(e) => onFile(e.target.files[0])} />

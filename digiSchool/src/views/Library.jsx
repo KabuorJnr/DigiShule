@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
+import { Icon } from '../components/icons';
 import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 
 export default function Library({ store }) {
@@ -92,10 +93,10 @@ export default function Library({ store }) {
       />
 
       <div className="stat-tiles">
-        <KpiCard icon="📚" label="Titles" value={totals.titles} sub="Catalogued" />
-        <KpiCard icon="📦" label="Total Copies" value={totals.copies} sub={`${totals.onLoan} on loan`} />
-        <KpiCard icon="🔄" label="Active Loans" value={loans.length} accent="#0369A1" />
-        <KpiCard icon="⏰" label="Overdue" value={totals.overdue} accent="#EF4444" sub="Needs follow-up" />
+        <KpiCard iconComponent={<Icon name="book" size={24} />} label="Titles" value={totals.titles} sub="Catalogued" />
+        <KpiCard iconComponent={<Icon name="folder" size={24} />} label="Total Copies" value={totals.copies} sub={`${totals.onLoan} on loan`} />
+        <KpiCard iconComponent={<Icon name="activity" size={24} />} label="Active Loans" value={loans.length} accent="#0369A1" />
+        <KpiCard iconComponent={<Icon name="clock" size={24} />} label="Overdue" value={totals.overdue} accent="#EF4444" sub="Needs follow-up" />
       </div>
 
       <div className="tabs" style={{ marginBottom: 16 }}>

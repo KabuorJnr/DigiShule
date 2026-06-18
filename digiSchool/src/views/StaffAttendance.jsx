@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
+import { Icon } from '../components/icons';
 import { fetchTable, upsertRow } from '../lib/api';
 import Modal from '../components/Modal';
 import { LEAVE_REQUESTS as SEED_LEAVE } from '../data/seed';
@@ -101,10 +102,10 @@ export default function StaffAttendance({ store, user }) {
 
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid var(--border)' }}>
         <button className={`tab${tab === 'attendance' ? ' active' : ''}`} onClick={() => setTab('attendance')}>
-          👥 Attendance
+          <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Attendance
         </button>
         <button className={`tab${tab === 'leave' ? ' active' : ''}`} onClick={() => setTab('leave')}>
-          📋 Leave Requests
+          <Icon name="clipboard" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Leave Requests
           {leaveTotals.pending > 0 && <Badge color="amber" style={{ marginLeft: 8 }}>{leaveTotals.pending}</Badge>}
         </button>
       </div>
@@ -112,10 +113,10 @@ export default function StaffAttendance({ store, user }) {
       {tab === 'attendance' && (
         <>
           <div className="stat-tiles">
-            <KpiCard icon="👥" label="Total Staff" value={totals.total} />
-            <KpiCard icon="✅" label="Present" value={totals.present} accent="#10B981" />
-            <KpiCard icon="❌" label="Absent" value={totals.absent} accent="#EF4444" />
-            <KpiCard icon="📋" label="On Leave" value={totals.leave} accent="#F59E0B" />
+            <KpiCard iconComponent={<Icon name="users" size={24} />} label="Total Staff" value={totals.total} />
+            <KpiCard iconComponent={<Icon name="check" size={24} />} label="Present" value={totals.present} accent="#10B981" />
+            <KpiCard iconComponent={<Icon name="x" size={24} />} label="Absent" value={totals.absent} accent="#EF4444" />
+            <KpiCard iconComponent={<Icon name="clipboard" size={24} />} label="On Leave" value={totals.leave} accent="#F59E0B" />
           </div>
 
           <div className="card card-pad">
@@ -153,10 +154,10 @@ export default function StaffAttendance({ store, user }) {
       {tab === 'leave' && (
         <>
           <div className="stat-tiles">
-            <KpiCard icon="📋" label="Total Requests" value={leaveTotals.total} />
-            <KpiCard icon="⏳" label="Pending" value={leaveTotals.pending} accent="#F59E0B" />
-            <KpiCard icon="✅" label="Approved" value={leaveTotals.approved} accent="#10B981" />
-            <KpiCard icon="❌" label="Rejected" value={leaveTotals.rejected} accent="#EF4444" />
+            <KpiCard iconComponent={<Icon name="clipboard" size={24} />} label="Total Requests" value={leaveTotals.total} />
+            <KpiCard iconComponent={<Icon name="clock" size={24} />} label="Pending" value={leaveTotals.pending} accent="#F59E0B" />
+            <KpiCard iconComponent={<Icon name="check" size={24} />} label="Approved" value={leaveTotals.approved} accent="#10B981" />
+            <KpiCard iconComponent={<Icon name="x" size={24} />} label="Rejected" value={leaveTotals.rejected} accent="#EF4444" />
           </div>
 
           <div className="card card-pad">
@@ -187,8 +188,8 @@ export default function StaffAttendance({ store, user }) {
                         <td>
                           {l.status === 'Pending' ? (
                             <div style={{ display: 'flex', gap: 6 }}>
-                              <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}>✓</button>
-                              <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}>✕</button>
+                              <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}><Icon name="check" size={14} /></button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}><Icon name="close" size={14} /></button>
                             </div>
                           ) : (
                             <span className="muted" style={{ fontSize: 11 }}>{l.approvedBy}</span>

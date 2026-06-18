@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader, Badge } from '../components/widgets';
+import { Icon } from '../components/icons';
 import { SUBJECTS, TEACHERS, CLASSES } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
@@ -95,10 +96,10 @@ export default function ExamSchedules({ store }) {
         subtitle="Plan, schedule and track examinations"
         actions={
           <>
-            <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>➕ Create New Schedule</button>
-            <button className="btn" onClick={exportPDF}>📄 Export PDF Timetable</button>
-            <button className="btn" onClick={exportExcel}>📊 Export Excel</button>
-            <button className="btn" onClick={() => notify('Import dialog (demo)', 'info', 'Import')}>📥 Import</button>
+            <button className="btn btn-primary" onClick={() => setCreateOpen(true)}><Icon name="plus" size={16} /> Schedule Exam</button>
+            <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
+            <button className="btn" onClick={exportExcel}><Icon name="chart" size={16} /> Export Excel</button>
+            <button className="btn" onClick={() => notify('Import dialog (demo)', 'info', 'Import')}><Icon name="download" size={16} /> Import</button>
           </>
         }
       />
@@ -133,8 +134,8 @@ export default function ExamSchedules({ store }) {
         <>
           <div style={{ marginBottom: 16 }}>
             <div className="seg">
-              <button className={mode === 'calendar' ? 'active' : ''} onClick={() => setMode('calendar')}>📅 Calendar View</button>
-              <button className={mode === 'list' ? 'active' : ''} onClick={() => setMode('list')}>📋 List View</button>
+              <button className={mode === 'calendar' ? 'active' : ''} onClick={() => setMode('calendar')}><Icon name="calendar" size={16} /> Calendar View</button>
+              <button className={mode === 'list' ? 'active' : ''} onClick={() => setMode('list')}><Icon name="list" size={16} /> List View</button>
             </div>
           </div>
 
@@ -201,7 +202,7 @@ export default function ExamSchedules({ store }) {
       {mainTab === 'venues' && (
         <div className="card" style={{ overflow: 'hidden' }}>
           <div style={{ padding: 14, display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="btn btn-primary btn-sm" onClick={() => setAddVenueOpen(true)}>➕ Add Venue</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setAddVenueOpen(true)}><Icon name="plus" size={14} /> Add Venue</button>
           </div>
           <div className="scroll-x">
             <table className="table">
@@ -350,7 +351,7 @@ function SessionRows({ rows, setRows, venues }) {
                   {TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}
                 </select>
               </td>
-              <td><button className="btn btn-icon btn-sm" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>✕</button></td>
+              <td><button className="btn btn-icon btn-sm" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button></td>
             </tr>
           ))}
         </tbody>

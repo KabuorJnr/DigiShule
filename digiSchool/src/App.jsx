@@ -383,6 +383,14 @@ export default function App() {
 
   const toggleNav = (id) => setExpandedNav(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const isNavActive = (navItem) => {
+    if (activeView !== navItem.view) return false;
+    if (navItem.tab && viewParams.tab !== navItem.tab) return false;
+    if (navItem.action && viewParams.action !== navItem.action) return false;
+    if (navItem.filter && viewParams.filter !== navItem.filter) return false;
+    return true;
+  };
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -421,7 +429,7 @@ export default function App() {
                 return (
                   <div key={item.id}>
                     <button
-                      className={`nav-item${activeView === item.view ? ' active' : ''}`}
+                      className={`nav-item${isNavActive(item) ? ' active' : ''}`}
                       onClick={() => {
                         if (hasSub) toggleNav(item.id);
                         else if (item.action === 'logout') handleLogout();
@@ -444,8 +452,8 @@ export default function App() {
                         {item.sub.map(subItem => (
                           <button
                             key={subItem.id}
-                            className={`nav-item${activeView === subItem.view ? ' active' : ''}`}
-                            style={{ padding: '6px 20px 6px 16px', minHeight: 32, fontSize: 13, opacity: activeView === subItem.view ? 1 : 0.7 }}
+                            className={`nav-item${isNavActive(subItem) ? ' active' : ''}`}
+                            style={{ padding: '6px 20px 6px 16px', minHeight: 32, fontSize: 13, opacity: isNavActive(subItem) ? 1 : 0.7 }}
                             onClick={() => {
                               if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
                               else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
@@ -518,12 +526,18 @@ export default function App() {
         {toasts.map((t) => (
           <div key={t.id} className={`toast ${t.type}`}>
             <span style={{ fontSize: 16 }}>
-              {t.type === 'success' ? '✅' : t.type === 'error' ? '⛔' : t.type === 'warning' ? '⚠️' : 'ℹ️'}
+              {t.type === 'success' ? <Icon name="check" size={16} /> : 
+               t.type === 'error' ? <Icon name="close" size={16} /> : 
+               t.type === 'warning' ? <Icon name="warning" size={16} /> : 
+               <Icon name="info" size={16} />}
             </span>
-            <div>
-              <div className="toast-title">{t.title}</div>
-              <div className="toast-msg">{t.message}</div>
+            <div style={{ flex: 1 }}>
+              {t.title && <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{t.title}</div>}
+              <div style={{ fontSize: 13, opacity: 0.9 }}>{t.message}</div>
             </div>
+            <button className="btn" style={{ background: 'transparent', border: 'none', color: 'inherit', opacity: 0.7, padding: 4 }} onClick={() => store.removeToast(t.id)}>
+              <Icon name="close" size={16} />
+            </button>
           </div>
         ))}
       </div>

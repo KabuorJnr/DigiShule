@@ -13,14 +13,14 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'overview', icon: '🏠', label: 'Dashboard', view: 'overview' }
+          { id: 'overview', icon: 'home', label: 'Dashboard', view: 'overview' }
         ]
       },
       {
         section: 'MANAGEMENT',
         items: [
           {
-            id: 'deputy_offices', icon: '🏢', label: 'Deputy Offices',
+            id: 'deputy_offices', icon: 'facilities', label: 'Deputy Offices',
             sub: [
               { id: 'deputy_academic', label: 'Deputy Academics', action: 'visit_academics' },
               { id: 'deputy_admin', label: 'Deputy Administration', action: 'visit_admin' },
@@ -28,21 +28,21 @@ export const ROLES = {
             ]
           },
           {
-            id: 'staff_management', icon: '👥', label: 'Staff Management',
+            id: 'staff_management', icon: 'users', label: 'Staff Management',
             sub: [
               { id: 'teaching_staff', label: 'Staff Attendance', view: 'staff' },
               { id: 'leave_management', label: 'Leave Management', view: 'staff' }
             ]
           },
           {
-            id: 'student_management', icon: '🎓', label: 'Student Management',
+            id: 'student_management', icon: 'student', label: 'Student Management',
             sub: [
               { id: 'admissions', label: 'Admissions', view: 'admissions' },
               { id: 'boarding', label: 'Class Rolls', view: 'admissions' }
             ]
           },
           {
-            id: 'academic', icon: '📚', label: 'Academic',
+            id: 'academic', icon: 'library', label: 'Academic',
             sub: [
               { id: 'timetable', label: 'Timetable', view: 'timetable' },
               { id: 'examinations', label: 'Examinations', view: 'exams' },
@@ -50,7 +50,7 @@ export const ROLES = {
             ]
           },
           {
-            id: 'finance_mgmt', icon: '💰', label: 'Finance',
+            id: 'finance_mgmt', icon: 'finance', label: 'Finance',
             sub: [
               { id: 'accounts', label: 'Accounts Office', view: 'finance' },
               { id: 'fee_structures', label: 'Fee Structures', view: 'finance' }
@@ -61,30 +61,30 @@ export const ROLES = {
       {
         section: 'SUPPORT OFFICES',
         items: [
-          { id: 'clinic', icon: '🏥', label: 'Health Center', view: 'clinic' },
-          { id: 'library', icon: '📚', label: 'Library', view: 'library' },
-          { id: 'facilities', icon: '🏛️', label: 'Facilities', view: 'facilities' }
+          { id: 'clinic', icon: 'clinic', label: 'Health Center', view: 'clinic' },
+          { id: 'library', icon: 'library', label: 'Library', view: 'library' },
+          { id: 'facilities', icon: 'facilities', label: 'Facilities', view: 'facilities' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'notices' },
-          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
+          { id: 'notices', icon: 'bell', label: 'Notices & Announcements', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
         section: 'QUICK ACTIONS',
         items: [
-          { id: 'new_admission', icon: '➕', label: 'New Admission', view: 'admissions' },
-          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' }
+          { id: 'new_admission', icon: 'plus', label: 'New Admission', view: 'admissions' },
+          { id: 'create_exam', icon: 'plus', label: 'Create Exam', view: 'create_exam' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: '⚙️', label: 'System Settings', view: 'settings' },
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'settings', icon: 'settings', label: 'System Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -99,26 +99,26 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'acad_dash', icon: '🏠', label: 'Dashboard', view: 'academics_dashboard' },
-          { id: 'timetable', icon: '📅', label: 'Timetable', view: 'timetable' },
-          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
-          { id: 'create_exam', icon: '⊕', label: 'Create Exam', view: 'create_exam' },
-          { id: 'gradebook', icon: '📊', label: 'Gradebook', view: 'gradebook' },
-          { id: 'staff', icon: '👥', label: 'Staff', view: 'staff' }
+          { id: 'acad_dash', icon: 'home', label: 'Dashboard', view: 'academics_dashboard' },
+          { id: 'timetable', icon: 'calendar', label: 'Timetable', view: 'timetable' },
+          { id: 'exams', icon: 'exam', label: 'Exam Schedules', view: 'exams' },
+          { id: 'create_exam', icon: 'plus', label: 'Create Exam', view: 'create_exam' },
+          { id: 'gradebook', icon: 'dashboard', label: 'Gradebook', view: 'gradebook' },
+          { id: 'staff', icon: 'users', label: 'Staff', view: 'staff' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: '📅', label: 'Calendar', view: 'school_calendar' }
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'settings', icon: 'settings', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -133,27 +133,27 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'admin_dash', icon: '🏠', label: 'Dashboard', view: 'admin_dashboard' },
-          { id: 'staff', icon: '👥', label: 'Staff Attendance', view: 'staff' },
-          { id: 'admissions', icon: '🎓', label: 'Student Registry', view: 'admissions' },
-          { id: 'facilities', icon: '🏛️', label: 'Facilities', view: 'facilities' },
-          { id: 'finance', icon: '💰', label: 'Finance', view: 'finance' },
-          { id: 'clinic', icon: '🏥', label: 'Health Center', view: 'clinic' },
-          { id: 'library', icon: '📚', label: 'Library', view: 'library' }
+          { id: 'admin_dash', icon: 'home', label: 'Dashboard', view: 'admin_dashboard' },
+          { id: 'staff', icon: 'users', label: 'Staff Attendance', view: 'staff' },
+          { id: 'admissions', icon: 'student', label: 'Student Registry', view: 'admissions' },
+          { id: 'facilities', icon: 'facilities', label: 'Facilities', view: 'facilities' },
+          { id: 'finance', icon: 'finance', label: 'Finance', view: 'finance' },
+          { id: 'clinic', icon: 'clinic', label: 'Health Center', view: 'clinic' },
+          { id: 'library', icon: 'library', label: 'Library', view: 'library' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: '📅', label: 'Calendar', view: 'school_calendar' }
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: '⚙️', label: 'Settings', view: 'settings' },
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'settings', icon: 'settings', label: 'Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -227,21 +227,21 @@ export const ROLES = {
       {
         section: 'REGISTRY',
         items: [
-          { id: 'registrar', icon: '📋', label: 'Student Register', view: 'registrar' },
-          { id: 'admissions', icon: '🎓', label: 'Admissions (Old)', view: 'admissions' }
+          { id: 'registrar', icon: 'exam', label: 'Student Register', view: 'registrar' },
+          { id: 'admissions', icon: 'student', label: 'Admissions (Old)', view: 'admissions' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices & Memos', view: 'notices' },
-          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
+          { id: 'notices', icon: 'bell', label: 'Notices & Memos', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -256,14 +256,14 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'library', icon: '📚', label: 'Library', view: 'library' },
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'library', icon: 'library', label: 'Library', view: 'library' },
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -278,24 +278,31 @@ export const ROLES = {
       {
         section: 'TEACHING',
         items: [
-          { id: 'teacher', icon: '🏠', label: 'My Dashboard', view: 'teacher' },
-          { id: 'timetable', icon: '📅', label: 'My Timetable', view: 'timetable' },
-          { id: 'gradebook', icon: '📊', label: 'Gradebook', view: 'gradebook' },
-          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
-          { id: 'teacher_resources', icon: '📁', label: 'Assignments & Materials', view: 'teacher_resources' }
+          { id: 'teacher', icon: 'home', label: 'My Dashboard', view: 'teacher' },
+          { id: 'timetable', icon: 'calendar', label: 'My Timetable', view: 'timetable' },
+          { id: 'exams', icon: 'book', label: 'Exam Schedules', view: 'exams' },
+          { id: 'teacher_resources', icon: 'folder', label: 'Assignments & Materials', view: 'teacher_resources' }
+        ]
+      },
+      {
+        section: 'GRADEBOOK',
+        items: [
+          { id: 'result_entry', icon: 'pen', label: 'Result Entry', view: 'gradebook', tab: 'entry' },
+          { id: 'result_analysis', icon: 'analytics', label: 'Result Analysis', view: 'gradebook', tab: 'analysis' },
+          { id: 'result_overview', icon: 'dashboard', label: 'Overview', view: 'gradebook', tab: 'overview' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -310,13 +317,13 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'student', icon: '🎓', label: 'My Portal', view: 'student' }
+          { id: 'student', icon: 'student', label: 'My Portal', view: 'student' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -331,14 +338,14 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'parent', icon: '👪', label: 'My Child', view: 'parent' },
-          { id: 'notices', icon: '📢', label: 'Notices & Messages', view: 'notices' }
+          { id: 'parent', icon: 'users', label: 'My Child', view: 'parent' },
+          { id: 'notices', icon: 'bell', label: 'Notices & Messages', view: 'notices' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],
@@ -353,14 +360,14 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'clinic', icon: '🏥', label: 'Clinic', view: 'clinic' },
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'clinic', icon: 'clinic', label: 'Clinic', view: 'clinic' },
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],

@@ -5,6 +5,8 @@ import Modal from '../components/Modal';
 import { supabase } from '../lib/supabaseClient';
 import { getActiveSchoolId } from '../lib/api';
 import { Bell, Plus, ChevronDown, ChevronUp, Loader } from 'lucide-react';
+import { Icon } from '../components/icons';
+import { exportTablePDF } from '../utils/exporters';
 
 const ROLE_COLOR = {
   'Deputy Academics': 'blue', 'Deputy Admin': 'green',
@@ -28,7 +30,36 @@ const audienceMap = {
 };
 
 export default function Notices({ store, user }) {
-  const { notify } = store;
+  const { notify, feeStructure, settings } = store;
+  
+  const downloadFeeStructure = () => {
+    if (!feeStructure || feeStructure.length === 0) return;
+    const head = ['Fee Component', 'Form 1 (KES)', 'Form 2 (KES)', 'Form 3 (KES)', 'Form 4 (KES)'];
+    const body = feeStructure.map(f => [
+      f.component,
+      f.f1.toLocaleString(),
+      f.f2.toLocaleString(),
+      f.f3.toLocaleString(),
+      f.f4.toLocaleString()
+    ]);
+    const totalRow = [
+      'TOTAL TERM FEES',
+      feeStructure.reduce((s, f) => s + (f.f1 || 0), 0).toLocaleString(),
+      feeStructure.reduce((s, f) => s + (f.f2 || 0), 0).toLocaleString(),
+      feeStructure.reduce((s, f) => s + (f.f3 || 0), 0).toLocaleString(),
+      feeStructure.reduce((s, f) => s + (f.f4 || 0), 0).toLocaleString(),
+    ];
+    body.push(totalRow);
+
+    exportTablePDF({
+      school: settings,
+      title: 'OFFICIAL FEE STRUCTURE',
+      subtitle: `Academic Year: ${new Date().getFullYear()}`,
+      head,
+      body,
+      filename: `Fee_Structure_${new Date().getFullYear()}.pdf`
+    });
+  };
   const [dbNotices, setDbNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPost, setShowPost] = useState(false);
@@ -181,7 +212,14 @@ export default function Notices({ store, user }) {
                 marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)',
                 fontSize: 14, lineHeight: 1.7, color: '#334155', whiteSpace: 'pre-wrap',
               }}>
-                {n.body}
+                {n.body.replace('[ATTACHMENT:FEE_STRUCTURE]', '')}
+                {n.body.includes('[ATTACHMENT:FEE_STRUCTURE]') && (
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); downloadFeeStructure(); }}>
+                      <Icon name="download" size={16} style={{ marginRight: 6 }} /> Download Fee Structure PDF
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

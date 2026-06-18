@@ -520,3 +520,21 @@
 .stat-tiles { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
 @media (max-width: 1100px) { .stat-tiles { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .stat-tiles { grid-template-columns: 1fr; } }
+
+/* ---------- Print Styles ---------- */
+@media print {
+  .sidebar, .topbar, .no-print {
+    display: none !important;
+  }
+  .main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  .layout {
+    display: block !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

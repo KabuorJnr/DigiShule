@@ -3,7 +3,9 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
-import { PageHeader, Badge } from '../components/widgets';
+import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
+import Modal from '../components/Modal';
+import { Icon } from '../components/icons';
 import { CLASSES, SUBJECTS } from '../data/seed';
 import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
@@ -143,10 +145,11 @@ export default function Gradebook({ store }) {
         title="Gradebook Review"
         subtitle="Inspect, edit and analyse student performance"
         actions={
-          <>
-            <button className="btn" onClick={exportPDF}>📄 Export Gradebook PDF</button>
-            <button className="btn" onClick={exportExcel}>📊 Export Excel</button>
-          </>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export Detailed</button>
+            <button className="btn"><Icon name="chart" size={16} /> Summary Stats</button>
+            <button className="btn"><Icon name="print" size={16} /> Print Slips</button>
+          </div>
         }
       />
 
@@ -174,7 +177,7 @@ export default function Gradebook({ store }) {
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
           <strong>{selected.length} selected for report cards</strong>
-          <button className="btn btn-primary btn-sm" onClick={generateReportCards}>🖨️ Generate Report Cards</button>
+          <button className="btn btn-primary btn-sm" onClick={generateReportCards}><Icon name="print" size={16} style={{ marginRight: 6 }} /> Generate Report Cards</button>
         </div>
         <div className="scroll-x">
           <table className="table">
@@ -276,7 +279,7 @@ export default function Gradebook({ store }) {
                 )}
               </div>
             ))}
-            {atRisk.length === 0 && <span className="muted">No at-risk students in this subject. 🎉</span>}
+            {atRisk.length === 0 && <span className="muted">No at-risk students in this subject. <Icon name="check" size={16} style={{ verticalAlign: 'text-bottom' }} /></span>}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PageHeader } from '../components/widgets';
+import { PageHeader, KpiCard, Badge } from '../components/widgets';
+import { Icon } from '../components/icons';
 
 export default function CreateExam({ store }) {
   const { navigate, notify } = store;
@@ -15,7 +16,7 @@ export default function CreateExam({ store }) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <div style={{ background: '#e0e7ff', color: '#0052cc', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-          ⊕
+          <Icon name="plus" size={20} />
         </div>
         <div>
           <h2 style={{ margin: 0, color: '#0052cc', fontSize: 22 }}>Create Exam</h2>
@@ -25,7 +26,7 @@ export default function CreateExam({ store }) {
 
       <div style={{ background: '#0052cc', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <span style={{ fontSize: 28, background: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 8 }}>🎓</span>
+          <span style={{ fontSize: 28, background: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 8 }}><Icon name="graduation-cap" size={24} color="#fff" /></span>
           <div>
             <h3 style={{ margin: 0, fontSize: 18 }}>Principal</h3>
             <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
@@ -35,8 +36,8 @@ export default function CreateExam({ store }) {
           </div>
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
-          <div style={{ marginBottom: 4 }}>📅 Monday, June 15, 2026</div>
-          <div>🎓 Term: Term 1</div>
+          <div style={{ marginBottom: 4 }}><Icon name="calendar" size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Monday, June 15, 2026</div>
+          <div><Icon name="graduation-cap" size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Term: Term 1</div>
         </div>
       </div>
 
@@ -57,7 +58,7 @@ export default function CreateExam({ store }) {
         {/* Left Column - Form */}
         <div>
           <h3 style={{ color: '#0052cc', marginTop: 0, marginBottom: 16, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>+</span> Exam Details
+            <span><Icon name="plus" size={16} /></span> Exam Details
           </h3>
           
           <div className="grid grid-2" style={{ gap: 16 }}>
@@ -114,13 +115,13 @@ export default function CreateExam({ store }) {
           </div>
 
           <h3 style={{ color: '#0052cc', marginTop: 32, marginBottom: 16, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            ⏱ Exam Scope
+            <Icon name="clock" size={16} /> Exam Scope
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <label className="card" style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', border: scope === 'school' ? '1px solid #0052cc' : '1px solid #eef2f7', background: scope === 'school' ? '#f8fafc' : '#fff' }}>
               <input type="radio" name="scope" value="school" checked={scope === 'school'} onChange={() => setScope('school')} style={{ width: 18, height: 18, accentColor: '#0052cc' }} />
               <div>
-                <strong style={{ color: scope === 'school' ? '#0052cc' : '#0f172a' }}>🏫 School Wide</strong>
+                <strong style={{ color: scope === 'school' ? '#0052cc' : '#0f172a' }}><Icon name="facilities" size={16} style={{ verticalAlign: 'text-bottom', marginRight: 4 }} /> School Wide</strong>
                 <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>This exam will be created for all classes and subjects in the school</div>
               </div>
             </label>
@@ -128,7 +129,7 @@ export default function CreateExam({ store }) {
             <label className="card" style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', border: scope === 'class' ? '1px solid #0052cc' : '1px solid #eef2f7', background: scope === 'class' ? '#f8fafc' : '#fff' }}>
               <input type="radio" name="scope" value="class" checked={scope === 'class'} onChange={() => setScope('class')} style={{ width: 18, height: 18, accentColor: '#0052cc' }} />
               <div>
-                <strong style={{ color: scope === 'class' ? '#0052cc' : '#0f172a' }}>👥 Specific Class</strong>
+                <strong style={{ color: scope === 'class' ? '#0052cc' : '#0f172a' }}><Icon name="users" size={16} style={{ verticalAlign: 'text-bottom', marginRight: 4 }} /> Specific Class</strong>
                 <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Create this exam for a specific class only</div>
               </div>
             </label>
@@ -136,7 +137,7 @@ export default function CreateExam({ store }) {
             <label className="card" style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', border: scope === 'subjects' ? '1px solid #0052cc' : '1px solid #eef2f7', background: scope === 'subjects' ? '#f8fafc' : '#fff' }}>
               <input type="radio" name="scope" value="subjects" checked={scope === 'subjects'} onChange={() => setScope('subjects')} style={{ width: 18, height: 18, accentColor: '#0052cc' }} />
               <div>
-                <strong style={{ color: scope === 'subjects' ? '#0052cc' : '#0f172a' }}>📚 Specific Subjects</strong>
+                <strong style={{ color: scope === 'subjects' ? '#0052cc' : '#0f172a' }}><Icon name="library" size={16} style={{ verticalAlign: 'text-bottom', marginRight: 4 }} /> Specific Subjects</strong>
                 <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Create this exam for specific subjects across all classes</div>
               </div>
             </label>
@@ -151,8 +152,8 @@ export default function CreateExam({ store }) {
           </div>
 
           <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-            <button className="btn btn-primary" style={{ background: '#0052cc', border: 'none', padding: '10px 20px' }} onClick={handleCreate}>
-              🔒 Create Exam
+            <button className="btn btn-primary" style={{ background: '#0052cc', border: 'none', padding: '10px 20px', color: '#fff' }} onClick={handleCreate}>
+              <Icon name="lock" size={16} style={{ marginRight: 6 }} /> Create Exam
             </button>
             <button className="btn" style={{ padding: '10px 20px' }} onClick={() => navigate('exams')}>
               Cancel
@@ -160,7 +161,7 @@ export default function CreateExam({ store }) {
           </div>
           
           <div className="card card-pad" style={{ marginTop: 32, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', gap: 12 }}>
-            <div style={{ fontSize: 20 }}>ℹ️</div>
+            <div style={{ fontSize: 20 }}><Icon name="info" size={20} /></div>
             <div style={{ fontSize: 13, color: '#475569' }}>
               <strong style={{ color: '#0f172a' }}>Exam Creation Tips:</strong>
               <ul style={{ paddingLeft: 20, margin: '8px 0 0 0' }}>

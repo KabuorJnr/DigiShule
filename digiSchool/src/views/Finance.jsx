@@ -12,7 +12,8 @@ import { Icon } from '../components/icons';
 const TABS = [
   { id: 'invoices', label: 'Invoices & Billing' },
   { id: 'payments', label: 'Payments' },
-  { id: 'fee_structure', label: 'Statements & Print' },
+  { id: 'statements', label: 'Student Statements' },
+  { id: 'fee_structure', label: 'School Fee Structure' },
   { id: 'expenses', label: 'Expense Management' },
   { id: 'reports', label: 'Reports & Analysis' }
 ];
@@ -76,7 +77,8 @@ export default function Finance({ store, user, params = {} }) {
 
       {activeTab === 'invoices' && <BillingTab invoices={invoices} setInvoices={setInvoices} notify={notify} params={params} students={students} />}
       {activeTab === 'payments' && <PaymentsTab payments={payments} invoices={invoices} setPayments={setPayments} notify={notify} params={params} students={students} />}
-      {activeTab === 'fee_structure' && <StatementsTab students={students} invoices={invoices} payments={payments} store={store} />}
+      {activeTab === 'statements' && <StatementsTab students={students} invoices={invoices} payments={payments} store={store} />}
+      {activeTab === 'fee_structure' && <FeeStructureTab store={store} user={user} />}
       {activeTab === 'expenses' && <ExpensesTab expenses={expenses} setExpenses={setExpenses} user={user} notify={notify} params={params} store={store} />}
       {activeTab === 'reports' && <ReportsTab invoices={invoices} payments={payments} expenses={expenses} />}
 
@@ -631,6 +633,126 @@ function ReportsTab({ invoices, payments, expenses }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// FEE STRUCTURE TAB
+// -----------------------------------------------------------------------------
+function FeeStructureTab({ store, user }) {
+  const { notify } = store;
+  const feeStructure = store.feeStructure || [];
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSendToParents = async () => {
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+      const { getActiveSchoolId } = await import('../lib/api');
+      
+      const row = {
+        title: 'Fee Structure - Current Term',
+        message: 'The official fee structure for this term is now available.',
+        body: 'Dear Parents,\n\nPlease find attached the official fee structure for the current term. You can download the PDF by clicking the button below.\n\n[ATTACHMENT:FEE_STRUCTURE]',
+        posted_by: user?.name || 'Administration',
+        role: user?.dept || user?.role || 'Finance',
+        audience: ['parents'],
+        school_id: getActiveSchoolId(),
+        created_at: new Date().toISOString()
+      };
+      
+      await supabase.from('notifications').insert(row);
+      notify('Fee structure sent to Parents Portal successfully!', 'success');
+    } catch (e) {
+      notify(`Failed to send notification: ${e.message}`, 'error');
+    }
+  };
+
+  return (
+    <div>
+      <div className="card card-pad no-print" style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="section-title" style={{ margin: 0 }}>School Fee Structure</div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-primary" onClick={handleSendToParents}>
+              <Icon name="message" size={16} style={{ marginRight: 6 }} /> Send to Parents
+            </button>
+            <button className="btn" onClick={handlePrint}>
+              <Icon name="print" size={16} style={{ marginRight: 6 }} /> Print / Export PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Printable Area */}
+      <div className="printable-fee-structure card card-pad" style={{ background: '#fff', color: '#000' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: 16, marginBottom: 24 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            {store.settings.logo && <img src={store.settings.logo} alt="School Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />}
+            <div>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>{store.settings.name || 'Your School Name'}</h1>
+              <div style={{ fontSize: 13, color: '#333' }}>{store.settings.address || 'P.O Box 123, Nairobi'} | {store.settings.phone || '0700000000'} | {store.settings.email || 'info@school.com'}</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ margin: 0, fontSize: 20, color: '#000' }}>OFFICIAL FEE STRUCTURE</h2>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Academic Year: {new Date().getFullYear()}</div>
+          </div>
+        </div>
+
+        <table className="table" style={{ width: '100%', marginBottom: 32, borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #000' }}>
+              <th style={{ padding: '12px 8px', textAlign: 'left' }}>Fee Component</th>
+              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Form 1 (KES)</th>
+              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Form 2 (KES)</th>
+              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Form 3 (KES)</th>
+              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Form 4 (KES)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feeStructure.map((item, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: '12px 8px', fontWeight: 600 }}>{item.component}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f1)}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f2)}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f3)}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f4)}</td>
+              </tr>
+            ))}
+            <tr style={{ borderTop: '2px solid #000', backgroundColor: '#f8fafc' }}>
+              <td style={{ padding: '12px 8px', fontWeight: 800 }}>TOTAL Term Fees</td>
+              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f1 || 0), 0))}</td>
+              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f2 || 0), 0))}</td>
+              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f3 || 0), 0))}</td>
+              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f4 || 0), 0))}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{ marginTop: 40 }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: 14 }}>Payment Methods:</h4>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.6 }}>
+            <li><strong>Bank Deposit:</strong> KCB Bank, Account: 1122334455, Branch: Nairobi</li>
+            <li><strong>M-Pesa Paybill:</strong> Business No: 123456, Account No: Student Admission Number</li>
+          </ul>
+        </div>
+      </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * { visibility: hidden; }
+          .printable-fee-structure, .printable-fee-structure * { visibility: visible; }
+          .printable-fee-structure { position: absolute; left: 0; top: 0; width: 100%; margin: 0; border: none; box-shadow: none; }
+          .no-print { display: none !important; }
+          .sidebar, .topbar { display: none !important; }
+          .layout { display: block !important; padding: 0 !important; }
+          .main { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+        }
+      `}} />
     </div>
   );
 }

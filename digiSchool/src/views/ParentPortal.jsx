@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
+import Modal from '../components/Modal';
+import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS, ATTENDANCE_RECORDS } from '../data/seed';
-import { fetchTable } from '../lib/api';
+import { fetchTable, upsertRow } from '../lib/api';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
@@ -10,26 +12,29 @@ const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 export default function ParentPortal({ store }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  // RLS scopes a parent to their own child, so it's the only row returned.
   const child = students[0];
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [payForm, setPayForm] = useState({ amount: '', method: 'M-Pesa' });
 
   useEffect(() => {
     if (!child?.adm) return;
     let active = true;
-    Promise.all([fetchTable('clinicVisits'), fetchTable('disciplinaryRecords')])
-      .then(([visits, cases]) => {
+    Promise.all([fetchTable('clinicVisits'), fetchTable('disciplinaryRecords'), fetchTable('financePayments')])
+      .then(([visits, cases, pays]) => {
         if (!active) return;
         setHealthRecords((visits || []).filter((v) => v.adm === child.adm));
         setDisciplinary((cases || []).filter((c) => c.adm === child.adm));
+        setPayments((pays || []).filter((p) => p.student_id === child.id));
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [child?.adm]);
+  }, [child?.adm, child?.id]);
 
   const subjects = useMemo(() => {
     if (!child) return [];
@@ -50,16 +55,39 @@ export default function ParentPortal({ store }) {
   const latestAtt = ATTENDANCE_RECORDS[ATTENDANCE_RECORDS.length - 1];
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
-  const paid = Math.round(termFees * 0.73);
+  // Calculate paid dynamically instead of fixed seed
+  const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0) || Math.round(termFees * 0.73);
   const balance = termFees - paid;
 
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
+
+  const handlePayFees = async () => {
+    if (!payForm.amount) return store.notify('Please enter an amount.', 'error');
+    try {
+      const payment = {
+        id: `pay_${Date.now()}`,
+        student_id: child.id,
+        amount: Number(payForm.amount),
+        method: payForm.method,
+        ref: 'PORTAL-PAY',
+        date: new Date().toISOString().slice(0, 10),
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('financePayments', payment);
+      setPayments(prev => [...prev, payment]);
+      store.notify(`Payment of KES ${payment.amount} successful!`);
+      setPayModalOpen(false);
+      setPayForm({ amount: '', method: 'M-Pesa' });
+    } catch (e) {
+      store.notify(`Payment failed: ${e.message}`, 'error');
+    }
+  };
 
   if (!child) {
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', marginTop: 40 }}>
         <div style={{ width: 80, height: 80, background: '#f8d7da', color: '#dc3545', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-          <AlertTriangle size={32} />
+          <Icon name="warning" size={32} />
         </div>
         <h2 style={{ margin: '0 0 10px' }}>No Linked Student Record Found</h2>
         <p className="muted" style={{ maxWidth: 400, margin: '0 auto' }}>
@@ -74,10 +102,10 @@ export default function ParentPortal({ store }) {
       <PageHeader title="My Child" subtitle={`${child.name} · ${child.adm} · Form ${child.class}`} />
 
       <div className="stat-tiles">
-        <KpiCard icon="📊" label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
-        <KpiCard icon="✅" label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
-        <KpiCard icon="💰" label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
-        <KpiCard icon="📝" label="Upcoming Exams" value={upcomingExams.length} accent="#F59E0B" />
+        <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
+        <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Upcoming Exams" value={upcomingExams.length} accent="#F59E0B" />
       </div>
 
       <div className="grid grid-2" style={{ alignItems: 'start' }}>
@@ -104,7 +132,10 @@ export default function ParentPortal({ store }) {
 
         <div>
           <div className="card card-pad" style={{ marginBottom: 14 }}>
-            <div className="section-title">Fee Statement</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className="section-title" style={{ margin: 0 }}>Fee Statement</div>
+              <button className="btn btn-primary btn-sm" onClick={() => setPayModalOpen(true)}>Pay Fees</button>
+            </div>
             <table className="table">
               <tbody>
                 <tr><td className="muted">Term Total</td><td style={{ fontWeight: 700 }}>KES {termFees.toLocaleString()}</td></tr>
@@ -184,6 +215,32 @@ export default function ParentPortal({ store }) {
           </div>
         </div>
       </div>
+
+      {payModalOpen && (
+        <Modal title="Pay School Fees" onClose={() => setPayModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setPayModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handlePayFees}>Confirm Payment</button>
+          </>
+        }>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label">Amount (KES)</label>
+              <input type="number" className="input" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))} placeholder="e.g. 5000" />
+            </div>
+            <div>
+              <label className="field-label">Payment Method</label>
+              <select className="select" value={payForm.method} onChange={e => setPayForm(f => ({ ...f, method: e.target.value }))}>
+                <option>M-Pesa</option>
+                <option>Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+          <p className="muted" style={{ marginTop: 16, fontSize: 13 }}>
+            Payments made here will automatically reflect on the finance portal.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }
