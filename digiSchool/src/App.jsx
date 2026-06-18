@@ -435,7 +435,7 @@ export default function App() {
                       }}
                       title={item.label}
                     >
-                      <span className="nav-icon">{NAV_ICON_MAP[item.icon] ? <Icon name={NAV_ICON_MAP[item.icon]} size={16} /> : item.icon}</span>
+                      <span className="nav-icon"><Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={16} fallback={item.icon} /></span>
                       {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
                       {!collapsed && hasSub && (isExpanded ? <ChevronDown size={14} style={{ opacity: 0.5 }} /> : <ChevronRight size={14} style={{ opacity: 0.5 }} />)}
                     </button>

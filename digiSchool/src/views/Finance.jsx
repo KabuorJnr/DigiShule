@@ -7,6 +7,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { fmtKES } from '../data/modules';
 import { fetchTable, upsertRow } from '../lib/api';
+import { Icon } from '../components/icons';
 
 const TABS = [
   { id: 'invoices', label: 'Invoices & Billing' },
@@ -339,7 +340,9 @@ function StatementsTab({ students, invoices, payments, store }) {
               {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.adm_no})</option>)}
             </select>
           </div>
-          <button className="btn btn-primary" disabled={!selectedStudent} onClick={handlePrint}>🖨️ Print Statement</button>
+          <button className="btn btn-primary" disabled={!selectedStudent} onClick={handlePrint}>
+            <Icon name="file" size={16} style={{ marginRight: 6 }} /> Print Statement
+          </button>
         </div>
       </div>
 
@@ -559,10 +562,10 @@ function ReportsTab({ invoices, payments, expenses }) {
   return (
     <div>
       <div className="stat-tiles" style={{ marginBottom: 24 }}>
-        <KpiCard icon="🧾" label="Total Billed" value={fmtKES(totalBilled)} accent="#0078D4" />
-        <KpiCard icon="💰" label="Total Collected" value={fmtKES(totalCollected)} accent="#10B981" />
-        <KpiCard icon="💸" label="Approved Expenses" value={fmtKES(totalExpenses)} accent="#EF4444" />
-        <KpiCard icon="⚖️" label="Net Cash Flow" value={fmtKES(cashFlow)} accent={cashFlow >= 0 ? '#10B981' : '#EF4444'} />
+        <KpiCard iconComponent={<Icon name="file" size={24} />} label="Total Billed" value={fmtKES(totalBilled)} accent="#0078D4" />
+        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Total Collected" value={fmtKES(totalCollected)} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="payment" size={24} />} label="Approved Expenses" value={fmtKES(totalExpenses)} accent="#EF4444" />
+        <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Net Cash Flow" value={fmtKES(cashFlow)} accent={cashFlow >= 0 ? '#10B981' : '#EF4444'} />
       </div>
 
       <div className="grid grid-2">

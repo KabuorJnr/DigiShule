@@ -168,51 +168,51 @@ export const ROLES = {
       {
         section: 'INVOICES & BILLING',
         items: [
-          { id: 'all_invoices', icon: '🧾', label: 'All Invoices', view: 'finance_dashboard', tab: 'invoices' },
-          { id: 'generate_invoice', icon: '➕', label: 'Generate Invoice', view: 'finance_dashboard', tab: 'invoices', action: 'generate_invoice' },
-          { id: 'bulk_invoicing', icon: '📦', label: 'Bulk Invoicing', view: 'finance_dashboard', tab: 'invoices', action: 'bulk_invoice' },
-          { id: 'overdue_invoices', icon: '⚠️', label: 'Overdue Invoices', view: 'finance_dashboard', tab: 'invoices', filter: 'overdue' }
+          { id: 'all_invoices', icon: 'file', label: 'All Invoices', view: 'finance_dashboard', tab: 'invoices' },
+          { id: 'generate_invoice', icon: 'plus', label: 'Generate Invoice', view: 'finance_dashboard', tab: 'invoices', action: 'generate_invoice' },
+          { id: 'bulk_invoicing', icon: 'folder', label: 'Bulk Invoicing', view: 'finance_dashboard', tab: 'invoices', action: 'bulk_invoice' },
+          { id: 'overdue_invoices', icon: 'warning', label: 'Overdue Invoices', view: 'finance_dashboard', tab: 'invoices', filter: 'overdue' }
         ]
       },
       {
         section: 'PAYMENTS',
         items: [
-          { id: 'all_payments', icon: '💳', label: 'All Payments', view: 'finance_dashboard', tab: 'payments' },
-          { id: 'record_payments', icon: '💰', label: 'Record Payments', view: 'finance_dashboard', tab: 'payments', action: 'record_payment' },
-          { id: 'pending_payments', icon: '⏳', label: 'Pending Payments', view: 'finance_dashboard', tab: 'payments', filter: 'pending' },
-          { id: 'reconciliation', icon: '⚖️', label: 'Reconciliation', view: 'finance_dashboard', tab: 'payments', action: 'reconcile' }
+          { id: 'all_payments', icon: 'payment', label: 'All Payments', view: 'finance_dashboard', tab: 'payments' },
+          { id: 'record_payments', icon: 'finance', label: 'Record Payments', view: 'finance_dashboard', tab: 'payments', action: 'record_payment' },
+          { id: 'pending_payments', icon: 'clock', label: 'Pending Payments', view: 'finance_dashboard', tab: 'payments', filter: 'pending' },
+          { id: 'reconciliation', icon: 'chart', label: 'Reconciliation', view: 'finance_dashboard', tab: 'payments', action: 'reconcile' }
         ]
       },
       {
         section: 'FEE STRUCTURE',
         items: [
-          { id: 'fee_statements', icon: '🖨️', label: 'Fee Statements & Print', view: 'finance_dashboard', tab: 'fee_structure' }
+          { id: 'fee_statements', icon: 'clipboard', label: 'Fee Statements & Print', view: 'finance_dashboard', tab: 'fee_structure' }
         ]
       },
       {
         section: 'EXPENSE MANAGEMENT',
         items: [
-          { id: 'all_expenses', icon: '💸', label: 'All Expenses', view: 'finance_dashboard', tab: 'expenses' },
-          { id: 'record_expense', icon: '📝', label: 'Record Expense', view: 'finance_dashboard', tab: 'expenses', action: 'record_expense' },
-          { id: 'expense_categories', icon: '🏷️', label: 'Categories', view: 'finance_dashboard', tab: 'expenses', action: 'categories' }
+          { id: 'all_expenses', icon: 'finance', label: 'All Expenses', view: 'finance_dashboard', tab: 'expenses' },
+          { id: 'record_expense', icon: 'pen', label: 'Record Expense', view: 'finance_dashboard', tab: 'expenses', action: 'record_expense' },
+          { id: 'expense_categories', icon: 'list', label: 'Categories', view: 'finance_dashboard', tab: 'expenses', action: 'categories' }
         ]
       },
       {
         section: 'REPORTS & ANALYSIS',
         items: [
-          { id: 'fee_report', icon: '📊', label: 'Fee Report', view: 'finance_dashboard', tab: 'reports' },
-          { id: 'expense_report', icon: '📉', label: 'Expense Report', view: 'finance_dashboard', tab: 'reports' },
-          { id: 'cash_flow', icon: '📈', label: 'Cash Flow', view: 'finance_dashboard', tab: 'reports' },
-          { id: 'student_statements', icon: '📋', label: 'Student Statements', view: 'finance_dashboard', tab: 'reports' },
-          { id: 'downloads', icon: '⬇️', label: 'Downloads', view: 'finance_dashboard', tab: 'reports', action: 'downloads' }
+          { id: 'fee_report', icon: 'dashboard', label: 'Fee Report', view: 'finance_dashboard', tab: 'reports' },
+          { id: 'expense_report', icon: 'analytics', label: 'Expense Report', view: 'finance_dashboard', tab: 'reports' },
+          { id: 'cash_flow', icon: 'analytics', label: 'Cash Flow', view: 'finance_dashboard', tab: 'reports' },
+          { id: 'student_statements', icon: 'clipboard', label: 'Student Statements', view: 'finance_dashboard', tab: 'reports' },
+          { id: 'downloads', icon: 'download', label: 'Downloads', view: 'finance_dashboard', tab: 'reports', action: 'downloads' }
         ]
       },
       {
         section: 'SYSTEM',
         items: [
-          { id: 'notifications', icon: '🔔', label: 'Notifications', view: 'finance_dashboard', action: 'notif' },
-          { id: 'settings', icon: '⚙️', label: 'Finance Settings', view: 'settings' },
-          { id: 'logout', icon: '🚪', label: 'Log Out', action: 'logout' }
+          { id: 'notifications', icon: 'bell', label: 'Notifications', view: 'finance_dashboard', action: 'notif' },
+          { id: 'settings', icon: 'settings', label: 'Finance Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
     ],

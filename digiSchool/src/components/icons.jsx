@@ -106,9 +106,9 @@ const ICON_MAP = {
   more: MoreHorizontal,
 };
 
-export function Icon({ name, size = 18, className = '', style = {}, ...props }) {
+export function Icon({ name, size = 18, className = '', style = {}, fallback, ...props }) {
   const Comp = ICON_MAP[name];
-  if (!Comp) return null;
+  if (!Comp) return fallback ? <span>{fallback}</span> : null;
   return <Comp size={size} className={className} style={style} strokeWidth={1.75} {...props} />;
 }
 
