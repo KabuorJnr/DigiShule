@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import './App.css';
-import { supabase } from './lib/supabaseClient';
+import { supabase, signOutAll } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
@@ -226,21 +226,76 @@ export default function App() {
   // ---- Auth bootstrap ----
   useEffect(() => {
     let active = true;
+
+    // Re-hydrate demo session if page was refreshed
+    const stored = localStorage.getItem('eduone_demo_user');
+    if (stored) {
+      try {
+        const seedUser = JSON.parse(stored);
+        const mockProfile = {
+          username: seedUser.username,
+          name: seedUser.name,
+          role: seedUser.role,
+          dept: seedUser.dept,
+          teacherId: seedUser.link || null,
+          studentId: seedUser.link || null,
+          schoolId: localStorage.getItem('eduone_school_id') || null,
+        };
+        setCurrentUser(mockProfile);
+        setView(ROLES[seedUser.role]?.home || 'overview');
+        setAuthChecked(true);
+        loadAllData().catch(() => {});
+      } catch { localStorage.removeItem('eduone_demo_user'); }
+    }
+
+    // Listen for demo login events (triggered by signInWithUsername fallback)
+    const onDemoLogin = (e) => {
+      if (!active) return;
+      const seedUser = e.detail;
+      const mockProfile = {
+        username: seedUser.username,
+        name: seedUser.name,
+        role: seedUser.role,
+        dept: seedUser.dept,
+        teacherId: seedUser.link || null,
+        studentId: seedUser.link || null,
+        schoolId: localStorage.getItem('eduone_school_id') || null,
+      };
+      setCurrentUser(mockProfile);
+      setView(ROLES[seedUser.role]?.home || 'overview');
+      notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
+      setAuthChecked(true);
+      loadAllData().catch(() => {});
+    };
+    window.addEventListener('eduone:demo_login', onDemoLogin);
+
+    // Supabase real-auth listener
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (session?.user) {
+        // Real Supabase user — clear any demo session
+        localStorage.removeItem('eduone_demo_user');
         loadUser(session.user.id, event === 'SIGNED_IN');
-      } else {
+      } else if (!localStorage.getItem('eduone_demo_user')) {
+        // Only reset to login if there's no demo session either
         setCurrentUser(null);
         setView(null);
         setAuthChecked(true);
       }
     });
-    return () => { active = false; sub.subscription.unsubscribe(); };
-  }, [loadUser]);
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+      window.removeEventListener('eduone:demo_login', onDemoLogin);
+    };
+  }, [loadUser, loadAllData, notify]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('eduone_demo_user');
+    setCurrentUser(null);
+    setView(null);
+    await signOutAll();
     notify('You have been logged out.', 'info', 'Logout');
   };
 
