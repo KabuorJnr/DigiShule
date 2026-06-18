@@ -29,6 +29,7 @@ import Notices from './views/Notices';
 import SchoolCalendar from './views/SchoolCalendar';
 import TeacherResources from './views/TeacherResources';
 import SetupWizard from './views/SetupWizard';
+import Registrar from './views/Registrar';
 
 const VIEW_MAP = {
   overview: Overview,
@@ -51,6 +52,7 @@ const VIEW_MAP = {
   notices: Notices,
   school_calendar: SchoolCalendar,
   teacher_resources: TeacherResources,
+  registrar: Registrar,
 };
 
 let toastId = 0;

@@ -1,55 +1,120 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import { NOTICES as SEED_NOTICES } from '../data/seed';
 import Modal from '../components/Modal';
+import { supabase } from '../lib/supabaseClient';
+import { getActiveSchoolId } from '../lib/api';
+import { Bell, Plus, ChevronDown, ChevronUp, Loader } from 'lucide-react';
 
 const ROLE_COLOR = {
-  'Deputy Academics': 'blue',
-  'Deputy Admin': 'green',
-  'Finance': 'amber',
-  'Principal': 'red',
+  'Deputy Academics': 'blue', 'Deputy Admin': 'green',
+  'Finance': 'amber', 'Principal': 'red', 'Staff': 'gray',
 };
 
-const CAN_POST = ['principal', 'deputy_academic', 'deputy_admin', 'finance'];
+const CAN_POST = ['principal', 'deputy_academic', 'deputy_admin', 'finance', 'registrar'];
+
+const AUDIENCE_OPTS = [
+  { value: 'all', label: 'Everyone' },
+  { value: 'students', label: 'Students Only' },
+  { value: 'parents', label: 'Parents Only' },
+  { value: 'teachers', label: 'Teachers Only' },
+  { value: 'staff', label: 'Staff Only' },
+];
+
+const audienceMap = {
+  principal: 'all', deputy_academic: 'all', deputy_admin: 'all', finance: 'all',
+  teacher: 'teachers', student: 'students', parent: 'parents',
+  nurse: 'staff', librarian: 'staff', registrar: 'staff',
+};
 
 export default function Notices({ store, user }) {
   const { notify } = store;
-  const [notices, setNotices] = useState(SEED_NOTICES);
+  const [dbNotices, setDbNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showPost, setShowPost] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [form, setForm] = useState({ title: '', body: '', audience: 'all' });
   const [expanded, setExpanded] = useState(null);
+  const [audienceFilter, setAudienceFilter] = useState('all');
 
   const canPost = user && CAN_POST.includes(user.role);
+  const myAudience = audienceMap[user?.role] || 'all';
 
-  const userRole = user?.role || '';
-  const audienceMap = {
-    principal: 'all', deputy_academic: 'all', deputy_admin: 'all', finance: 'all',
-    teacher: 'teachers', student: 'students', parent: 'parents', nurse: 'staff',
-    librarian: 'staff', registrar: 'staff',
-  };
-  const myAudience = audienceMap[userRole] || 'all';
-  const visible = notices.filter(n =>
-    n.audience.includes('all') || n.audience.includes(myAudience)
-  );
-
-  const handlePost = () => {
-    if (!form.title.trim() || !form.body.trim()) {
-      notify('Title and body are required', 'warning');
-      return;
+  // ── Load notices: Supabase first, fall back to seed ──────────
+  const loadNotices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setDbNotices(data && data.length > 0 ? data : []);
+    } catch {
+      setDbNotices([]);
+    } finally {
+      setLoading(false);
     }
-    const newNotice = {
-      id: `n${Date.now()}`,
-      title: form.title,
-      body: form.body,
-      postedBy: user.name,
-      role: user.dept || 'Staff',
-      date: new Date().toISOString().slice(0, 10),
-      audience: form.audience === 'all' ? ['all'] : [form.audience],
-    };
-    setNotices(prev => [newNotice, ...prev]);
-    setShowPost(false);
-    setForm({ title: '', body: '', audience: 'all' });
-    notify('Notice posted successfully', 'success', 'Notices');
+  }, []);
+
+  useEffect(() => { loadNotices(); }, [loadNotices]);
+
+  // Merge seed + db; filter by audience
+  const seedNotices = SEED_NOTICES.map(n => ({ ...n, source: 'seed' }));
+  const allNotices = [
+    ...dbNotices.map(n => ({
+      id: n.id, title: n.title || n.message, body: n.body || n.message,
+      postedBy: n.posted_by || 'Admin', role: n.role || 'Staff',
+      date: (n.created_at || '').slice(0, 10),
+      audience: n.audience ? (Array.isArray(n.audience) ? n.audience : [n.audience]) : ['all'],
+      source: 'db',
+    })),
+    ...seedNotices,
+  ];
+
+  const visible = allNotices.filter(n => {
+    const aud = n.audience;
+    const matchUser = aud.includes('all') || aud.includes(myAudience);
+    const matchFilter = audienceFilter === 'all' || aud.includes(audienceFilter) || aud.includes('all');
+    return matchUser && matchFilter;
+  });
+
+  // ── Post notice ───────────────────────────────────────────────
+  const handlePost = async () => {
+    if (!form.title.trim() || !form.body.trim()) {
+      notify('Title and body are required', 'warning'); return;
+    }
+    setPosting(true);
+    const schoolId = getActiveSchoolId();
+    try {
+      const row = {
+        title: form.title,
+        message: form.body,
+        body: form.body,
+        posted_by: user?.name || 'Staff',
+        role: user?.dept || user?.role || 'Staff',
+        audience: form.audience === 'all' ? ['all'] : [form.audience],
+        read: false,
+        school_id: schoolId,
+        created_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('notifications').insert(row);
+      if (error) throw error;
+      await loadNotices();
+      setShowPost(false);
+      setForm({ title: '', body: '', audience: 'all' });
+      notify('Notice posted successfully', 'success', 'Notices');
+    } catch (e) {
+      // Fallback to local if Supabase fails
+      setDbNotices(prev => [{
+        id: `local_${Date.now()}`, title: form.title, body: form.body,
+        posted_by: user?.name, role: user?.dept || 'Staff',
+        audience: [form.audience], created_at: new Date().toISOString(),
+      }, ...prev]);
+      setShowPost(false);
+      setForm({ title: '', body: '', audience: 'all' });
+      notify('Notice posted (local only — sync when online)', 'warning', 'Notices');
+    } finally { setPosting(false); }
   };
 
   return (
@@ -58,67 +123,102 @@ export default function Notices({ store, user }) {
         title="Notices & Announcements"
         subtitle={`${visible.length} notice${visible.length !== 1 ? 's' : ''} visible to you`}
         actions={canPost && (
-          <button className="btn btn-primary" onClick={() => setShowPost(true)}>+ Post Notice</button>
+          <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => setShowPost(true)}>
+            <Plus size={15} /> Post Notice
+          </button>
         )}
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Audience filter */}
+      <div className="toolbar" style={{ marginBottom: 16 }}>
+        <Bell size={16} color="#94a3b8" />
+        {AUDIENCE_OPTS.map(o => (
+          <button
+            key={o.value}
+            className={`btn btn-sm${audienceFilter === o.value ? ' btn-primary' : ''}`}
+            onClick={() => setAudienceFilter(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+        {loading && <Loader size={14} style={{ opacity: 0.5, marginLeft: 4 }} />}
+      </div>
+
+      {/* Notice list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {visible.length === 0 && !loading && (
+          <div className="card card-pad" style={{ textAlign: 'center', padding: 40 }}>
+            <Bell size={32} color="#94a3b8" style={{ margin: '0 auto 10px' }} />
+            <p className="muted">No notices to display.</p>
+          </div>
+        )}
         {visible.map(n => (
-          <div key={n.id} className="card card-pad" style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === n.id ? null : n.id)}>
+          <div
+            key={n.id}
+            className="card card-pad"
+            style={{ cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+            onClick={() => setExpanded(expanded === n.id ? null : n.id)}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: 0, fontSize: 15 }}>{n.title}</h4>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{n.title}</h4>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
                   <span className="muted" style={{ fontSize: 12 }}>By {n.postedBy}</span>
                   <Badge color={ROLE_COLOR[n.role] || 'gray'}>{n.role}</Badge>
                   <span className="muted" style={{ fontSize: 12 }}>{n.date}</span>
+                  {n.source === 'db' && <Badge color="green">Live</Badge>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
                 {n.audience.map(a => (
                   <Badge key={a} color="gray">{a === 'all' ? 'Everyone' : a}</Badge>
                 ))}
+                {expanded === n.id ? <ChevronUp size={16} color="#94a3b8" /> : <ChevronDown size={16} color="#94a3b8" />}
               </div>
             </div>
             {expanded === n.id && (
-              <div style={{ marginTop: 12, padding: '12px 0', borderTop: '1px solid var(--border)', fontSize: 14, lineHeight: 1.6, color: '#334155' }}>
+              <div style={{
+                marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)',
+                fontSize: 14, lineHeight: 1.7, color: '#334155', whiteSpace: 'pre-wrap',
+              }}>
                 {n.body}
               </div>
             )}
           </div>
         ))}
-        {visible.length === 0 && (
-          <div className="card card-pad" style={{ textAlign: 'center' }}>
-            <p className="muted">No notices to display.</p>
-          </div>
-        )}
       </div>
 
+      {/* Post Notice Modal */}
       {showPost && (
-        <Modal title="Post a Notice" onClose={() => setShowPost(false)} footer={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={() => setShowPost(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handlePost}>Publish Notice</button>
-          </div>
-        }>
+        <Modal
+          title="Post a Notice"
+          onClose={() => !posting && setShowPost(false)}
+          footer={
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" disabled={posting} onClick={() => setShowPost(false)}>Cancel</button>
+              <button className="btn btn-primary" disabled={posting} style={{ gap: 6 }} onClick={handlePost}>
+                {posting ? <><Loader size={14} /> Posting…</> : <><Bell size={14} /> Publish Notice</>}
+              </button>
+            </div>
+          }
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label className="field-label">Title *</label>
-              <input className="input" placeholder="Notice title..." value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+              <input className="input" placeholder="Notice title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Body *</label>
-              <textarea className="input" rows={5} placeholder="Write the notice content..." value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
+              <textarea className="input" rows={6} placeholder="Write the notice content…" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Audience</label>
               <select className="select" value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
-                <option value="all">Everyone</option>
-                <option value="students">Students Only</option>
-                <option value="parents">Parents Only</option>
-                <option value="teachers">Teachers Only</option>
-                <option value="staff">Staff Only</option>
+                {AUDIENCE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
+            </div>
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 10, fontSize: 12, color: '#0369a1' }}>
+              This notice will be saved to Supabase and visible to all users of this school.
             </div>
           </div>
         </Modal>

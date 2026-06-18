@@ -24,7 +24,7 @@ export const ROLES = {
             sub: [
               { id: 'deputy_academic', label: 'Deputy Academics', action: 'visit_academics' },
               { id: 'deputy_admin', label: 'Deputy Administration', action: 'visit_admin' },
-              { id: 'registrar', label: 'Registrar Office', view: 'admissions' }
+              { id: 'registrar', label: 'Registrar Office', view: 'registrar' }
             ]
           },
           {
@@ -175,7 +175,8 @@ export const ROLES = {
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'Calendar', view: 'school_calendar' }
         ]
       },
       {
@@ -190,15 +191,22 @@ export const ROLES = {
 
   registrar: {
     label: 'Registrar',
-    portal: 'Admissions Office',
+    portal: 'Registrar Office',
     accent: '#7C3AED',
-    home: 'admissions',
+    home: 'registrar',
     nav: [
       {
-        section: 'CORE',
+        section: 'REGISTRY',
         items: [
-          { id: 'admissions', icon: '📋', label: 'Admissions & Registry', view: 'admissions' },
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'registrar', icon: '📋', label: 'Student Register', view: 'registrar' },
+          { id: 'admissions', icon: '🎓', label: 'Admissions (Old)', view: 'admissions' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: '📢', label: 'Notices & Memos', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
