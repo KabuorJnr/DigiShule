@@ -238,8 +238,9 @@ export default function App() {
       if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
       await loadAllData();
     } catch {
-      // No profile row — sign out and let user use demo credentials.
-      notify('Account not set up yet. Please use your demo credentials.', 'warning');
+      // No profile row — silently sign out and show login.
+      // No toast here: this fires automatically for stale sessions and
+      // would confuse users who haven't tried to log in yet.
       await supabase.auth.signOut();
     } finally {
       setAuthChecked(true);
