@@ -226,23 +226,7 @@ export default function App() {
 
   const loadUser = useCallback(async (userId, greet) => {
     try {
-      let profile;
-      try {
-        profile = await api.fetchProfile(userId);
-      } catch {
-        // Profile row doesn't exist yet — use a safe default and seed data
-        console.warn('No profile row found for', userId, '— using defaults');
-        isDemoRef.current = true;
-        profile = {
-          username: 'admin',
-          name: 'School Admin',
-          role: 'principal',
-          dept: 'Administration',
-          teacherId: null,
-          studentId: null,
-          schoolId: localStorage.getItem('eduone_school_id') || null,
-        };
-      }
+      const profile = await api.fetchProfile(userId);
       const sid = profile.schoolId || localStorage.getItem('eduone_school_id');
       if (sid) {
         setActiveSchoolId(sid);
@@ -253,8 +237,9 @@ export default function App() {
       setView(ROLES[profile.role]?.home || 'overview');
       if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
       await loadAllData();
-    } catch (e) {
-      notify(`Could not load your account: ${e.message || e}`, 'error');
+    } catch {
+      // No profile row — sign out and let user use demo credentials.
+      notify('Account not set up yet. Please use your demo credentials.', 'warning');
       await supabase.auth.signOut();
     } finally {
       setAuthChecked(true);
