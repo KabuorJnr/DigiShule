@@ -4,6 +4,11 @@ import { supabase, signOutAll } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
+import {
+  buildStudents, TEACHERS, buildExamSchedules,
+  DEFAULT_SETTINGS, DEFAULT_GRADE_BOUNDARIES, DEFAULT_FEE_STRUCTURE,
+  DEFAULT_NOTIF_TOGGLES, DEFAULT_VENUES, SEED_NOTIFICATIONS,
+} from './data/seed';
 import { Icon, NAV_ICON_MAP } from './components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
 
@@ -177,23 +182,41 @@ export default function App() {
       setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent]
   );
 
+  // ---- Demo mode flag (ref so loadAllData closure reads latest value) ----
+  const isDemoRef = useRef(!!localStorage.getItem('eduone_demo_user'));
+
   // ---- Load all domain data after a user is known ----
   const loadAllData = useCallback(async () => {
     setDataLoading(true);
     try {
-      const [cfg, st, tch, ex, tt, notifs] = await Promise.all([
-        api.fetchConfig(),
-        api.fetchStudents(),
-        api.fetchTeachers(),
-        api.fetchExamSchedules(),
-        api.fetchTimetables(),
-        api.fetchTable('notifications'),
-      ]);
-      setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
-      setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
-      setVenues(cfg.venues);
-      setStudents(st); setTeachers(tch); setExamSchedules(ex); setTimetables(tt);
-      setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      if (isDemoRef.current) {
+        // ── Demo mode: use seed data, no Supabase calls ──
+        setSettings(DEFAULT_SETTINGS);
+        setGradeBoundaries(DEFAULT_GRADE_BOUNDARIES);
+        setFeeStructure(DEFAULT_FEE_STRUCTURE);
+        setNotifToggles(DEFAULT_NOTIF_TOGGLES);
+        setVenues(DEFAULT_VENUES);
+        setStudents(buildStudents());
+        setTeachers(TEACHERS);
+        setExamSchedules(buildExamSchedules());
+        setTimetables({});
+        setNotifications(SEED_NOTIFICATIONS);
+      } else {
+        // ── Real mode: fetch from Supabase ──
+        const [cfg, st, tch, ex, tt, notifs] = await Promise.all([
+          api.fetchConfig(),
+          api.fetchStudents(),
+          api.fetchTeachers(),
+          api.fetchExamSchedules(),
+          api.fetchTimetables(),
+          api.fetchTable('notifications'),
+        ]);
+        setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
+        setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
+        setVenues(cfg.venues);
+        setStudents(st); setTeachers(tch); setExamSchedules(ex); setTimetables(tt);
+        setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      }
     } catch (e) {
       notify(`Failed to load data: ${e.message || e}`, 'error');
     } finally {
@@ -241,6 +264,7 @@ export default function App() {
           studentId: seedUser.link || null,
           schoolId: localStorage.getItem('eduone_school_id') || null,
         };
+        isDemoRef.current = true;
         setCurrentUser(mockProfile);
         setView(ROLES[seedUser.role]?.home || 'overview');
         setAuthChecked(true);
@@ -261,19 +285,23 @@ export default function App() {
         studentId: seedUser.link || null,
         schoolId: localStorage.getItem('eduone_school_id') || null,
       };
+      isDemoRef.current = true;
+      // Sign out any stale Supabase session silently
+      supabase.auth.signOut().catch(() => {});
       setCurrentUser(mockProfile);
       setView(ROLES[seedUser.role]?.home || 'overview');
       notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
       setAuthChecked(true);
-      loadAllData().catch(() => {});
+      loadAllData();
     };
     window.addEventListener('eduone:demo_login', onDemoLogin);
 
     // Supabase real-auth listener
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      if (session?.user) {
-        // Real Supabase user — clear any demo session
+      if (session?.user && !localStorage.getItem('eduone_demo_user')) {
+        // Real Supabase user — clear demo mode
+        isDemoRef.current = false;
         localStorage.removeItem('eduone_demo_user');
         loadUser(session.user.id, event === 'SIGNED_IN');
       } else if (!localStorage.getItem('eduone_demo_user')) {
@@ -292,6 +320,7 @@ export default function App() {
   }, [loadUser, loadAllData, notify]);
 
   const handleLogout = async () => {
+    isDemoRef.current = false;
     localStorage.removeItem('eduone_demo_user');
     setCurrentUser(null);
     setView(null);
