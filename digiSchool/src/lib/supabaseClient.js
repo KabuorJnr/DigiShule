@@ -22,11 +22,12 @@ export const supabase = createClient(url, anonKey, {
  *
  * Strategy:
  * 1. Try Supabase: look up email via `email_for_username` RPC → signInWithPassword.
- * 2. If Supabase has no matching user (RPC returns null / RPC missing), fall back to
- *    the demo seed credentials in users.js and set a local mock session.
+ *    ONLY proceeds with Supabase session if a profile row also exists (role is known).
+ * 2. If Supabase has no profile row, signs out and falls through to seed credentials.
+ * 3. If RPC missing / no match → falls through to seed credentials.
  *
- * The mock session stores the matched seed user in localStorage so App.jsx can
- * bootstrap the correct role without a real Supabase session.
+ * This means demo/seed credentials ALWAYS work, even when a Supabase auth
+ * account exists but the profile row hasn't been created yet.
  */
 export async function signInWithUsername(username, password) {
   const uname = (username || '').trim();
@@ -39,15 +40,30 @@ export async function signInWithUsername(username, password) {
     });
 
     if (!rpcError && email) {
-      // RPC succeeded and found an email — attempt Supabase sign-in
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error) return { data };
-      // Wrong password for Supabase user — don't fall through to demo
-      return { error: { message: 'Invalid username or password. Please try again.' } };
+
+      if (!error && data?.user) {
+        // Supabase auth succeeded — verify a profile row exists.
+        // Without a profile row the app cannot determine the user's role.
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profileRow) {
+          // Full real user with profile — proceed with Supabase session.
+          return { data };
+        }
+
+        // No profile row yet — sign out of Supabase and fall through to seed.
+        await supabase.auth.signOut();
+      }
+      // Wrong password OR no profile → fall through to seed below.
     }
-    // rpcError or email is null → no Supabase user, fall through to demo
+    // rpcError or email null → no Supabase user, fall through to seed.
   } catch {
-    // Network error or RPC doesn't exist yet — fall through to demo
+    // Network error or RPC doesn't exist — fall through to seed.
   }
 
   // ── 2. Demo / seed fallback ──────────────────────────────────────
