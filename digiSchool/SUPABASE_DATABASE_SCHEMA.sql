@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS schools (
   email TEXT,
   website TEXT,
   logo_url TEXT,
+  settings JSONB DEFAULT '{}'::jsonb,
+  grade_boundaries JSONB DEFAULT '[]'::jsonb,
+  fee_structure JSONB DEFAULT '{}'::jsonb,
+  notif_toggles JSONB DEFAULT '{}'::jsonb,
+  venues JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -215,3 +220,28 @@ ALTER TABLE events DISABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices DISABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_payments DISABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+
+-- 14. Settings RPC
+CREATE OR REPLACE FUNCTION upsert_school_config(
+  p_school_id UUID,
+  p_settings JSONB DEFAULT NULL,
+  p_grade_boundaries JSONB DEFAULT NULL,
+  p_fee_structure JSONB DEFAULT NULL,
+  p_notif_toggles JSONB DEFAULT NULL,
+  p_venues JSONB DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE schools
+  SET
+    settings = COALESCE(p_settings, settings),
+    grade_boundaries = COALESCE(p_grade_boundaries, grade_boundaries),
+    fee_structure = COALESCE(p_fee_structure, fee_structure),
+    notif_toggles = COALESCE(p_notif_toggles, notif_toggles),
+    venues = COALESCE(p_venues, venues)
+  WHERE id = p_school_id;
+END;
+$$;
