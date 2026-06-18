@@ -92,6 +92,13 @@ export default function Finance({ store, user, params = {} }) {
 function BillingTab({ invoices, setInvoices, notify, params, students }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'generate_invoice');
   const [form, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkForm, setBulkForm] = useState({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
+
+  const classes = useMemo(() => {
+    const cls = new Set(students.map(s => s.class));
+    return Array.from(cls).filter(Boolean).sort();
+  }, [students]);
 
   useEffect(() => {
     if (params.action === 'generate_invoice') setModalOpen(true);
@@ -131,12 +138,49 @@ function BillingTab({ invoices, setInvoices, notify, params, students }) {
     }
   };
 
+  const handleBulkGenerate = async () => {
+    if (!bulkForm.amount || !bulkForm.due_date) {
+      notify('Please fill all required fields.', 'error');
+      return;
+    }
+    
+    const targetStudents = students.filter(s => 
+      (bulkForm.target_class === 'All' || s.class === bulkForm.target_class) && 
+      s.status !== 'Inactive' && s.status !== 'Graduated'
+    );
+
+    if (targetStudents.length === 0) {
+      notify('No active students found in the selected target.', 'warning');
+      return;
+    }
+
+    const newInvoices = targetStudents.map((s, idx) => ({
+      id: `inv_${Date.now()}_${idx}`,
+      student_id: s.id,
+      amount: Number(bulkForm.amount),
+      status: 'Pending',
+      due_date: bulkForm.due_date,
+      created_at: new Date().toISOString()
+    }));
+
+    setInvoices(prev => [...newInvoices, ...prev]);
+    notify(`Bulk Invoices generated for ${newInvoices.length} students.`, 'success');
+    setBulkModalOpen(false);
+    setBulkForm({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
+
+    try {
+      await Promise.all(newInvoices.map(inv => upsertRow('invoices', inv)));
+    } catch (e) {
+      console.warn('API error ignored for mock bulk:', e.message);
+    }
+  };
+
   return (
     <div className="card card-pad">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div className="section-title">Invoices</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={() => notify('Bulk Invoicing: Please select students first.', 'info')}>Bulk Invoicing</button>
+          <button className="btn" onClick={() => setBulkModalOpen(true)}>Bulk Invoicing</button>
           <button className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Generate Invoice</button>
         </div>
       </div>
@@ -194,6 +238,44 @@ function BillingTab({ invoices, setInvoices, notify, params, students }) {
             <div>
               <label className="field-label">Type</label>
               <select className="select" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+                <option>Term Fee</option>
+                <option>Transport</option>
+                <option>Uniform</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {bulkModalOpen && (
+        <Modal title="Bulk Invoice Generation" onClose={() => setBulkModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setBulkModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleBulkGenerate}>Generate Invoices</button>
+          </>
+        }>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label">Target Audience</label>
+              <select className="select" value={bulkForm.target_class} onChange={e => setBulkForm(f => ({ ...f, target_class: e.target.value }))}>
+                <option value="All">All Active Students</option>
+                {classes.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Amount (KES) per Student</label>
+              <input type="number" className="input" value={bulkForm.amount} onChange={e => setBulkForm(f => ({ ...f, amount: e.target.value }))} />
+            </div>
+          </div>
+          <div className="grid grid-2" style={{ marginTop: 12 }}>
+            <div>
+              <label className="field-label">Due Date</label>
+              <input type="date" className="input" value={bulkForm.due_date} onChange={e => setBulkForm(f => ({ ...f, due_date: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Type</label>
+              <select className="select" value={bulkForm.type} onChange={e => setBulkForm(f => ({ ...f, type: e.target.value }))}>
                 <option>Term Fee</option>
                 <option>Transport</option>
                 <option>Uniform</option>
