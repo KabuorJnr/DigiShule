@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
-  LineChart, Line
+  LineChart, Line, PieChart, Pie, Legend
 } from 'recharts';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
@@ -739,7 +739,7 @@ function ReportsTab({ invoices, payments, expenses }) {
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                  {expenseBreakdown.map((entry, index) => <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />)}
+                  {expenseBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(value) => fmtKES(value)} />
                 <Legend />
@@ -756,7 +756,7 @@ function ReportsTab({ invoices, payments, expenses }) {
               <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => \`\${value / 1000}k\`} />
+                <YAxis tickFormatter={(value) => `${value / 1000}k`} />
                 <Tooltip formatter={(value) => fmtKES(value)} />
                 <Legend />
                 <Bar dataKey="Income" fill="#10B981" radius={[4, 4, 0, 0]} />
