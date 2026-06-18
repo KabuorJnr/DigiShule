@@ -247,6 +247,25 @@ export default function App() {
     }
   }, [loadAllData, notify]);
 
+  // ---- Demo login handler (called directly by Login.jsx via prop) ----
+  const handleDemoLogin = useCallback((seedUser) => {
+    isDemoRef.current = true;
+    const mockProfile = {
+      username: seedUser.username,
+      name: seedUser.name,
+      role: seedUser.role,
+      dept: seedUser.dept,
+      teacherId: seedUser.link || null,
+      studentId: seedUser.link || null,
+      schoolId: localStorage.getItem('eduone_school_id') || null,
+    };
+    setCurrentUser(mockProfile);
+    setView(ROLES[seedUser.role]?.home || 'overview');
+    notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
+    setAuthChecked(true);
+    loadAllData();
+  }, [loadAllData, notify]);
+
   // ---- Auth bootstrap ----
   useEffect(() => {
     let active = true;
@@ -260,47 +279,18 @@ export default function App() {
     if (storedDemo) {
       try {
         const seedUser = JSON.parse(storedDemo);
-        const mockProfile = {
-          username: seedUser.username, name: seedUser.name,
-          role: seedUser.role, dept: seedUser.dept,
-          teacherId: seedUser.link || null, studentId: seedUser.link || null,
-          schoolId: localStorage.getItem('eduone_school_id') || null,
-        };
-        setCurrentUser(mockProfile);
-        setView(ROLES[seedUser.role]?.home || 'overview');
-        setAuthChecked(true);
-        loadAllData().catch(() => {});
+        handleDemoLogin(seedUser);
       } catch {
         localStorage.removeItem('eduone_demo_user');
         isDemoRef.current = false;
       }
     }
 
-    // STEP 3: Fresh demo login listener
-    const onDemoLogin = (e) => {
-      if (!active) return;
-      isDemoRef.current = true; // Set FIRST — before any async work
-      const seedUser = e.detail;
-      const mockProfile = {
-        username: seedUser.username, name: seedUser.name,
-        role: seedUser.role, dept: seedUser.dept,
-        teacherId: seedUser.link || null, studentId: seedUser.link || null,
-        schoolId: localStorage.getItem('eduone_school_id') || null,
-      };
-      setCurrentUser(mockProfile);
-      setView(ROLES[seedUser.role]?.home || 'overview');
-      notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
-      setAuthChecked(true);
-      loadAllData();
-      // No supabase.auth.signOut() here — it caused a race condition
-    };
-    window.addEventListener('eduone:demo_login', onDemoLogin);
-
-    // STEP 4: Supabase real-auth listener
+    // STEP 3: Supabase real-auth listener
     // When isDemoRef is true, this is a no-op — demo session owns the UI.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      if (isDemoRef.current) return; // Demo mode — ignore ALL Supabase auth events
+      if (isDemoRef.current) return;
 
       if (session?.user) {
         loadUser(session.user.id, event === 'SIGNED_IN');
@@ -314,9 +304,8 @@ export default function App() {
     return () => {
       active = false;
       sub.subscription.unsubscribe();
-      window.removeEventListener('eduone:demo_login', onDemoLogin);
     };
-  }, [loadUser, loadAllData, notify]);
+  }, [loadUser, handleDemoLogin]);
 
   const handleLogout = async () => {
     isDemoRef.current = false;
@@ -351,7 +340,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <>
-        <Login />
+        <Login onDemoLogin={handleDemoLogin} />
         {/* Toasts render even on login page */}
         <div className="toast-wrap">
           {toasts.map((t) => (

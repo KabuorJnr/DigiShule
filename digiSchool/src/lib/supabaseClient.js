@@ -77,11 +77,9 @@ export async function signInWithUsername(username, password) {
     return { error: { message: 'Invalid username or password. Please try again.' } };
   }
 
-  // Store the seed user as a mock session so App.jsx can read it
+  // Store the seed user as a mock session (persists across refreshes)
   localStorage.setItem('eduone_demo_user', JSON.stringify(seedUser));
-  // Dispatch a custom event so App.jsx reacts synchronously
-  window.dispatchEvent(new CustomEvent('eduone:demo_login', { detail: seedUser }));
-
+  // Return demoUser — Login.jsx calls App.jsx's onDemoLogin prop directly.
   return { data: { demoUser: seedUser } };
 }
 

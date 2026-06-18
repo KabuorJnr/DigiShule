@@ -23,7 +23,7 @@ const FEATURES = [
   { icon: Shield, text: 'Secure multi-role access control' },
 ];
 
-export default function Login() {
+export default function Login({ onDemoLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -35,11 +35,17 @@ export default function Login() {
     if (!username.trim() || !password) { setError('Please enter your username and password.'); return; }
     setError('');
     setBusy(true);
-    const { error: signInError } = await signInWithUsername(username, password);
+    const { data, error: signInError } = await signInWithUsername(username, password);
     setBusy(false);
     if (signInError) {
       setError(signInError.message || 'Invalid credentials. Please try again.');
+      return;
     }
+    // Seed / demo login — call App.jsx directly via prop
+    if (data?.demoUser && onDemoLogin) {
+      onDemoLogin(data.demoUser);
+    }
+    // Real Supabase login is handled by App.jsx's onAuthStateChange
   };
 
   return (
