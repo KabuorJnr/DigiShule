@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader } from '../components/widgets';
 import { CLASSES, SUBJECTS, DEPARTMENTS } from '../data/seed';
 
-const TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications'];
+const TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
 
 export default function Settings({ store }) {
@@ -211,6 +211,51 @@ export default function Settings({ store }) {
               </label>
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === 'Calendar' && (
+        <div className="card card-pad" style={{ maxWidth: 660 }}>
+          <h3 className="section-title">Google Calendar Integration</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+            Connect your school's public Google Calendar so it appears embedded in the School Calendar view.
+            The calendar must be set to <strong>Public</strong> in Google Calendar settings.
+          </p>
+          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13 }}>
+            <strong>How to get the embed URL:</strong><br />
+            1. Open Google Calendar → select your calendar → <em>Settings</em><br />
+            2. Scroll to <em>"Integrate calendar"</em> → copy the <em>"Embed code"</em> src URL<br />
+            3. Paste the URL below (it should start with <code>https://calendar.google.com/calendar/embed?...</code>)
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label className="field-label">Google Calendar Embed URL</label>
+            <input
+              className="input"
+              placeholder="https://calendar.google.com/calendar/embed?src=..."
+              value={form.googleCalendarUrl || ''}
+              onChange={e => upForm({ googleCalendarUrl: e.target.value })}
+            />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label className="field-label">Calendar Display Name (optional)</label>
+            <input
+              className="input"
+              placeholder="e.g. Starehe Boys School Calendar"
+              value={form.googleCalendarName || ''}
+              onChange={e => upForm({ googleCalendarName: e.target.value })}
+            />
+          </div>
+          {form.googleCalendarUrl && (
+            <div style={{ marginBottom: 14 }}>
+              <label className="field-label">Preview</label>
+              <iframe
+                src={form.googleCalendarUrl}
+                style={{ border: 'none', width: '100%', height: 300, borderRadius: 8 }}
+                title="Calendar Preview"
+              />
+            </div>
+          )}
+          <button className="btn btn-primary" onClick={saveGeneral}>Save Calendar Settings</button>
         </div>
       )}
     </div>

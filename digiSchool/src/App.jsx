@@ -24,6 +24,9 @@ import CreateExam from './views/CreateExam';
 import AcademicsDashboard from './views/AcademicsDashboard';
 import AdminDashboard from './views/AdminDashboard';
 import Notices from './views/Notices';
+import SchoolCalendar from './views/SchoolCalendar';
+import TeacherResources from './views/TeacherResources';
+import SetupWizard from './views/SetupWizard';
 
 const VIEW_MAP = {
   overview: Overview,
@@ -44,12 +47,15 @@ const VIEW_MAP = {
   student: StudentPortal,
   parent: ParentPortal,
   notices: Notices,
+  school_calendar: SchoolCalendar,
+  teacher_resources: TeacherResources,
 };
 
 let toastId = 0;
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
+  const [setupDone, setSetupDone] = useState(() => !!localStorage.getItem('eduone_setup_done'));
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
   const [dataLoading, setDataLoading] = useState(false);
@@ -224,6 +230,14 @@ export default function App() {
     await supabase.auth.signOut();
     notify('You have been logged out.', 'info', 'Logout');
   };
+
+  // ---- Show Setup Wizard on first run ----
+  if (!setupDone) {
+    return <SetupWizard onComplete={(config) => {
+      // merge wizard school name into settings if needed
+      setSetupDone(true);
+    }} />;
+  }
 
   // ---- Splash while we check the session ----
   if (!authChecked) {

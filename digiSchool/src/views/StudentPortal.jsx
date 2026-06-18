@@ -4,6 +4,7 @@ import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS, NOTICES, ASSIGNMENTS_LIST, STUDENT_ATTENDANCE_LOG, STUDY_MATERIALS, REVISION_DOWNLOADS, STUDENT_FEE_ACCOUNT, UPCOMING_EVENTS } from '../data/seed';
 import { LIBRARY_BOOKS } from '../data/modules';
 import { fetchClassRank } from '../lib/api';
+import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
 import Modal from '../components/Modal';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import {
@@ -11,6 +12,7 @@ import {
   Calendar, CheckCircle2, Clock, XCircle, DollarSign, AlertTriangle,
   BookOpen, Download, Eye, Send
 } from 'lucide-react';
+
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -360,48 +362,82 @@ export default function StudentPortal({ store, user }) {
             </div>
           )}
 
-          {resTab === 'materials' && (
-            <div className="card card-pad">
-              <h3 className="section-title">Study Materials</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {STUDY_MATERIALS.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{m.title}</div>
-                      <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploadedBy} · {m.date}</div>
+          {resTab === 'materials' && (() => {
+            const uploaded = listFiles('materials');
+            const allMaterials = [
+              ...STUDY_MATERIALS.map(m => ({ ...m, isUploaded: false })),
+              ...uploaded.map(m => ({ id: m.id, title: m.description || m.name, subject: m.subject, uploadedBy: m.uploadedBy, date: m.uploadedAt?.slice(0,10), size: 'PDF', isUploaded: true }))
+            ];
+            return (
+              <div className="card card-pad">
+                <h3 className="section-title">Study Materials ({allMaterials.length})</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {allMaterials.map(m => (
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{m.title}</span>
+                          {m.isUploaded && <Badge color="green">New</Badge>}
+                        </div>
+                        <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploadedBy} · {m.date}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="muted" style={{ fontSize: 11 }}>{m.size}</span>
+                        {m.isUploaded
+                          ? <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => openFilePDF(m.id)}><Eye size={14} /> View</button>
+                          : <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => notify(`Opening ${m.title}`, 'info')}><Eye size={14} /> View</button>
+                        }
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="muted" style={{ fontSize: 11 }}>{m.size}</span>
-                      <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => notify(`Opening ${m.title}`, 'info')}><Eye size={14} /> View</button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
-          {resTab === 'downloads' && (
-            <div className="card card-pad">
-              <h3 className="section-title">Revision Papers & Downloads</h3>
-              <div className="scroll-x">
-                <table className="table">
-                  <thead><tr><th>Title</th><th>Subject</th><th>Year</th><th>Type</th><th>Size</th><th></th></tr></thead>
-                  <tbody>
-                    {REVISION_DOWNLOADS.map(d => (
-                      <tr key={d.id}>
-                        <td style={{ fontWeight: 600 }}>{d.title}</td>
-                        <td>{d.subject}</td>
-                        <td>{d.year}</td>
-                        <td><Badge color={d.type === 'Past Paper' ? 'blue' : 'green'}>{d.type}</Badge></td>
-                        <td className="muted">{d.size}</td>
-                        <td><button className="btn btn-sm" style={{ gap: 4 }} onClick={() => notify(`Downloading ${d.title}...`, 'info')}><Download size={14} /> Download</button></td>
-                      </tr>
+          {resTab === 'downloads' && (() => {
+            const uploadedAssignments = listFiles('assignments');
+            return (
+              <div className="card card-pad">
+                <h3 className="section-title">Revision Papers & Teacher Downloads</h3>
+                {uploadedAssignments.length > 0 && (
+                  <>
+                    <div style={{ fontWeight: 600, fontSize: 12, color: '#0078D4', marginBottom: 8 }}>TEACHER UPLOADS</div>
+                    {uploadedAssignments.map(d => (
+                      <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                        <div>
+                          <div style={{ display: 'flex', gap: 6 }}><span style={{ fontWeight: 600, fontSize: 13 }}>{d.description || d.name}</span><Badge color="green">New</Badge></div>
+                          <div className="muted" style={{ fontSize: 12 }}>{d.subject} · Due: {d.dueDate} · by {d.uploadedBy}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-sm" style={{ gap: 4 }} onClick={() => openFilePDF(d.id)}><Eye size={13} /> View</button>
+                          <button className="btn btn-sm" style={{ gap: 4 }} onClick={() => downloadFilePDF(d.id)}><Download size={13} /> Download</button>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                    <div style={{ fontWeight: 600, fontSize: 12, color: '#64748b', margin: '16px 0 8px' }}>PAST PAPERS & REVISION</div>
+                  </>
+                )}
+                <div className="scroll-x">
+                  <table className="table">
+                    <thead><tr><th>Title</th><th>Subject</th><th>Year</th><th>Type</th><th>Size</th><th></th></tr></thead>
+                    <tbody>
+                      {REVISION_DOWNLOADS.map(d => (
+                        <tr key={d.id}>
+                          <td style={{ fontWeight: 600 }}>{d.title}</td>
+                          <td>{d.subject}</td>
+                          <td>{d.year}</td>
+                          <td><Badge color={d.type === 'Past Paper' ? 'blue' : 'green'}>{d.type}</Badge></td>
+                          <td className="muted">{d.size}</td>
+                          <td><button className="btn btn-sm" style={{ gap: 4 }} onClick={() => notify(`Downloading ${d.title}...`, 'info')}><Download size={14} /> Download</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </>
       )}
 

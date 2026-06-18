@@ -69,7 +69,8 @@ export const ROLES = {
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'notices' }
+          { id: 'notices', icon: '📢', label: 'Notices & Announcements', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
@@ -109,7 +110,8 @@ export const ROLES = {
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'Calendar', view: 'school_calendar' }
         ]
       },
       {
@@ -143,7 +145,8 @@ export const ROLES = {
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'Calendar', view: 'school_calendar' }
         ]
       },
       {
@@ -242,13 +245,15 @@ export const ROLES = {
           { id: 'teacher', icon: '🏠', label: 'My Dashboard', view: 'teacher' },
           { id: 'timetable', icon: '📅', label: 'My Timetable', view: 'timetable' },
           { id: 'gradebook', icon: '📊', label: 'Gradebook', view: 'gradebook' },
-          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' }
+          { id: 'exams', icon: '📝', label: 'Exam Schedules', view: 'exams' },
+          { id: 'teacher_resources', icon: '📁', label: 'Assignments & Materials', view: 'teacher_resources' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' }
+          { id: 'notices', icon: '📢', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: '📅', label: 'School Calendar', view: 'school_calendar' }
         ]
       },
       {
