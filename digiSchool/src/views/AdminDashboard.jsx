@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge, ProgressBar } from '../components/widgets';
-import { STAFF, FACILITIES, DISCIPLINARY_RECORDS } from '../data/modules';
+import { STAFF, FACILITIES, DISCIPLINARY_RECORDS, fmtKES } from '../data/modules';
 import { LEAVE_REQUESTS } from '../data/seed';
 import Modal from '../components/Modal';
+import { fetchTable, upsertRow } from '../lib/api';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -18,6 +19,11 @@ export default function AdminDashboard({ store, user }) {
   const { navigate, notify } = store;
   const [disciplineModal, setDisciplineModal] = useState(null);
   const [leaveActions, setLeaveActions] = useState({});
+  const [expenses, setExpenses] = useState([]);
+
+  useEffect(() => {
+    fetchTable('expenses').then(setExpenses).catch(() => {});
+  }, []);
 
   const presentStaff = STAFF.filter(s => s.status === 'Present').length;
   const operationalFac = FACILITIES.filter(f => f.status === 'Operational').length;
@@ -27,6 +33,17 @@ export default function AdminDashboard({ store, user }) {
   const handleLeaveAction = (id, action) => {
     setLeaveActions(prev => ({ ...prev, [id]: action }));
     notify(`Leave request ${action.toLowerCase()}`, action === 'Approved' ? 'success' : 'warning', 'Leave');
+  };
+
+  const handleExpenseAction = async (expense, action) => {
+    try {
+      const updated = { ...expense, status: action };
+      await upsertRow('expenses', updated);
+      setExpenses(prev => prev.map(e => e.id === expense.id ? updated : e));
+      notify(`Expense ${action.toLowerCase()} successfully.`);
+    } catch (e) {
+      notify(`Failed to update expense: ${e.message}`, 'error');
+    }
   };
 
   return (
@@ -108,35 +125,60 @@ export default function AdminDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* Leave Requests */}
-      <div className="card card-pad" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 className="section-title" style={{ margin: 0, color: '#0f766e' }}>Pending Leave Requests</h3>
-          <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
-        </div>
-        {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => {
-          const action = leaveActions[l.id];
-          return (
-            <div key={l.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{l.staff} — {l.type} Leave</div>
-                <div className="muted" style={{ fontSize: 12 }}>{l.start} to {l.end} ({l.days} days)</div>
-                <div className="muted" style={{ fontSize: 11 }}>{l.reason}</div>
-              </div>
-              {action ? (
-                <Badge color={action === 'Approved' ? 'green' : 'red'}>{action}</Badge>
-              ) : (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}>Approve</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}>Reject</button>
+      {/* Leave Requests & Expense Approvals */}
+      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
+        <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, color: '#0f766e' }}>Pending Leave Requests</h3>
+            <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
+          </div>
+          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => {
+            const action = leaveActions[l.id];
+            return (
+              <div key={l.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{l.staff} — {l.type} Leave</div>
+                  <div className="muted" style={{ fontSize: 12 }}>{l.start} to {l.end} ({l.days} days)</div>
+                  <div className="muted" style={{ fontSize: 11 }}>{l.reason}</div>
                 </div>
-              )}
+                {action ? (
+                  <Badge color={action === 'Approved' ? 'green' : 'red'}>{action}</Badge>
+                ) : (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}>Approve</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}>Reject</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').length === 0 && (
+            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
+          )}
+        </div>
+
+        <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, color: '#dc2626' }}>Pending Expense Approvals</h3>
+            <button className="btn btn-sm" onClick={() => navigate('finance')}>Finance Module</button>
+          </div>
+          {expenses.filter(e => e.status === 'Pending').map(e => (
+            <div key={e.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{e.category} <span className="muted" style={{ fontWeight: 400 }}>via {e.requested_by}</span></div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{fmtKES(e.amount)}</div>
+                <div className="muted" style={{ fontSize: 12 }}>{e.description}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button className="btn btn-sm btn-success" onClick={() => handleExpenseAction(e, 'Approved')}>Approve</button>
+                <button className="btn btn-sm btn-danger" onClick={() => handleExpenseAction(e, 'Rejected')}>Reject</button>
+              </div>
             </div>
-          );
-        })}
-        {LEAVE_REQUESTS.filter(l => l.status === 'Pending').length === 0 && (
-          <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
-        )}
+          ))}
+          {expenses.filter(e => e.status === 'Pending').length === 0 && (
+            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending expenses</p>
+          )}
+        </div>
       </div>
 
       {/* Discipline Modal */}

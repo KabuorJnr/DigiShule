@@ -47,6 +47,7 @@ const VIEW_MAP = {
   settings: Settings,
   library: Library,
   finance: Finance,
+  finance_dashboard: Finance,
   admissions: Admissions,
   clinic: Clinic,
   staff: StaffAttendance,
@@ -67,6 +68,7 @@ export default function App() {
   const [setupDone, setSetupDone] = useState(() => !!localStorage.getItem('eduone_setup_done'));
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
+  const [viewParams, setViewParams] = useState({}); // Stores tab, action, filters from sidebar
   const [dataLoading, setDataLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [expandedNav, setExpandedNav] = useState({});
@@ -426,7 +428,10 @@ export default function App() {
                         else if (item.action === 'notif') setNotifOpen(true);
                         else if (item.action === 'visit_academics') setOfficeVisitWarning('academics');
                         else if (item.action === 'visit_admin') setOfficeVisitWarning('admin');
-                        else if (item.view) setView(item.view);
+                        else if (item.view) {
+                          setView(item.view);
+                          setViewParams({ tab: item.tab, action: item.action, filter: item.filter });
+                        }
                       }}
                       title={item.label}
                     >
@@ -444,7 +449,10 @@ export default function App() {
                             onClick={() => {
                               if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
                               else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
-                              else if (subItem.view) setView(subItem.view);
+                              else if (subItem.view) {
+                                setView(subItem.view);
+                                setViewParams({ tab: subItem.tab, action: subItem.action, filter: subItem.filter });
+                              }
                             }}
                           >
                             {subItem.label}
@@ -475,6 +483,7 @@ export default function App() {
                 onClick={() => {
                   setActiveRoleOverride(null);
                   setView(ROLES[currentUser.role].home || 'overview');
+                  setViewParams({});
                   notify('Returned to Principal Office', 'info', 'Office Visit');
                 }}
               >
@@ -497,7 +506,7 @@ export default function App() {
           {dataLoading ? (
             <p className="muted">Loading…</p>
           ) : ViewComponent ? (
-            <ViewComponent store={store} user={currentUser} />
+            <ViewComponent store={store} user={currentUser} params={viewParams} />
           ) : (
             <p>View not found.</p>
           )}

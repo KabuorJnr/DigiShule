@@ -253,6 +253,7 @@ export async function saveTimetables(map, term) {
 const TABLES = {
   libraryBooks: 'library_books', libraryLoans: 'library_loans',
   financePayments: 'finance_payments', feeSummary: 'fee_summary',
+  invoices: 'invoices', expenses: 'expenses',
   admissions: 'admissions', clinicVisits: 'clinic_visits',
   disciplinaryRecords: 'disciplinary_records', staff: 'staff',
   facilities: 'facilities', notifications: 'notifications',

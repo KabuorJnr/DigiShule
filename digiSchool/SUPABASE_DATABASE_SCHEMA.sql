@@ -167,6 +167,41 @@ BEGIN
 END;
 $$;
 
+-- 13. Finance Tables
+CREATE TABLE IF NOT EXISTS invoices (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  status TEXT DEFAULT 'Pending',
+  due_date DATE NOT NULL,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS finance_payments (
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT REFERENCES invoices(id) ON DELETE CASCADE,
+  student_id TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  method TEXT NOT NULL,
+  ref TEXT,
+  date DATE NOT NULL,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'Pending',
+  requested_by TEXT NOT NULL,
+  date DATE NOT NULL,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- 13. Disable RLS across the board temporarily
 ALTER TABLE schools DISABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
@@ -177,3 +212,6 @@ ALTER TABLE exam_sessions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE timetables DISABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;
 ALTER TABLE events DISABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices DISABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
