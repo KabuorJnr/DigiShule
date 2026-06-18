@@ -61,7 +61,9 @@ export default function Gradebook({ store }) {
     const v = Math.max(0, Math.min(field === 'cat1' || field === 'cat2' ? 30 : 100, Number(value) || 0));
     const target = students.find((s) => s.id === id);
     if (target) {
-      updateStudent({ ...target, scores: { ...target.scores, [subject]: { ...target.scores[subject], [field]: v } } });
+      const currentScores = target.scores || {};
+      const subjectScores = currentScores[subject] || {};
+      updateStudent({ ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } });
     }
     setEditing(null);
   }

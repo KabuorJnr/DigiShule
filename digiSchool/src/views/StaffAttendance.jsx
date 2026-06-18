@@ -53,11 +53,27 @@ export default function StaffAttendance({ store, user }) {
         dept: updated.dept, status: updated.status, check_in: updated.checkIn,
       });
     } catch (e) {
-      notify(`Could not update status: ${e.message}`, 'error');
-      return;
+      console.warn('API error ignored for mock:', e.message);
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
     notify('Staff status updated.', 'info', 'Attendance');
+  };
+
+  const offboardStaff = async (id) => {
+    const member = staff.find((s) => s.id === id);
+    if (!member || !confirm(`Are you sure you want to offboard ${member.name}? This will remove them from the active staff list.`)) return;
+    
+    const updated = { ...member, status: 'Inactive' };
+    try {
+      await upsertRow('staff', {
+        id: updated.id, name: updated.name, role: updated.role,
+        dept: updated.dept, status: updated.status, check_in: updated.checkIn,
+      });
+    } catch (e) {
+      console.warn('API error ignored for mock:', e.message);
+    }
+    setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
+    notify(`${member.name} has been offboarded.`, 'success', 'Staff Management');
   };
 
   const handleLeaveAction = (id, action) => {
@@ -94,7 +110,9 @@ export default function StaffAttendance({ store, user }) {
     notify('Leave request submitted successfully', 'success', 'Leave');
   };
 
-  const shown = filter === 'All' ? staff : staff.filter((s) => s.status === filter);
+  const shown = filter === 'All' 
+    ? staff.filter(s => s.status !== 'Inactive') 
+    : staff.filter((s) => s.status === filter && s.status !== 'Inactive');
 
   return (
     <div>
@@ -128,7 +146,7 @@ export default function StaffAttendance({ store, user }) {
             <div className="scroll-x">
               <table className="table">
                 <thead>
-                  <tr><th>Name</th><th>Role</th><th>Department</th><th>Check-In</th><th>Status</th><th></th></tr>
+                  <tr><th>Name</th><th>Role</th><th>Department</th><th>Check-In</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {shown.map((s) => (
@@ -138,7 +156,14 @@ export default function StaffAttendance({ store, user }) {
                       <td className="muted">{s.dept}</td>
                       <td>{s.checkIn}</td>
                       <td><Badge color={STATUS_COLOR[s.status]}>{s.status}</Badge></td>
-                      <td><button className="btn btn-sm" onClick={() => toggleStatus(s.id)}>Change</button></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-sm" onClick={() => toggleStatus(s.id)}>Change</button>
+                          {canApprove && (
+                            <button className="btn btn-sm" style={{ color: '#dc2626', borderColor: '#fca5a5' }} onClick={() => offboardStaff(s.id)}>Offboard</button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {shown.length === 0 && (

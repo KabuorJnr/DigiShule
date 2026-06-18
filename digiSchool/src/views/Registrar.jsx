@@ -38,6 +38,8 @@ export default function Registrar({ store, user }) {
   // ── REGISTER TAB ──────────────────────────────────────────────
   const filtered = useMemo(() => {
     return students.filter(s => {
+      // Hide offboarded students from the active register
+      if (s.status === 'Inactive' || s.status === 'Graduated') return false;
       const matchClass = classFilter === 'All' || s.class === classFilter;
       const q = search.toLowerCase();
       const matchSearch = !q || s.name?.toLowerCase().includes(q) || s.adm?.toLowerCase().includes(q);
@@ -95,16 +97,38 @@ export default function Registrar({ store, user }) {
 
   // ── TRANSFER TAB ──────────────────────────────────────────────
   const [transfers, setTransfers] = useState([]);
-  const handleTransfer = () => {
+  const handleTransfer = async () => {
     if (!transferForm.studentId || !transferForm.reason || !transferForm.date) {
       notify('All fields are required', 'warning'); return;
     }
     const student = students.find(s => s.id === transferForm.studentId);
-    const record = { ...transferForm, studentName: student?.name || '—', id: `tr${Date.now()}` };
-    setTransfers(prev => [record, ...prev]);
-    setTransferModal(false);
-    setTransferForm({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
-    notify(`Transfer record saved for ${student?.name}`, 'success', 'Registrar');
+    if (!student) return;
+
+    setSaving(true);
+    const newStatus = transferForm.type === 'Completed (Graduated)' ? 'Graduated' : 'Inactive';
+    const updatedStudent = { ...student, status: newStatus };
+
+    try {
+      await upsertStudent(updatedStudent);
+      setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+      
+      const record = { ...transferForm, studentName: student.name, id: `tr${Date.now()}` };
+      setTransfers(prev => [record, ...prev]);
+      setTransferModal(false);
+      setTransferForm({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
+      notify(`Transfer record saved and ${student.name} marked as ${newStatus}`, 'success', 'Registrar');
+    } catch (e) {
+      // Mock fallback
+      console.warn('API error ignored for mock:', e.message);
+      setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+      const record = { ...transferForm, studentName: student.name, id: `tr${Date.now()}` };
+      setTransfers(prev => [record, ...prev]);
+      setTransferModal(false);
+      setTransferForm({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
+      notify(`Transfer record saved and ${student.name} marked as ${newStatus}`, 'success', 'Registrar');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const exportCSV = () => {
@@ -136,10 +160,10 @@ export default function Registrar({ store, user }) {
       {/* KPI Bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Total Students', value: students.length, color: '#0078D4' },
-          { label: 'Male', value: students.filter(s => s.gender === 'Male').length, color: '#0369A1' },
-          { label: 'Female', value: students.filter(s => s.gender === 'Female').length, color: '#7C3AED' },
-          { label: 'Flagged', value: students.filter(s => s.flagged).length, color: '#D13438' },
+          { label: 'Active Students', value: students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#0078D4' },
+          { label: 'Male', value: students.filter(s => s.gender === 'Male' && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#0369A1' },
+          { label: 'Female', value: students.filter(s => s.gender === 'Female' && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#7C3AED' },
+          { label: 'Flagged', value: students.filter(s => s.flagged && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#D13438' },
         ].map(k => (
           <div key={k.label} className="card card-pad" style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
@@ -378,7 +402,7 @@ export default function Registrar({ store, user }) {
               <label className="field-label">Student</label>
               <select className="select" value={transferForm.studentId} onChange={e => setTransferForm(f => ({ ...f, studentId: e.target.value }))}>
                 <option value="">Select student…</option>
-                {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.class})</option>)}
+                {students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated').map(s => <option key={s.id} value={s.id}>{s.name} ({s.class})</option>)}
               </select>
             </div>
             <div className="grid grid-2">

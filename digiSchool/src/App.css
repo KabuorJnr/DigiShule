@@ -77,8 +77,8 @@
   color: #e4e4e7;
 }
 .nav-item.active {
-  background: rgba(0, 120, 212, 0.15);
-  color: #60a5fa;
+  background: rgba(13, 148, 136, 0.15); /* Teal overlay to match primary */
+  color: #2dd4bf;
 }
 .nav-item.active::before {
   content: '';
