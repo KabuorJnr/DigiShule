@@ -460,7 +460,9 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
   const [form, setForm] = useState({ category: '', amount: '', description: '' });
 
   const defaultCategories = ['Office Supplies', 'Maintenance', 'Utilities', 'Staff Welfare', 'Other'];
-  const categories = store.settings.expenseCategories || defaultCategories;
+  const categories = (store.settings.expenseCategories && store.settings.expenseCategories.length > 0) 
+    ? store.settings.expenseCategories 
+    : defaultCategories;
 
   // Initialize form category when categories load
   useEffect(() => {
@@ -485,10 +487,11 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
       amount: Number(form.amount),
       description: form.description,
       status: 'Pending',
-      requested_by: user.name,
+      requested_by: user?.name || 'User',
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
+    // Optimistic update
     setExpenses(prev => [expense, ...prev]);
     notify(`Expense of ${fmtKES(form.amount)} submitted for approval.`);
     setModalOpen(false);
