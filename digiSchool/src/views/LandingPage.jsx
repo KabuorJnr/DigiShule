@@ -1,204 +1,130 @@
 import React from 'react';
-import { ArrowRight, BookOpen, Calculator, Stethoscope, Users, Building, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Shield, BookOpen, Activity, Layout, Terminal, Code2, Cpu } from 'lucide-react';
 import { USERS } from '../data/users';
 
 const LandingPage = ({ onGetStarted, onDemoLogin }) => {
   const primaryRoles = ['principal', 'teacher', 'student', 'parent'];
+  
   const getRoleUser = (role) => USERS.find(u => u.role === role);
 
   return (
-    <div className="saas-body">
-      {/* Navigation */}
-      <nav className="saas-nav">
-        <div className="saas-nav-container">
-          <div className="saas-brand">
-             edu<span className="saas-brand-highlight">one</span>
-          </div>
-          <div className="saas-nav-links desktop-only">
-            <a href="#features">Features</a>
-            <a href="#solutions">Solutions</a>
-            <a href="#demo">Interactive Demo</a>
-          </div>
-          <div className="saas-nav-actions">
-            <button className="saas-btn-text" onClick={onGetStarted}>Log in</button>
-            <button className="saas-btn-primary" onClick={onGetStarted}>Get Started</button>
-          </div>
+    <div className="landing-container">
+      {/* Navbar */}
+      <nav className="landing-nav">
+        <div className="landing-brand">
+          <Terminal size={24} className="accent-icon" />
+          <span>EduOne_</span>
+        </div>
+        <div className="landing-actions">
+          <button className="landing-btn outline" onClick={onGetStarted}>Standard Login</button>
         </div>
       </nav>
 
-      <main className="saas-main">
-        {/* Hero Section */}
-        <section className="saas-hero">
-          <div className="saas-hero-content">
-            <div className="saas-badge">✨ The Modern Operating System for Schools</div>
-            <h1 className="saas-hero-title">
-              Manage your entire school from one <span className="saas-text-gradient">unified platform.</span>
-            </h1>
-            <p className="saas-hero-subtitle">
-              EduOne brings academics, finance, health, and administration together in a beautiful, easy-to-use cloud platform. Built for modern educators and administrators.
-            </p>
-            <div className="saas-hero-actions">
-              <button className="saas-btn-primary saas-btn-large" onClick={onGetStarted}>
-                Start your free trial <ArrowRight size={18} />
-              </button>
-              <button className="saas-btn-outline saas-btn-large" onClick={() => document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })}>
-                Try interactive demo
-              </button>
-            </div>
-            <div className="saas-hero-trust">
-              <p>Trusted by innovative institutions worldwide</p>
-              <div className="saas-trust-logos">
-                <span>St. Patrick's Academy</span>
-                <span>•</span>
-                <span>Oakridge International</span>
-                <span>•</span>
-                <span>Greenwood High</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="saas-features">
-          <div className="saas-section-header">
-            <h2>Everything you need to run your school</h2>
-            <p>Replace disjointed tools with a single, powerful platform designed for education.</p>
-          </div>
-          
-          <div className="saas-feature-grid">
-            {/* Feature 1 */}
-            <div className="saas-feature-card">
-              <div className="saas-feature-icon" style={{background: '#e0e7ff', color: '#4f46e5'}}>
-                <BookOpen size={24} />
-              </div>
-              <h3>Academics Engine</h3>
-              <p>Comprehensive grading systems supporting both 8-4-4 and modern CBC frameworks. Track attendance, manage assignments, and generate insightful report cards effortlessly.</p>
-              <ul className="saas-feature-list">
-                <li><CheckCircle size={16} /> CBC & Standard Grading</li>
-                <li><CheckCircle size={16} /> Automated Report Cards</li>
-              </ul>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="saas-feature-card">
-              <div className="saas-feature-icon" style={{background: '#dcfce7', color: '#16a34a'}}>
-                <Calculator size={24} />
-              </div>
-              <h3>Finance & Billing</h3>
-              <p>Streamline your financial operations. Automate fee collection, track expenses, manage payroll, and generate professional invoices for parents in seconds.</p>
-              <ul className="saas-feature-list">
-                <li><CheckCircle size={16} /> Automated Invoicing</li>
-                <li><CheckCircle size={16} /> Expense Tracking</li>
-              </ul>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="saas-feature-card">
-              <div className="saas-feature-icon" style={{background: '#fee2e2', color: '#dc2626'}}>
-                <Stethoscope size={24} />
-              </div>
-              <h3>Health & Clinic</h3>
-              <p>Ensure student wellbeing with a dedicated digital clinic. Log medical visits, track prescriptions, and maintain comprehensive student health records securely.</p>
-              <ul className="saas-feature-list">
-                <li><CheckCircle size={16} /> Medical Logs</li>
-                <li><CheckCircle size={16} /> Secure Health Records</li>
-              </ul>
-            </div>
-            
-             {/* Feature 4 */}
-             <div className="saas-feature-card">
-              <div className="saas-feature-icon" style={{background: '#fef3c7', color: '#d97706'}}>
-                <Users size={24} />
-              </div>
-              <h3>Admissions & Enrollment</h3>
-              <p>Manage the entire student lifecycle from application to graduation. Digitize enrollment forms and keep parent communication organized.</p>
-              <ul className="saas-feature-list">
-                <li><CheckCircle size={16} /> Digital Applications</li>
-                <li><CheckCircle size={16} /> Parent Portals</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* Interactive Demo Sandbox */}
-        <section id="demo" className="saas-demo-section">
-          <div className="saas-demo-container">
-            <div className="saas-demo-content">
-              <h2>Interactive Sandbox</h2>
-              <p>Experience EduOne from every perspective. Select a role below to jump into a fully populated demo environment.</p>
-              
-              <div className="saas-demo-grid">
-                {primaryRoles.map(role => {
-                  const user = getRoleUser(role);
-                  if (!user) return null;
-                  
-                  let Icon = Users;
-                  if (role === 'principal') Icon = Building;
-                  if (role === 'teacher') Icon = BookOpen;
-                  if (role === 'student') Icon = ShieldCheck;
-                  
-                  return (
-                    <div key={role} className="saas-demo-card" onClick={() => onDemoLogin(user)}>
-                      <div className="saas-demo-icon">
-                        <Icon size={24} />
-                      </div>
-                      <div className="saas-demo-info">
-                        <h4>{user.name}</h4>
-                        <span className="saas-demo-role">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
-                      </div>
-                      <ArrowRight className="saas-demo-arrow" size={20} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="saas-demo-image desktop-only">
-               <div className="saas-browser-mockup">
-                 <div className="saas-browser-header">
-                   <div className="saas-browser-dots">
-                     <span></span><span></span><span></span>
-                   </div>
-                 </div>
-                 <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Dashboard Preview" />
-               </div>
-            </div>
-          </div>
-        </section>
-
-      </main>
-
-      {/* Footer */}
-      <footer className="saas-footer">
-        <div className="saas-footer-container">
-          <div className="saas-footer-brand">
-            <div className="saas-brand">
-               edu<span className="saas-brand-highlight">one</span>
-            </div>
-            <p>The operating system for modern education.</p>
-          </div>
-          <div className="saas-footer-links">
-            <div className="saas-footer-col">
-              <h4>Product</h4>
-              <a href="#">Features</a>
-              <a href="#">Pricing</a>
-              <a href="#">Security</a>
-            </div>
-            <div className="saas-footer-col">
-              <h4>Resources</h4>
-              <a href="#">Documentation</a>
-              <a href="#">Help Center</a>
-              <a href="#">API</a>
-            </div>
-            <div className="saas-footer-col">
-              <h4>Company</h4>
-              <a href="#">About</a>
-              <a href="#">Careers</a>
-              <a href="#">Contact</a>
-            </div>
+      {/* Hero Section */}
+      <header className="landing-hero">
+        <div className="hero-content">
+          <div className="hero-badge">v2.0 // Enterprise Ready</div>
+          <h1 className="hero-title">
+            The Operating System for <span className="highlight-text">Modern Education.</span>
+          </h1>
+          <p className="hero-subtitle">
+            Execute school management with precision. From admissions and academics to finance and health—EduOne compiles your entire institution into a single, high-performance platform.
+          </p>
+          <div className="hero-cta">
+            <button className="landing-btn primary" onClick={() => {
+              document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
+            }}>
+              Initialize Demo System <Cpu size={18} style={{ marginLeft: 8 }} />
+            </button>
           </div>
         </div>
-        <div className="saas-footer-bottom">
-          <p>&copy; 2026 EduOne Inc. All rights reserved.</p>
+        
+        {/* Abstract code visual decoration */}
+        <div className="hero-visual">
+          <div className="code-window">
+            <div className="window-header">
+              <span className="dot red"></span>
+              <span className="dot yellow"></span>
+              <span className="dot green"></span>
+            </div>
+            <pre className="code-block">
+              <code>
+                <span className="token keyword">import</span> {'{'} EduOne {'}'} <span className="token keyword">from</span> <span className="token string">'@school/core'</span>;{'\n\n'}
+                <span className="token keyword">const</span> system = <span className="token keyword">new</span> <span className="token class-name">EduOne</span>({'{'}{'\n'}
+                {'  '}modules: [<span className="token string">'Academics'</span>, <span className="token string">'Finance'</span>, <span className="token string">'Clinic'</span>],{'\n'}
+                {'  '}performance: <span className="token string">'O(1)'</span>,{'\n'}
+                {'  '}security: <span className="token boolean">true</span>{'\n'}
+                {'}'});{'\n\n'}
+                system.<span className="token function">initialize</span>().<span className="token function">then</span>(() =&gt; {'{'}{'\n'}
+                {'  '}console.<span className="token function">log</span>(<span className="token string">'Institution is live.'</span>);{'\n'}
+                {'}'});
+              </code>
+            </pre>
+          </div>
+        </div>
+      </header>
+
+      {/* Features Grid */}
+      <section className="landing-features">
+        <h2 className="section-title">Core Modules Executed <span className="highlight-text">Flawlessly</span></h2>
+        <div className="feature-grid">
+          <div className="feature-card">
+            <div className="feature-icon"><BookOpen size={24} /></div>
+            <h3>Academics Engine</h3>
+            <p>Compute grades, manage CBC curriculum, and generate insightful analytics for every student.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon"><Layout size={24} /></div>
+            <h3>Resource Allocation</h3>
+            <p>Schedule classes, assign teachers, and manage venues to optimize your operational bandwidth.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon"><Activity size={24} /></div>
+            <h3>Health & Discipline</h3>
+            <p>Real-time telemetry on student wellbeing, clinic visits, and disciplinary logs.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon"><Shield size={24} /></div>
+            <h3>Role-Based Auth</h3>
+            <p>Cryptographically secure access control tailored for principals, teachers, students, and parents.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Quick Access */}
+      <section id="demo-section" className="landing-demo">
+        <h2 className="section-title">Test Drive the <span className="highlight-text">Ecosystem</span></h2>
+        <p className="section-subtitle">No configuration required. Select a role below to boot a demo session instantly.</p>
+        
+        <div className="demo-roles">
+          {primaryRoles.map(role => {
+            const user = getRoleUser(role);
+            if (!user) return null;
+            return (
+              <button key={role} className="role-card" onClick={() => onDemoLogin(user)}>
+                <div className="role-header">
+                  <h3>{user.name}</h3>
+                  <span className="role-badge">{role}</span>
+                </div>
+                <div className="role-details">
+                  <span className="role-dept">{user.dept}</span>
+                  <span className="role-action">Boot Session &rarr;</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <Terminal size={18} className="accent-icon" /> EduOne_
+          </div>
+          <div className="footer-links">
+            <span>© 2026 Advanced Agentic Solutions</span>
+            <span>v2.0.4-stable</span>
+          </div>
         </div>
       </footer>
     </div>
