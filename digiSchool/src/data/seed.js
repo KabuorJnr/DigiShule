@@ -60,7 +60,7 @@ function mulberry32(seed) {
   };
 }
 
-const ASSESSMENTS = ['cat1', 'cat2', 'midterm', 'endterm'];
+const ASSESSMENTS = ['a1', 'a2', 'a3', 'a4'];
 
 function makeStudent(cls, idx, rand) {
   const fn = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
@@ -69,12 +69,12 @@ function makeStudent(cls, idx, rand) {
   const adm = `${form}${cls[1]}-${String(idx + 1).padStart(3, '0')}`;
   const scores = {};
   SUBJECTS.forEach((sub) => {
-    const base = 35 + Math.floor(rand() * 60); // 35-95 baseline
+    const base = 1.5 + (rand() * 2.5); // Baseline competency between 1.5 and 4.0
     scores[sub] = {
-      cat1: Math.max(0, Math.min(30, Math.round((base / 100) * 30 + (rand() * 6 - 3)))),
-      cat2: Math.max(0, Math.min(30, Math.round((base / 100) * 30 + (rand() * 6 - 3)))),
-      midterm: Math.max(0, Math.min(100, Math.round(base + (rand() * 16 - 8)))),
-      endterm: Math.max(0, Math.min(100, Math.round(base + (rand() * 16 - 8)))),
+      a1: Math.max(1, Math.min(4, Math.round(base + (rand() * 1.5 - 0.75)))),
+      a2: Math.max(1, Math.min(4, Math.round(base + (rand() * 1.5 - 0.75)))),
+      a3: Math.max(1, Math.min(4, Math.round(base + (rand() * 1.5 - 0.75)))),
+      a4: Math.max(1, Math.min(4, Math.round(base + (rand() * 1.5 - 0.75)))),
     };
   });
   return {
@@ -178,11 +178,10 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const DEFAULT_GRADE_BOUNDARIES = [
-  { grade: 'A', min: 80 },
-  { grade: 'B', min: 60 },
-  { grade: 'C', min: 40 },
-  { grade: 'D', min: 20 },
-  { grade: 'E', min: 0 },
+  { grade: 'EE', min: 3.5 },
+  { grade: 'ME', min: 2.5 },
+  { grade: 'AE', min: 1.5 },
+  { grade: 'BE', min: 0 },
 ];
 
 export const DEFAULT_FEE_STRUCTURE = [
