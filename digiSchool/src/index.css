@@ -316,339 +316,379 @@ textarea.input {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* --- LANDING PAGE (HACKERRANK STYLE) --- */
-.landing-container {
+/* --- AMAZON STYLE LANDING PAGE --- */
+.amz-body {
+  background-color: #eaeded;
+  font-family: Arial, sans-serif;
+  color: #0F1111;
   min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #e5e5e5;
-  font-family: 'Inter', system-ui, sans-serif;
-  overflow-x: hidden;
 }
 
-.landing-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 48px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+/* Header */
+.amz-header {
+  background-color: #131921;
+  color: white;
 }
-
-.landing-brand {
+.amz-nav-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
-  color: #fff;
+  padding: 5px 10px;
+  height: 60px;
 }
-
-.accent-icon {
-  color: #10B981;
+.amz-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
-
-.landing-btn {
-  padding: 10px 24px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
+.amz-logo {
+  padding: 5px 10px;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'JetBrains Mono', monospace;
+}
+.amz-logo:hover {
+  border-color: white;
+  border-radius: 2px;
+}
+.amz-logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+.amz-logo-smile {
+  color: #f90;
+}
+.amz-nav-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.amz-nav-location:hover {
+  border-color: white;
+  border-radius: 2px;
+}
+.amz-nav-text {
+  display: flex;
+  flex-direction: column;
+}
+.amz-nav-line-1 {
+  font-size: 12px;
+  color: #ccc;
+  line-height: 14px;
+}
+.amz-nav-line-2 {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 15px;
+}
+.amz-nav-search {
+  flex: 1;
+  display: flex;
+  height: 40px;
+  margin: 0 15px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.amz-search-dropdown {
+  background: #f3f3f3;
+  border: none;
+  border-right: 1px solid #cdcdcd;
+  padding: 0 10px;
+  color: #333;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+.amz-search-input {
+  flex: 1;
+  border: none;
+  padding: 0 10px;
+  outline: none;
+}
+.amz-search-btn {
+  background: #febd69;
+  border: none;
+  width: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+}
+.amz-search-btn:hover {
+  background: #f3a847;
 }
 
-.landing-btn.outline {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
-.landing-btn.outline:hover {
-  border-color: #10B981;
-  color: #10B981;
-}
-
-.landing-btn.primary {
-  background: #10B981;
-  border: 1px solid #10B981;
-  color: #000;
-}
-
-.landing-btn.primary:hover {
-  background: #0ea5e9;
-  border-color: #0ea5e9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-}
-
-.landing-hero {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  padding: 100px 48px;
-  max-width: 1400px;
-  margin: 0 auto;
+.amz-nav-right {
+  display: flex;
   align-items: center;
 }
-
-.hero-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  margin-bottom: 24px;
+.amz-nav-tool {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
 }
-
-.hero-title {
-  font-size: 56px;
-  line-height: 1.1;
-  margin: 0 0 24px 0;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -1px;
+.amz-nav-tool:hover {
+  border-color: white;
+  border-radius: 2px;
 }
-
-.highlight-text {
-  color: #10B981;
+.amz-nav-cart {
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
   position: relative;
 }
-
-.hero-subtitle {
-  font-size: 18px;
-  line-height: 1.6;
-  color: #a3a3a3;
-  margin-bottom: 40px;
-  max-width: 500px;
+.amz-nav-cart:hover {
+  border-color: white;
+  border-radius: 2px;
+}
+.amz-cart-count {
+  position: absolute;
+  top: 5px;
+  left: 24px;
+  color: #f90;
+  font-weight: 700;
+  font-size: 16px;
 }
 
-.code-window {
-  background: #171717;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.4);
-}
-
-.window-header {
-  background: #262626;
-  padding: 12px 16px;
+/* Sub Nav */
+.amz-nav-sub {
+  background-color: #232f3e;
   display: flex;
-  gap: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.window-header .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.dot.red { background: #ef4444; }
-.dot.yellow { background: #eab308; }
-.dot.green { background: #22c55e; }
-
-.code-block {
-  padding: 24px;
-  margin: 0;
-  font-family: 'JetBrains Mono', monospace;
+  align-items: center;
+  padding: 5px 10px;
+  gap: 15px;
   font-size: 14px;
-  line-height: 1.5;
-  color: #e5e5e5;
-  overflow-x: auto;
+  color: white;
+}
+.amz-nav-sub-item {
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.amz-nav-sub-item:hover {
+  border-color: white;
+  border-radius: 2px;
+}
+.amz-menu {
+  font-weight: 700;
 }
 
-.token.keyword { color: #c678dd; }
-.token.string { color: #98c379; }
-.token.class-name { color: #e5c07b; }
-.token.function { color: #61afef; }
-.token.boolean { color: #d19a66; }
-
-.landing-features {
-  padding: 100px 48px;
-  background: #121212;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.section-title {
-  font-size: 36px;
-  text-align: center;
-  margin: 0 0 60px 0;
-  color: #fff;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 32px;
-  max-width: 1200px;
+/* Main */
+.amz-main {
+  max-width: 1500px;
   margin: 0 auto;
 }
+.amz-hero {
+  height: 250px;
+  background: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1500&q=80') center/cover;
+  position: relative;
+  margin-bottom: -100px;
+}
+.amz-hero-gradient {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(to bottom, rgba(234,237,237,0) 0%, #eaeded 100%);
+}
 
-.feature-card {
-  background: #171717;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 32px;
+.amz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.amz-card {
+  background: white;
+  padding: 20px;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+.amz-card h2 {
+  font-size: 21px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  color: #0F1111;
+}
+.amz-card-img {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+.amz-card-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.amz-card-link {
+  color: #007185;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.amz-card-link:hover {
+  color: #c45500;
+  text-decoration: underline;
+}
+
+.amz-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex: 1;
+  margin-bottom: 15px;
+}
+.amz-card-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.amz-card-sub img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+.amz-card-sub span {
+  font-size: 12px;
+}
+
+.amz-demo-card {
+  height: 420px;
+}
+.amz-demo-card h2 {
+  font-size: 21px;
+}
+.amz-btn-primary {
+  background: #ffd814;
+  border: 1px solid #fcd200;
   border-radius: 8px;
-  transition: all 0.3s ease;
+  padding: 8px 10px;
+  box-shadow: 0 2px 5px rgba(15,17,17,.15);
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  color: #0f1111;
 }
-
-.feature-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(16, 185, 129, 0.3);
-  background: #1a1a1a;
+.amz-btn-primary:hover {
+  background: #f7ca00;
 }
-
-.feature-icon {
-  color: #10B981;
+.amz-main-login-btn {
   margin-bottom: 20px;
 }
-
-.feature-card h3 {
-  color: #fff;
-  font-size: 20px;
-  margin: 0 0 12px 0;
-  font-family: 'JetBrains Mono', monospace;
+.amz-demo-roles p {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+.amz-demo-roles ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.amz-demo-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: white;
+  border: 1px solid #d5d9d9;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 2px 5px rgba(15,17,17,.15);
+  color: #0f1111;
+}
+.amz-demo-link:hover {
+  background: #f7fafa;
 }
 
-.feature-card p {
-  color: #a3a3a3;
-  line-height: 1.6;
-  margin: 0;
+.amz-wide-card {
+  height: auto;
+}
+
+.amz-spacer {
+  height: 40px;
+}
+
+/* Footer */
+.amz-footer {
+  background: #232f3e;
+  color: white;
+}
+.amz-back-top {
+  display: block;
+  background: #37475a;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  text-decoration: none;
+  font-size: 13px;
+}
+.amz-back-top:hover {
+  background: #485769;
+}
+.amz-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+  padding: 40px 20px;
+  border-bottom: 1px solid #3a4553;
+  flex-wrap: wrap;
+}
+.amz-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.amz-footer-col h3 {
+  font-size: 16px;
+  margin: 0 0 10px 0;
+}
+.amz-footer-col a {
+  color: #ddd;
+  text-decoration: none;
   font-size: 14px;
 }
-
-.landing-demo {
-  padding: 100px 48px;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
+.amz-footer-col a:hover {
+  text-decoration: underline;
 }
-
-.section-subtitle {
-  color: #a3a3a3;
-  margin-bottom: 48px;
-  font-size: 18px;
-}
-
-.demo-roles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
-}
-
-.role-card {
-  background: #171717;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 24px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.amz-footer-bottom {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.role-card:hover {
-  background: rgba(16, 185, 129, 0.05);
-  border-color: #10B981;
-}
-
-.role-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  padding: 30px;
+  gap: 10px;
 }
-
-.role-header h3 {
+.amz-footer-bottom p {
+  font-size: 12px;
+  color: #ddd;
   margin: 0;
-  color: #fff;
-  font-size: 18px;
 }
 
-.role-badge {
-  background: rgba(255,255,255,0.1);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #a3a3a3;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.role-card:hover .role-badge {
-  background: #10B981;
-  color: #000;
-}
-
-.role-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.role-dept {
-  color: #a3a3a3;
-  font-size: 13px;
-}
-
-.role-action {
-  color: #10B981;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 0.2s ease;
-}
-
-.role-card:hover .role-action {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.landing-footer {
-  padding: 40px 48px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: #0a0a0a;
-}
-
-.footer-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: #fff;
-}
-
-.footer-links {
-  display: flex;
-  gap: 24px;
-  color: #737373;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
+@media (max-width: 800px) {
+  .desktop-only { display: none !important; }
+  .amz-footer-links { gap: 40px; }
 }
 @keyframes popIn {
   from { transform: scale(0.97); opacity: 0; }
