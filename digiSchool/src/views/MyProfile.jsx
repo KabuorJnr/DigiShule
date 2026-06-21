@@ -38,7 +38,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     try { return JSON.parse(localStorage.getItem('eduone_profile_overrides') || '{}'); } catch { return {}; }
   })();
 
-  const [Grade, setForm] = useState({
+  const [form, setForm] = useState({
     name:    savedOverrides.name    || user?.name    || '',
     email:   savedOverrides.email   || user?.email   || '',
     phone:   savedOverrides.phone   || user?.phone   || '',
@@ -59,18 +59,18 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
   // ── Save profile details ──────────────────────────────────────
   const handleSave = async () => {
-    if (!Grade.name.trim()) { setError('Name is required.'); return; }
+    if (!form.name.trim()) { setError('Name is required.'); return; }
     setError('');
     setSaving(true);
     try {
       // 1. Always persist to localStorage
-      const overrides = { name: Grade.name, email: Grade.email, phone: Grade.phone, title: Grade.title, bio: Grade.bio };
+      const overrides = { name: form.name, email: form.email, phone: form.phone, title: form.title, bio: form.bio };
       localStorage.setItem('eduone_profile_overrides', JSON.stringify(overrides));
 
       // Update the demo_user in localStorage too (so sidebar reflects new name)
       const demoUser = JSON.parse(localStorage.getItem('eduone_demo_user') || 'null');
       if (demoUser) {
-        demoUser.name = Grade.name;
+        demoUser.name = form.name;
         localStorage.setItem('eduone_demo_user', JSON.stringify(demoUser));
       }
 
@@ -79,20 +79,20 @@ export default function MyProfile({ store, user, onUserUpdate }) {
       if (supaUser) {
         await supabase.from('profiles').upsert({
           id: supaUser.id,
-          full_name: Grade.name,
+          full_name: form.name,
           username: user?.username,
           role: user?.role,
-          dept: Grade.title,
+          dept: form.title,
         }, { onConflict: 'id' });
 
         // Update email in Supabase Auth if changed
-        if (Grade.email && Grade.email !== supaUser.email) {
-          await supabase.auth.updateUser({ email: Grade.email });
+        if (form.email && form.email !== supaUser.email) {
+          await supabase.auth.updateUser({ email: form.email });
         }
       }
 
       // 3. Update app state
-      if (onUserUpdate) onUserUpdate({ ...user, name: Grade.name, dept: Grade.title });
+      if (onUserUpdate) onUserUpdate({ ...user, name: form.name, dept: form.title });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       notify('Profile saved successfully', 'success', 'My Profile');
@@ -170,10 +170,10 @@ export default function MyProfile({ store, user, onUserUpdate }) {
             width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #0078D4, #0369A1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 700, flexShrink: 0
           }}>
-            {(Grade.name || 'U').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+            {(form.name || 'U').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>{Grade.name || 'Your Name'}</div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{form.name || 'Your Name'}</div>
             <div style={{ color: '#64748b', fontSize: 13 }}>{ROLE_LABELS[user?.role] || user?.role}</div>
             {isDemoMode && <div style={{ fontSize: 11, color: '#f59e0b', marginTop: 2 }}>Demo Account</div>}
           </div>
@@ -182,17 +182,17 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <Field label="Full Name *" icon={User}>
-              <input className="input" value={Grade.name} onChange={e => upForm({ name: e.target.value })} placeholder="Your full name" />
+              <input className="input" value={form.name} onChange={e => upForm({ name: e.target.value })} placeholder="Your full name" />
             </Field>
           </div>
           <Field label="Email Address" icon={Mail}>
-            <input className="input" type="email" value={Grade.email} onChange={e => upForm({ email: e.target.value })} placeholder="your@email.com" />
+            <input className="input" type="email" value={form.email} onChange={e => upForm({ email: e.target.value })} placeholder="your@email.com" />
           </Field>
           <Field label="Phone Number" icon={Phone}>
-            <input className="input" value={Grade.phone} onChange={e => upForm({ phone: e.target.value })} placeholder="+254 7XX XXX XXX" />
+            <input className="input" value={form.phone} onChange={e => upForm({ phone: e.target.value })} placeholder="+254 7XX XXX XXX" />
           </Field>
           <Field label="Job Title / Department" icon={Tag}>
-            <input className="input" value={Grade.title} onChange={e => upForm({ title: e.target.value })} placeholder="e.g. Mathematics Teacher" />
+            <input className="input" value={form.title} onChange={e => upForm({ title: e.target.value })} placeholder="e.g. Mathematics Teacher" />
           </Field>
           <Field label="Role" icon={Building2}>
             <input className="input" value={ROLE_LABELS[user?.role] || user?.role || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
@@ -201,7 +201,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
         <div style={{ marginTop: 14 }}>
           <Field label="Short Bio (optional)" icon={null}>
-            <textarea className="input" rows={3} value={Grade.bio} onChange={e => upForm({ bio: e.target.value })} placeholder="A short description about yourself…" />
+            <textarea className="input" rows={3} value={form.bio} onChange={e => upForm({ bio: e.target.value })} placeholder="A short description about yourself…" />
           </Field>
         </div>
 

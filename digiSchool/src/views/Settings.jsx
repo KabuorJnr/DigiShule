@@ -13,7 +13,7 @@ export default function Settings({ store, user }) {
   const levels = settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
 
   // local copies for editing
-  const [Grade, setForm] = useState(settings);
+  const [form, setForm] = useState(settings);
   const [classList, setClassList] = useState(CLASSES.map((c) => ({ name: `Grade ${c}`, capacity: 40 })));
   const [newClass, setNewClass] = useState('');
   const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
@@ -36,7 +36,7 @@ export default function Settings({ store, user }) {
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
-    setSettings((s) => ({ ...s, currentTerm: Grade.currentTerm, termStart: Grade.termStart, termEnd: Grade.termEnd }));
+    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd }));
     notify('Academic settings saved', 'success', 'Settings');
   }
   function saveFees() {
@@ -61,18 +61,18 @@ export default function Settings({ store, user }) {
       {tab === 'General' && (
         <div className="card card-pad" style={{ maxWidth: 760 }}>
           <div className="grid grid-2" style={{ marginBottom: 16 }}>
-            <div><label className="field-label">School Name</label><input className="input" value={Grade.name} onChange={(e) => upForm({ name: e.target.value })} /></div>
-            <div><label className="field-label">Motto</label><input className="input" value={Grade.motto} onChange={(e) => upForm({ motto: e.target.value })} /></div>
-            <div style={{ gridColumn: '1 / -1' }}><label className="field-label">Address</label><input className="input" value={Grade.address} onChange={(e) => upForm({ address: e.target.value })} /></div>
-            <div><label className="field-label">Phone</label><input className="input" value={Grade.phone} onChange={(e) => upForm({ phone: e.target.value })} /></div>
-            <div><label className="field-label">Email</label><input className="input" value={Grade.email} onChange={(e) => upForm({ email: e.target.value })} /></div>
-            <div><label className="field-label">Principal Name</label><input className="input" value={Grade.principal} onChange={(e) => upForm({ principal: e.target.value })} /></div>
+            <div><label className="field-label">School Name</label><input className="input" value={form.name} onChange={(e) => upForm({ name: e.target.value })} /></div>
+            <div><label className="field-label">Motto</label><input className="input" value={form.motto} onChange={(e) => upForm({ motto: e.target.value })} /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label className="field-label">Address</label><input className="input" value={form.address} onChange={(e) => upForm({ address: e.target.value })} /></div>
+            <div><label className="field-label">Phone</label><input className="input" value={form.phone} onChange={(e) => upForm({ phone: e.target.value })} /></div>
+            <div><label className="field-label">Email</label><input className="input" value={form.email} onChange={(e) => upForm({ email: e.target.value })} /></div>
+            <div><label className="field-label">Principal Name</label><input className="input" value={form.principal} onChange={(e) => upForm({ principal: e.target.value })} /></div>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="field-label">School Logo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div className="logo-box" style={{ width: 64, height: 64, background: Grade.logo ? '#fff' : 'var(--accent)' }}>
-                {Grade.logo ? <img src={Grade.logo} alt="logo" /> : <span>WS</span>}
+              <div className="logo-box" style={{ width: 64, height: 64, background: form.logo ? '#fff' : 'var(--accent)' }}>
+                {form.logo ? <img src={form.logo} alt="logo" /> : <span>WS</span>}
               </div>
               <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files[0])} />
             </div>
@@ -87,11 +87,11 @@ export default function Settings({ store, user }) {
             <h3 className="section-title">Current Term</h3>
             <div className="grid grid-3">
               <div><label className="field-label">Current Term</label>
-                <select className="select" value={Grade.currentTerm} onChange={(e) => upForm({ currentTerm: e.target.value })}>
+                <select className="select" value={form.currentTerm} onChange={(e) => upForm({ currentTerm: e.target.value })}>
                   {['Term 1', 'Term 2', 'Term 3'].map((t) => <option key={t}>{t}</option>)}
                 </select></div>
-              <div><label className="field-label">Term Start</label><input className="input" type="date" value={Grade.termStart} onChange={(e) => upForm({ termStart: e.target.value })} /></div>
-              <div><label className="field-label">Term End</label><input className="input" type="date" value={Grade.termEnd} onChange={(e) => upForm({ termEnd: e.target.value })} /></div>
+              <div><label className="field-label">Term Start</label><input className="input" type="date" value={form.termStart} onChange={(e) => upForm({ termStart: e.target.value })} /></div>
+              <div><label className="field-label">Term End</label><input className="input" type="date" value={form.termEnd} onChange={(e) => upForm({ termEnd: e.target.value })} /></div>
             </div>
             <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={saveAcademic}>Save Term Dates</button>
           </div>
@@ -235,7 +235,7 @@ export default function Settings({ store, user }) {
             <input
               className="input"
               placeholder="https://calendar.google.com/calendar/embed?src=..."
-              value={Grade.googleCalendarUrl || ''}
+              value={form.googleCalendarUrl || ''}
               onChange={e => upForm({ googleCalendarUrl: e.target.value })}
             />
           </div>
@@ -244,15 +244,15 @@ export default function Settings({ store, user }) {
             <input
               className="input"
               placeholder="e.g. Starehe Boys School Calendar"
-              value={Grade.googleCalendarName || ''}
+              value={form.googleCalendarName || ''}
               onChange={e => upForm({ googleCalendarName: e.target.value })}
             />
           </div>
-          {Grade.googleCalendarUrl && (
+          {form.googleCalendarUrl && (
             <div style={{ marginBottom: 14 }}>
               <label className="field-label">Preview</label>
               <iframe
-                src={Grade.googleCalendarUrl}
+                src={form.googleCalendarUrl}
                 style={{ border: 'none', width: '100%', height: 300, borderRadius: 8 }}
                 title="Calendar Preview"
               />

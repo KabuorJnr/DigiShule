@@ -91,7 +91,7 @@ export default function Finance({ store, user, params = {} }) {
 // -----------------------------------------------------------------------------
 function BillingTab({ invoices, setInvoices, notify, params, students }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'generate_invoice');
-  const [Grade, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
+  const [form, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
 
@@ -114,16 +114,16 @@ function BillingTab({ invoices, setInvoices, notify, params, students }) {
   }, [invoices, params.filter]);
 
   const handleGenerate = async () => {
-    if (!Grade.student_id || !Grade.amount || !Grade.due_date) {
+    if (!form.student_id || !form.amount || !form.due_date) {
       notify('Please fill all required fields.', 'error');
       return;
     }
     const newInvoice = {
       id: `inv_${Date.now()}`,
-      student_id: Grade.student_id,
-      amount: Number(Grade.amount),
+      student_id: form.student_id,
+      amount: Number(form.amount),
       status: 'Pending',
-      due_date: Grade.due_date,
+      due_date: form.due_date,
       created_at: new Date().toISOString()
     };
     // Optimistically update UI so it works in session even without backend
@@ -220,24 +220,24 @@ function BillingTab({ invoices, setInvoices, notify, params, students }) {
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student</label>
-              <select className="select" value={Grade.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}>
+              <select className="select" value={form.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}>
                 <option value="">-- Select Student --</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.adm_no})</option>)}
               </select>
             </div>
             <div>
               <label className="field-label">Amount (KES)</label>
-              <input type="number" className="input" value={Grade.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
+              <input type="number" className="input" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">Due Date</label>
-              <input type="date" className="input" value={Grade.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+              <input type="date" className="input" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Type</label>
-              <select className="select" value={Grade.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+              <select className="select" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
                 <option>Term Fee</option>
                 <option>Transport</option>
                 <option>Uniform</option>
@@ -294,29 +294,29 @@ function BillingTab({ invoices, setInvoices, notify, params, students }) {
 // -----------------------------------------------------------------------------
 function PaymentsTab({ payments, invoices, setPayments, notify, params, students }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'record_payment');
-  const [Grade, setForm] = useState({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
+  const [form, setForm] = useState({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
 
   useEffect(() => {
     if (params.action === 'record_payment') setModalOpen(true);
   }, [params.action]);
 
   const handleRecord = async () => {
-    if (!Grade.student_id || !Grade.amount) {
+    if (!form.student_id || !form.amount) {
       notify('Student and amount are required.', 'error');
       return;
     }
     const payment = {
       id: `pay_${Date.now()}`,
-      invoice_id: Grade.invoice_id || null,
-      student_id: Grade.student_id,
-      amount: Number(Grade.amount),
-      method: Grade.method,
-      ref: Grade.ref || '—',
+      invoice_id: form.invoice_id || null,
+      student_id: form.student_id,
+      amount: Number(form.amount),
+      method: form.method,
+      ref: form.ref || '—',
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
     setPayments(prev => [payment, ...prev]);
-    notify(`Payment of ${fmtKES(Grade.amount)} recorded successfully.`);
+    notify(`Payment of ${fmtKES(form.amount)} recorded successfully.`);
     setModalOpen(false);
     setForm({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
     try {
@@ -366,26 +366,26 @@ function PaymentsTab({ payments, invoices, setPayments, notify, params, students
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student</label>
-              <select className="select" value={Grade.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}>
+              <select className="select" value={form.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}>
                 <option value="">-- Select Student --</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.adm_no})</option>)}
               </select>
             </div>
             <div>
               <label className="field-label">Amount (KES)</label>
-              <input type="number" className="input" value={Grade.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
+              <input type="number" className="input" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">Method</label>
-              <select className="select" value={Grade.method} onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
+              <select className="select" value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
                 <option>M-Pesa</option><option>Bank</option><option>Cheque</option><option>Cash</option>
               </select>
             </div>
             <div>
               <label className="field-label">Reference</label>
-              <input className="input" value={Grade.ref} onChange={e => setForm(f => ({ ...f, ref: e.target.value }))} />
+              <input className="input" value={form.ref} onChange={e => setForm(f => ({ ...f, ref: e.target.value }))} />
             </div>
           </div>
         </Modal>
@@ -539,7 +539,7 @@ function StatementsTab({ students, invoices, payments, store }) {
 function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'record_expense');
   const [catModalOpen, setCatModalOpen] = useState(params.action === 'categories');
-  const [Grade, setForm] = useState({ category: '', amount: '', description: '' });
+  const [form, setForm] = useState({ category: '', amount: '', description: '' });
 
   const defaultCategories = ['Office Supplies', 'Maintenance', 'Utilities', 'Staff Welfare', 'Other'];
   const categories = (store.settings.expenseCategories && store.settings.expenseCategories.length > 0) 
@@ -548,10 +548,10 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
 
   // Initialize Grade category when categories load
   useEffect(() => {
-    if (!Grade.category && categories.length > 0) {
+    if (!form.category && categories.length > 0) {
       setForm(f => ({ ...f, category: categories[0] }));
     }
-  }, [categories, Grade.category]);
+  }, [categories, form.category]);
 
   useEffect(() => {
     if (params.action === 'record_expense') setModalOpen(true);
@@ -559,15 +559,15 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
   }, [params.action]);
 
   const handleRecord = async () => {
-    if (!Grade.amount || !Grade.description || !Grade.category) {
+    if (!form.amount || !form.description || !form.category) {
       notify('Category, amount and description are required.', 'error');
       return;
     }
     const expense = {
       id: `exp_${Date.now()}`,
-      category: Grade.category,
-      amount: Number(Grade.amount),
-      description: Grade.description,
+      category: form.category,
+      amount: Number(form.amount),
+      description: form.description,
       status: 'Pending',
       requested_by: user?.name || 'User',
       date: new Date().toISOString().slice(0,10),
@@ -575,7 +575,7 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
     };
     // Optimistic update
     setExpenses(prev => [expense, ...prev]);
-    notify(`Expense of ${fmtKES(Grade.amount)} submitted for approval.`);
+    notify(`Expense of ${fmtKES(form.amount)} submitted for approval.`);
     setModalOpen(false);
     setForm({ category: categories[0] || '', amount: '', description: '' });
     try {
@@ -598,7 +598,7 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
     if (confirm(`Remove category "${catToRemove}"?`)) {
       const newCategories = categories.filter(c => c !== catToRemove);
       store.setSettings({ ...store.settings, expenseCategories: newCategories });
-      if (Grade.category === catToRemove) setForm(f => ({ ...f, category: newCategories[0] || '' }));
+      if (form.category === catToRemove) setForm(f => ({ ...f, category: newCategories[0] || '' }));
       notify('Category removed.', 'info');
     }
   };
@@ -646,18 +646,18 @@ function ExpensesTab({ expenses, setExpenses, user, notify, params, store }) {
           <div className="grid grid-2">
             <div>
               <label className="field-label">Category</label>
-              <select className="select" value={Grade.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+              <select className="select" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
               <label className="field-label">Amount (KES)</label>
-              <input type="number" className="input" value={Grade.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
+              <input type="number" className="input" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             </div>
           </div>
           <div style={{ marginTop: 12 }}>
             <label className="field-label">Description / Purpose</label>
-            <input className="input" value={Grade.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            <input className="input" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>This will be visible to the Principal for approval.</div>
           </div>
         </Modal>

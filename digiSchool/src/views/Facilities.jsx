@@ -11,7 +11,7 @@ export default function Facilities({ store }) {
   const { notify } = store;
   const [facilities, setFacilities] = useState([]);
   const [addOpen, setAddOpen] = useState(false);
-  const [Grade, setForm] = useState({ name: '', type: 'Room', capacity: '', note: '' });
+  const [form, setForm] = useState({ name: '', type: 'Room', capacity: '', note: '' });
 
   useEffect(() => {
     fetchTable('facilities')
@@ -42,10 +42,10 @@ export default function Facilities({ store }) {
   };
 
   const addFacility = async () => {
-    if (!Grade.name) { notify('Name is required.', 'error'); return; }
+    if (!form.name) { notify('Name is required.', 'error'); return; }
     const facility = {
-      id: `f${Date.now()}`, name: Grade.name, type: Grade.type,
-      capacity: Number(Grade.capacity) || 0, status: 'Operational', note: Grade.note,
+      id: `f${Date.now()}`, name: form.name, type: form.type,
+      capacity: Number(form.capacity) || 0, status: 'Operational', note: form.note,
     };
     try {
       await upsertRow('facilities', facility);
@@ -56,7 +56,7 @@ export default function Facilities({ store }) {
     setFacilities((fs) => [...fs, facility]);
     setAddOpen(false);
     setForm({ name: '', type: 'Room', capacity: '', note: '' });
-    notify(`Facility "${Grade.name}" added.`);
+    notify(`Facility "${form.name}" added.`);
   };
 
   return (
@@ -101,21 +101,21 @@ export default function Facilities({ store }) {
           <><button className="btn" onClick={() => setAddOpen(false)}>Cancel</button><button className="btn btn-primary" onClick={addFacility}>Save</button></>
         }>
           <label className="field-label">Name</label>
-          <input className="input" value={Grade.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          <input className="input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           <div className="grid grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">Type</label>
-              <select className="select" value={Grade.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+              <select className="select" value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
                 <option>Room</option><option>Hall</option><option>Laboratory</option><option>Dormitory</option><option>Outdoor</option>
               </select>
             </div>
             <div>
               <label className="field-label">Capacity</label>
-              <input type="number" className="input" value={Grade.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
+              <input type="number" className="input" value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
             </div>
           </div>
           <label className="field-label" style={{ marginTop: 12 }}>Notes</label>
-          <input className="input" value={Grade.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+          <input className="input" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
         </Modal>
       )}
     </div>

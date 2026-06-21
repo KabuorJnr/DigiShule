@@ -64,7 +64,7 @@ export default function Notices({ store, user }) {
   const [loading, setLoading] = useState(true);
   const [showPost, setShowPost] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [Grade, setForm] = useState({ title: '', body: '', audience: 'all' });
+  const [form, setForm] = useState({ title: '', body: '', audience: 'all' });
   const [expanded, setExpanded] = useState(null);
   const [audienceFilter, setAudienceFilter] = useState('all');
 
@@ -112,19 +112,19 @@ export default function Notices({ store, user }) {
 
   // ── Post notice ───────────────────────────────────────────────
   const handlePost = async () => {
-    if (!Grade.title.trim() || !Grade.body.trim()) {
+    if (!form.title.trim() || !form.body.trim()) {
       notify('Title and body are required', 'warning'); return;
     }
     setPosting(true);
     const schoolId = getActiveSchoolId();
     try {
       const row = {
-        title: Grade.title,
-        message: Grade.body,
-        body: Grade.body,
+        title: form.title,
+        message: form.body,
+        body: form.body,
         posted_by: user?.name || 'Staff',
         role: user?.dept || user?.role || 'Staff',
-        audience: Grade.audience === 'all' ? ['all'] : [Grade.audience],
+        audience: form.audience === 'all' ? ['all'] : [form.audience],
         read: false,
         school_id: schoolId,
         created_at: new Date().toISOString(),
@@ -138,9 +138,9 @@ export default function Notices({ store, user }) {
     } catch (e) {
       // Fallback to local if Supabase fails
       setDbNotices(prev => [{
-        id: `local_${Date.now()}`, title: Grade.title, body: Grade.body,
+        id: `local_${Date.now()}`, title: form.title, body: form.body,
         posted_by: user?.name, role: user?.dept || 'Staff',
-        audience: [Grade.audience], created_at: new Date().toISOString(),
+        audience: [form.audience], created_at: new Date().toISOString(),
       }, ...prev]);
       setShowPost(false);
       setForm({ title: '', body: '', audience: 'all' });
@@ -243,15 +243,15 @@ export default function Notices({ store, user }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label className="field-label">Title *</label>
-              <input className="input" placeholder="Notice title…" value={Grade.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+              <input className="input" placeholder="Notice title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Body *</label>
-              <textarea className="input" rows={6} placeholder="Write the notice content…" value={Grade.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
+              <textarea className="input" rows={6} placeholder="Write the notice content…" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Audience</label>
-              <select className="select" value={Grade.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
+              <select className="select" value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
                 {AUDIENCE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>

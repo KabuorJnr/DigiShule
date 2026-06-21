@@ -17,6 +17,7 @@ import Overview from './views/Overview';
 import Timetable from './views/Timetable';
 import ExamSchedules from './views/ExamSchedules';
 import Gradebook from './views/Gradebook';
+import LandingPage from './views/LandingPage';
 import Settings from './views/Settings';
 import Library from './views/Library';
 import Finance from './views/Finance';
@@ -66,7 +67,7 @@ let toastId = 0;
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
-  const [setupDone, setSetupDone] = useState(() => !!localStorage.getItem('eduone_setup_done'));
+  const [showLogin, setShowLogin] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
   const [viewParams, setViewParams] = useState({}); // Stores tab, action, filters from sidebar
@@ -328,31 +329,21 @@ export default function App() {
     notify('You have been logged out.', 'info', 'Logout');
   };
 
-  // ---- Show Setup Wizard on first run ----
-  if (!setupDone) {
-    return <SetupWizard 
-      onComplete={(config, sid) => {
-        if (sid) {
-          setActiveSchoolId(sid);
-          setSchoolId(sid);
-        }
-        setSetupDone(true);
-      }}
-      onSkip={() => setSetupDone(true)}
-    />;
-  }
-
   // ---- Splash while we check the session ----
   if (!authChecked) {
     return (
-      <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh' }}>
-        <div className="muted">Loading EduOne…</div>
+      <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh', background: '#0a0a0a', color: '#10B981' }}>
+        <div className="muted" style={{ fontFamily: 'monospace' }}>[SYS] Booting EduOne...</div>
       </div>
     );
   }
 
-  // ---- If not logged in, show Login ----
+  // ---- If not logged in, show Landing Page or Login ----
   if (!currentUser) {
+    if (!showLogin) {
+      return <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} />;
+    }
+
     return (
       <>
         <Login onDemoLogin={handleDemoLogin} />

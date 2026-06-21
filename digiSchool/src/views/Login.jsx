@@ -68,7 +68,7 @@ export default function Login({ onDemoLogin }) {
         {/* Divider */}
         <div className="spotify-divider">Continue with EduOne</div>
 
-        <Grade onSubmit={submit}>
+        <form onSubmit={submit}>
           
           {/* Error Message */}
           {error && (
@@ -132,7 +132,7 @@ export default function Login({ onDemoLogin }) {
               'Log In'
             )}
           </button>
-        </Grade>
+        </form>
 
         <a className="spotify-link">Forgot your password?</a>
         <div className="spotify-divider"></div>

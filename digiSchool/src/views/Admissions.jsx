@@ -15,7 +15,7 @@ export default function Admissions({ store }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewStudent, setViewStudent] = useState(null);
-  const [Grade, setForm] = useState({
+  const [form, setForm] = useState({
     name: '', kcpe: '', gender: 'M', Grade: 'Grade 7',
     dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day',
   });
@@ -44,18 +44,18 @@ export default function Admissions({ store }) {
   };
 
   const addApplicant = async () => {
-    if (!Grade.name || !Grade.kcpe) { notify('Name and KCPE marks are required.', 'error'); return; }
+    if (!form.name || !form.kcpe) { notify('Name and KCPE marks are required.', 'error'); return; }
     const applicant = {
-      id: `ad${Date.now()}`, name: Grade.name, kcpe: Number(Grade.kcpe), gender: Grade.gender,
-      Grade: Grade.Grade, date: new Date().toISOString().slice(0, 10), status: 'Pending',
-      dob: Grade.dob, parentName: Grade.parentName, parentPhone: Grade.parentPhone, parentEmail: Grade.parentEmail,
-      boardingStatus: Grade.boardingStatus,
+      id: `ad${Date.now()}`, name: form.name, kcpe: Number(form.kcpe), gender: form.gender,
+      Grade: form.Grade, date: new Date().toISOString().slice(0, 10), status: 'Pending',
+      dob: form.dob, parentName: form.parentName, parentPhone: form.parentPhone, parentEmail: form.parentEmail,
+      boardingStatus: form.boardingStatus,
     };
     try { await upsertRow('admissions', applicant); } catch (e) { notify(`Could not add application: ${e.message}`, 'error'); return; }
     setApps(as => [applicant, ...as]);
     setAddOpen(false);
     setForm({ name: '', kcpe: '', gender: 'M', Grade: 'Grade 7', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
-    notify(`Application for ${Grade.name} added.`);
+    notify(`Application for ${form.name} added.`);
   };
 
   const roll = CLASSES.map(c => ({ cls: `Grade ${c}`, count: students.filter(s => s.class === c).length }));
@@ -151,34 +151,34 @@ export default function Admissions({ store }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label className="field-label">Full Name *</label>
-              <input className="input" value={Grade.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              <input className="input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="grid grid-2">
               <div>
                 <label className="field-label">KCPE Marks *</label>
-                <input type="number" className="input" value={Grade.kcpe} onChange={e => setForm(f => ({ ...f, kcpe: e.target.value }))} />
+                <input type="number" className="input" value={form.kcpe} onChange={e => setForm(f => ({ ...f, kcpe: e.target.value }))} />
               </div>
               <div>
                 <label className="field-label">Date of Birth</label>
-                <input type="date" className="input" value={Grade.dob} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} />
+                <input type="date" className="input" value={form.dob} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-3">
               <div>
                 <label className="field-label">Gender</label>
-                <select className="select" value={Grade.gender} onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}>
+                <select className="select" value={form.gender} onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}>
                   <option value="M">Male</option><option value="F">Female</option>
                 </select>
               </div>
               <div>
                 <label className="field-label">Grade</label>
-                <select className="select" value={Grade.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))}>
+                <select className="select" value={form.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))}>
                   <option>Grade 7</option><option>Grade 8 (Transfer)</option><option>Grade 9 (Transfer)</option>
                 </select>
               </div>
               <div>
                 <label className="field-label">Boarding Status</label>
-                <select className="select" value={Grade.boardingStatus} onChange={e => setForm(f => ({ ...f, boardingStatus: e.target.value }))}>
+                <select className="select" value={form.boardingStatus} onChange={e => setForm(f => ({ ...f, boardingStatus: e.target.value }))}>
                   <option>Day</option><option>Boarding</option>
                 </select>
               </div>
@@ -186,16 +186,16 @@ export default function Admissions({ store }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Parent/Guardian Name</label>
-                <input className="input" placeholder="Parent full name" value={Grade.parentName} onChange={e => setForm(f => ({ ...f, parentName: e.target.value }))} />
+                <input className="input" placeholder="Parent full name" value={form.parentName} onChange={e => setForm(f => ({ ...f, parentName: e.target.value }))} />
               </div>
               <div>
                 <label className="field-label">Parent Phone</label>
-                <input className="input" placeholder="07XX XXX XXX" value={Grade.parentPhone} onChange={e => setForm(f => ({ ...f, parentPhone: e.target.value }))} />
+                <input className="input" placeholder="07XX XXX XXX" value={form.parentPhone} onChange={e => setForm(f => ({ ...f, parentPhone: e.target.value }))} />
               </div>
             </div>
             <div>
               <label className="field-label">Parent Email (Optional)</label>
-              <input type="email" className="input" placeholder="For parent portal access" value={Grade.parentEmail} onChange={e => setForm(f => ({ ...f, parentEmail: e.target.value }))} />
+              <input type="email" className="input" placeholder="For parent portal access" value={form.parentEmail} onChange={e => setForm(f => ({ ...f, parentEmail: e.target.value }))} />
             </div>
           </div>
         </Modal>
