@@ -395,111 +395,177 @@
 }
 
 /* ---------- Login page ---------- */
-.login-shell {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
+.spotify-login-wrap {
   min-height: 100vh;
-}
-.login-brand {
-  background: linear-gradient(160deg, #0078D4 0%, #005BA1 55%, #003A6A 100%);
-  color: #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px;
-  position: relative;
-  overflow: hidden;
-}
-.login-brand::after {
-  content: "";
-  position: absolute;
-  width: 460px;
-  height: 460px;
-  border-radius: 50%;
-  background: rgba(14, 165, 233, 0.12);
-  top: -120px;
-  right: -120px;
-}
-.login-brand-inner { max-width: 420px; position: relative; z-index: 1; }
-.login-logo {
-  width: 56px; height: 56px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
+  background: linear-gradient(180deg, #181818 0%, #000000 100%);
+  font-family: 'Outfit', 'Inter', sans-serif;
   color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 22px;
-  margin-bottom: 22px;
-  backdrop-filter: blur(8px);
+  padding: 20px;
 }
-.login-brand h1 { color: #fff; font-size: 26px; line-height: 1.2; }
-.login-motto { color: #60a5fa; font-weight: 600; margin: 8px 0 18px; }
-.login-tagline { color: #cbd5e1; font-size: 14px; }
-.login-points { list-style: none; padding: 0; margin: 24px 0 0; display: flex; flex-direction: column; gap: 10px; }
-.login-points li { color: #e2e8f0; font-size: 13px; }
 
-.login-panel {
+.spotify-login-container {
+  width: 100%;
+  max-width: 734px;
+  background: #121212;
+  border-radius: 8px;
+  padding: 72px;
+}
+
+.spotify-login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.spotify-login-logo {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
   background: #fff;
+  border-radius: 50%;
 }
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 28px;
+.spotify-login-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.spotify-login-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin: 0;
+  color: #fff;
 }
-.login-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
-.login-error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-.login-pw { position: relative; }
-.login-pw .input { padding-right: 44px; }
-.login-pw-toggle {
-  position: absolute;
-  right: 6px; top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: none;
-  font-size: 16px;
-  padding: 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-.login-pw-toggle:hover { background: #f0f0f0; }
-.login-submit { width: 100%; margin-top: 20px; height: 40px; font-size: 14px; }
-.login-quick { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 18px; }
-.login-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.login-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: var(--radius-sm);
-  padding: 5px 10px;
-  transition: all 0.12s;
-}
-.login-chip:hover { border-color: var(--primary); background: #e8f0fe; }
-.login-chip-role { font-size: 11px; font-weight: 600; color: var(--primary); }
-.login-chip-user { font-size: 10px; color: var(--muted); }
-.login-card code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
 
-@media (max-width: 880px) {
-  .login-shell { grid-template-columns: 1fr; }
-  .login-brand { display: none; }
+.spotify-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #a7a7a7;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 32px 0;
+}
+.spotify-divider::before,
+.spotify-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #292929;
+}
+.spotify-divider:not(:empty)::before { margin-right: .25em; }
+.spotify-divider:not(:empty)::after { margin-left: .25em; }
+
+.spotify-form-group {
+  margin-bottom: 24px;
+}
+.spotify-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.spotify-input {
+  width: 100%;
+  background-color: #121212;
+  border: 1px solid #727272;
+  border-radius: 4px;
+  padding: 14px;
+  color: #fff;
+  font-size: 16px;
+  transition: border-color 0.1s ease;
+}
+.spotify-input:hover {
+  border-color: #fff;
+}
+.spotify-input:focus {
+  border: 2px solid #fff;
+  padding: 13px; /* Compensate for 2px border */
+  outline: none;
+}
+
+.spotify-pw-wrap { position: relative; }
+.spotify-pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a7a7a7;
+  cursor: pointer;
+  padding: 4px;
+}
+.spotify-pw-toggle:hover { color: #fff; }
+
+.spotify-error {
+  background: #E22134;
+  color: #fff;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 4px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spotify-btn {
+  width: 100%;
+  background: #1ed760;
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.spotify-btn:hover {
+  background: #1fdf64;
+  transform: scale(1.04);
+}
+.spotify-btn:active {
+  background: #169c46;
+  transform: scale(1);
+}
+.spotify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spotify-link {
+  color: #fff;
+  text-decoration: underline;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  display: block;
+  margin-top: 32px;
+  cursor: pointer;
+}
+.spotify-link:hover {
+  color: #1ed760;
+}
+
+@media (max-width: 768px) {
+  .spotify-login-wrap {
+    background: #121212;
+    padding: 0;
+    align-items: flex-start;
+  }
+  .spotify-login-container {
+    padding: 32px 16px;
+    border-radius: 0;
+  }
 }
 
 /* ---------- Role badge in topbar ---------- */
