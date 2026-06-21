@@ -316,379 +316,439 @@ textarea.input {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* --- AMAZON STYLE LANDING PAGE --- */
-.amz-body {
-  background-color: #eaeded;
-  font-family: Arial, sans-serif;
-  color: #0F1111;
+/* --- SAAS STYLE LANDING PAGE --- */
+.saas-body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #ffffff;
+  color: #0f172a;
   min-height: 100vh;
+  line-height: 1.5;
 }
 
-/* Header */
-.amz-header {
-  background-color: #131921;
+/* Nav */
+.saas-nav {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 100;
+}
+.saas-nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.saas-brand {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #0f172a;
+}
+.saas-brand-highlight {
+  color: #2563eb;
+}
+.saas-nav-links {
+  display: flex;
+  gap: 2rem;
+}
+.saas-nav-links a {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+.saas-nav-links a:hover {
+  color: #0f172a;
+}
+.saas-nav-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Buttons */
+.saas-btn-text {
+  background: none;
+  border: none;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+.saas-btn-text:hover {
+  color: #0f172a;
+}
+.saas-btn-primary {
+  background: #2563eb;
   color: white;
-}
-.amz-nav-top {
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-  height: 60px;
-}
-.amz-nav-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.amz-logo {
-  padding: 5px 10px;
-  border: 1px solid transparent;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
   cursor: pointer;
-}
-.amz-logo:hover {
-  border-color: white;
-  border-radius: 2px;
-}
-.amz-logo-text {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-}
-.amz-logo-smile {
-  color: #f90;
-}
-.amz-nav-location {
-  display: flex;
+  transition: background-color 0.2s;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border: 1px solid transparent;
+  gap: 0.5rem;
+}
+.saas-btn-primary:hover {
+  background: #1d4ed8;
+}
+.saas-btn-outline {
+  background: white;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
 }
-.amz-nav-location:hover {
-  border-color: white;
-  border-radius: 2px;
+.saas-btn-outline:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
-.amz-nav-text {
+.saas-btn-large {
+  padding: 0.875rem 1.5rem;
+  font-size: 1.05rem;
+}
+
+/* Hero */
+.saas-main {
   display: flex;
   flex-direction: column;
 }
-.amz-nav-line-1 {
-  font-size: 12px;
-  color: #ccc;
-  line-height: 14px;
+.saas-hero {
+  padding: 6rem 2rem;
+  text-align: center;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
 }
-.amz-nav-line-2 {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 15px;
-}
-.amz-nav-search {
-  flex: 1;
-  display: flex;
-  height: 40px;
-  margin: 0 15px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.amz-search-dropdown {
-  background: #f3f3f3;
-  border: none;
-  border-right: 1px solid #cdcdcd;
-  padding: 0 10px;
-  color: #333;
-  font-size: 12px;
-  outline: none;
-  cursor: pointer;
-}
-.amz-search-input {
-  flex: 1;
-  border: none;
-  padding: 0 10px;
-  outline: none;
-}
-.amz-search-btn {
-  background: #febd69;
-  border: none;
-  width: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.amz-search-btn:hover {
-  background: #f3a847;
-}
-
-.amz-nav-right {
-  display: flex;
-  align-items: center;
-}
-.amz-nav-tool {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-.amz-nav-tool:hover {
-  border-color: white;
-  border-radius: 2px;
-}
-.amz-nav-cart {
-  display: flex;
-  align-items: flex-end;
-  padding: 10px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  position: relative;
-}
-.amz-nav-cart:hover {
-  border-color: white;
-  border-radius: 2px;
-}
-.amz-cart-count {
-  position: absolute;
-  top: 5px;
-  left: 24px;
-  color: #f90;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-/* Sub Nav */
-.amz-nav-sub {
-  background-color: #232f3e;
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-  gap: 15px;
-  font-size: 14px;
-  color: white;
-}
-.amz-nav-sub-item {
-  padding: 5px 10px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.amz-nav-sub-item:hover {
-  border-color: white;
-  border-radius: 2px;
-}
-.amz-menu {
-  font-weight: 700;
-}
-
-/* Main */
-.amz-main {
-  max-width: 1500px;
+.saas-hero-content {
+  max-width: 800px;
   margin: 0 auto;
 }
-.amz-hero {
-  height: 250px;
-  background: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1500&q=80') center/cover;
-  position: relative;
-  margin-bottom: -100px;
+.saas-badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 0.35rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border: 1px solid #bfdbfe;
 }
-.amz-hero-gradient {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 100px;
-  background: linear-gradient(to bottom, rgba(234,237,237,0) 0%, #eaeded 100%);
+.saas-hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.03em;
 }
-
-.amz-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 0 20px;
-  position: relative;
-  z-index: 2;
+.saas-text-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-
-.amz-card {
-  background: white;
-  padding: 20px;
-  height: 420px;
+.saas-hero-subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+.saas-hero-actions {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 4rem;
 }
-.amz-card h2 {
-  font-size: 21px;
-  font-weight: 700;
-  margin: 0 0 15px 0;
-  color: #0F1111;
+.saas-hero-trust {
+  padding-top: 3rem;
+  border-top: 1px solid #e2e8f0;
 }
-.amz-card-img {
-  flex: 1;
+.saas-hero-trust p {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+.saas-trust-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.saas-trust-logos span:nth-child(even) {
+  color: #cbd5e1;
+}
+
+/* Features */
+.saas-features {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.saas-section-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 4rem auto;
+}
+.saas-section-header h2 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.03em;
+}
+.saas-section-header p {
+  font-size: 1.125rem;
+  color: #64748b;
+}
+
+.saas-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+.saas-feature-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+.saas-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+.saas-feature-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 15px;
-  overflow: hidden;
+  margin-bottom: 1.5rem;
 }
-.amz-card-img img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-.amz-card-link {
-  color: #007185;
-  font-size: 13px;
-  text-decoration: none;
-  cursor: pointer;
-}
-.amz-card-link:hover {
-  color: #c45500;
-  text-decoration: underline;
-}
-
-.amz-card-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  flex: 1;
-  margin-bottom: 15px;
-}
-.amz-card-sub {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.amz-card-sub img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-}
-.amz-card-sub span {
-  font-size: 12px;
-}
-
-.amz-demo-card {
-  height: 420px;
-}
-.amz-demo-card h2 {
-  font-size: 21px;
-}
-.amz-btn-primary {
-  background: #ffd814;
-  border: 1px solid #fcd200;
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: 0 2px 5px rgba(15,17,17,.15);
-  cursor: pointer;
-  font-size: 13px;
-  width: 100%;
-  color: #0f1111;
-}
-.amz-btn-primary:hover {
-  background: #f7ca00;
-}
-.amz-main-login-btn {
-  margin-bottom: 20px;
-}
-.amz-demo-roles p {
-  font-size: 13px;
+.saas-feature-card h3 {
+  font-size: 1.25rem;
   font-weight: 700;
-  margin: 0 0 10px 0;
+  margin: 0 0 0.75rem 0;
 }
-.amz-demo-roles ul {
+.saas-feature-card p {
+  color: #64748b;
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+}
+.saas-feature-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.75rem;
 }
-.amz-demo-link {
+.saas-feature-list li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: white;
-  border: 1px solid #d5d9d9;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 13px;
+  gap: 0.5rem;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Demo Section */
+.saas-demo-section {
+  padding: 6rem 2rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+.saas-demo-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.saas-demo-content h2 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.03em;
+}
+.saas-demo-content p {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+.saas-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.saas-demo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   cursor: pointer;
-  text-align: left;
-  box-shadow: 0 2px 5px rgba(15,17,17,.15);
-  color: #0f1111;
+  transition: all 0.2s ease;
 }
-.amz-demo-link:hover {
-  background: #f7fafa;
+.saas-demo-card:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.saas-demo-icon {
+  background: #f1f5f9;
+  color: #475569;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.saas-demo-card:hover .saas-demo-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.saas-demo-info {
+  flex: 1;
+}
+.saas-demo-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.saas-demo-role {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.saas-demo-arrow {
+  color: #cbd5e1;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.saas-demo-card:hover .saas-demo-arrow {
+  color: #2563eb;
+  transform: translateX(4px);
 }
 
-.amz-wide-card {
+.saas-browser-mockup {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+.saas-browser-header {
+  background: #f1f5f9;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.saas-browser-dots {
+  display: flex;
+  gap: 6px;
+}
+.saas-browser-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.saas-browser-dots span:nth-child(1) { background: #ef4444; }
+.saas-browser-dots span:nth-child(2) { background: #eab308; }
+.saas-browser-dots span:nth-child(3) { background: #22c55e; }
+.saas-browser-mockup img {
+  width: 100%;
   height: auto;
-}
-
-.amz-spacer {
-  height: 40px;
+  display: block;
 }
 
 /* Footer */
-.amz-footer {
-  background: #232f3e;
-  color: white;
+.saas-footer {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 4rem 2rem 2rem 2rem;
 }
-.amz-back-top {
+.saas-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 4rem;
+  margin-bottom: 4rem;
+}
+.saas-footer-brand .saas-brand {
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+.saas-footer-brand p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+.saas-footer-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+.saas-footer-col h4 {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 1.25rem 0;
+}
+.saas-footer-col a {
   display: block;
-  background: #37475a;
-  color: white;
+  color: #94a3b8;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+.saas-footer-col a:hover {
+  color: #ffffff;
+}
+.saas-footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  border-top: 1px solid #1e293b;
   text-align: center;
-  padding: 15px;
-  text-decoration: none;
-  font-size: 13px;
-}
-.amz-back-top:hover {
-  background: #485769;
-}
-.amz-footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 80px;
-  padding: 40px 20px;
-  border-bottom: 1px solid #3a4553;
-  flex-wrap: wrap;
-}
-.amz-footer-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.amz-footer-col h3 {
-  font-size: 16px;
-  margin: 0 0 10px 0;
-}
-.amz-footer-col a {
-  color: #ddd;
-  text-decoration: none;
-  font-size: 14px;
-}
-.amz-footer-col a:hover {
-  text-decoration: underline;
-}
-.amz-footer-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 30px;
-  gap: 10px;
-}
-.amz-footer-bottom p {
-  font-size: 12px;
-  color: #ddd;
-  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
-@media (max-width: 800px) {
-  .desktop-only { display: none !important; }
-  .amz-footer-links { gap: 40px; }
+@media (max-width: 768px) {
+  .saas-demo-container {
+    grid-template-columns: 1fr;
+  }
+  .saas-hero-title {
+    font-size: 2.5rem;
+  }
+  .saas-hero-actions {
+    flex-direction: column;
+  }
+  .saas-footer-container {
+    grid-template-columns: 1fr;
+  }
 }
 @keyframes popIn {
   from { transform: scale(0.97); opacity: 0; }

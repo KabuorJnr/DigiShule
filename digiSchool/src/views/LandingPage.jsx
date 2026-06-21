@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ShoppingCart, MapPin, Menu, ChevronRight } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, Stethoscope, Users, Building, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { USERS } from '../data/users';
 
 const LandingPage = ({ onGetStarted, onDemoLogin }) => {
@@ -7,181 +7,198 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
   const getRoleUser = (role) => USERS.find(u => u.role === role);
 
   return (
-    <div className="amz-body">
-      {/* Header */}
-      <header className="amz-header">
-        <div className="amz-nav-top">
-          {/* Logo */}
-          <div className="amz-nav-left">
-            <div className="amz-logo">
-              <span className="amz-logo-text">edu<span className="amz-logo-smile">one</span></span>
+    <div className="saas-body">
+      {/* Navigation */}
+      <nav className="saas-nav">
+        <div className="saas-nav-container">
+          <div className="saas-brand">
+             edu<span className="saas-brand-highlight">one</span>
+          </div>
+          <div className="saas-nav-links desktop-only">
+            <a href="#features">Features</a>
+            <a href="#solutions">Solutions</a>
+            <a href="#demo">Interactive Demo</a>
+          </div>
+          <div className="saas-nav-actions">
+            <button className="saas-btn-text" onClick={onGetStarted}>Log in</button>
+            <button className="saas-btn-primary" onClick={onGetStarted}>Get Started</button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="saas-main">
+        {/* Hero Section */}
+        <section className="saas-hero">
+          <div className="saas-hero-content">
+            <div className="saas-badge">✨ The Modern Operating System for Schools</div>
+            <h1 className="saas-hero-title">
+              Manage your entire school from one <span className="saas-text-gradient">unified platform.</span>
+            </h1>
+            <p className="saas-hero-subtitle">
+              EduOne brings academics, finance, health, and administration together in a beautiful, easy-to-use cloud platform. Built for modern educators and administrators.
+            </p>
+            <div className="saas-hero-actions">
+              <button className="saas-btn-primary saas-btn-large" onClick={onGetStarted}>
+                Start your free trial <ArrowRight size={18} />
+              </button>
+              <button className="saas-btn-outline saas-btn-large" onClick={() => document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })}>
+                Try interactive demo
+              </button>
             </div>
-            <div className="amz-nav-location desktop-only">
-              <MapPin size={16} />
-              <div className="amz-nav-text">
-                <span className="amz-nav-line-1">Deliver to</span>
-                <span className="amz-nav-line-2">Your School</span>
+            <div className="saas-hero-trust">
+              <p>Trusted by innovative institutions worldwide</p>
+              <div className="saas-trust-logos">
+                <span>St. Patrick's Academy</span>
+                <span>•</span>
+                <span>Oakridge International</span>
+                <span>•</span>
+                <span>Greenwood High</span>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Search */}
-          <div className="amz-nav-search">
-            <select className="amz-search-dropdown desktop-only">
-              <option>All Modules</option>
-              <option>Academics</option>
-              <option>Finance</option>
-            </select>
-            <input type="text" className="amz-search-input" placeholder="Search EduOne..." />
-            <button className="amz-search-btn">
-              <Search size={20} color="#333" />
-            </button>
+        {/* Features Section */}
+        <section id="features" className="saas-features">
+          <div className="saas-section-header">
+            <h2>Everything you need to run your school</h2>
+            <p>Replace disjointed tools with a single, powerful platform designed for education.</p>
           </div>
-
-          {/* Right Tools */}
-          <div className="amz-nav-right">
-            <div className="amz-nav-tool" onClick={onGetStarted}>
-              <span className="amz-nav-line-1">Hello, sign in</span>
-              <span className="amz-nav-line-2">Account &amp; Lists</span>
+          
+          <div className="saas-feature-grid">
+            {/* Feature 1 */}
+            <div className="saas-feature-card">
+              <div className="saas-feature-icon" style={{background: '#e0e7ff', color: '#4f46e5'}}>
+                <BookOpen size={24} />
+              </div>
+              <h3>Academics Engine</h3>
+              <p>Comprehensive grading systems supporting both 8-4-4 and modern CBC frameworks. Track attendance, manage assignments, and generate insightful report cards effortlessly.</p>
+              <ul className="saas-feature-list">
+                <li><CheckCircle2 size={16} /> CBC & Standard Grading</li>
+                <li><CheckCircle2 size={16} /> Automated Report Cards</li>
+              </ul>
             </div>
-            <div className="amz-nav-tool desktop-only">
-              <span className="amz-nav-line-1">Returns</span>
-              <span className="amz-nav-line-2">&amp; Orders</span>
+
+            {/* Feature 2 */}
+            <div className="saas-feature-card">
+              <div className="saas-feature-icon" style={{background: '#dcfce7', color: '#16a34a'}}>
+                <Calculator size={24} />
+              </div>
+              <h3>Finance & Billing</h3>
+              <p>Streamline your financial operations. Automate fee collection, track expenses, manage payroll, and generate professional invoices for parents in seconds.</p>
+              <ul className="saas-feature-list">
+                <li><CheckCircle2 size={16} /> Automated Invoicing</li>
+                <li><CheckCircle2 size={16} /> Expense Tracking</li>
+              </ul>
             </div>
-            <div className="amz-nav-cart">
-              <ShoppingCart size={28} />
-              <span className="amz-cart-count">0</span>
-              <span className="amz-nav-line-2 desktop-only">Cart</span>
+
+            {/* Feature 3 */}
+            <div className="saas-feature-card">
+              <div className="saas-feature-icon" style={{background: '#fee2e2', color: '#dc2626'}}>
+                <Stethoscope size={24} />
+              </div>
+              <h3>Health & Clinic</h3>
+              <p>Ensure student wellbeing with a dedicated digital clinic. Log medical visits, track prescriptions, and maintain comprehensive student health records securely.</p>
+              <ul className="saas-feature-list">
+                <li><CheckCircle2 size={16} /> Medical Logs</li>
+                <li><CheckCircle2 size={16} /> Secure Health Records</li>
+              </ul>
             </div>
-          </div>
-        </div>
-
-        {/* Sub Nav */}
-        <div className="amz-nav-sub">
-          <div className="amz-nav-sub-item amz-menu">
-            <Menu size={20} /> All
-          </div>
-          <div className="amz-nav-sub-item">Today's Deals</div>
-          <div className="amz-nav-sub-item">Customer Service</div>
-          <div className="amz-nav-sub-item">Registry</div>
-          <div className="amz-nav-sub-item">Gift Cards</div>
-          <div className="amz-nav-sub-item">Sell</div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="amz-main">
-        {/* Hero Banner Area */}
-        <div className="amz-hero">
-          <div className="amz-hero-gradient"></div>
-        </div>
-
-        {/* Product Grid */}
-        <div className="amz-grid">
-          {/* Card 1 */}
-          <div className="amz-card">
-            <h2>Academics Engine</h2>
-            <div className="amz-card-img" style={{background: '#f0f8ff'}}>
-               <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=300&q=80" alt="Academics" />
-            </div>
-            <a className="amz-card-link">Shop grading systems</a>
-          </div>
-
-          {/* Card 2 */}
-          <div className="amz-card">
-            <h2>Finance & Billing</h2>
-            <div className="amz-card-grid">
-              <div className="amz-card-sub"><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=150&q=80" alt="1" /><span>Invoicing</span></div>
-              <div className="amz-card-sub"><img src="https://images.unsplash.com/photo-1580519542036-ed47f3e42214?auto=format&fit=crop&w=150&q=80" alt="2" /><span>Payments</span></div>
-              <div className="amz-card-sub"><img src="https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=150&q=80" alt="3" /><span>Reports</span></div>
-              <div className="amz-card-sub"><img src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?auto=format&fit=crop&w=150&q=80" alt="4" /><span>Payroll</span></div>
-            </div>
-            <a className="amz-card-link">See more</a>
-          </div>
-
-          {/* Card 3 */}
-          <div className="amz-card">
-            <h2>Clinic & Health</h2>
-            <div className="amz-card-img" style={{background: '#fcf0f0'}}>
-              <img src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&w=300&q=80" alt="Clinic" />
-            </div>
-            <a className="amz-card-link">Explore health tracking</a>
-          </div>
-
-          {/* Demo Sign In Widget (Amazon Style) */}
-          <div className="amz-card amz-demo-card">
-            <h2>Sign in for the best experience</h2>
-            <button className="amz-btn-primary amz-main-login-btn" onClick={onGetStarted}>Sign in securely</button>
-            <div className="amz-demo-roles">
-              <p>Or test drive a demo account:</p>
-              <ul>
-                {primaryRoles.map(role => {
-                  const user = getRoleUser(role);
-                  if (!user) return null;
-                  return (
-                    <li key={role}>
-                      <button className="amz-demo-link" onClick={() => onDemoLogin(user)}>
-                        Sign in as {user.name} ({role}) <ChevronRight size={14} />
-                      </button>
-                    </li>
-                  );
-                })}
+            
+             {/* Feature 4 */}
+             <div className="saas-feature-card">
+              <div className="saas-feature-icon" style={{background: '#fef3c7', color: '#d97706'}}>
+                <Users size={24} />
+              </div>
+              <h3>Admissions & Enrollment</h3>
+              <p>Manage the entire student lifecycle from application to graduation. Digitize enrollment forms and keep parent communication organized.</p>
+              <ul className="saas-feature-list">
+                <li><CheckCircle2 size={16} /> Digital Applications</li>
+                <li><CheckCircle2 size={16} /> Parent Portals</li>
               </ul>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Second Row of Cards */}
-        <div className="amz-grid" style={{marginTop: 20}}>
-          <div className="amz-card amz-wide-card">
-            <div style={{display: 'flex', gap: 20, alignItems: 'center'}}>
-              <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=200&q=80" alt="Library" style={{borderRadius: 8}} />
-              <div>
-                <h2>Discover the Library Module</h2>
-                <p style={{fontSize: 14, color: '#0F1111', marginTop: 8}}>Manage inventory, track borrowed books, and streamline returns.</p>
-                <a className="amz-card-link" style={{marginTop: 8, display: 'inline-block'}}>Click to learn more</a>
+        {/* Interactive Demo Sandbox */}
+        <section id="demo" className="saas-demo-section">
+          <div className="saas-demo-container">
+            <div className="saas-demo-content">
+              <h2>Interactive Sandbox</h2>
+              <p>Experience EduOne from every perspective. Select a role below to jump into a fully populated demo environment.</p>
+              
+              <div className="saas-demo-grid">
+                {primaryRoles.map(role => {
+                  const user = getRoleUser(role);
+                  if (!user) return null;
+                  
+                  let Icon = Users;
+                  if (role === 'principal') Icon = Building;
+                  if (role === 'teacher') Icon = BookOpen;
+                  if (role === 'student') Icon = ShieldCheck;
+                  
+                  return (
+                    <div key={role} className="saas-demo-card" onClick={() => onDemoLogin(user)}>
+                      <div className="saas-demo-icon">
+                        <Icon size={24} />
+                      </div>
+                      <div className="saas-demo-info">
+                        <h4>{user.name}</h4>
+                        <span className="saas-demo-role">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                      </div>
+                      <ArrowRight className="saas-demo-arrow" size={20} />
+                    </div>
+                  );
+                })}
               </div>
             </div>
+            <div className="saas-demo-image desktop-only">
+               <div className="saas-browser-mockup">
+                 <div className="saas-browser-header">
+                   <div className="saas-browser-dots">
+                     <span></span><span></span><span></span>
+                   </div>
+                 </div>
+                 <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Dashboard Preview" />
+               </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="amz-spacer"></div>
       </main>
 
       {/* Footer */}
-      <footer className="amz-footer">
-        <a href="#" className="amz-back-top">Back to top</a>
-        <div className="amz-footer-links">
-          <div className="amz-footer-col">
-            <h3>Get to Know Us</h3>
-            <a href="#">Careers</a>
-            <a href="#">Blog</a>
-            <a href="#">About EduOne</a>
+      <footer className="saas-footer">
+        <div className="saas-footer-container">
+          <div className="saas-footer-brand">
+            <div className="saas-brand">
+               edu<span className="saas-brand-highlight">one</span>
+            </div>
+            <p>The operating system for modern education.</p>
           </div>
-          <div className="amz-footer-col">
-            <h3>Make Money with Us</h3>
-            <a href="#">Sell products on EduOne</a>
-            <a href="#">Become an Affiliate</a>
-            <a href="#">Advertise Your Products</a>
-          </div>
-          <div className="amz-footer-col">
-            <h3>EduOne Payment Products</h3>
-            <a href="#">EduOne Business Card</a>
-            <a href="#">Shop with Points</a>
-            <a href="#">Reload Your Balance</a>
-          </div>
-          <div className="amz-footer-col">
-            <h3>Let Us Help You</h3>
-            <a href="#">Your Account</a>
-            <a href="#">Your Orders</a>
-            <a href="#">Help</a>
+          <div className="saas-footer-links">
+            <div className="saas-footer-col">
+              <h4>Product</h4>
+              <a href="#">Features</a>
+              <a href="#">Pricing</a>
+              <a href="#">Security</a>
+            </div>
+            <div className="saas-footer-col">
+              <h4>Resources</h4>
+              <a href="#">Documentation</a>
+              <a href="#">Help Center</a>
+              <a href="#">API</a>
+            </div>
+            <div className="saas-footer-col">
+              <h4>Company</h4>
+              <a href="#">About</a>
+              <a href="#">Careers</a>
+              <a href="#">Contact</a>
+            </div>
           </div>
         </div>
-        <div className="amz-footer-bottom">
-          <div className="amz-logo">
-             <span className="amz-logo-text">edu<span className="amz-logo-smile">one</span></span>
-          </div>
-          <p>© 2026, EduOne.com, Inc. or its affiliates</p>
+        <div className="saas-footer-bottom">
+          <p>&copy; 2026 EduOne Inc. All rights reserved.</p>
         </div>
       </footer>
     </div>
