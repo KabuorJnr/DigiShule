@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { USERS } from '../data/users';
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
 
-if (!url || !anonKey) {
+if (url === 'https://placeholder.supabase.co') {
   console.error(
     'Missing Supabase env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in digiSchool/.env'
   );
