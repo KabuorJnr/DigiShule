@@ -58,7 +58,7 @@ export default function SetupWizard({ onComplete, onSkip }) {
   });
 
   // Step 2: Academic
-  const [forms, setForms] = useState(4);
+  const [forms, setForms] = useState(6);
   const [streamsPerForm, setStreamsPerForm] = useState(2);
   const [streamNames, setStreamNames] = useState(['A', 'B', 'C', 'D']);
   const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS.map(s => ({ name: s, dept: DEFAULT_DEPTS[s] })));
@@ -94,7 +94,7 @@ export default function SetupWizard({ onComplete, onSkip }) {
     setLaunchError('');
     const streamList = streamNames.slice(0, streamsPerForm);
     const classes = [];
-    for (let f = 1; f <= forms; f++) {
+    for (let f = 7; f < 7 + forms; f++) {
       for (const stream of streamList) classes.push(`${f}${stream}`);
     }
     const config = {
@@ -151,8 +151,8 @@ export default function SetupWizard({ onComplete, onSkip }) {
   const genClasses = () => {
     const sl = streamNames.slice(0, streamsPerForm);
     const result = [];
-    for (let f = 1; f <= forms; f++) {
-      for (const s of sl) result.push(`Form ${f}${s}`);
+    for (let f = 7; f < 7 + forms; f++) {
+      for (const s of sl) result.push(`Grade ${f}${s}`);
     }
     return result;
   };
@@ -249,13 +249,13 @@ export default function SetupWizard({ onComplete, onSkip }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div>
-                  <label className="field-label">Number of Forms</label>
+                  <label className="field-label">Number of Grades</label>
                   <select className="select" value={forms} onChange={e => setForms(Number(e.target.value))}>
-                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Form{n>1?'s':''}</option>)}
+                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Grade{n>1?'s':''}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="field-label">Streams per Form</label>
+                  <label className="field-label">Streams per Grade</label>
                   <select className="select" value={streamsPerForm} onChange={e => setStreamsPerForm(Number(e.target.value))}>
                     {[1,2,3,4].map(n => <option key={n} value={n}>{n} Stream{n>1?'s':''}</option>)}
                   </select>
@@ -354,7 +354,7 @@ export default function SetupWizard({ onComplete, onSkip }) {
 
                 <div className="card card-pad" style={{ background: '#f8fafc' }}>
                   <div style={{ fontWeight: 700, marginBottom: 8, color: '#0078D4' }}>Academic Structure</div>
-                  <div style={{ fontSize: 13 }}>{forms} forms · {streamsPerForm} stream{streamsPerForm > 1 ? 's' : ''} per form</div>
+                  <div style={{ fontSize: 13 }}>{forms} grades · {streamsPerForm} stream{streamsPerForm > 1 ? 's' : ''} per Grade</div>
                   <div className="muted" style={{ fontSize: 12 }}>Classes: {genClasses().join(', ')}</div>
                   <div className="muted" style={{ fontSize: 12 }}>{subjects.length} subjects: {subjects.map(s => s.name).join(', ')}</div>
                 </div>

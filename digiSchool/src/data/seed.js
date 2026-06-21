@@ -1,6 +1,5 @@
 // Deterministic seed data for the Principal Dashboard.
-
-export const CLASSES = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'];
+export const CLASSES = ['7A', '7B', '8A', '8B', '9A', '9B', '10A', '10B'];
 
 export const DEPARTMENTS = {
   Mathematics: 'Math',
@@ -65,8 +64,8 @@ const ASSESSMENTS = ['a1', 'a2', 'a3', 'a4'];
 function makeStudent(cls, idx, rand) {
   const fn = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
   const ln = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)];
-  const form = cls[0];
-  const adm = `${form}${cls[1]}-${String(idx + 1).padStart(3, '0')}`;
+  const Grade = cls[0];
+  const adm = `${Grade}${cls[1]}-${String(idx + 1).padStart(3, '0')}`;
   const scores = {};
   SUBJECTS.forEach((sub) => {
     const base = 1.5 + (rand() * 2.5); // Baseline competency between 1.5 and 4.0
@@ -139,27 +138,29 @@ export const ATTENDANCE_RECORDS = (() => {
 })();
 
 export const FEE_BY_CLASS = [
-  { class: 'Form 1', collected: 84 },
-  { class: 'Form 2', collected: 76 },
-  { class: 'Form 3', collected: 65 },
-  { class: 'Form 4', collected: 58 },
+  { class: 'Grade 7', collected: 84 },
+  { class: 'Grade 8', collected: 76 },
+  { class: 'Grade 9', collected: 65 },
+  { class: 'Grade 10', collected: 58 },
+  { class: 'Grade 11', collected: 60 },
+  { class: 'Grade 12', collected: 55 },
 ];
 
 export const SEED_ALERTS = [
   { id: 'a1', icon: '👨‍🏫', message: '3 teachers absent today', time: '08:15 AM', type: 'warning' },
-  { id: 'a2', icon: '📝', message: 'Form 4 Mock Exams in 5 days', time: 'Yesterday', type: 'info' },
+  { id: 'a2', icon: '📝', message: 'Grade 10 Mock Exams in 5 days', time: 'Yesterday', type: 'info' },
   { id: 'a3', icon: '📚', message: '12 library books overdue', time: '2 days ago', type: 'warning' },
   { id: 'a4', icon: '🏥', message: '2 students referred to hospital this week', time: '3 days ago', type: 'danger' },
   { id: 'a5', icon: '💰', message: 'Payroll due in 3 days', time: '3 days ago', type: 'info' },
 ];
 
 export const SEED_NOTIFICATIONS = [
-  { id: 'n1', title: 'New admission approved', body: 'Form 1 admission for Brian Mwangi approved.', time: '10 min ago', read: false },
-  { id: 'n2', title: 'Fee payment received', body: 'KES 45,000 received from Form 3A parent.', time: '32 min ago', read: false },
+  { id: 'n1', title: 'New admission approved', body: 'Grade 7 admission for Brian Mwangi approved.', time: '10 min ago', read: false },
+  { id: 'n2', title: 'Fee payment received', body: 'KES 45,000 received from Grade 9A parent.', time: '32 min ago', read: false },
   { id: 'n3', title: 'Exam schedule published', body: 'End-Term timetable is now live.', time: '1 hour ago', read: false },
   { id: 'n4', title: 'Staff leave request', body: 'Ms. Achieng requested 3 days leave.', time: '2 hours ago', read: false },
   { id: 'n5', title: 'Library overdue alert', body: '17 books are overdue this week.', time: '4 hours ago', read: true },
-  { id: 'n6', title: 'Disciplinary case logged', body: 'New case logged for Form 2B student.', time: 'Yesterday', read: true },
+  { id: 'n6', title: 'Disciplinary case logged', body: 'New case logged for Grade 8B student.', time: 'Yesterday', read: true },
   { id: 'n7', title: 'Maintenance complete', body: 'Science lab projector repaired.', time: 'Yesterday', read: true },
   { id: 'n8', title: 'Board meeting reminder', body: 'BOM meeting scheduled for Friday 2 PM.', time: '2 days ago', read: true },
 ];
@@ -185,11 +186,11 @@ export const DEFAULT_GRADE_BOUNDARIES = [
 ];
 
 export const DEFAULT_FEE_STRUCTURE = [
-  { type: 'Tuition', f1: 25000, f2: 25000, f3: 28000, f4: 28000 },
-  { type: 'Boarding', f1: 18000, f2: 18000, f3: 19000, f4: 19000 },
-  { type: 'Activity', f1: 3000, f2: 3000, f3: 3000, f4: 3000 },
-  { type: 'Library', f1: 1500, f2: 1500, f3: 1500, f4: 1500 },
-  { type: 'Exam', f1: 2000, f2: 2000, f3: 2500, f4: 2500 },
+  { type: 'Tuition', f1: 25000, f2: 25000, f3: 28000, f4: 28000, f5: 30000, f6: 30000 },
+  { type: 'Boarding', f1: 18000, f2: 18000, f3: 19000, f4: 19000, f5: 20000, f6: 20000 },
+  { type: 'Activity', f1: 3000, f2: 3000, f3: 3000, f4: 3000, f5: 3500, f6: 3500 },
+  { type: 'Library', f1: 1500, f2: 1500, f3: 1500, f4: 1500, f5: 2000, f6: 2000 },
+  { type: 'Exam', f1: 2000, f2: 2000, f3: 2500, f4: 2500, f5: 3000, f6: 3000 },
 ];
 
 export const DEFAULT_NOTIF_TOGGLES = {
@@ -203,12 +204,12 @@ export const DEFAULT_NOTIF_TOGGLES = {
 export const DEFAULT_VENUES = [
   { id: 'v1', name: 'Main Hall', capacity: 200, status: 'available' },
   { id: 'v2', name: 'Science Lab Block', capacity: 80, status: 'available' },
-  { id: 'v3', name: 'Form 4 Classrooms', capacity: 120, status: 'available' },
+  { id: 'v3', name: 'Grade 10 Classrooms', capacity: 120, status: 'available' },
   { id: 'v4', name: 'Library', capacity: 60, status: 'maintenance' },
 ];
 
 export function buildExamSchedules() {
-  const venues = ['Main Hall', 'Science Lab Block', 'Form 4 Classrooms'];
+  const venues = ['Main Hall', 'Science Lab Block', 'Grade 10 Classrooms'];
   const invigilators = TEACHERS.map((t) => t.name);
   const mk = (id, name, type, start, days, classes) => {
     const sessions = [];
@@ -233,9 +234,9 @@ export function buildExamSchedules() {
     return { id, name, type, startDate: start, endDate: days, sessions };
   };
   return [
-    mk('ex1', 'End-Term 2 Examinations', 'End-Term', '2026-06-21', '2026-06-25', 'Form 1-4'),
-    mk('ex2', 'Form 4 Mock Examinations', 'Mock', '2026-06-14', '2026-06-18', 'Form 4'),
-    mk('ex3', 'June CAT Series', 'CAT', '2026-06-10', '2026-06-12', 'Form 1-3'),
+    mk('ex1', 'End-Term 2 Examinations', 'End-Term', '2026-06-21', '2026-06-25', 'Grade 7-12'),
+    mk('ex2', 'Grade 10 Mock Examinations', 'Mock', '2026-06-14', '2026-06-18', 'Grade 10'),
+    mk('ex3', 'June CAT Series', 'CAT', '2026-06-10', '2026-06-12', 'Grade 7-3'),
   ];
 }
 
@@ -249,10 +250,12 @@ export const MONTHLY_REVENUE_TREND = [
 ];
 
 export const CLASS_DISTRIBUTION = [
-  { name: 'Form 1', value: 240 },
-  { name: 'Form 2', value: 210 },
-  { name: 'Form 3', value: 205 },
-  { name: 'Form 4', value: 192 },
+  { name: 'Grade 7', value: 240 },
+  { name: 'Grade 8', value: 210 },
+  { name: 'Grade 9', value: 205 },
+  { name: 'Grade 10', value: 192 },
+  { name: 'Grade 11', value: 180 },
+  { name: 'Grade 12', value: 175 },
 ];
 
 export const UPCOMING_EVENTS = [
@@ -263,10 +266,12 @@ export const UPCOMING_EVENTS = [
 ];
 
 export const CLASS_PERFORMANCE_DATA = [
-  { name: 'Form 1', average: 58.4, passRate: 72.0 },
-  { name: 'Form 2', average: 62.1, passRate: 78.5 },
-  { name: 'Form 3', average: 66.8, passRate: 88.5 },
-  { name: 'Form 4', average: 51.2, passRate: 42.0 },
+  { name: 'Grade 7', average: 58.4, passRate: 72.0 },
+  { name: 'Grade 8', average: 62.1, passRate: 78.5 },
+  { name: 'Grade 9', average: 66.8, passRate: 88.5 },
+  { name: 'Grade 10', average: 51.2, passRate: 42.0 },
+  { name: 'Grade 11', average: 55.3, passRate: 50.0 },
+  { name: 'Grade 12', average: 59.8, passRate: 60.0 },
 ];
 
 export const TOP_SUBJECTS_DATA = [
@@ -276,10 +281,12 @@ export const TOP_SUBJECTS_DATA = [
 ];
 
 export const CLASS_PERFORMANCE_SUMMARY = [
-  { id: 'f3', class: 'Form 3', students: 28, streams: 3, avg: 66.8, passRate: 88.5, marks: 78, perf: 'good' },
-  { id: 'f2', class: 'Form 2', students: 32, streams: 3, avg: 62.1, passRate: 78.5, marks: 84, perf: 'good' },
-  { id: 'f1', class: 'Form 1', students: 35, streams: 3, avg: 58.4, passRate: 72.0, marks: 91, perf: 'average' },
-  { id: 'f4', class: 'Form 4', students: 25, streams: 2, avg: 51.2, passRate: 42.0, marks: 45, perf: 'poor' },
+  { id: 'f6', class: 'Grade 12', students: 20, streams: 2, avg: 59.8, passRate: 60.0, marks: 55, perf: 'average' },
+  { id: 'f5', class: 'Grade 11', students: 22, streams: 2, avg: 55.3, passRate: 50.0, marks: 50, perf: 'average' },
+  { id: 'f4', class: 'Grade 10', students: 25, streams: 2, avg: 51.2, passRate: 42.0, marks: 45, perf: 'poor' },
+  { id: 'f3', class: 'Grade 9', students: 28, streams: 3, avg: 66.8, passRate: 88.5, marks: 78, perf: 'good' },
+  { id: 'f2', class: 'Grade 8', students: 32, streams: 3, avg: 62.1, passRate: 78.5, marks: 84, perf: 'good' },
+  { id: 'f1', class: 'Grade 7', students: 35, streams: 3, avg: 58.4, passRate: 72.0, marks: 91, perf: 'average' },
 ];
 
 export const LEAVE_REQUESTS = [
@@ -327,7 +334,7 @@ export const STUDENT_ATTENDANCE_LOG = (() => {
 })();
 
 export const STUDY_MATERIALS = [
-  { id: 'sm1', subject: 'Mathematics', title: 'Form 1 — Algebra Notes', type: 'PDF', size: '2.4 MB', uploadedBy: 'Mr. Omondi', date: '2026-05-20' },
+  { id: 'sm1', subject: 'Mathematics', title: 'Grade 7 — Algebra Notes', type: 'PDF', size: '2.4 MB', uploadedBy: 'Mr. Omondi', date: '2026-05-20' },
   { id: 'sm2', subject: 'Mathematics', title: 'Quadratic Equations Worksheet', type: 'PDF', size: '1.1 MB', uploadedBy: 'Mr. Omondi', date: '2026-06-01' },
   { id: 'sm3', subject: 'English', title: 'A Doll\'s House — Study Guide', type: 'PDF', size: '3.8 MB', uploadedBy: 'Ms. Wanjiku', date: '2026-05-15' },
   { id: 'sm4', subject: 'English', title: 'Essay Writing Tips & Examples', type: 'PDF', size: '1.5 MB', uploadedBy: 'Ms. Wanjiku', date: '2026-06-05' },
@@ -346,7 +353,7 @@ export const REVISION_DOWNLOADS = [
   { id: 'rd4', subject: 'Biology', title: 'KCSE 2024 Biology Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '3.5 MB' },
   { id: 'rd5', subject: 'Chemistry', title: 'KCSE 2024 Chemistry Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '3.2 MB' },
   { id: 'rd6', subject: 'Physics', title: 'KCSE 2024 Physics Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '2.8 MB' },
-  { id: 'rd7', subject: 'Mathematics', title: 'Form 1 End-Term Revision Booklet', year: '2026', type: 'Revision', size: '1.8 MB' },
+  { id: 'rd7', subject: 'Mathematics', title: 'Grade 7 End-Term Revision Booklet', year: '2026', type: 'Revision', size: '1.8 MB' },
   { id: 'rd8', subject: 'English', title: 'Comprehension Practice Set', year: '2026', type: 'Revision', size: '0.9 MB' },
   { id: 'rd9', subject: 'History', title: 'KCSE 2024 History Paper 1 & 2', year: '2024', type: 'Past Paper', size: '2.0 MB' },
   { id: 'rd10', subject: 'Kiswahili', title: 'KCSE 2024 Kiswahili Paper 1, 2 & 3', year: '2024', type: 'Past Paper', size: '2.5 MB' },
