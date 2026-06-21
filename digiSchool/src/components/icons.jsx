@@ -72,6 +72,7 @@ const ICON_MAP = {
   clinic: Heart,
   library: Library,
   facility: Landmark,
+  facilities: Landmark,
   maintenance: Wrench,
   discipline: Shield,
 
