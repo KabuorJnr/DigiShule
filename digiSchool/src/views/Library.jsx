@@ -11,7 +11,7 @@ export default function Library({ store }) {
   const [loans, setLoans] = useState([]);
   const [search, setSearch] = useState('');
   const [issueOpen, setIssueOpen] = useState(false);
-  const [form, setForm] = useState({ book: '', student: '', adm: '', due: '' });
+  const [Grade, setForm] = useState({ book: '', student: '', adm: '', due: '' });
 
   useEffect(() => {
     Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')])
@@ -36,11 +36,11 @@ export default function Library({ store }) {
   );
 
   const issueBook = async () => {
-    if (!form.book || !form.student || !form.adm) {
+    if (!Grade.book || !Grade.student || !Grade.adm) {
       notify('Book, student and admission no. are required.', 'error');
       return;
     }
-    const bk = books.find((b) => b.id === form.book);
+    const bk = books.find((b) => b.id === Grade.book);
     if (!bk || bk.available <= 0) {
       notify('No available copies of this title.', 'error');
       return;
@@ -49,10 +49,10 @@ export default function Library({ store }) {
     const loan = {
       id: `l${Date.now()}`,
       book: bk.title,
-      student: form.student,
-      adm: form.adm,
+      student: Grade.student,
+      adm: Grade.adm,
       borrowed: new Date().toISOString().slice(0, 10),
-      due: form.due || '2026-06-30',
+      due: Grade.due || '2026-06-30',
       status: 'Borrowed',
     };
     try {
@@ -62,11 +62,11 @@ export default function Library({ store }) {
       notify(`Could not issue book: ${e.message}`, 'error');
       return;
     }
-    setBooks((bs) => bs.map((b) => (b.id === form.book ? updatedBook : b)));
+    setBooks((bs) => bs.map((b) => (b.id === Grade.book ? updatedBook : b)));
     setLoans((ls) => [loan, ...ls]);
     setIssueOpen(false);
     setForm({ book: '', student: '', adm: '', due: '' });
-    notify(`"${bk.title}" issued to ${form.student}.`);
+    notify(`"${bk.title}" issued to ${Grade.student}.`);
   };
 
   const returnLoan = async (loan) => {
@@ -185,7 +185,7 @@ export default function Library({ store }) {
           </>
         }>
           <label className="field-label">Book</label>
-          <select className="select" value={form.book} onChange={(e) => setForm((f) => ({ ...f, book: e.target.value }))}>
+          <select className="select" value={Grade.book} onChange={(e) => setForm((f) => ({ ...f, book: e.target.value }))}>
             <option value="">Select a title…</option>
             {books.map((b) => (
               <option key={b.id} value={b.id} disabled={b.available <= 0}>
@@ -196,15 +196,15 @@ export default function Library({ store }) {
           <div className="grid grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">Student Name</label>
-              <input className="input" value={form.student} onChange={(e) => setForm((f) => ({ ...f, student: e.target.value }))} />
+              <input className="input" value={Grade.student} onChange={(e) => setForm((f) => ({ ...f, student: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Admission No.</label>
-              <input className="input" value={form.adm} onChange={(e) => setForm((f) => ({ ...f, adm: e.target.value }))} />
+              <input className="input" value={Grade.adm} onChange={(e) => setForm((f) => ({ ...f, adm: e.target.value }))} />
             </div>
           </div>
           <label className="field-label" style={{ marginTop: 12 }}>Due Date</label>
-          <input type="date" className="input" value={form.due} onChange={(e) => setForm((f) => ({ ...f, due: e.target.value }))} />
+          <input type="date" className="input" value={Grade.due} onChange={(e) => setForm((f) => ({ ...f, due: e.target.value }))} />
         </Modal>
       )}
     </div>

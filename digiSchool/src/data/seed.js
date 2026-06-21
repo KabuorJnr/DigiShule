@@ -22,14 +22,14 @@ export const DEPT_COLORS = {
 };
 
 export const TEACHERS = [
-  { id: 't1', name: 'Mr. Omondi', subject: 'Mathematics', department: 'Math', status: 'active' },
-  { id: 't2', name: 'Ms. Wanjiku', subject: 'English', department: 'Languages', status: 'active' },
-  { id: 't3', name: 'Mr. Kipchoge', subject: 'Kiswahili', department: 'Languages', status: 'active' },
-  { id: 't4', name: 'Ms. Achieng', subject: 'Biology', department: 'Sciences', status: 'on leave' },
-  { id: 't5', name: 'Mr. Muthoni', subject: 'Chemistry', department: 'Sciences', status: 'active' },
-  { id: 't6', name: 'Ms. Njeri', subject: 'Physics', department: 'Sciences', status: 'active' },
-  { id: 't7', name: 'Mr. Kamau', subject: 'History', department: 'Humanities', status: 'active' },
-  { id: 't8', name: 'Ms. Otieno', subject: 'Geography', department: 'Humanities', status: 'on leave' },
+  { id: 't1', name: 'Mr. Omondi', subject: 'Mathematics', department: 'Math', status: 'active', assignedClass: 'Grade 7A' },
+  { id: 't2', name: 'Ms. Wanjiku', subject: 'English', department: 'Languages', status: 'active', assignedClass: 'Grade 8A' },
+  { id: 't3', name: 'Mr. Kipchoge', subject: 'Kiswahili', department: 'Languages', status: 'active', assignedClass: null },
+  { id: 't4', name: 'Ms. Achieng', subject: 'Biology', department: 'Sciences', status: 'on leave', assignedClass: null },
+  { id: 't5', name: 'Mr. Muthoni', subject: 'Chemistry', department: 'Sciences', status: 'active', assignedClass: null },
+  { id: 't6', name: 'Ms. Njeri', subject: 'Physics', department: 'Sciences', status: 'active', assignedClass: null },
+  { id: 't7', name: 'Mr. Kamau', subject: 'History', department: 'Humanities', status: 'active', assignedClass: null },
+  { id: 't8', name: 'Ms. Otieno', subject: 'Geography', department: 'Humanities', status: 'on leave', assignedClass: null },
 ];
 
 const FIRST_NAMES = [
@@ -87,9 +87,9 @@ function makeStudent(cls, idx, rand) {
   };
 }
 
-export function buildStudents() {
+export function buildStudents(classList = CLASSES) {
   const list = [];
-  CLASSES.forEach((cls, ci) => {
+  classList.forEach((cls, ci) => {
     const rand = mulberry32(1000 + ci * 97);
     for (let i = 0; i < 20; i++) {
       list.push(makeStudent(cls, i, rand));
@@ -185,13 +185,23 @@ export const DEFAULT_GRADE_BOUNDARIES = [
   { grade: 'BE', min: 0 },
 ];
 
-export const DEFAULT_FEE_STRUCTURE = [
-  { type: 'Tuition', f1: 25000, f2: 25000, f3: 28000, f4: 28000, f5: 30000, f6: 30000 },
-  { type: 'Boarding', f1: 18000, f2: 18000, f3: 19000, f4: 19000, f5: 20000, f6: 20000 },
-  { type: 'Activity', f1: 3000, f2: 3000, f3: 3000, f4: 3000, f5: 3500, f6: 3500 },
-  { type: 'Library', f1: 1500, f2: 1500, f3: 1500, f4: 1500, f5: 2000, f6: 2000 },
-  { type: 'Exam', f1: 2000, f2: 2000, f3: 2500, f4: 2500, f5: 3000, f6: 3000 },
-];
+export function buildDefaultFees(levels = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']) {
+  const baseFees = [
+    { type: 'Tuition', base: 25000 },
+    { type: 'Boarding', base: 18000 },
+    { type: 'Activity', base: 3000 },
+    { type: 'Library', base: 1500 },
+    { type: 'Exam', base: 2000 },
+  ];
+  return baseFees.map(bf => {
+    const obj = { type: bf.type };
+    levels.forEach((l, i) => {
+      // Slight increase for higher levels just to simulate real fees
+      obj[l] = bf.base + (i * 1000);
+    });
+    return obj;
+  });
+}
 
 export const DEFAULT_NOTIF_TOGGLES = {
   email: true,
@@ -249,14 +259,9 @@ export const MONTHLY_REVENUE_TREND = [
   { month: 'Jun', revenue: 1400000 },
 ];
 
-export const CLASS_DISTRIBUTION = [
-  { name: 'Grade 7', value: 240 },
-  { name: 'Grade 8', value: 210 },
-  { name: 'Grade 9', value: 205 },
-  { name: 'Grade 10', value: 192 },
-  { name: 'Grade 11', value: 180 },
-  { name: 'Grade 12', value: 175 },
-];
+export function buildClassDistribution(levels = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']) {
+  return levels.map((l, i) => ({ name: l, value: 240 - (i * 15) }));
+}
 
 export const UPCOMING_EVENTS = [
   { id: 'e1', date: 'Jun 18', title: 'PTA Meeting', desc: 'Main Hall, 10:00 AM' },
@@ -265,14 +270,13 @@ export const UPCOMING_EVENTS = [
   { id: 'e4', date: 'Jul 15', title: 'BOM Review Meeting', desc: 'Board Room' },
 ];
 
-export const CLASS_PERFORMANCE_DATA = [
-  { name: 'Grade 7', average: 58.4, passRate: 72.0 },
-  { name: 'Grade 8', average: 62.1, passRate: 78.5 },
-  { name: 'Grade 9', average: 66.8, passRate: 88.5 },
-  { name: 'Grade 10', average: 51.2, passRate: 42.0 },
-  { name: 'Grade 11', average: 55.3, passRate: 50.0 },
-  { name: 'Grade 12', average: 59.8, passRate: 60.0 },
-];
+export function buildClassPerformanceData(levels = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']) {
+  return levels.map((l, i) => ({
+    name: l,
+    average: 55 + (i % 2 === 0 ? 5 : -3) + (i * 1.5),
+    passRate: 60 + (i % 2 === 0 ? 10 : -5) + (i * 2.0),
+  }));
+}
 
 export const TOP_SUBJECTS_DATA = [
   { name: 'Mathematics', score: 68.3, fill: '#2563EB' },
@@ -280,14 +284,18 @@ export const TOP_SUBJECTS_DATA = [
   { name: 'Chemistry', score: 64.4, fill: '#F59E0B' },
 ];
 
-export const CLASS_PERFORMANCE_SUMMARY = [
-  { id: 'f6', class: 'Grade 12', students: 20, streams: 2, avg: 59.8, passRate: 60.0, marks: 55, perf: 'average' },
-  { id: 'f5', class: 'Grade 11', students: 22, streams: 2, avg: 55.3, passRate: 50.0, marks: 50, perf: 'average' },
-  { id: 'f4', class: 'Grade 10', students: 25, streams: 2, avg: 51.2, passRate: 42.0, marks: 45, perf: 'poor' },
-  { id: 'f3', class: 'Grade 9', students: 28, streams: 3, avg: 66.8, passRate: 88.5, marks: 78, perf: 'good' },
-  { id: 'f2', class: 'Grade 8', students: 32, streams: 3, avg: 62.1, passRate: 78.5, marks: 84, perf: 'good' },
-  { id: 'f1', class: 'Grade 7', students: 35, streams: 3, avg: 58.4, passRate: 72.0, marks: 91, perf: 'average' },
-];
+export function buildClassPerformanceSummary(levels = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']) {
+  return levels.map((l, i) => ({
+    id: `c${i}`,
+    class: l,
+    students: 35 - (i * 2),
+    streams: 3,
+    avg: 55 + (i * 1.2),
+    passRate: 65 + (i * 2.5),
+    marks: 80 - (i * 3),
+    perf: i % 3 === 0 ? 'good' : i % 2 === 0 ? 'average' : 'poor'
+  }));
+}
 
 export const LEAVE_REQUESTS = [
   { id: 'lr1', staff: 'Ms. Achieng', dept: 'Sciences', type: 'Sick', start: '2026-06-10', end: '2026-06-12', days: 3, reason: 'Medical appointment and recovery', status: 'Approved', approvedBy: 'Dr. Jane Kamau', date: '2026-06-09' },

@@ -7,7 +7,7 @@ import { KpiCard, Sparkline, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, UserCheck, Building, FileText, Megaphone, CalendarDays, CreditCard, AlertCircle } from 'lucide-react';
-import { buildAttendanceTrend, SEED_ALERTS, MONTHLY_REVENUE_TREND, CLASS_DISTRIBUTION, UPCOMING_EVENTS } from '../data/seed';
+import { buildAttendanceTrend, SEED_ALERTS, MONTHLY_REVENUE_TREND, buildClassDistribution, UPCOMING_EVENTS } from '../data/seed';
 
 const ALERT_ICON_MAP = {
   '👨‍🏫': Users,
@@ -31,6 +31,7 @@ export default function Overview({ store }) {
   const [alertModal, setAlertModal] = useState(null);
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
+  const classDistData = useMemo(() => buildClassDistribution(store.settings.levels), [store.settings.levels]);
 
   return (
     <div>
@@ -79,8 +80,8 @@ export default function Overview({ store }) {
           <h3 className="section-title">Class Distribution</h3>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={CLASS_DISTRIBUTION} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                {CLASS_DISTRIBUTION.map((entry, index) => (
+              <Pie data={classDistData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                {classDistData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={['#0078D4', '#0EA5E9', '#107C10', '#FFB900'][index % 4]} />
                 ))}
               </Pie>

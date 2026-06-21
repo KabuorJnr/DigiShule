@@ -10,8 +10,8 @@ import { CLASSES, SUBJECTS } from '../data/seed';
 import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 
-const GRADE_COLORS = { A: '#10B981', B: '#3B82F6', C: '#F59E0B', D: '#F97316', E: '#EF4444' };
-const ASSESS_OPTIONS = ['All', 'CAT 1', 'CAT 2', 'Midterm', 'End-Term'];
+const GRADE_COLORS = { EE: '#10B981', ME: '#3B82F6', AE: '#F59E0B', BE: '#EF4444', '-': '#9CA3AF' };
+const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
   const { students, updateStudent, gradeBoundaries, settings, notify } = store;
@@ -37,20 +37,21 @@ export default function Gradebook({ store }) {
 
   const colAvg = useMemo(() => {
     if (rows.length === 0) return null;
-    const sum = (k) => rows.reduce((a, b) => a + b[k], 0);
-    const avg = (k) => Math.round((sum(k) / rows.length) * 10) / 10;
-    return { cat1: avg('cat1'), cat2: avg('cat2'), midterm: avg('midterm'), endterm: avg('endterm'), total: avg('total'), average: avg('average') };
+    const sum = (k) => rows.reduce((a, b) => a + (b[k] || 0), 0);
+    const validCount = (k) => rows.filter(b => b[k] > 0).length || 1;
+    const avg = (k) => Math.round((sum(k) / validCount(k)) * 10) / 10;
+    return { a1: avg('a1'), a2: avg('a2'), a3: avg('a3'), a4: avg('a4'), average: avg('average') };
   }, [rows]);
 
   // performance summary
   const gradeDist = useMemo(() => {
-    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    rows.forEach((r) => { counts[r.grade] = (counts[r.grade] || 0) + 1; });
+    const counts = { EE: 0, ME: 0, AE: 0, BE: 0 };
+    rows.forEach((r) => { if (r.grade !== '-') counts[r.grade] = (counts[r.grade] || 0) + 1; });
     return Object.entries(counts).map(([grade, value]) => ({ grade, value }));
   }, [rows]);
 
   const top5 = useMemo(() => [...rows].sort((a, b) => b.average - a.average).slice(0, 5), [rows]);
-  const atRisk = useMemo(() => rows.filter((r) => r.average < 40), [rows]);
+  const atRisk = useMemo(() => rows.filter((r) => r.average > 0 && r.average < 2.0), [rows]);
   const subjectCompare = useMemo(() =>
     SUBJECTS.map((sub) => {
       const avg = classStudents.reduce((a, s) => a + subjectAverage(s.scores[sub]), 0) / (classStudents.length || 1);
@@ -58,7 +59,7 @@ export default function Gradebook({ store }) {
     }), [classStudents]);
 
   function saveScore(id, field, value) {
-    const v = Math.max(0, Math.min(field === 'cat1' || field === 'cat2' ? 30 : 100, Number(value) || 0));
+    const v = Math.max(0, Math.min(4, Number(value) || 0));
     const target = students.find((s) => s.id === id);
     if (target) {
       const currentScores = target.scores || {};
@@ -75,14 +76,14 @@ export default function Gradebook({ store }) {
   }
 
   function exportPDF() {
-    const head = ['#', 'Student', 'Adm No.', 'CAT1', 'CAT2', 'Mid', 'End', 'Total', 'Avg %', 'Grade', 'Remarks'];
-    const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.cat1, r.cat2, r.midterm, r.endterm, r.total, r.average, r.grade, r.remarks]);
-    exportTablePDF({ school: settings, title: `Gradebook — Form ${cls} • ${subject}`, subtitle: `${term} • ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
+    const head = ['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks'];
+    const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]);
+    exportTablePDF({ school: settings, title: `Gradebook — Grade ${cls} • ${subject}`, subtitle: `${term} • ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
   function exportExcel() {
-    const aoa = [['#', 'Student', 'Adm No.', 'CAT1', 'CAT2', 'Midterm', 'End-Term', 'Total', 'Average %', 'Grade', 'Remarks']];
-    rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.cat1, r.cat2, r.midterm, r.endterm, r.total, r.average, r.grade, r.remarks]));
+    const aoa = [['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks']];
+    rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]));
     downloadExcel(`gradebook-${cls}-${subject}.xlsx`, [{ name: `${cls} ${subject}`.slice(0, 31), aoa }]);
     notify('Gradebook exported as Excel', 'success', 'Export');
   }
@@ -138,7 +139,7 @@ export default function Gradebook({ store }) {
         </td>
       );
     }
-    return <td className="editable-cell" onClick={() => setEditing({ id: r.id, field })} title="Click to edit">{r[field]}</td>;
+    return <td className="editable-cell" onClick={() => setEditing({ id: r.id, field })} title="Click to edit (1-4)">{r[field] || '-'}</td>;
   };
 
   return (
@@ -158,7 +159,7 @@ export default function Gradebook({ store }) {
       <div className="toolbar">
         <div><label className="field-label">Class</label>
           <select className="select" value={cls} onChange={(e) => { setCls(e.target.value); setSelected([]); }} style={{ width: 120 }}>
-            {CLASSES.map((c) => <option key={c} value={c}>Form {c}</option>)}
+            {CLASSES.map((c) => <option key={c} value={c}>Grade {c}</option>)}
           </select></div>
         <div><label className="field-label">Subject</label>
           <select className="select" value={subject} onChange={(e) => setSubject(e.target.value)} style={{ width: 150 }}>
@@ -190,8 +191,8 @@ export default function Gradebook({ store }) {
                     onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} />
                 </th>
                 <th>#</th><th>Student Name</th><th>Adm. No.</th>
-                <th>CAT 1</th><th>CAT 2</th><th>Midterm</th><th>End-Term</th>
-                <th>Total</th><th>Average %</th><th>Grade</th><th>Remarks</th>
+                <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
+                <th>Avg Rubric</th><th>Competency</th><th>Remarks</th>
               </tr>
             </thead>
             <tbody>
@@ -204,21 +205,20 @@ export default function Gradebook({ store }) {
                     {r.name} {r.flagged && <Badge color="amber">Flagged</Badge>}
                   </td>
                   <td>{r.adm}</td>
-                  <ScoreCell r={r} field="cat1" />
-                  <ScoreCell r={r} field="cat2" />
-                  <ScoreCell r={r} field="midterm" />
-                  <ScoreCell r={r} field="endterm" />
-                  <td><strong>{r.total}</strong></td>
-                  <td>{r.average}</td>
-                  <td><Badge color={r.grade === 'A' || r.grade === 'B' ? 'green' : r.grade === 'C' ? 'amber' : 'red'}>{r.grade}</Badge></td>
+                  <ScoreCell r={r} field="a1" />
+                  <ScoreCell r={r} field="a2" />
+                  <ScoreCell r={r} field="a3" />
+                  <ScoreCell r={r} field="a4" />
+                  <td><strong>{r.average || '-'}</strong></td>
+                  <td><Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>{r.grade}</Badge></td>
                   <td>{r.remarks}</td>
                 </tr>
               ))}
               {colAvg && (
                 <tr style={{ background: '#eef2f7', fontWeight: 700 }}>
                   <td></td><td></td><td>Class Average</td><td></td>
-                  <td>{colAvg.cat1}</td><td>{colAvg.cat2}</td><td>{colAvg.midterm}</td><td>{colAvg.endterm}</td>
-                  <td>{colAvg.total}</td><td>{colAvg.average}%</td><td></td><td></td>
+                  <td>{colAvg.a1}</td><td>{colAvg.a2}</td><td>{colAvg.a3}</td><td>{colAvg.a4}</td>
+                  <td>{colAvg.average}</td><td></td><td></td>
                 </tr>
               )}
               {rows.length === 0 && <tr><td colSpan={12} style={{ textAlign: 'center', color: 'var(--muted)' }}>No students match.</td></tr>}
@@ -230,7 +230,7 @@ export default function Gradebook({ store }) {
       {/* Performance summary */}
       <div className="grid grid-2" style={{ marginBottom: 16 }}>
         <div className="card card-pad">
-          <h3 className="section-title">Grade Distribution</h3>
+          <h3 className="section-title">Competency Distribution</h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={gradeDist} dataKey="value" nameKey="grade" cx="50%" cy="50%" outerRadius={80} label={(e) => `${e.grade}: ${e.value}`}>
@@ -247,9 +247,9 @@ export default function Gradebook({ store }) {
             <BarChart data={subjectCompare} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="subject" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+              <YAxis domain={[0, 4]} tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="avg" name="Avg %" fill="#1E3A5F" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="avg" name="Avg Rubric" fill="#1E3A5F" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -263,19 +263,19 @@ export default function Gradebook({ store }) {
               <div key={r.id} className="rank-row">
                 <span className="rank-num">{i + 1}</span>
                 <span style={{ flex: 1 }}>{r.name}</span>
-                <strong>{r.average}%</strong>
-                <Badge color={r.grade === 'A' || r.grade === 'B' ? 'green' : 'amber'}>{r.grade}</Badge>
+                <strong>{r.average}</strong>
+                <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : 'amber'}>{r.grade}</Badge>
               </div>
             ))}
             {top5.length === 0 && <span className="muted">No data.</span>}
           </div>
         </div>
         <div className="card card-pad">
-          <h3 className="section-title">At-Risk Students (avg &lt; 40%)</h3>
+          <h3 className="section-title">At-Risk Students (avg rubric &lt; 2.0)</h3>
           <div className="list-flex">
             {atRisk.map((r) => (
               <div key={r.id} className="rank-row">
-                <span style={{ flex: 1 }}>{r.name} <span className="muted">({r.average}%)</span></span>
+                <span style={{ flex: 1 }}>{r.name} <span className="muted">({r.average})</span></span>
                 {r.flagged ? <Badge color="amber">Flagged</Badge> : (
                   <button className="btn btn-sm" onClick={() => flagStudent(r.id)}>Flag for Support</button>
                 )}

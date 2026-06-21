@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
-import { CLASS_PERFORMANCE_DATA, TOP_SUBJECTS_DATA, CLASS_PERFORMANCE_SUMMARY } from '../data/seed';
+import { buildClassPerformanceData, TOP_SUBJECTS_DATA, buildClassPerformanceSummary } from '../data/seed';
 import { Badge, ProgressBar } from '../components/widgets';
 
 function Stat({ label, value, color, sub }) {
@@ -15,7 +16,10 @@ function Stat({ label, value, color, sub }) {
 }
 
 export default function AcademicsDashboard({ store, user }) {
-  const { navigate, notify } = store;
+  const { navigate, notify, settings } = store;
+  
+  const classPerfData = useMemo(() => buildClassPerformanceData(settings.levels), [settings.levels]);
+  const classPerfSummary = useMemo(() => buildClassPerformanceSummary(settings.levels), [settings.levels]);
 
   return (
     <div>
@@ -65,6 +69,7 @@ export default function AcademicsDashboard({ store, user }) {
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Staff Attendance</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('class_teachers')}>Class Teachers</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>Settings</button>
         </div>
       </div>
@@ -75,7 +80,7 @@ export default function AcademicsDashboard({ store, user }) {
             Class Performance Overview
           </h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={CLASS_PERFORMANCE_DATA} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
+            <BarChart data={classPerfData} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
               <XAxis dataKey="name" tickLine={false} tick={{ fontSize: 12 }} />
               <YAxis tickLine={false} tick={{ fontSize: 12 }} tickFormatter={val => `${val}%`} />
@@ -121,7 +126,7 @@ export default function AcademicsDashboard({ store, user }) {
             <tr><th>Class</th><th>Students</th><th>Streams</th><th>Avg Score</th><th>Pass Rate</th><th>Marks</th><th>Performance</th></tr>
           </thead>
           <tbody>
-            {CLASS_PERFORMANCE_SUMMARY.map(row => (
+            {classPerfSummary.map(row => (
               <tr key={row.id}>
                 <td><strong>{row.class}</strong></td>
                 <td>{row.students}</td>

@@ -9,10 +9,22 @@ import { fetchTable, upsertRow } from '../lib/api';
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 
-export default function ParentPortal({ store }) {
+export default function ParentPortal({ store, user }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  const child = students[0];
+  const child = useMemo(() => {
+    if (!students || students.length === 0) return null;
+    if (user?.link) {
+      const match = students.find(s => s.id === user.link || s.adm === user.link);
+      if (match) return match;
+    }
+    const idStr = (user?.email || user?.username || '').toLowerCase();
+    if (idStr) {
+      const match = students.find(s => s.guardianEmail?.toLowerCase() === idStr);
+      if (match) return match;
+    }
+    return null;
+  }, [students, user]);
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
@@ -99,7 +111,7 @@ export default function ParentPortal({ store }) {
 
   return (
     <div>
-      <PageHeader title="My Child" subtitle={`${child.name} · ${child.adm} · Form ${child.class}`} />
+      <PageHeader title="My Child" subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
 
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />

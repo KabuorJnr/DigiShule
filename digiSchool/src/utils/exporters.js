@@ -88,7 +88,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.setTextColor(15, 23, 42);
     doc.text(`Name: ${stu.name}`, 40, 150);
     doc.text(`Adm No: ${stu.adm}`, 320, 150);
-    doc.text(`Class: Form ${stu.class}`, 40, 168);
+    doc.text(`Class: Grade ${stu.class}`, 40, 168);
     doc.text(`Position: ${stu.position} of ${stu.classSize}`, 320, 168);
 
     // photo placeholder

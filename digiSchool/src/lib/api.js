@@ -119,13 +119,31 @@ export async function saveConfig(patch) {
 export async function fetchTeachers() {
   const { data, error } = await supabase.from('teachers').select('*').order('id');
   if (error) throw error;
-  return data;
+  return data.map(t => ({
+    ...t,
+    assignedClass: t.assigned_class || null
+  }));
+}
+
+export async function updateTeacher(id, patch) {
+  const payload = { ...patch };
+  if (payload.assignedClass !== undefined) {
+    payload.assigned_class = payload.assignedClass;
+    delete payload.assignedClass;
+  }
+  const { error } = await supabase.from('teachers').update(payload).eq('id', id);
+  if (error) throw error;
 }
 
 export async function fetchStudents() {
   const { data, error } = await supabase.from('students').select('*').order('class').order('adm');
   if (error) throw error;
-  return data;
+  return data.map(s => ({
+    ...s,
+    guardianName: s.guardian_name,
+    guardianPhone: s.guardian_phone,
+    guardianEmail: s.guardian_email,
+  }));
 }
 
 export async function fetchClassRank() {
@@ -145,6 +163,9 @@ export async function upsertStudent(student) {
     gender: student.gender,
     scores: student.scores,
     flagged: student.flagged,
+    guardian_name: student.guardianName,
+    guardian_phone: student.guardianPhone,
+    guardian_email: student.guardianEmail,
     school_id: _schoolId,
   });
   if (error) throw error;

@@ -7,7 +7,7 @@ import {
   CheckCircle2, AlertTriangle, Download, Filter
 } from 'lucide-react';
 
-const CLASSES_LIST = ['Form 1A', 'Form 1B', 'Form 2A', 'Form 2B', 'Form 3A', 'Form 3B', 'Form 4A', 'Form 4B'];
+const CLASSES_LIST = ['Grade 7A', 'Grade 7B', 'Grade 8A', 'Grade 8B', 'Grade 9A', 'Grade 9B', 'Grade 10A', 'Grade 10B'];
 const TABS = [
   { id: 'register', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
@@ -15,7 +15,7 @@ const TABS = [
 ];
 
 const EMPTY_FORM = {
-  name: '', adm: '', class: 'Form 1A', gender: 'Male',
+  name: '', adm: '', class: 'Grade 7A', gender: 'Male',
   dob: '', guardianName: '', guardianPhone: '', guardianEmail: '',
   address: '', medicalNotes: '', previousSchool: '',
 };
@@ -28,7 +28,7 @@ export default function Registrar({ store, user }) {
   const [editModal, setEditModal] = useState(false);
   const [editStudent, setEditStudent] = useState(null);
   const [enrollModal, setEnrollModal] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [Grade, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
   const [transferForm, setTransferForm] = useState({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
@@ -72,23 +72,36 @@ export default function Registrar({ store, user }) {
 
   // ── ENROLMENT TAB ─────────────────────────────────────────────
   const handleEnroll = async () => {
-    if (!form.name.trim() || !form.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
-    if (students.find(s => s.adm === form.adm)) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
+    if (!Grade.name.trim() || !Grade.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
+    if (students.find(s => s.adm === Grade.adm)) { notify(`Adm No. ${Grade.adm} already exists`, 'warning'); return; }
     setSaving(true);
     const newStudent = {
       id: `s${Date.now()}`,
-      name: form.name,
-      adm: form.adm,
-      class: form.class,
-      gender: form.gender,
+      name: Grade.name,
+      adm: Grade.adm,
+      class: Grade.class,
+      gender: Grade.gender,
       flagged: false,
       scores: {},
+      guardianName: Grade.guardianName,
+      guardianPhone: Grade.guardianPhone,
+      guardianEmail: Grade.guardianEmail,
     };
     try {
       await upsertStudent(newStudent);
       setStudents(prev => [...prev, newStudent]);
       setForm(EMPTY_FORM);
-      notify(`${form.name} enrolled successfully in ${form.class}`, 'success', 'Registrar');
+      
+      if (Grade.guardianEmail) {
+        notify(
+          `${Grade.name} enrolled. Parent portal account provisioned for ${Grade.guardianEmail}. Temporary Password: Parent@2026`,
+          'success',
+          'Parent Registered'
+        );
+      } else {
+        notify(`${Grade.name} enrolled successfully in ${Grade.class}`, 'success', 'Registrar');
+      }
+      
       setTab('register');
     } catch (e) {
       notify(`Enrolment failed: ${e.message}`, 'error');
@@ -249,23 +262,23 @@ export default function Registrar({ store, user }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Full Name *</label>
-                <input className="input" placeholder="e.g. Jane Akinyi Otieno" value={form.name} onChange={e => upForm({ name: e.target.value })} />
+                <input className="input" placeholder="e.g. Jane Akinyi Otieno" value={Grade.name} onChange={e => upForm({ name: e.target.value })} />
               </div>
               <div>
                 <label className="field-label">Admission No. *</label>
-                <input className="input" placeholder="e.g. ADM/2026/001" value={form.adm} onChange={e => upForm({ adm: e.target.value })} />
+                <input className="input" placeholder="e.g. ADM/2026/001" value={Grade.adm} onChange={e => upForm({ adm: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Class</label>
-                <select className="select" value={form.class} onChange={e => upForm({ class: e.target.value })}>
+                <select className="select" value={Grade.class} onChange={e => upForm({ class: e.target.value })}>
                   {CLASSES_LIST.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className="field-label">Gender</label>
-                <select className="select" value={form.gender} onChange={e => upForm({ gender: e.target.value })}>
+                <select className="select" value={Grade.gender} onChange={e => upForm({ gender: e.target.value })}>
                   <option>Male</option><option>Female</option><option>Other</option>
                 </select>
               </div>
@@ -273,11 +286,11 @@ export default function Registrar({ store, user }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Date of Birth</label>
-                <input type="date" className="input" value={form.dob} onChange={e => upForm({ dob: e.target.value })} />
+                <input type="date" className="input" value={Grade.dob} onChange={e => upForm({ dob: e.target.value })} />
               </div>
               <div>
                 <label className="field-label">Previous School</label>
-                <input className="input" placeholder="Previous institution (if any)" value={form.previousSchool} onChange={e => upForm({ previousSchool: e.target.value })} />
+                <input className="input" placeholder="Previous institution (if any)" value={Grade.previousSchool} onChange={e => upForm({ previousSchool: e.target.value })} />
               </div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
@@ -285,20 +298,20 @@ export default function Registrar({ store, user }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Guardian Name</label>
-                <input className="input" value={form.guardianName} onChange={e => upForm({ guardianName: e.target.value })} />
+                <input className="input" value={Grade.guardianName} onChange={e => upForm({ guardianName: e.target.value })} />
               </div>
               <div>
                 <label className="field-label">Guardian Phone</label>
-                <input className="input" placeholder="+254 7XX XXX XXX" value={form.guardianPhone} onChange={e => upForm({ guardianPhone: e.target.value })} />
+                <input className="input" placeholder="+254 7XX XXX XXX" value={Grade.guardianPhone} onChange={e => upForm({ guardianPhone: e.target.value })} />
               </div>
             </div>
             <div>
               <label className="field-label">Guardian Email</label>
-              <input className="input" type="email" value={form.guardianEmail} onChange={e => upForm({ guardianEmail: e.target.value })} />
+              <input className="input" type="email" value={Grade.guardianEmail} onChange={e => upForm({ guardianEmail: e.target.value })} />
             </div>
             <div>
               <label className="field-label">Medical Notes (optional)</label>
-              <textarea className="input" rows={2} placeholder="Any medical conditions or special needs…" value={form.medicalNotes} onChange={e => upForm({ medicalNotes: e.target.value })} />
+              <textarea className="input" rows={2} placeholder="Any medical conditions or special needs…" value={Grade.medicalNotes} onChange={e => upForm({ medicalNotes: e.target.value })} />
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <button className="btn" onClick={() => { setForm(EMPTY_FORM); setTab('register'); }}>Cancel</button>

@@ -18,7 +18,7 @@ export default function TeacherResources({ store, user }) {
   const [uploadModal, setUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [actionId, setActionId] = useState(null); // tracks which file is loading
-  const [form, setForm] = useState({
+  const [Grade, setForm] = useState({
     subject: SUBJECTS[0], targetClass: 'All Classes', title: '', description: '',
     dueDate: '', file: null, fileName: '',
   });
@@ -47,21 +47,21 @@ export default function TeacherResources({ store, user }) {
   };
 
   const handleUpload = async () => {
-    if (!form.title.trim()) { notify('Title is required', 'warning'); return; }
-    if (!form.file) { notify('Please select a PDF file', 'warning'); return; }
-    if (tab === 'assignments' && !form.dueDate) { notify('Due date is required for assignments', 'warning'); return; }
+    if (!Grade.title.trim()) { notify('Title is required', 'warning'); return; }
+    if (!Grade.file) { notify('Please select a PDF file', 'warning'); return; }
+    if (tab === 'assignments' && !Grade.dueDate) { notify('Due date is required for assignments', 'warning'); return; }
 
     setUploading(true);
     try {
       const id = `file_${Date.now()}`;
       await saveFile({
         id,
-        file: form.file,
+        file: Grade.file,
         type: tab,
-        subject: form.subject,
-        targetClass: form.targetClass,
-        description: form.title,
-        dueDate: form.dueDate,
+        subject: Grade.subject,
+        targetClass: Grade.targetClass,
+        description: Grade.title,
+        dueDate: Grade.dueDate,
         uploadedBy: user?.name || 'Teacher',
       });
       await refreshFiles();
@@ -212,41 +212,41 @@ export default function TeacherResources({ store, user }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label className="field-label">Title *</label>
-              <input className="input" placeholder={tab === 'assignments' ? 'e.g. Quadratic Equations Holiday Assignment' : 'e.g. Cell Biology Notes'} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+              <input className="input" placeholder={tab === 'assignments' ? 'e.g. Quadratic Equations Holiday Assignment' : 'e.g. Cell Biology Notes'} value={Grade.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Description (optional)</label>
-              <textarea className="input" rows={2} placeholder="Additional notes for students..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              <textarea className="input" rows={2} placeholder="Additional notes for students..." value={Grade.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Subject</label>
-                <select className="select" value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}>
+                <select className="select" value={Grade.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}>
                   {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
                 <label className="field-label">Target Class</label>
-                <select className="select" value={form.targetClass} onChange={e => setForm(f => ({ ...f, targetClass: e.target.value }))}>
+                <select className="select" value={Grade.targetClass} onChange={e => setForm(f => ({ ...f, targetClass: e.target.value }))}>
                   <option value="All Classes">All Classes</option>
-                  {CLASSES.map(c => <option key={c} value={`Form ${c}`}>Form {c}</option>)}
+                  {CLASSES.map(c => <option key={c} value={`Grade ${c}`}>Grade {c}</option>)}
                 </select>
               </div>
             </div>
             {tab === 'assignments' && (
               <div>
                 <label className="field-label">Due Date *</label>
-                <input type="date" className="input" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+                <input type="date" className="input" value={Grade.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))} />
               </div>
             )}
             <div>
               <label className="field-label">PDF File * <span className="muted">(max 20 MB)</span></label>
               <label style={{ display: 'block', cursor: uploading ? 'not-allowed' : 'pointer' }}>
-                <div style={{ border: `2px dashed ${form.fileName ? '#0078D4' : 'var(--border)'}`, borderRadius: 8, padding: 24, textAlign: 'center', background: form.fileName ? '#e8f0fe' : '#f8fafc', transition: 'all 0.2s' }}>
-                  {form.fileName ? (
+                <div style={{ border: `2px dashed ${Grade.fileName ? '#0078D4' : 'var(--border)'}`, borderRadius: 8, padding: 24, textAlign: 'center', background: Grade.fileName ? '#e8f0fe' : '#f8fafc', transition: 'all 0.2s' }}>
+                  {Grade.fileName ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                       <FileText size={20} color="#0078D4" />
-                      <span style={{ fontWeight: 600, color: '#0078D4' }}>{form.fileName}</span>
+                      <span style={{ fontWeight: 600, color: '#0078D4' }}>{Grade.fileName}</span>
                     </div>
                   ) : (
                     <>

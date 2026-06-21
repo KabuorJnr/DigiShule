@@ -1,12 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users } from 'lucide-react';
 
 export default function TeacherPortal({ store, user }) {
   const { students, gradeBoundaries, navigate } = store;
   const teacherName = user?.name || 'Teacher';
   const subject = user?.dept || 'Mathematics';
+
+  const teacherProfile = useMemo(() => store.teachers.find(t => t.name === teacherName) || {}, [store.teachers, teacherName]);
+  const assignedClass = teacherProfile.assignedClass || null;
+  const [printModalOpen, setPrintModalOpen] = useState(false);
 
   const rows = useMemo(() => {
     return students
@@ -54,6 +58,23 @@ export default function TeacherPortal({ store, user }) {
           <div style={{ fontSize: 11, opacity: 0.8 }}>Subject Average</div>
         </div>
       </div>
+
+      {/* Class Teacher Banner */}
+      {assignedClass && (
+        <div style={{ background: '#f0fdfa', border: '1px solid #ccfbf1', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontWeight: 700, fontSize: 16 }}>
+              <Users size={18} /> Class Teacher: {assignedClass}
+            </div>
+            <div style={{ color: '#0f766e', opacity: 0.8, fontSize: 13, marginTop: 4 }}>
+              You are assigned to manage {assignedClass}.
+            </div>
+          </div>
+          <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setPrintModalOpen(true)}>
+            <Printer size={16} /> Generate Class List
+          </button>
+        </div>
+      )}
 
       {/* KPI Tiles */}
       <div className="stat-tiles" style={{ marginBottom: 20 }}>
@@ -147,6 +168,58 @@ export default function TeacherPortal({ store, user }) {
           </div>
         )}
       </div>
+
+      {/* Print Class List Modal */}
+      {printModalOpen && assignedClass && (
+        <>
+          <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)} />
+          <div className="modal" style={{ maxWidth: 800 }}>
+            <div className="modal-header">
+              <h3>{assignedClass} — Class List</h3>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print / Save PDF</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
+              </div>
+            </div>
+            <div className="print-area" style={{ padding: 24, background: '#fff' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ margin: '0 0 8px 0' }}>{store.settings.name || 'DigiShule'}</h2>
+                <h3 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h3>
+                <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
+              </div>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ borderBottom: '2px solid #cbd5e1', padding: 8, textAlign: 'left' }}>#</th>
+                    <th style={{ borderBottom: '2px solid #cbd5e1', padding: 8, textAlign: 'left' }}>Adm No.</th>
+                    <th style={{ borderBottom: '2px solid #cbd5e1', padding: 8, textAlign: 'left' }}>Student Name</th>
+                    <th style={{ borderBottom: '2px solid #cbd5e1', padding: 8, textAlign: 'left' }}>Gender</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.filter(s => s.class === assignedClass).map((s, idx) => (
+                    <tr key={s.id}>
+                      <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{idx + 1}</td>
+                      <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{s.adm}</td>
+                      <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8, fontWeight: 600 }}>{s.name}</td>
+                      <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{s.gender || '-'}</td>
+                    </tr>
+                  ))}
+                  {students.filter(s => s.class === assignedClass).length === 0 && (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'center', padding: 24 }} className="muted">No students assigned to {assignedClass}.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b' }}>
+                <div>Generated on {new Date().toLocaleDateString()}</div>
+                <div>Signature: ______________________</div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

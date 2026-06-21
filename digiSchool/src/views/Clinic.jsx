@@ -10,7 +10,7 @@ export default function Clinic({ store }) {
   const { notify, students = [] } = store;
   const [visits, setVisits] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
-  const [form, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
+  const [Grade, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
   const [notifyParentOpen, setNotifyParentOpen] = useState(null);
   const [parentMsg, setParentMsg] = useState('');
 
@@ -27,18 +27,18 @@ export default function Clinic({ store }) {
   }), [visits]);
 
   const logVisit = async () => {
-    if (!form.student || !form.complaint) {
+    if (!Grade.student || !Grade.complaint) {
       notify('Student name and complaint are required.', 'error');
       return;
     }
     const visit = {
       id: `c${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
-      student: form.student,
-      adm: form.adm || '—',
-      complaint: form.complaint,
-      treatment: form.treatment,
-      outcome: form.outcome,
+      student: Grade.student,
+      adm: Grade.adm || '—',
+      complaint: Grade.complaint,
+      treatment: Grade.treatment,
+      outcome: Grade.outcome,
     };
     try {
       await upsertRow('clinicVisits', visit);
@@ -49,7 +49,7 @@ export default function Clinic({ store }) {
     setVisits((vs) => [visit, ...vs]);
     setLogOpen(false);
     setForm({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
-    notify(`Clinic visit logged for ${form.student}.`);
+    notify(`Clinic visit logged for ${Grade.student}.`);
   };
 
   const handleStudentSelect = (e) => {
@@ -157,14 +157,14 @@ export default function Clinic({ store }) {
                 {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-            <div><label className="field-label">Admission No.</label><input className="input" value={form.adm} disabled /></div>
+            <div><label className="field-label">Admission No.</label><input className="input" value={Grade.adm} disabled /></div>
           </div>
           <label className="field-label" style={{ marginTop: 12 }}>Complaint</label>
-          <input className="input" value={form.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} />
+          <input className="input" value={Grade.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} />
           <label className="field-label" style={{ marginTop: 12 }}>Treatment</label>
-          <input className="input" value={form.treatment} onChange={(e) => setForm((f) => ({ ...f, treatment: e.target.value }))} />
+          <input className="input" value={Grade.treatment} onChange={(e) => setForm((f) => ({ ...f, treatment: e.target.value }))} />
           <label className="field-label" style={{ marginTop: 12 }}>Outcome</label>
-          <select className="select" value={form.outcome} onChange={(e) => setForm((f) => ({ ...f, outcome: e.target.value }))}>
+          <select className="select" value={Grade.outcome} onChange={(e) => setForm((f) => ({ ...f, outcome: e.target.value }))}>
             <option>Returned to class</option><option>Sent home</option><option>Referred to hospital</option>
           </select>
         </Modal>

@@ -143,7 +143,7 @@ export default function StudentPortal({ store, user }) {
 
   return (
     <div>
-      <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Form ${me.class}`} />
+      <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Grade ${me.class}`} />
 
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 20, overflowX: 'auto' }}>
@@ -197,7 +197,7 @@ export default function StudentPortal({ store, user }) {
           <div className="card card-pad" style={{ marginBottom: 16 }}>
             <h3 className="section-title">Class Information</h3>
             <div className="grid grid-4" style={{ gap: 12 }}>
-              <div><span className="muted" style={{ fontSize: 12 }}>Form</span><div style={{ fontWeight: 600, fontSize: 18 }}>Form {me.class}</div></div>
+              <div><span className="muted" style={{ fontSize: 12 }}>Grade</span><div style={{ fontWeight: 600, fontSize: 18 }}>Grade {me.class}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Stream</span><div style={{ fontWeight: 600, fontSize: 18 }}>{me.class.slice(1)}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Class Teacher</span><div style={{ fontWeight: 600 }}>Mr. Omondi</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Total Students</span><div style={{ fontWeight: 600, fontSize: 18 }}>{classmates.length}</div></div>

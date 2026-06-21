@@ -6,7 +6,7 @@ import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
 import {
   buildStudents, TEACHERS, buildExamSchedules,
-  DEFAULT_SETTINGS, DEFAULT_GRADE_BOUNDARIES, DEFAULT_FEE_STRUCTURE,
+  DEFAULT_SETTINGS, DEFAULT_GRADE_BOUNDARIES, buildDefaultFees,
   DEFAULT_NOTIF_TOGGLES, DEFAULT_VENUES, SEED_NOTIFICATIONS,
 } from './data/seed';
 import { Icon, NAV_ICON_MAP } from './components/icons';
@@ -25,6 +25,8 @@ import Clinic from './views/Clinic';
 import StaffAttendance from './views/StaffAttendance';
 import Facilities from './views/Facilities';
 import TeacherPortal from './views/TeacherPortal';
+import TeacherResources from './views/TeacherResources';
+import ClassTeachers from './views/ClassTeachers';
 import StudentPortal from './views/StudentPortal';
 import ParentPortal from './views/ParentPortal';
 import CreateExam from './views/CreateExam';
@@ -32,8 +34,6 @@ import AcademicsDashboard from './views/AcademicsDashboard';
 import AdminDashboard from './views/AdminDashboard';
 import Notices from './views/Notices';
 import SchoolCalendar from './views/SchoolCalendar';
-import TeacherResources from './views/TeacherResources';
-import SetupWizard from './views/SetupWizard';
 import Registrar from './views/Registrar';
 
 const VIEW_MAP = {
@@ -55,6 +55,7 @@ const VIEW_MAP = {
   teacher: TeacherPortal,
   student: StudentPortal,
   parent: ParentPortal,
+  class_teachers: ClassTeachers,
   notices: Notices,
   school_calendar: SchoolCalendar,
   teacher_resources: TeacherResources,
@@ -156,6 +157,11 @@ export default function App() {
     api.upsertStudent(student).catch(onSaveError);
   }, [onSaveError]);
 
+  const updateTeacher = useCallback((id, patch) => {
+    setTeachers((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    api.updateTeacher(id, patch).catch(onSaveError);
+  }, [onSaveError]);
+
   const markRead = (id) => {
     setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
     api.setNotificationRead(id, true).catch(onSaveError);
@@ -171,7 +177,7 @@ export default function App() {
       settings, setSettings: setSettingsP,
       schoolId,
       students, setStudents, updateStudent,
-      teachers, setTeachers,
+      teachers, setTeachers, updateTeacher,
       examSchedules, setExamSchedules: setExamsP,
       venues, setVenues: setVenuesP,
       gradeBoundaries, setGradeBoundaries: setBoundsP,
@@ -182,7 +188,7 @@ export default function App() {
       navigate: setView,
     }),
     [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
-      setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent]
+      setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher]
   );
 
   // ---- Demo mode flag (ref so loadAllData closure reads latest value) ----
@@ -194,12 +200,14 @@ export default function App() {
     try {
       if (isDemoRef.current) {
         // ── Demo mode: use seed data, no Supabase calls ──
-        setSettings(DEFAULT_SETTINGS);
+        const savedConfig = JSON.parse(localStorage.getItem('eduone_school_config') || '{}');
+        setSettings({ ...DEFAULT_SETTINGS, ...savedConfig.school, levels: savedConfig.levels, classes: savedConfig.classes });
         setGradeBoundaries(DEFAULT_GRADE_BOUNDARIES);
-        setFeeStructure(DEFAULT_FEE_STRUCTURE);
+        const demoLevels = savedConfig.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
+        setFeeStructure(buildDefaultFees(demoLevels));
         setNotifToggles(DEFAULT_NOTIF_TOGGLES);
         setVenues(DEFAULT_VENUES);
-        setStudents(buildStudents());
+        setStudents(buildStudents(savedConfig.classes || undefined));
         setTeachers(TEACHERS);
         setExamSchedules(buildExamSchedules());
         setTimetables({});

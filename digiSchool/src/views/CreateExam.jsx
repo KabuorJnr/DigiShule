@@ -55,7 +55,7 @@ export default function CreateExam({ store }) {
 
       <div className="grid grid-2" style={{ gap: 32, marginTop: 24, gridTemplateColumns: '2fr 1fr' }}>
         
-        {/* Left Column - Form */}
+        {/* Left Column - Grade */}
         <div>
           <h3 style={{ color: '#0052cc', marginTop: 0, marginBottom: 16, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span><Icon name="plus" size={16} /></span> Exam Details

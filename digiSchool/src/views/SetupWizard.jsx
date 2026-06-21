@@ -58,6 +58,7 @@ export default function SetupWizard({ onComplete, onSkip }) {
   });
 
   // Step 2: Academic
+  const [startGrade, setStartGrade] = useState(1);
   const [forms, setForms] = useState(6);
   const [streamsPerForm, setStreamsPerForm] = useState(2);
   const [streamNames, setStreamNames] = useState(['A', 'B', 'C', 'D']);
@@ -94,12 +95,15 @@ export default function SetupWizard({ onComplete, onSkip }) {
     setLaunchError('');
     const streamList = streamNames.slice(0, streamsPerForm);
     const classes = [];
-    for (let f = 7; f < 7 + forms; f++) {
+    const levels = [];
+    for (let f = startGrade; f < startGrade + forms; f++) {
+      levels.push(`Grade ${f}`);
       for (const stream of streamList) classes.push(`${f}${stream}`);
     }
     const config = {
       school: { ...school },
       classes,
+      levels,
       subjects: subjects.map(s => s.name),
       departments: Object.fromEntries(subjects.map(s => [s.name, s.dept])),
       terms,
@@ -151,7 +155,7 @@ export default function SetupWizard({ onComplete, onSkip }) {
   const genClasses = () => {
     const sl = streamNames.slice(0, streamsPerForm);
     const result = [];
-    for (let f = 7; f < 7 + forms; f++) {
+    for (let f = startGrade; f < startGrade + forms; f++) {
       for (const s of sl) result.push(`Grade ${f}${s}`);
     }
     return result;
@@ -247,7 +251,13 @@ export default function SetupWizard({ onComplete, onSkip }) {
               <h2 style={{ margin: '0 0 4px', fontSize: 22 }}>Academic Structure</h2>
               <p style={{ margin: '0 0 24px', color: '#64748b', fontSize: 14 }}>Configure your forms, streams, and subjects.</p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div>
+                  <label className="field-label">Starting Grade</label>
+                  <select className="select" value={startGrade} onChange={e => setStartGrade(Number(e.target.value))}>
+                    {[1,2,3,4,5,6,7,8,9,10,11].map(n => <option key={n} value={n}>Grade {n}</option>)}
+                  </select>
+                </div>
                 <div>
                   <label className="field-label">Number of Grades</label>
                   <select className="select" value={forms} onChange={e => setForms(Number(e.target.value))}>

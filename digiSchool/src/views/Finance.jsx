@@ -838,41 +838,37 @@ function FeeStructureTab({ store, user }) {
           </div>
         </div>
 
-        <table className="table" style={{ width: '100%', marginBottom: 32, borderCollapse: 'collapse' }}>
+        {(() => {
+          const levels = store.settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
+          return (
+            <table className="table" style={{ width: '100%', marginBottom: 32, borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #000' }}>
               <th style={{ padding: '12px 8px', textAlign: 'left' }}>Fee Component</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 7 (KES)</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 8 (KES)</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 9 (KES)</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 10 (KES)</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 11 (KES)</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right' }}>Grade 12 (KES)</th>
+              {levels.map(l => <th key={l} style={{ padding: '12px 8px', textAlign: 'right' }}>{l} (KES)</th>)}
             </tr>
           </thead>
           <tbody>
             {feeStructure.map((item, idx) => (
               <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px 8px', fontWeight: 600 }}>{item.component}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f1)}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f2)}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f3)}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f4)}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f5)}</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item.f6)}</td>
+                <td style={{ padding: '12px 8px', fontWeight: 600 }}>{item.component || item.type}</td>
+                {levels.map(l => (
+                  <td key={l} style={{ padding: '12px 8px', textAlign: 'right' }}>{fmtKES(item[l])}</td>
+                ))}
               </tr>
             ))}
             <tr style={{ borderTop: '2px solid #000', backgroundColor: '#f8fafc' }}>
               <td style={{ padding: '12px 8px', fontWeight: 800 }}>TOTAL Term Fees</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f1 || 0), 0))}</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f2 || 0), 0))}</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f3 || 0), 0))}</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f4 || 0), 0))}</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f5 || 0), 0))}</td>
-              <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>{fmtKES(feeStructure.reduce((s, f) => s + (f.f6 || 0), 0))}</td>
+              {levels.map(l => (
+                <td key={l} style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800 }}>
+                  {fmtKES(feeStructure.reduce((s, f) => s + (f[l] || 0), 0))}
+                </td>
+              ))}
             </tr>
           </tbody>
         </table>
+        );
+        })()}
 
         <div style={{ marginTop: 40 }}>
           <h4 style={{ margin: '0 0 8px 0', fontSize: 14 }}>Payment Methods:</h4>

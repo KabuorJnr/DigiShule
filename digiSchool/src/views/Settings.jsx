@@ -10,6 +10,7 @@ export default function Settings({ store, user }) {
   
   const TABS = user?.role === 'finance' ? ['Fee Structure'] : ALL_TABS;
   const [tab, setTab] = useState(TABS[0]);
+  const levels = settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
 
   // local copies for editing
   const [Grade, setForm] = useState(settings);
@@ -154,15 +155,15 @@ export default function Settings({ store, user }) {
         <div className="card card-pad" style={{ maxWidth: 760 }}>
           <div className="scroll-x">
             <table className="table">
-              <thead><tr><th>Fee Type</th><th>Grade 7</th><th>Grade 8</th><th>Grade 9</th><th>Grade 10</th><th>Grade 11</th><th>Grade 12</th></tr></thead>
+              <thead><tr><th>Fee Type</th>{levels.map(l => <th key={l}>{l}</th>)}</tr></thead>
               <tbody>
                 {fees.map((f, i) => (
                   <tr key={i}>
                     <td>{f.type}</td>
-                    {['f1', 'f2', 'f3', 'f4', 'f5', 'f6'].map((k) => (
-                      <td key={k}>
-                        <input className="input" type="number" value={f[k]} style={{ width: 110, height: 32 }}
-                          onChange={(e) => setFees((fs) => fs.map((x, j) => (j === i ? { ...x, [k]: Number(e.target.value) } : x)))} />
+                    {levels.map((l) => (
+                      <td key={l}>
+                        <input className="input" type="number" value={f[l] || ''} style={{ width: 110, height: 32 }}
+                          onChange={(e) => setFees((fs) => fs.map((x, j) => (j === i ? { ...x, [l]: Number(e.target.value) } : x)))} />
                       </td>
                     ))}
                   </tr>

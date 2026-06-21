@@ -330,8 +330,8 @@ function SessionRows({ rows, setRows, venues }) {
               <td>
                 <select className="select" value={r.classes} style={{ height: 32, width: 110 }} onChange={(e) => update(i, { classes: e.target.value })}>
                   <option value="">Select</option>
-                  {CLASSES.map((c) => <option key={c} value={`Form ${c}`}>Form {c}</option>)}
-                  <option value="Form 1-4">Form 1-4</option>
+                  {CLASSES.map((c) => <option key={c} value={`Grade ${c}`}>Grade {c}</option>)}
+                  <option value="Grade 7-12">Grade 7-12</option>
                 </select>
               </td>
               <td>
@@ -366,7 +366,7 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [rows, setRows] = useState([
-    { date: '', classes: 'Form 1', subject: 'Mathematics', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name },
+    { date: '', classes: 'Grade 7', subject: 'Mathematics', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name },
   ]);
 
   function save() {
@@ -392,7 +392,7 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues }) {
       </div>
       <label className="field-label">Sessions</label>
       <SessionRows rows={rows} setRows={setRows} venues={venues} />
-      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: 'Form 1', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name }])}>+ Add Session</button>
+      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: 'Grade 7', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name }])}>+ Add Session</button>
     </Modal>
   );
 }

@@ -172,7 +172,7 @@ export default function Timetable({ store }) {
     ]);
     exportTablePDF({
       school: settings,
-      title: `Class Timetable — Form ${cls}`,
+      title: `Class Timetable — Grade ${cls}`,
       subtitle: `${term} • Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
@@ -187,7 +187,7 @@ export default function Timetable({ store }) {
     tt.grid.forEach((row, p) => {
       aoa.push([`P${p + 1}`, ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} / ${c.teacher}` : ''))]);
     });
-    downloadExcel(`timetable-${cls}-${term}.xlsx`, [{ name: `Form ${cls}`, aoa }]);
+    downloadExcel(`timetable-${cls}-${term}.xlsx`, [{ name: `Grade ${cls}`, aoa }]);
     notify('Timetable exported as Excel', 'success', 'Export');
   }
 
@@ -216,7 +216,7 @@ export default function Timetable({ store }) {
         <div>
           <label className="field-label">Class</label>
           <select className="select" value={cls} onChange={(e) => setCls(e.target.value)} style={{ width: 140 }}>
-            {CLASSES.map((c) => <option key={c} value={c}>Form {c}</option>)}
+            {CLASSES.map((c) => <option key={c} value={c}>Grade {c}</option>)}
           </select>
         </div>
       </div>
@@ -378,7 +378,7 @@ export default function Timetable({ store }) {
                       cell ? (
                         <td key={d} style={{ background: deptColorBg[cell.dept] || '#f1f5f9' }}>
                           <div className="tt-cell-sub">{cell.subject}</div>
-                          <div className="tt-cell-teacher">Form {cell.cls}</div>
+                          <div className="tt-cell-teacher">Grade {cell.cls}</div>
                         </td>
                       ) : <td key={d} className="tt-empty">—</td>
                     ))}

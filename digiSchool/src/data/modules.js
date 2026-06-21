@@ -6,7 +6,7 @@ export const LIBRARY_BOOKS = [
   { id: 'b2', title: 'The River and the Source', author: 'Margaret Ogola', isbn: '978-9966466521', category: 'Set Book', copies: 50, available: 12 },
   { id: 'b3', title: 'Blossoms of the Savannah', author: 'Henry Ole Kulet', isbn: '978-9966254863', category: 'Set Book', copies: 50, available: 9 },
   { id: 'b4', title: 'KCSE Revision Mathematics', author: 'KLB', isbn: '978-9966259011', category: 'Revision', copies: 30, available: 21 },
-  { id: 'b5', title: 'Secondary Chemistry Form 4', author: 'KLB', isbn: '978-9966259028', category: 'Course', copies: 35, available: 30 },
+  { id: 'b5', title: 'Secondary Chemistry Grade 10', author: 'KLB', isbn: '978-9966259028', category: 'Course', copies: 35, available: 30 },
   { id: 'b6', title: 'Comprehensive Biology', author: 'Longhorn', isbn: '978-9966493011', category: 'Course', copies: 35, available: 33 },
   { id: 'b7', title: 'Atlas of Kenya & The World', author: 'Macmillan', isbn: '978-9966493028', category: 'Reference', copies: 20, available: 18 },
   { id: 'b8', title: 'Fathers of Nations', author: 'Paul B. Vitta', isbn: '978-9914701234', category: 'Set Book', copies: 50, available: 5 },
@@ -29,22 +29,22 @@ export const FINANCE_PAYMENTS = [
   { id: 'p6', date: '2026-06-06', student: 'Esther Kipchoge', adm: '2B-005', method: 'Bank', ref: 'EQB-77004', amount: 42000 },
 ];
 
-// Termly fee billing summary per form (KES).
+// Termly fee billing summary per Grade (KES).
 export const FEE_SUMMARY = [
-  { form: 'Form 1', billed: 49500, students: 40, collected: 1663200, expected: 1980000 },
-  { form: 'Form 2', billed: 49500, students: 40, collected: 1504800, expected: 1980000 },
-  { form: 'Form 3', billed: 54000, students: 40, collected: 1404000, expected: 2160000 },
-  { form: 'Form 4', billed: 54000, students: 40, collected: 1252800, expected: 2160000 },
+  { Grade: 'Grade 7', billed: 49500, students: 40, collected: 1663200, expected: 1980000 },
+  { Grade: 'Grade 8', billed: 49500, students: 40, collected: 1504800, expected: 1980000 },
+  { Grade: 'Grade 9', billed: 54000, students: 40, collected: 1404000, expected: 2160000 },
+  { Grade: 'Grade 10', billed: 54000, students: 40, collected: 1252800, expected: 2160000 },
 ];
 
 export const ADMISSIONS = [
-  { id: 'ad1', name: 'Samuel Barasa', kcpe: 398, gender: 'M', form: 'Form 1', date: '2026-06-02', status: 'Admitted' },
-  { id: 'ad2', name: 'Diana Akinyi', kcpe: 412, gender: 'F', form: 'Form 1', date: '2026-06-03', status: 'Admitted' },
-  { id: 'ad3', name: 'Felix Mutua', kcpe: 365, gender: 'M', form: 'Form 1', date: '2026-06-04', status: 'Pending' },
-  { id: 'ad4', name: 'Nancy Chepkemoi', kcpe: 388, gender: 'F', form: 'Form 1', date: '2026-06-05', status: 'Pending' },
-  { id: 'ad5', name: 'Allan Simiyu', kcpe: 421, gender: 'M', form: 'Form 1', date: '2026-06-06', status: 'Admitted' },
-  { id: 'ad6', name: 'Purity Nyokabi', kcpe: 354, gender: 'F', form: 'Form 1', date: '2026-06-07', status: 'Waitlisted' },
-  { id: 'ad7', name: 'Ian Kiplagat', kcpe: 377, gender: 'M', form: 'Form 2 (Transfer)', date: '2026-06-07', status: 'Pending' },
+  { id: 'ad1', name: 'Samuel Barasa', kcpe: 398, gender: 'M', Grade: 'Grade 7', date: '2026-06-02', status: 'Admitted' },
+  { id: 'ad2', name: 'Diana Akinyi', kcpe: 412, gender: 'F', Grade: 'Grade 7', date: '2026-06-03', status: 'Admitted' },
+  { id: 'ad3', name: 'Felix Mutua', kcpe: 365, gender: 'M', Grade: 'Grade 7', date: '2026-06-04', status: 'Pending' },
+  { id: 'ad4', name: 'Nancy Chepkemoi', kcpe: 388, gender: 'F', Grade: 'Grade 7', date: '2026-06-05', status: 'Pending' },
+  { id: 'ad5', name: 'Allan Simiyu', kcpe: 421, gender: 'M', Grade: 'Grade 7', date: '2026-06-06', status: 'Admitted' },
+  { id: 'ad6', name: 'Purity Nyokabi', kcpe: 354, gender: 'F', Grade: 'Grade 7', date: '2026-06-07', status: 'Waitlisted' },
+  { id: 'ad7', name: 'Ian Kiplagat', kcpe: 377, gender: 'M', Grade: 'Grade 8 (Transfer)', date: '2026-06-07', status: 'Pending' },
 ];
 
 export const CLINIC_VISITS = [
