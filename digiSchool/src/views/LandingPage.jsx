@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BookOpen, Calculator, Stethoscope, Users, Building, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, Stethoscope, Users, Building, ShieldCheck, CheckCircle } from 'lucide-react';
 import { USERS } from '../data/users';
 
 const LandingPage = ({ onGetStarted, onDemoLogin }) => {
@@ -74,8 +74,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
               <h3>Academics Engine</h3>
               <p>Comprehensive grading systems supporting both 8-4-4 and modern CBC frameworks. Track attendance, manage assignments, and generate insightful report cards effortlessly.</p>
               <ul className="saas-feature-list">
-                <li><CheckCircle2 size={16} /> CBC & Standard Grading</li>
-                <li><CheckCircle2 size={16} /> Automated Report Cards</li>
+                <li><CheckCircle size={16} /> CBC & Standard Grading</li>
+                <li><CheckCircle size={16} /> Automated Report Cards</li>
               </ul>
             </div>
 
@@ -87,8 +87,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
               <h3>Finance & Billing</h3>
               <p>Streamline your financial operations. Automate fee collection, track expenses, manage payroll, and generate professional invoices for parents in seconds.</p>
               <ul className="saas-feature-list">
-                <li><CheckCircle2 size={16} /> Automated Invoicing</li>
-                <li><CheckCircle2 size={16} /> Expense Tracking</li>
+                <li><CheckCircle size={16} /> Automated Invoicing</li>
+                <li><CheckCircle size={16} /> Expense Tracking</li>
               </ul>
             </div>
 
@@ -100,8 +100,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
               <h3>Health & Clinic</h3>
               <p>Ensure student wellbeing with a dedicated digital clinic. Log medical visits, track prescriptions, and maintain comprehensive student health records securely.</p>
               <ul className="saas-feature-list">
-                <li><CheckCircle2 size={16} /> Medical Logs</li>
-                <li><CheckCircle2 size={16} /> Secure Health Records</li>
+                <li><CheckCircle size={16} /> Medical Logs</li>
+                <li><CheckCircle size={16} /> Secure Health Records</li>
               </ul>
             </div>
             
@@ -113,8 +113,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
               <h3>Admissions & Enrollment</h3>
               <p>Manage the entire student lifecycle from application to graduation. Digitize enrollment forms and keep parent communication organized.</p>
               <ul className="saas-feature-list">
-                <li><CheckCircle2 size={16} /> Digital Applications</li>
-                <li><CheckCircle2 size={16} /> Parent Portals</li>
+                <li><CheckCircle size={16} /> Digital Applications</li>
+                <li><CheckCircle size={16} /> Parent Portals</li>
               </ul>
             </div>
           </div>
