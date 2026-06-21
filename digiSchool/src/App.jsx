@@ -102,7 +102,6 @@ export default function App() {
   const studentsRef = useRef(students);
   const examsRef = useRef(examSchedules);
   const timetablesRef = useRef(timetables);
-  const isDemoRef = useRef(false);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
   useEffect(() => { feeRef.current = feeStructure; }, [feeStructure]);
   useEffect(() => { boundsRef.current = gradeBoundaries; }, [gradeBoundaries]);
