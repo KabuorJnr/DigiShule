@@ -32,7 +32,7 @@ export default function Settings({ store, user }) {
   }
 
   function saveGeneral() {
-    setSettings(Grade);
+    setSettings(form);
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
