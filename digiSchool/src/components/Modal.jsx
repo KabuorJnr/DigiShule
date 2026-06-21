@@ -1,5 +1,16 @@
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
 export default function Modal({ title, onClose, children, footer, wide }) {
-  return (
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
+  const content = (
     <div className="modal-overlay" onMouseDown={onClose}>
       <div
         className={`modal${wide ? ' modal-lg' : ''}`}
@@ -16,4 +27,6 @@ export default function Modal({ title, onClose, children, footer, wide }) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
 }
