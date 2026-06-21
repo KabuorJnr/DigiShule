@@ -17,7 +17,6 @@ import Overview from './views/Overview';
 import Timetable from './views/Timetable';
 import ExamSchedules from './views/ExamSchedules';
 import Gradebook from './views/Gradebook';
-import LandingPage from './views/LandingPage';
 import Settings from './views/Settings';
 import Library from './views/Library';
 import Finance from './views/Finance';
@@ -338,12 +337,8 @@ export default function App() {
     );
   }
 
-  // ---- If not logged in, show Landing Page or Login ----
+  // ---- If not logged in, show Login ----
   if (!currentUser) {
-    if (!showLogin) {
-      return <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} />;
-    }
-
     return (
       <>
         <Login onDemoLogin={handleDemoLogin} />
