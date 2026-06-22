@@ -5,13 +5,18 @@ import { Icon } from '../components/icons';
 import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 
 export default function Library({ store }) {
-  const { notify } = store;
+  const { notify, students = [] } = store;
   const [tab, setTab] = useState('catalog');
   const [books, setBooks] = useState([]);
   const [loans, setLoans] = useState([]);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  
   const [issueOpen, setIssueOpen] = useState(false);
-  const [form, setForm] = useState({ book: '', student: '', adm: '', due: '' });
+  const [form, setForm] = useState({ book: '', student_id: '', due: '' });
+
+  const [addAssetOpen, setAddAssetOpen] = useState(false);
+  const [assetForm, setAssetForm] = useState({ title: '', author: '', isbn: '', category: 'Book', copies: 1 });
 
   useEffect(() => {
     Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')])
@@ -29,17 +34,22 @@ export default function Library({ store }) {
     return { titles: books.length, copies, onLoan: copies - available, overdue };
   }, [books, loans]);
 
-  const filtered = books.filter(
-    (b) =>
-      b.title.toLowerCase().includes(search.toLowerCase()) ||
-      b.author.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = books.filter((b) => {
+    const matchesSearch = b.title.toLowerCase().includes(search.toLowerCase()) || (b.author && b.author.toLowerCase().includes(search.toLowerCase()));
+    const matchesCategory = categoryFilter === 'All' || b.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = ['All', ...new Set(books.map(b => b.category))];
 
   const issueBook = async () => {
-    if (!form.book || !form.student || !form.adm) {
-      notify('Book, student and admission no. are required.', 'error');
+    if (!form.book || !form.student_id) {
+      notify('Book and student are required.', 'error');
       return;
     }
+    const student = students.find(s => s.id === form.student_id);
+    if (!student) return;
+
     const bk = books.find((b) => b.id === form.book);
     if (!bk || bk.available <= 0) {
       notify('No available copies of this title.', 'error');
@@ -49,8 +59,9 @@ export default function Library({ store }) {
     const loan = {
       id: `l${Date.now()}`,
       book: bk.title,
-      student: form.student,
-      adm: form.adm,
+      student: student.name,
+      adm: student.adm_no,
+      student_id: student.id,
       borrowed: new Date().toISOString().slice(0, 10),
       due: form.due || '2026-06-30',
       status: 'Borrowed',
@@ -59,14 +70,36 @@ export default function Library({ store }) {
       await upsertRow('libraryBooks', updatedBook);
       await upsertRow('libraryLoans', loan);
     } catch (e) {
-      notify(`Could not issue book: ${e.message}`, 'error');
+      notify(`Could not issue item: ${e.message}`, 'error');
       return;
     }
     setBooks((bs) => bs.map((b) => (b.id === form.book ? updatedBook : b)));
     setLoans((ls) => [loan, ...ls]);
     setIssueOpen(false);
-    setForm({ book: '', student: '', adm: '', due: '' });
-    notify(`"${bk.title}" issued to ${form.student}.`);
+    setForm({ book: '', student_id: '', due: '' });
+    notify(`"${bk.title}" issued to ${student.name}.`);
+  };
+
+  const addAsset = async () => {
+    if (!assetForm.title) return notify('Title/Name is required', 'error');
+    const newAsset = {
+      id: `b${Date.now()}`,
+      title: assetForm.title,
+      author: assetForm.author || 'N/A',
+      isbn: assetForm.isbn || 'N/A',
+      category: assetForm.category,
+      copies: Number(assetForm.copies),
+      available: Number(assetForm.copies)
+    };
+    try {
+      await upsertRow('libraryBooks', newAsset);
+      setBooks(prev => [...prev, newAsset].sort((a, b) => a.title.localeCompare(b.title)));
+      setAddAssetOpen(false);
+      setAssetForm({ title: '', author: '', isbn: '', category: 'Book', copies: 1 });
+      notify(`${newAsset.title} added to catalog successfully.`);
+    } catch (e) {
+      notify(`Failed to add asset: ${e.message}`, 'error');
+    }
   };
 
   const returnLoan = async (loan) => {
@@ -87,9 +120,14 @@ export default function Library({ store }) {
   return (
     <div>
       <PageHeader
-        title="Library"
-        subtitle="Catalog, loans and overdue tracking"
-        actions={<button className="btn btn-primary" onClick={() => setIssueOpen(true)}>+ Issue Book</button>}
+        title="Library & Asset Management"
+        subtitle="Catalog, IT assets, loans and overdue tracking"
+        actions={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" onClick={() => setAddAssetOpen(true)}>+ Add Asset</button>
+            <button className="btn btn-primary" onClick={() => setIssueOpen(true)}>+ Issue Item</button>
+          </div>
+        }
       />
 
       <div className="stat-tiles">
@@ -106,13 +144,18 @@ export default function Library({ store }) {
 
       {tab === 'catalog' && (
         <div className="card card-pad">
-          <input
-            className="input"
-            style={{ maxWidth: 320, marginBottom: 14 }}
-            placeholder="Search title or author…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <input
+              className="input"
+              style={{ maxWidth: 320 }}
+              placeholder="Search title or author…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select className="select" style={{ maxWidth: 200 }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <div className="scroll-x">
             <table className="table">
               <thead>
@@ -178,33 +221,66 @@ export default function Library({ store }) {
       )}
 
       {issueOpen && (
-        <Modal title="Issue Book" onClose={() => setIssueOpen(false)} footer={
+        <Modal title="Issue Item" onClose={() => setIssueOpen(false)} footer={
           <>
             <button className="btn" onClick={() => setIssueOpen(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={issueBook}>Issue</button>
           </>
         }>
-          <label className="field-label">Book</label>
+          <label className="field-label">Asset / Book</label>
           <select className="select" value={form.book} onChange={(e) => setForm((f) => ({ ...f, book: e.target.value }))}>
-            <option value="">Select a title…</option>
+            <option value="">Select an item…</option>
             {books.map((b) => (
               <option key={b.id} value={b.id} disabled={b.available <= 0}>
                 {b.title} ({b.available} available)
               </option>
             ))}
           </select>
-          <div className="grid grid-2" style={{ marginTop: 12 }}>
-            <div>
-              <label className="field-label">Student Name</label>
-              <input className="input" value={form.student} onChange={(e) => setForm((f) => ({ ...f, student: e.target.value }))} />
-            </div>
-            <div>
-              <label className="field-label">Admission No.</label>
-              <input className="input" value={form.adm} onChange={(e) => setForm((f) => ({ ...f, adm: e.target.value }))} />
-            </div>
-          </div>
+          
+          <label className="field-label" style={{ marginTop: 12 }}>Student</label>
+          <select className="select" value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))}>
+            <option value="">-- Choose Student --</option>
+            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.adm_no})</option>)}
+          </select>
+
           <label className="field-label" style={{ marginTop: 12 }}>Due Date</label>
           <input type="date" className="input" value={form.due} onChange={(e) => setForm((f) => ({ ...f, due: e.target.value }))} />
+        </Modal>
+      )}
+
+      {addAssetOpen && (
+        <Modal title="Add to Catalog" onClose={() => setAddAssetOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setAddAssetOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={addAsset}>Add Item</button>
+          </>
+        }>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label">Title / Name *</label>
+              <input className="input" placeholder="E.g. ThinkPad T14 or Physics Vol 2" value={assetForm.title} onChange={e => setAssetForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Category</label>
+              <select className="select" value={assetForm.category} onChange={e => setAssetForm(f => ({ ...f, category: e.target.value }))}>
+                <option>Book</option>
+                <option>Laptop</option>
+                <option>Tablet</option>
+                <option>Equipment</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-2" style={{ marginTop: 12 }}>
+            <div>
+              <label className="field-label">Author / Manufacturer</label>
+              <input className="input" placeholder="E.g. Lenovo" value={assetForm.author} onChange={e => setAssetForm(f => ({ ...f, author: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Total Copies</label>
+              <input type="number" min="1" className="input" value={assetForm.copies} onChange={e => setAssetForm(f => ({ ...f, copies: e.target.value }))} />
+            </div>
+          </div>
         </Modal>
       )}
     </div>

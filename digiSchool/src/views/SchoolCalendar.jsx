@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UPCOMING_EVENTS } from '../data/seed';
+import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 import { Badge } from '../components/widgets';
-import { Calendar, ExternalLink, Plus } from 'lucide-react';
+import { Calendar, ExternalLink, Plus, Edit2, Trash2 } from 'lucide-react';
 import Modal from '../components/Modal';
 
 const TYPE_COLOR = { academic: 'blue', exam: 'red', event: 'green', holiday: 'amber', meeting: 'purple' };
@@ -18,19 +19,62 @@ export default function SchoolCalendar({ store, user }) {
   const calendarUrl = settings?.googleCalendarUrl || '';
   const location = settings?.name || 'School';
 
-  const [localEvents, setLocalEvents] = useState(UPCOMING_EVENTS);
+  const [localEvents, setLocalEvents] = useState([]);
   const [addModal, setAddModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', desc: '', date: '', type: 'academic' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [newEvent, setNewEvent] = useState({ id: '', title: '', desc: '', date: '', type: 'academic' });
 
   const canAdd = user && ['principal', 'deputy_academic', 'deputy_admin'].includes(user.role);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    fetchTable('schoolEvents')
+      .then(data => {
+        if (data && data.length > 0) {
+          setLocalEvents(data.sort((a, b) => a.date.localeCompare(b.date)));
+        } else {
+          setLocalEvents(UPCOMING_EVENTS.sort((a, b) => a.date.localeCompare(b.date)));
+        }
+      })
+      .catch(() => setLocalEvents(UPCOMING_EVENTS.sort((a, b) => a.date.localeCompare(b.date))));
+  }, []);
+
+  const openAdd = () => {
+    setIsEditing(false);
+    setNewEvent({ id: '', title: '', desc: '', date: '', type: 'academic' });
+    setAddModal(true);
+  };
+
+  const openEdit = (ev) => {
+    setIsEditing(true);
+    setNewEvent({ ...ev });
+    setAddModal(true);
+  };
+
+  const handleSave = async () => {
     if (!newEvent.title.trim() || !newEvent.date.trim()) { notify('Title and date are required', 'warning'); return; }
-    const ev = { id: `ev${Date.now()}`, ...newEvent };
-    setLocalEvents(prev => [...prev, ev].sort((a, b) => a.date.localeCompare(b.date)));
-    setAddModal(false);
-    setNewEvent({ title: '', desc: '', date: '', type: 'academic' });
-    notify('Event added to calendar', 'success', 'Calendar');
+    const ev = { ...newEvent, id: newEvent.id || `ev${Date.now()}` };
+    try {
+      await upsertRow('schoolEvents', ev);
+      setLocalEvents(prev => {
+        const filtered = prev.filter(e => e.id !== ev.id);
+        return [...filtered, ev].sort((a, b) => a.date.localeCompare(b.date));
+      });
+      setAddModal(false);
+      notify(`Event ${isEditing ? 'updated' : 'added'}`, 'success');
+    } catch (e) {
+      notify(`Error saving event: ${e.message}`, 'error');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this event?')) return;
+    try {
+      await deleteRow('schoolEvents', id);
+      setLocalEvents(prev => prev.filter(e => e.id !== id));
+      notify('Event deleted', 'info');
+    } catch (e) {
+      notify(`Error deleting event: ${e.message}`, 'error');
+    }
   };
 
   return (
@@ -40,7 +84,7 @@ export default function SchoolCalendar({ store, user }) {
           <h2 style={{ margin: 0, fontSize: 22, display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={22} /> School Calendar</h2>
           <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Academic events, exams, and term dates</p>
         </div>
-        {canAdd && <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => setAddModal(true)}><Plus size={16} /> Add Event</button>}
+        {canAdd && <button className="btn btn-primary" style={{ gap: 6 }} onClick={openAdd}><Plus size={16} /> Add Event</button>}
       </div>
 
       {/* Google Calendar Embed */}
@@ -87,16 +131,23 @@ export default function SchoolCalendar({ store, user }) {
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Badge color={TYPE_COLOR[e.type] || 'gray'}>{e.type}</Badge>
-                <a
-                  href={makeGoogleCalLink({ title: e.title, desc: e.desc, date: e.date, location })}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-sm"
-                  style={{ gap: 4, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
-                  title="Add to Google Calendar"
-                >
-                  <ExternalLink size={13} /> Add to Calendar
-                </a>
+                {canAdd ? (
+                  <>
+                    <button className="btn btn-sm" onClick={() => openEdit(e)} title="Edit"><Edit2 size={14} /></button>
+                    <button className="btn btn-sm" style={{ color: '#D13438' }} onClick={() => handleDelete(e.id)} title="Delete"><Trash2 size={14} /></button>
+                  </>
+                ) : (
+                  <a
+                    href={makeGoogleCalLink({ title: e.title, desc: e.desc, date: e.date, location })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-sm"
+                    style={{ gap: 4, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
+                    title="Add to Google Calendar"
+                  >
+                    <ExternalLink size={13} /> Add to Calendar
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -105,10 +156,10 @@ export default function SchoolCalendar({ store, user }) {
 
       {/* Add Event Modal */}
       {addModal && (
-        <Modal title="Add School Event" onClose={() => setAddModal(false)} footer={
+        <Modal title={isEditing ? "Edit School Event" : "Add School Event"} onClose={() => setAddModal(false)} footer={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setAddModal(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleAdd}>Add Event</button>
+            <button className="btn btn-primary" onClick={handleSave}>{isEditing ? 'Save Changes' : 'Add Event'}</button>
           </div>
         }>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

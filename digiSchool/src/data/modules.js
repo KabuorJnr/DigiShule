@@ -10,6 +10,9 @@ export const LIBRARY_BOOKS = [
   { id: 'b6', title: 'Comprehensive Biology', author: 'Longhorn', isbn: '978-9966493011', category: 'Course', copies: 35, available: 33 },
   { id: 'b7', title: 'Atlas of Kenya & The World', author: 'Macmillan', isbn: '978-9966493028', category: 'Reference', copies: 20, available: 18 },
   { id: 'b8', title: 'Fathers of Nations', author: 'Paul B. Vitta', isbn: '978-9914701234', category: 'Set Book', copies: 50, available: 5 },
+  { id: 'b9', title: 'Lenovo ThinkPad T14', author: 'Lenovo', isbn: 'SN: 19483722', category: 'Laptop', copies: 15, available: 8 },
+  { id: 'b10', title: 'Apple iPad Pro 11"', author: 'Apple', isbn: 'SN: AP-883', category: 'Tablet', copies: 30, available: 30 },
+  { id: 'b11', title: 'Epson LCD Projector', author: 'Epson', isbn: 'SN: EP-9901', category: 'Equipment', copies: 5, available: 2 },
 ];
 
 export const LIBRARY_LOANS = [

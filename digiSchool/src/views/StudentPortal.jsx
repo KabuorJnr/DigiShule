@@ -39,9 +39,13 @@ const MOCK_TIMETABLE = {
 
 const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-export default function StudentPortal({ store, user }) {
+export default function StudentPortal({ store, user, params }) {
   const { students, gradeBoundaries, examSchedules, feeStructure, navigate, notify } = store;
-  const me = students[0];
+  const me = useMemo(() => {
+    if (!students || students.length === 0) return null;
+    const targetId = params?.childId || user?.link || user?.id;
+    return students.find(s => s.id === targetId || s.adm === targetId) || students[0];
+  }, [students, user, params]);
   const [tab, setTab] = useState('dashboard');
   const [rank, setRank] = useState(null);
   const [payModal, setPayModal] = useState(false);
@@ -57,6 +61,20 @@ export default function StudentPortal({ store, user }) {
   const [cloudLoading, setCloudLoading] = useState(false);
   const [actionId, setActionId] = useState(null);
 
+  const [libraryBooks, setLibraryBooks] = useState([]);
+  const [libraryLoans, setLibraryLoans] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    import('../lib/api').then(({ fetchTable }) => {
+      Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')]).then(([bks, lns]) => {
+        if (!active) return;
+        setLibraryBooks(bks || []);
+        setLibraryLoans(lns || []);
+      });
+    });
+    return () => { active = false; };
+  }, []);
   useEffect(() => {
     let active = true;
     fetchClassRank().then(r => { if (active) setRank(r); }).catch(() => {});
@@ -467,25 +485,55 @@ export default function StudentPortal({ store, user }) {
           </div>
 
           {resTab === 'library' && (
-            <div className="card card-pad">
-              <h3 className="section-title">Library Catalog</h3>
-              <div className="scroll-x">
-                <table className="table">
-                  <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Available</th><th>Status</th></tr></thead>
-                  <tbody>
-                    {LIBRARY_BOOKS.map(b => (
-                      <tr key={b.id}>
-                        <td style={{ fontWeight: 600 }}>{b.title}</td>
-                        <td className="muted">{b.author}</td>
-                        <td><Badge color={b.category === 'Set Book' ? 'blue' : b.category === 'Reference' ? 'amber' : 'gray'}>{b.category}</Badge></td>
-                        <td>{b.available} / {b.copies}</td>
-                        <td><Badge color={b.available > 0 ? 'green' : 'red'}>{b.available > 0 ? 'Available' : 'Out'}</Badge></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <>
+              {libraryLoans.filter(l => l.student_id === me.id).length > 0 && (
+                <div className="card card-pad" style={{ marginBottom: 16 }}>
+                  <h3 className="section-title">My Borrowed Items</h3>
+                  <div className="scroll-x">
+                    <table className="table">
+                      <thead><tr><th>Item</th><th>Borrowed On</th><th>Due Date</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {libraryLoans.filter(l => l.student_id === me.id).map(l => (
+                          <tr key={l.id} style={l.status === 'Overdue' ? { background: '#fef2f2' } : {}}>
+                            <td style={{ fontWeight: 600 }}>{l.book}</td>
+                            <td>{l.borrowed}</td>
+                            <td>{l.due}</td>
+                            <td><Badge color={l.status === 'Overdue' ? 'red' : 'blue'}>{l.status}</Badge></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              <div className="card card-pad">
+                <h3 className="section-title">Library Catalog</h3>
+                <div className="scroll-x">
+                  <table className="table">
+                    <thead><tr><th>Title</th><th>Author / Brand</th><th>Category</th><th>Available</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {libraryBooks.length > 0 ? libraryBooks.map(b => (
+                        <tr key={b.id}>
+                          <td style={{ fontWeight: 600 }}>{b.title}</td>
+                          <td className="muted">{b.author}</td>
+                          <td><Badge color="gray">{b.category}</Badge></td>
+                          <td>{b.available} / {b.copies}</td>
+                          <td><Badge color={b.available > 0 ? 'green' : 'red'}>{b.available > 0 ? 'Available' : 'Out'}</Badge></td>
+                        </tr>
+                      )) : LIBRARY_BOOKS.map(b => (
+                        <tr key={b.id}>
+                          <td style={{ fontWeight: 600 }}>{b.title}</td>
+                          <td className="muted">{b.author}</td>
+                          <td><Badge color={b.category === 'Set Book' ? 'blue' : b.category === 'Reference' ? 'amber' : 'gray'}>{b.category}</Badge></td>
+                          <td>{b.available} / {b.copies}</td>
+                          <td><Badge color={b.available > 0 ? 'green' : 'red'}>{b.available > 0 ? 'Available' : 'Out'}</Badge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {resTab === 'materials' && (

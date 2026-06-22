@@ -245,3 +245,28 @@ BEGIN
   WHERE id = p_school_id;
 END;
 $$;
+
+-- 14. School Events
+CREATE TABLE IF NOT EXISTS school_events (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  "desc" TEXT,
+  date TEXT NOT NULL,
+  type TEXT DEFAULT 'academic',
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE school_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY ""Users can view their school's events""
+ON school_events FOR SELECT USING (school_id = my_school_id());
+
+CREATE POLICY ""Users can insert their school's events""
+ON school_events FOR INSERT WITH CHECK (school_id = my_school_id());
+
+CREATE POLICY ""Users can update their school's events""
+ON school_events FOR UPDATE USING (school_id = my_school_id());
+
+CREATE POLICY ""Users can delete their school's events""
+ON school_events FOR DELETE USING (school_id = my_school_id());

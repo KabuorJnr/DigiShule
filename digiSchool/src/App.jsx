@@ -191,7 +191,7 @@ export default function App() {
       notifToggles, setNotifToggles: setTogglesP,
       timetables, setTimetables: setTimetablesP,
       notify,
-      navigate: setView,
+      navigate: (v, p = {}) => { setViewParams(p); setView(v); },
     }),
     [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
       setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher]

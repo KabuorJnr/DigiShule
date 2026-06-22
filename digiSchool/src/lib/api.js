@@ -278,6 +278,7 @@ const TABLES = {
   admissions: 'admissions', clinicVisits: 'clinic_visits',
   disciplinaryRecords: 'disciplinary_records', staff: 'staff',
   facilities: 'facilities', notifications: 'notifications',
+  schoolEvents: 'school_events',
 };
 
 export async function fetchTable(key) {

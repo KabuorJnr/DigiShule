@@ -163,12 +163,15 @@ export default function ParentPortal({ store, user }) {
 
       <div className="card card-pad" style={{ marginBottom: 14 }}>
         <h3 className="section-title">Quick Actions</h3>
-        <div className="grid grid-3" style={{ gap: 12 }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModalOpen(true)}>
             <Icon name="message" size={18} /> Message Teacher
           </button>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setProfileModalOpen(true)}>
             <Icon name="settings" size={18} /> Update Contact Info
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8, background: '#eef2ff', color: '#4f46e5', borderColor: '#c7d2fe' }} onClick={() => store.navigate('student', { childId: child.id })}>
+            <Icon name="analytics" size={18} /> View Child's Portal
           </button>
           <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
             <Icon name="finance" size={18} /> Pay School Fees
