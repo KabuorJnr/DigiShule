@@ -72,7 +72,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
             <div className="b-dash-grid">
               <div className="b-dash-card">
                 <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>Total Active Students</div>
-                <div style={{ fontSize: '32px', fontWeight: '800', color: '#0f172a' }}>1,248</div>
+                <div className="b-dash-skeleton" style={{ width: '80px', height: '32px', marginBottom: '4px' }} />
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'flex-end', height: '60px' }}>
                   <div style={{ width: '16%', height: '40%', background: '#e2e8f0', borderRadius: '4px' }} />
                   <div style={{ width: '16%', height: '60%', background: '#e2e8f0', borderRadius: '4px' }} />
@@ -94,28 +94,6 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
           </div>
         </div>
       </header>
-
-      {/* 2. Trust Minimalist Banner */}
-      <section className="bespoke-trust">
-        <div className="b-trust-inner">
-          <div className="b-trust-stat">
-            <strong>99.9%</strong>
-            <span>Uptime SLA</span>
-          </div>
-          <div className="b-trust-stat">
-            <strong>500+</strong>
-            <span>Partner Schools</span>
-          </div>
-          <div className="b-trust-stat">
-            <strong>#1</strong>
-            <span>Rated Support</span>
-          </div>
-          <div className="b-trust-stat">
-            <strong>24/7</strong>
-            <span>Cloud Sync</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Bento Grid Section */}
       <section id="bento" className="bespoke-bento">
