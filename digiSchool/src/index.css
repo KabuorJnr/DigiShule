@@ -460,49 +460,111 @@ textarea.input {
   max-width: 500px;
 }
 
-.code-window {
-  background: rgba(15, 23, 42, 0.6);
+.dashboard-preview {
+  background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 24px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
 }
 
-.window-header {
+.preview-header {
   background: rgba(255, 255, 255, 0.03);
-  padding: 12px 16px;
+  padding: 16px 24px;
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.window-header .dot {
-  width: 12px;
-  height: 12px;
+.preview-nav {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.preview-nav .active {
+  color: #2dd4bf;
+  border-bottom: 2px solid #2dd4bf;
+  padding-bottom: 4px;
+}
+
+.preview-avatar {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  background: rgba(45, 212, 191, 0.2);
+  border: 1px solid rgba(45, 212, 191, 0.4);
 }
 
-.dot.red { background: #ef4444; }
-.dot.yellow { background: #eab308; }
-.dot.green { background: #22c55e; }
-
-.code-block {
+.preview-body {
   padding: 24px;
-  margin: 0;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #e2e8f0;
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.token.keyword { color: #c678dd; }
-.token.string { color: #98c379; }
-.token.class-name { color: #e5c07b; }
-.token.function { color: #61afef; }
-.token.boolean { color: #d19a66; }
+.preview-top-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.preview-card {
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.preview-card-title {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.preview-card-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.preview-card-trend {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.preview-card-trend.positive {
+  color: #2dd4bf;
+}
+
+.preview-chart {
+  height: 140px;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.preview-chart-bars {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.preview-chart-bars .bar {
+  flex: 1;
+  background: linear-gradient(to top, rgba(45, 212, 191, 0.1), rgba(45, 212, 191, 0.6));
+  border-radius: 4px 4px 0 0;
+  min-width: 16px;
+}
 
 .landing-features {
   padding: 100px 48px;

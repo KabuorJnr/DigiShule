@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, BookOpen, Activity, Layout, Terminal, Code2, Cpu } from 'lucide-react';
+import { BookOpen, Layout, GraduationCap, Users, Heart, ArrowRight } from 'lucide-react';
 import { USERS } from '../data/users';
 
 const LandingPage = ({ onGetStarted, onDemoLogin }) => {
@@ -12,8 +12,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
       {/* Navbar */}
       <nav className="landing-nav">
         <div className="landing-brand">
-          <Terminal size={24} className="accent-icon" />
-          <span>EduOne_</span>
+          <GraduationCap size={28} className="accent-icon" />
+          <span>EduOne</span>
         </div>
         <div className="landing-actions">
           <button className="landing-btn outline" onClick={onGetStarted}>Standard Login</button>
@@ -23,92 +23,106 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
       {/* Hero Section */}
       <header className="landing-hero">
         <div className="hero-content">
-          <div className="hero-badge">v2.0 // Enterprise Ready</div>
+          <div className="hero-badge">Trusted by 500+ Schools</div>
           <h1 className="hero-title">
-            The Operating System for <span className="highlight-text">Modern Education.</span>
+            Empower Your School with <span className="highlight-text">Smart Education.</span>
           </h1>
           <p className="hero-subtitle">
-            Execute school management with precision. From admissions and academics to finance and health—EduOne compiles your entire institution into a single, high-performance platform.
+            Manage academics, admissions, finance, and student health seamlessly. EduOne brings your entire school community together on one beautiful, easy-to-use platform.
           </p>
           <div className="hero-cta">
             <button className="landing-btn primary" onClick={() => {
               document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
             }}>
-              Initialize Demo System <Cpu size={18} style={{ marginLeft: 8 }} />
+              Try the Interactive Demo <ArrowRight size={18} style={{ marginLeft: 8 }} />
             </button>
           </div>
         </div>
         
-        {/* Abstract code visual decoration */}
+        {/* Dashboard visual decoration */}
         <div className="hero-visual">
-          <div className="code-window">
-            <div className="window-header">
-              <span className="dot red"></span>
-              <span className="dot yellow"></span>
-              <span className="dot green"></span>
+          <div className="dashboard-preview glass-panel">
+            <div className="preview-header">
+              <div className="preview-nav">
+                <span className="active">Overview</span>
+                <span>Academics</span>
+                <span>Finance</span>
+              </div>
+              <div className="preview-avatar"></div>
             </div>
-            <pre className="code-block">
-              <code>
-                <span className="token keyword">import</span> {'{'} EduOne {'}'} <span className="token keyword">from</span> <span className="token string">'@school/core'</span>;{'\n\n'}
-                <span className="token keyword">const</span> system = <span className="token keyword">new</span> <span className="token class-name">EduOne</span>({'{'}{'\n'}
-                {'  '}modules: [<span className="token string">'Academics'</span>, <span className="token string">'Finance'</span>, <span className="token string">'Clinic'</span>],{'\n'}
-                {'  '}performance: <span className="token string">'O(1)'</span>,{'\n'}
-                {'  '}security: <span className="token boolean">true</span>{'\n'}
-                {'}'});{'\n\n'}
-                system.<span className="token function">initialize</span>().<span className="token function">then</span>(() =&gt; {'{'}{'\n'}
-                {'  '}console.<span className="token function">log</span>(<span className="token string">'Institution is live.'</span>);{'\n'}
-                {'}'});
-              </code>
-            </pre>
+            <div className="preview-body">
+              <div className="preview-top-cards">
+                <div className="preview-card glass-panel" style={{ flex: 1 }}>
+                  <div className="preview-card-title">Total Students</div>
+                  <div className="preview-card-value">1,248</div>
+                  <div className="preview-card-trend positive">+12 this term</div>
+                </div>
+                <div className="preview-card glass-panel" style={{ flex: 1 }}>
+                  <div className="preview-card-title">Fee Collection</div>
+                  <div className="preview-card-value">85%</div>
+                  <div className="preview-card-trend">On track</div>
+                </div>
+              </div>
+              <div className="preview-chart glass-panel">
+                <div className="preview-chart-bars">
+                  <div className="bar" style={{ height: '60%' }}></div>
+                  <div className="bar" style={{ height: '80%' }}></div>
+                  <div className="bar" style={{ height: '40%' }}></div>
+                  <div className="bar" style={{ height: '90%' }}></div>
+                  <div className="bar" style={{ height: '70%' }}></div>
+                  <div className="bar" style={{ height: '100%' }}></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Features Grid */}
       <section className="landing-features">
-        <h2 className="section-title">Core Modules Executed <span className="highlight-text">Flawlessly</span></h2>
+        <h2 className="section-title">Everything you need to <span className="highlight-text">run your school</span></h2>
         <div className="feature-grid">
-          <div className="feature-card">
+          <div className="feature-card glass-panel">
             <div className="feature-icon"><BookOpen size={24} /></div>
-            <h3>Academics Engine</h3>
-            <p>Compute grades, manage CBC curriculum, and generate insightful analytics for every student.</p>
+            <h3>Smart Academics</h3>
+            <p>Streamline grading, attendance, and curriculum tracking to ensure every student reaches their full potential.</p>
           </div>
-          <div className="feature-card">
+          <div className="feature-card glass-panel">
             <div className="feature-icon"><Layout size={24} /></div>
-            <h3>Resource Allocation</h3>
-            <p>Schedule classes, assign teachers, and manage venues to optimize your operational bandwidth.</p>
+            <h3>School Operations</h3>
+            <p>Effortlessly schedule classes, manage staff, and coordinate school resources from one centralized dashboard.</p>
           </div>
-          <div className="feature-card">
-            <div className="feature-icon"><Activity size={24} /></div>
-            <h3>Health & Discipline</h3>
-            <p>Real-time telemetry on student wellbeing, clinic visits, and disciplinary logs.</p>
+          <div className="feature-card glass-panel">
+            <div className="feature-icon"><Heart size={24} /></div>
+            <h3>Student Wellbeing</h3>
+            <p>Keep track of clinic visits, health records, and student behavior in a secure, confidential system.</p>
           </div>
-          <div className="feature-card">
-            <div className="feature-icon"><Shield size={24} /></div>
-            <h3>Role-Based Auth</h3>
-            <p>Cryptographically secure access control tailored for principals, teachers, students, and parents.</p>
+          <div className="feature-card glass-panel">
+            <div className="feature-icon"><Users size={24} /></div>
+            <h3>Connected Community</h3>
+            <p>Dedicated, easy-to-use portals for principals, teachers, students, and parents to stay engaged and informed.</p>
           </div>
         </div>
       </section>
 
       {/* Demo Quick Access */}
       <section id="demo-section" className="landing-demo">
-        <h2 className="section-title">Test Drive the <span className="highlight-text">Ecosystem</span></h2>
-        <p className="section-subtitle">No configuration required. Select a role below to boot a demo session instantly.</p>
+        <h2 className="section-title">Experience <span className="highlight-text">EduOne</span></h2>
+        <p className="section-subtitle">No configuration required. Select a role below to explore the platform instantly.</p>
         
         <div className="demo-roles">
           {primaryRoles.map(role => {
             const user = getRoleUser(role);
             if (!user) return null;
             return (
-              <button key={role} className="role-card" onClick={() => onDemoLogin(user)}>
+              <button key={role} className="role-card glass-panel" onClick={() => onDemoLogin(user)}>
                 <div className="role-header">
                   <h3>{user.name}</h3>
                   <span className="role-badge">{role}</span>
                 </div>
                 <div className="role-details">
                   <span className="role-dept">{user.dept}</span>
-                  <span className="role-action">Boot Session &rarr;</span>
+                  <span className="role-action">Log in &rarr;</span>
                 </div>
               </button>
             );
@@ -119,11 +133,12 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
       <footer className="landing-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <Terminal size={18} className="accent-icon" /> EduOne_
+            <GraduationCap size={18} className="accent-icon" /> EduOne
           </div>
           <div className="footer-links">
-            <span>© 2026 Advanced Agentic Solutions</span>
-            <span>v2.0.4-stable</span>
+            <span>© 2026 EduOne Technologies</span>
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
           </div>
         </div>
       </footer>
