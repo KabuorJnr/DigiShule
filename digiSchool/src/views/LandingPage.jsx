@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, Layout, GraduationCap, Users, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
 import { USERS } from '../data/users';
 
-const LandingPage = ({ onGetStarted, onDemoLogin }) => {
+const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
   const [activeTab, setActiveTab] = useState('principal');
   
   const getRoleUser = (role) => USERS.find(u => u.role === role);
@@ -40,8 +40,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
           <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
-          <button className="bespoke-btn primary" onClick={() => document.getElementById('bento').scrollIntoView({ behavior: 'smooth' })}>
-            Explore Platform <ArrowRight size={16} />
+          <button className="bespoke-btn primary" onClick={onApply} style={{ background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
+            Apply Now
           </button>
         </div>
       </nav>
@@ -57,6 +57,14 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
         <p className="b-hero-subtitle">
           Say goodbye to fragmented tools. EduOne brings academics, finance, operations, and communication into one beautifully designed, lightning-fast platform.
         </p>
+        <div style={{ marginTop: '30px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 32px', fontSize: '18px', background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
+            Start Online Application
+          </button>
+          <button className="bespoke-btn secondary" onClick={() => document.getElementById('bento').scrollIntoView({ behavior: 'smooth' })} style={{ padding: '16px 32px', fontSize: '18px' }}>
+            Explore Platform <ArrowRight size={18} />
+          </button>
+        </div>
 
         {/* Floating Glass Dashboard Visual */}
         <div className="b-hero-visual">

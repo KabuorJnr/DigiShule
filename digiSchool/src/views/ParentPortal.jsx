@@ -139,7 +139,7 @@ export default function ParentPortal({ store, user }) {
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
         <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
         <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
-        <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Upcoming Exams" value={upcomingExams.length} accent="#F59E0B" />
+        <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Behavior Score" value="45 pts" accent="#10B981" sub="Good Standing" />
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 14 }}>

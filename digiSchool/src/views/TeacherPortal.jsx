@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award } from 'lucide-react';
+import Modal from '../components/Modal';
 
 export default function TeacherPortal({ store, user }) {
   const { students, gradeBoundaries, navigate } = store;
@@ -11,6 +12,15 @@ export default function TeacherPortal({ store, user }) {
   const teacherProfile = useMemo(() => store.teachers.find(t => t.name === teacherName) || {}, [store.teachers, teacherName]);
   const assignedClass = teacherProfile.assignedClass || null;
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
+  const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });
+
+  const handleLogBehavior = () => {
+    if (!behaviorForm.student) return store.notify('Please select a student', 'warning');
+    store.notify(`Logged ${behaviorForm.type} (${behaviorForm.points} pts) for ${behaviorForm.student}.`, 'success');
+    setBehaviorModalOpen(false);
+    setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
+  };
 
   const rows = useMemo(() => {
     return students
@@ -70,9 +80,14 @@ export default function TeacherPortal({ store, user }) {
               You are assigned to manage {assignedClass}.
             </div>
           </div>
-          <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setPrintModalOpen(true)}>
-            <Printer size={16} /> Generate Class List
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
+              <Award size={16} /> Log Behavior (PBIS)
+            </button>
+            <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setPrintModalOpen(true)}>
+              <Printer size={16} /> Generate Class List
+            </button>
+          </div>
         </div>
       )}
 
@@ -219,6 +234,45 @@ export default function TeacherPortal({ store, user }) {
             </div>
           </div>
         </>
+      )}
+
+      {/* Log Behavior Modal */}
+      {behaviorModalOpen && (
+        <Modal title="Log Student Behavior" onClose={() => setBehaviorModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setBehaviorModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleLogBehavior}>Save Record</button>
+          </>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="field-label">Student</label>
+              <select className="select" value={behaviorForm.student} onChange={e => setBehaviorForm(f => ({ ...f, student: e.target.value }))}>
+                <option value="">-- Select Student --</option>
+                {students.filter(s => !assignedClass || s.class === assignedClass).map(s => (
+                  <option key={s.id} value={s.name}>{s.name} ({s.adm})</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Type</label>
+                <select className="select" value={behaviorForm.type} onChange={e => setBehaviorForm(f => ({ ...f, type: e.target.value }))}>
+                  <option value="Merit">Merit (Positive)</option>
+                  <option value="Demerit">Demerit (Negative)</option>
+                </select>
+              </div>
+              <div>
+                <label className="field-label">Points</label>
+                <input type="number" className="input" value={behaviorForm.points} onChange={e => setBehaviorForm(f => ({ ...f, points: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Notes/Reason</label>
+              <textarea className="input" rows={3} placeholder="e.g. Helping a classmate, disruptive in class..." value={behaviorForm.notes} onChange={e => setBehaviorForm(f => ({ ...f, notes: e.target.value }))}></textarea>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, 
 
 import LandingPage from './views/LandingPage';
 import Login from './views/Login';
+import PublicApplication from './views/PublicApplication';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
 import ExamSchedules from './views/ExamSchedules';
@@ -68,6 +69,7 @@ let toastId = 0;
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showApplication, setShowApplication] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
   const [viewParams, setViewParams] = useState({}); // Stores tab, action, filters from sidebar
@@ -340,10 +342,13 @@ export default function App() {
 
   // ---- If not logged in, show Landing or Login ----
   if (!currentUser) {
+    if (showApplication) {
+      return <PublicApplication onBack={() => setShowApplication(false)} />;
+    }
     return (
       <>
         {!showLogin ? (
-          <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} />
+          <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} onApply={() => setShowApplication(true)} />
         ) : (
           <Login onDemoLogin={handleDemoLogin} />
         )}

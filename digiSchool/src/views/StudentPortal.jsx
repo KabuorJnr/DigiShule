@@ -10,7 +10,7 @@ import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Cart
 import {
   BarChart3, Trophy, FileText, Wallet, CreditCard, Mail, ClipboardList,
   Calendar, CheckCircle2, Clock, XCircle, DollarSign, AlertTriangle,
-  BookOpen, Download, Eye, Send, Loader
+  BookOpen, Download, Eye, Send, Loader, Award
 } from 'lucide-react';
 
 const TABS = [
@@ -180,7 +180,7 @@ export default function StudentPortal({ store, user }) {
           <div className="stat-tiles">
             <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#0078D4" />
             <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={rank ? `${rank.position} / ${rank.classSize}` : '—'} />
-            <KpiCard iconComponent={<FileText size={20} />} label="Upcoming Exams" value={upcomingExams.length} accent="#FFB900" />
+            <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="45 pts" accent="#107C10" sub="Good Standing" />
             <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(feeAccount.outstanding)} accent={feeAccount.outstanding > 0 ? '#D13438' : '#107C10'}>
               <div style={{ marginTop: 6 }}><ProgressBar value={(feeAccount.totalPaid / feeAccount.totalBilled) * 100} color="#107C10" /></div>
             </KpiCard>
