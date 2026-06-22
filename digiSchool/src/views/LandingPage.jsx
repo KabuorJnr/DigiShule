@@ -34,7 +34,6 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
             <button className="landing-btn primary hero-btn" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>
               Try the Interactive Demo
             </button>
-            <span className="hero-note">No credit card required.</span>
           </div>
         </div>
         
