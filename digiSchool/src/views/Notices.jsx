@@ -7,6 +7,7 @@ import { getActiveSchoolId } from '../lib/api';
 import { Bell, Plus, ChevronDown, ChevronUp, Loader } from 'lucide-react';
 import { Icon } from '../components/icons';
 import { exportTablePDF } from '../utils/exporters';
+import { USERS } from '../data/users';
 
 const ROLE_COLOR = {
   'Deputy Academics': 'blue', 'Deputy Admin': 'green',
@@ -21,6 +22,7 @@ const AUDIENCE_OPTS = [
   { value: 'parents', label: 'Parents Only' },
   { value: 'teachers', label: 'Teachers Only' },
   { value: 'staff', label: 'Staff Only' },
+  { value: 'specific', label: 'Specific User' },
 ];
 
 const audienceMap = {
@@ -64,7 +66,7 @@ export default function Notices({ store, user }) {
   const [loading, setLoading] = useState(true);
   const [showPost, setShowPost] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', audience: 'all' });
+  const [form, setForm] = useState({ title: '', body: '', audience: 'all', specificUser: '' });
   const [expanded, setExpanded] = useState(null);
   const [audienceFilter, setAudienceFilter] = useState('all');
 
@@ -105,7 +107,11 @@ export default function Notices({ store, user }) {
 
   const visible = allNotices.filter(n => {
     const aud = n.audience;
-    const matchUser = aud.includes('all') || aud.includes(myAudience);
+    const isGlobalViewer = ['principal', 'deputy_admin', 'deputy_academic'].includes(user?.role);
+    const isSender = n.postedBy === user?.name;
+    const matchUser = isGlobalViewer || isSender || aud.includes('all') || aud.includes(myAudience) || aud.includes(user?.username);
+    
+    // For the filter tabs
     const matchFilter = audienceFilter === 'all' || aud.includes(audienceFilter) || aud.includes('all');
     return matchUser && matchFilter;
   });
@@ -124,7 +130,7 @@ export default function Notices({ store, user }) {
         body: form.body,
         posted_by: user?.name || 'Staff',
         role: user?.dept || user?.role || 'Staff',
-        audience: form.audience === 'all' ? ['all'] : [form.audience],
+        audience: form.audience === 'all' ? ['all'] : form.audience === 'specific' && form.specificUser ? [form.specificUser] : [form.audience],
         read: false,
         school_id: schoolId,
         created_at: new Date().toISOString(),
@@ -133,17 +139,17 @@ export default function Notices({ store, user }) {
       if (error) throw error;
       await loadNotices();
       setShowPost(false);
-      setForm({ title: '', body: '', audience: 'all' });
+      setForm({ title: '', body: '', audience: 'all', specificUser: '' });
       notify('Notice posted successfully', 'success', 'Notices');
     } catch (e) {
       // Fallback to local if Supabase fails
       setDbNotices(prev => [{
         id: `local_${Date.now()}`, title: form.title, body: form.body,
         posted_by: user?.name, role: user?.dept || 'Staff',
-        audience: [form.audience], created_at: new Date().toISOString(),
+        audience: form.audience === 'specific' ? [form.specificUser] : [form.audience], created_at: new Date().toISOString(),
       }, ...prev]);
       setShowPost(false);
-      setForm({ title: '', body: '', audience: 'all' });
+      setForm({ title: '', body: '', audience: 'all', specificUser: '' });
       notify('Notice posted (local only — sync when online)', 'warning', 'Notices');
     } finally { setPosting(false); }
   };
@@ -251,10 +257,21 @@ export default function Notices({ store, user }) {
             </div>
             <div>
               <label className="field-label">Audience</label>
-              <select className="select" value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
+              <select className="select" value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value, specificUser: '' }))}>
                 {AUDIENCE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
+            {form.audience === 'specific' && (
+              <div>
+                <label className="field-label">Select Recipient</label>
+                <select className="select" value={form.specificUser || ''} onChange={e => setForm(p => ({ ...p, specificUser: e.target.value }))}>
+                  <option value="">-- Choose User --</option>
+                  {USERS.filter(u => u.username !== user?.username).map(u => (
+                    <option key={u.username} value={u.username}>{u.name} ({u.role})</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 10, fontSize: 12, color: '#0369a1' }}>
               This notice will be saved to Supabase and visible to all users of this school.
             </div>
