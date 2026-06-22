@@ -5,6 +5,8 @@ import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS, ATTENDANCE_RECORDS, STUDENT_ATTENDANCE_LOG } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
+import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
+import { Download } from 'lucide-react';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
@@ -81,6 +83,49 @@ export default function ParentPortal({ store, user }) {
   const balance = termFees - paid;
 
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
+
+  const handleDownloadTranscript = () => {
+    const enrichedChild = {
+      ...child,
+      position: 1,
+      classSize: 40,
+      average: overallAvg,
+      grade: gradeFor(overallAvg, gradeBoundaries),
+      attendance: latestAtt?.rate || 91
+    };
+    exportReportCardsPDF({
+      school: store.settings,
+      students: [enrichedChild],
+      subjects: SUBJECTS,
+      computeStudent: (stu, sub) => {
+        const scores = stu.scores[sub] || {};
+        const avg = computeRow(scores).average;
+        return {
+          score: avg || '-',
+          grade: avg ? gradeFor(avg, gradeBoundaries) : '-',
+          remark: avg ? (avg >= 80 ? 'Excellent' : 'Good') : '-'
+        };
+      },
+      filename: `${child.name}_Transcript.pdf`
+    });
+  };
+
+  const handleDownloadStatement = () => {
+    const head = ['Date', 'Reference', 'Method', 'Amount (KES)'];
+    const body = payments.map(p => [p.date, p.ref, p.method, Number(p.amount).toLocaleString()]);
+    body.push(['', '', 'Term Fees Billed:', termFees.toLocaleString()]);
+    body.push(['', '', 'Total Paid:', paid.toLocaleString()]);
+    body.push(['', '', 'Balance Due:', balance.toLocaleString()]);
+    
+    exportTablePDF({
+      school: store.settings,
+      title: 'Fee Statement',
+      subtitle: `Student: ${child.name} | Adm: ${child.adm}`,
+      head,
+      body,
+      filename: `${child.name}_Fee_Statement.pdf`
+    });
+  };
 
   const handlePayFees = async () => {
     if (!payForm.amount) return store.notify('Please enter an amount.', 'error');
@@ -175,6 +220,12 @@ export default function ParentPortal({ store, user }) {
           </button>
           <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
             <Icon name="finance" size={18} /> Pay School Fees
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
+            <Download size={18} /> Download Transcript
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadStatement}>
+            <Download size={18} /> Download Statement
           </button>
         </div>
       </div>
