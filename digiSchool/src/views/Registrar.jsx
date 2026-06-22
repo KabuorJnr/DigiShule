@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { exportReportCardsPDF } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
-import { SUBJECTS, CLASSES } from '../data/seed';
+import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
 const TABS = [
   { id: 'register', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
@@ -37,6 +37,8 @@ export default function Registrar({ store, user }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
+
+  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -276,7 +278,7 @@ export default function Registrar({ store, user }) {
             </div>
             <select className="select" style={{ width: 160 }} value={classFilter} onChange={e => setClassFilter(e.target.value)}>
               <option value="All">All Classes</option>
-              {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
+              {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
             </select>
             <span className="muted" style={{ fontSize: 13 }}>{filtered.length} student{filtered.length !== 1 ? 's' : ''}</span>
           </div>
@@ -349,9 +351,10 @@ export default function Registrar({ store, user }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Class</label>
-                <select className="select" value={form.class} onChange={e => upForm({ class: e.target.value })}>
-                  {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
-                </select>
+                <input className="input" list="classes-list" placeholder="e.g. 7A" value={form.class} onChange={e => upForm({ class: e.target.value })} />
+                <datalist id="classes-list">
+                  {dynamicClasses.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div>
                 <label className="field-label">Gender</label>
@@ -487,9 +490,10 @@ export default function Registrar({ store, user }) {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Class</label>
-                <select className="select" value={editStudent.class} onChange={e => setEditStudent(s => ({ ...s, class: e.target.value }))}>
-                  {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
-                </select>
+                <input className="input" list="edit-classes-list" placeholder="e.g. 7A" value={editStudent.class || ''} onChange={e => setEditStudent(s => ({ ...s, class: e.target.value }))} />
+                <datalist id="edit-classes-list">
+                  {dynamicClasses.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div>
                 <label className="field-label">Gender</label>

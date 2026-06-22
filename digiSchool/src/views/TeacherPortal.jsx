@@ -18,6 +18,7 @@ export default function TeacherPortal({ store, user }) {
   const [messages, setMessages] = useState([]);
   const [inboxModalOpen, setInboxModalOpen] = useState(false);
   const [replyText, setReplyText] = useState({});
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +83,36 @@ export default function TeacherPortal({ store, user }) {
       ['Jane Smith', '2026-06-20', 'Absent', 'Sick leave']
     ];
     downloadCSV(`attendance_report_${assignedClass}.csv`, rows);
+  };
+
+  function saveScore(id, field, value) {
+    const v = Math.max(0, Math.min(4, Number(value) || 0));
+    const target = students.find((s) => s.id === id);
+    if (target) {
+      const currentScores = target.scores || {};
+      const subjectScores = currentScores[subject] || {};
+      store.updateStudent({ ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } });
+    }
+    setEditing(null);
+  }
+
+  const ScoreCell = ({ r, field }) => {
+    const isEditing = editing && editing.id === r.id && editing.field === field;
+    if (isEditing) {
+      return (
+        <td>
+          <input
+            style={{ width: '48px', height: '28px', padding: '0 4px', border: '1px solid #2563eb', borderRadius: '4px', outline: 'none' }}
+            type="number"
+            autoFocus
+            defaultValue={r[field]}
+            onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
+            onBlur={(e) => saveScore(r.id, field, e.target.value)}
+          />
+        </td>
+      );
+    }
+    return <td style={{ cursor: 'pointer', minWidth: '40px', fontWeight: 600, color: '#0369A1' }} onClick={() => setEditing({ id: r.id, field })} title="Click to edit (1-4)">{r[field] || '-'}</td>;
   };
 
   const rows = useMemo(() => {
@@ -217,30 +248,26 @@ export default function TeacherPortal({ store, user }) {
               <thead>
                 <tr>
                   <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
-                  <th>CAT 1</th><th>CAT 2</th><th>Midterm</th><th>End-Term</th>
-                  <th>Total</th><th>Avg %</th><th>Grade</th>
+                  <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
+                  <th>Avg Rubric</th><th>Grade</th>
                 </tr>
               </thead>
               <tbody>
                 {rows
                   .sort((a, b) => b.average - a.average)
                   .map((r, i) => (
-                    <tr key={r.id} style={r.average < 40 ? { background: '#fff5f5' } : undefined}>
+                    <tr key={r.id}>
                       <td className="muted">{i + 1}</td>
-                      <td style={{ fontWeight: 600 }}>
-                        {r.average < 40 && <AlertTriangle size={12} color="#D13438" style={{ marginRight: 4 }} />}
-                        {r.name}
-                      </td>
+                      <td style={{ fontWeight: 600 }}>{r.name}</td>
                       <td className="muted">{r.adm}</td>
                       <td><Badge color="gray">{r.class}</Badge></td>
-                      <td>{r.cat1}</td><td>{r.cat2}</td>
-                      <td>{r.midterm}</td><td>{r.endterm}</td>
-                      <td style={{ fontWeight: 700 }}>{r.total}</td>
-                      <td style={{ fontWeight: 700, color: r.average >= 70 ? '#107C10' : r.average >= 50 ? '#0078D4' : '#D13438' }}>
-                        {r.average}%
-                      </td>
+                      <ScoreCell r={r} field="a1" />
+                      <ScoreCell r={r} field="a2" />
+                      <ScoreCell r={r} field="a3" />
+                      <ScoreCell r={r} field="a4" />
+                      <td style={{ fontWeight: 700 }}>{r.average || '-'}</td>
                       <td>
-                        <Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>
+                        <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
                           {r.grade}
                         </Badge>
                       </td>

@@ -6,7 +6,7 @@ import {
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
-import { CLASSES, SUBJECTS } from '../data/seed';
+import { CLASSES, SUBJECTS, getDynamicClasses } from '../data/seed';
 import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 
@@ -22,6 +22,8 @@ export default function Gradebook({ store }) {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null); // {id, field}
   const [selected, setSelected] = useState([]);
+
+  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
 
   const classStudents = useMemo(
     () => students.filter((s) => s.class === cls && s.name.toLowerCase().includes(search.toLowerCase())),
@@ -158,7 +160,7 @@ export default function Gradebook({ store }) {
       <div className="toolbar">
         <div><label className="field-label">Class</label>
           <select className="select" value={cls} onChange={(e) => { setCls(e.target.value); setSelected([]); }} style={{ width: 120 }}>
-            {CLASSES.map((c) => <option key={c} value={c}>Grade {c}</option>)}
+            {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
           </select></div>
         <div><label className="field-label">Subject</label>
           <select className="select" value={subject} onChange={(e) => setSubject(e.target.value)} style={{ width: 150 }}>

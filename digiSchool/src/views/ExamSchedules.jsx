@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, TEACHERS, CLASSES } from '../data/seed';
+import { SUBJECTS, TEACHERS, CLASSES, getDynamicClasses } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
 const EXAM_TYPES = ['Mid-Term', 'End-Term', 'Mock', 'CAT'];
@@ -24,6 +24,8 @@ export default function ExamSchedules({ store }) {
   const [sortKey, setSortKey] = useState('date');
   const [sortDir, setSortDir] = useState('asc');
   const [chipDetail, setChipDetail] = useState(null);
+
+  const dynamicClasses = useMemo(() => getDynamicClasses(store.students), [store.students]);
 
   const flat = useMemo(() =>
     examSchedules.flatMap((s) =>
@@ -227,6 +229,7 @@ export default function ExamSchedules({ store }) {
           defaultType={examType}
           onClose={() => setCreateOpen(false)}
           venues={venues}
+          dynamicClasses={dynamicClasses}
           onSave={(schedule) => {
             setExamSchedules((prev) => [...prev, schedule]);
             notify('Exam schedule saved', 'success', 'Exam Schedules');
@@ -312,7 +315,7 @@ function CalendarView({ sessions, onChip }) {
   );
 }
 
-function SessionRows({ rows, setRows, venues }) {
+function SessionRows({ rows, setRows, venues, dynamicClasses }) {
   const clashing = rows.map((r, i) =>
     rows.some((o, j) => i !== j && r.classes && r.classes === o.classes && r.date && r.date === o.date && r.start < o.end && o.start < r.end)
   );
@@ -330,8 +333,8 @@ function SessionRows({ rows, setRows, venues }) {
               <td>
                 <select className="select" value={r.classes} style={{ height: 32, width: 110 }} onChange={(e) => update(i, { classes: e.target.value })}>
                   <option value="">Select</option>
-                  {CLASSES.map((c) => <option key={c} value={`Grade ${c}`}>Grade {c}</option>)}
-                  <option value="Grade 7-12">Grade 7-12</option>
+                  {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
+                  <option value="Grade 7-12">All Grades</option>
                 </select>
               </td>
               <td>
@@ -360,7 +363,7 @@ function SessionRows({ rows, setRows, venues }) {
   );
 }
 
-function CreateScheduleModal({ onClose, onSave, defaultType, venues }) {
+function CreateScheduleModal({ onClose, onSave, defaultType, venues, dynamicClasses }) {
   const [name, setName] = useState('');
   const [type, setType] = useState(defaultType);
   const [startDate, setStartDate] = useState('');
@@ -391,8 +394,8 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues }) {
         <div><label className="field-label">End Date</label><input className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
       </div>
       <label className="field-label">Sessions</label>
-      <SessionRows rows={rows} setRows={setRows} venues={venues} />
-      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: 'Grade 7', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name }])}>+ Add Session</button>
+      <SessionRows rows={rows} setRows={setRows} venues={venues} dynamicClasses={dynamicClasses} />
+      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: dynamicClasses[0] || '7A', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name }])}>+ Add Session</button>
     </Modal>
   );
 }

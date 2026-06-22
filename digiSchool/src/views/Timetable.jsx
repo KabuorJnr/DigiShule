@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, TEACHERS, DEPARTMENTS, DEPT_COLORS, CLASSES } from '../data/seed';
+import { SUBJECTS, TEACHERS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -64,9 +64,10 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
 }
 
 export default function Timetable({ store }) {
-  const { timetables, setTimetables, notify, settings } = store;
+  const { timetables, setTimetables, notify, settings, students } = store;
+  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
   const [term, setTerm] = useState('Term 2');
-  const [cls, setCls] = useState('1A');
+  const [cls, setCls] = useState(dynamicClasses[0] || '7A');
   const [tab, setTab] = useState('class');
   const [teacherSel, setTeacherSel] = useState(TEACHERS[0].name);
 
@@ -98,7 +99,7 @@ export default function Timetable({ store }) {
       if (pct >= 100) {
         clearInterval(tick);
         const gen = generateAll({
-          classes: CLASSES,
+          classes: dynamicClasses,
           days: activeDays,
           periods: Number(periodsPerDay),
           breaks,
@@ -114,7 +115,7 @@ export default function Timetable({ store }) {
 
   function hasConflict(cell, periodIdx, dayIdx) {
     if (!cell || cell.type !== 'lesson') return false;
-    return CLASSES.some((c) => {
+    return dynamicClasses.some((c) => {
       if (c === cls) return false;
       const other = timetables[c];
       if (!other) return false;
@@ -149,7 +150,7 @@ export default function Timetable({ store }) {
       const row = [];
       for (let d = 0; d < activeDays.length; d++) {
         let found = null;
-        for (const c of CLASSES) {
+        for (const c of dynamicClasses) {
           const cell = timetables[c]?.grid[p]?.[d];
           if (cell && cell.type === 'lesson' && cell.teacher === teacherSel) {
             found = { ...cell, cls: c };
@@ -235,7 +236,7 @@ export default function Timetable({ store }) {
         <div>
           <label className="field-label">Class</label>
           <select className="select" value={cls} onChange={(e) => setCls(e.target.value)} style={{ width: 140 }}>
-            {CLASSES.map((c) => <option key={c} value={c}>Grade {c}</option>)}
+            {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
           </select>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { CLASSES } from '../data/seed';
+import { getDynamicClasses } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
 import { ClipboardList, CheckCircle2, Clock, GraduationCap } from 'lucide-react';
 
@@ -15,8 +15,9 @@ export default function Admissions({ store }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewStudent, setViewStudent] = useState(null);
+  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
   const [form, setForm] = useState({
-    name: '', kcpe: '', gender: 'M', Grade: 'Grade 7',
+    name: '', kcpe: '', gender: 'M', Grade: '7A',
     dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day',
   });
 
@@ -54,11 +55,11 @@ export default function Admissions({ store }) {
     try { await upsertRow('admissions', applicant); } catch (e) { notify(`Could not add application: ${e.message}`, 'error'); return; }
     setApps(as => [applicant, ...as]);
     setAddOpen(false);
-    setForm({ name: '', kcpe: '', gender: 'M', Grade: 'Grade 7', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
+    setForm({ name: '', kcpe: '', gender: 'M', Grade: '7A', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
     notify(`Application for ${form.name} added.`);
   };
 
-  const roll = CLASSES.map(c => ({ cls: `Grade ${c}`, count: students.filter(s => s.class === c).length }));
+  const roll = dynamicClasses.map(c => ({ cls: `Grade ${c}`, count: students.filter(s => s.class === c).length }));
 
   const filteredApps = apps.filter(a => {
     const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase());
@@ -172,9 +173,10 @@ export default function Admissions({ store }) {
               </div>
               <div>
                 <label className="field-label">Grade</label>
-                <select className="select" value={form.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))}>
-                  <option>Grade 7</option><option>Grade 8 (Transfer)</option><option>Grade 9 (Transfer)</option>
-                </select>
+                <input className="input" list="admissions-classes" placeholder="e.g. 7A" value={form.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))} />
+                <datalist id="admissions-classes">
+                  {dynamicClasses.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div>
                 <label className="field-label">Boarding Status</label>

@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { saveFile, listFiles, deleteFile, openFilePDF, downloadFilePDF } from '../lib/fileStore';
-import { SUBJECTS, CLASSES } from '../data/seed';
+import { SUBJECTS, getDynamicClasses } from '../data/seed';
 import { Upload, Eye, Download, Trash2, FileText, BookOpen, Loader } from 'lucide-react';
 
 const TABS = [
@@ -11,7 +11,8 @@ const TABS = [
 ];
 
 export default function TeacherResources({ store, user }) {
-  const { notify } = store;
+  const { notify, students } = store;
+  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
   const [tab, setTab] = useState('assignments');
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -229,7 +230,7 @@ export default function TeacherResources({ store, user }) {
                 <label className="field-label">Target Class</label>
                 <select className="select" value={form.targetClass} onChange={e => setForm(f => ({ ...f, targetClass: e.target.value }))}>
                   <option value="All Classes">All Classes</option>
-                  {CLASSES.map(c => <option key={c} value={`Grade ${c}`}>Grade {c}</option>)}
+                  {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
                 </select>
               </div>
             </div>
