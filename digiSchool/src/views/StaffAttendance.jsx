@@ -17,6 +17,10 @@ export default function StaffAttendance({ store, user }) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
   const [selectedStaff, setSelectedStaff] = useState(null);
+  
+  // Messaging Staff
+  const [composeModal, setComposeModal] = useState(false);
+  const [messageForm, setMessageForm] = useState({ subject: '', body: '' });
 
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
@@ -300,7 +304,8 @@ export default function StaffAttendance({ store, user }) {
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn" onClick={() => setSelectedStaff(null)}>Close</button>
               <button className="btn btn-primary" onClick={() => {
-                notify(`Message composed for ${selectedStaff.name}`, 'info');
+                setComposeModal(selectedStaff);
+                setMessageForm({ subject: '', body: '' });
                 setSelectedStaff(null);
               }}>Message Staff</button>
             </div>
@@ -345,6 +350,46 @@ export default function StaffAttendance({ store, user }) {
           </Modal>
         );
       })()}
+
+      {composeModal && (
+        <Modal title={`Message ${composeModal.name}`} onClose={() => setComposeModal(null)} footer={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn" onClick={() => setComposeModal(null)}>Cancel</button>
+            <button className="btn btn-primary" onClick={async () => {
+              if (!messageForm.subject || !messageForm.body) return notify('Subject and Body required', 'warning');
+              try {
+                const { upsertRow } = await import('../lib/api');
+                await upsertRow('messages', {
+                  id: `msg_${Date.now()}`,
+                  sender_id: user?.id || 'admin',
+                  sender_name: user?.name || user?.role || 'Admin',
+                  recipient_role: composeModal.name, // specifically address by name
+                  student_name: 'Administration', // context for teacher inbox
+                  subject: messageForm.subject,
+                  body: messageForm.body,
+                  status: 'Unread',
+                  created_at: new Date().toISOString()
+                });
+                notify(`Message sent to ${composeModal.name}`, 'success');
+                setComposeModal(null);
+              } catch (err) {
+                notify(`Failed to send message: ${err.message}`, 'error');
+              }
+            }}>Send Message</button>
+          </div>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label className="field-label">Subject</label>
+              <input className="input" placeholder="E.g. Performance Review" value={messageForm.subject} onChange={e => setMessageForm(f => ({ ...f, subject: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Message</label>
+              <textarea className="input" rows={5} placeholder="Type your message here..." value={messageForm.body} onChange={e => setMessageForm(f => ({ ...f, body: e.target.value }))} />
+            </div>
+          </div>
+        </Modal>
+      )}
 
     </div>
   );

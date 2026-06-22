@@ -28,6 +28,7 @@ export default function TeacherPortal({ store, user }) {
         const myMsgs = allMsgs.filter(m => {
           if (m.recipient_role === 'Class Teacher' && assignedClass) return true;
           if (m.recipient_role.includes(subject)) return true;
+          if (m.recipient_role === teacherName) return true;
           return false;
         });
         setMessages(myMsgs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
