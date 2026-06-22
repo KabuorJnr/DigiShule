@@ -21,7 +21,7 @@ const ALERT_ICON_MAP = {
 const QUICK_ACTIONS = [
   { icon: FileText, label: 'New Admission', desc: 'Enroll a new student', view: 'admissions' },
   { icon: Megaphone, label: 'Send Mass Broadcast', desc: 'SMS/Email to staff & parents', view: 'overview', action: 'broadcast' },
-  { icon: CalendarDays, label: 'Schedule a Meeting', desc: 'Staff or parent meeting', view: 'overview' },
+  { icon: CalendarDays, label: 'Schedule a Meeting', desc: 'Staff or parent meeting', view: 'school_calendar' },
   { icon: CreditCard, label: 'Fee Structure', desc: 'Update school fees', view: 'finance' },
 ];
 
