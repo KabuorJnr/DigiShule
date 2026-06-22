@@ -319,15 +319,15 @@ textarea.input {
 /* --- GLASSMORPHIC LANDING PAGE --- */
 .landing-container {
   min-height: 100vh;
-  /* A vibrant mesh gradient background to show off the glass */
+  /* A vibrant light mesh gradient background to show off the glass */
   background: 
-    radial-gradient(circle at 15% 50%, rgba(13, 148, 136, 0.4), transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.4), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.3), transparent 50%),
-    #0f172a;
+    radial-gradient(circle at 15% 50%, rgba(13, 148, 136, 0.08), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.08), transparent 50%),
+    #f8fafc;
   background-size: 150% 150%;
   animation: gradientShift 15s ease infinite;
-  color: #ffffff;
+  color: #0f172a;
   font-family: 'Inter', system-ui, sans-serif;
   overflow-x: hidden;
   position: relative;
@@ -340,11 +340,11 @@ textarea.input {
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
 }
 
 .landing-nav {
@@ -355,10 +355,10 @@ textarea.input {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .landing-brand {
@@ -367,7 +367,7 @@ textarea.input {
   gap: 12px;
   font-size: 24px;
   font-weight: 800;
-  color: #fff;
+  color: #0f172a;
   letter-spacing: -0.5px;
 }
 
@@ -388,16 +388,16 @@ textarea.input {
 }
 
 .landing-btn.outline {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #0f172a;
 }
 
 .landing-btn.outline:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.9);
   border-color: #2dd4bf;
-  color: #2dd4bf;
+  color: #0d9488;
 }
 
 .landing-btn.primary {
@@ -442,7 +442,7 @@ textarea.input {
   line-height: 1.1;
   margin: 0 0 24px 0;
   font-weight: 800;
-  color: #fff;
+  color: #0f172a;
   letter-spacing: -1px;
 }
 
@@ -455,30 +455,30 @@ textarea.input {
 .hero-subtitle {
   font-size: 18px;
   line-height: 1.6;
-  color: #cbd5e1;
+  color: #475569;
   margin-bottom: 40px;
   max-width: 500px;
 }
 
 .dashboard-preview {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.5);
   display: flex;
   flex-direction: column;
 }
 
 .preview-header {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.4);
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .preview-nav {
@@ -529,7 +529,7 @@ textarea.input {
 .preview-card-value {
   font-size: 28px;
   font-weight: 800;
-  color: #f8fafc;
+  color: #0f172a;
   margin-bottom: 4px;
 }
 
@@ -568,8 +568,8 @@ textarea.input {
 
 .landing-features {
   padding: 100px 48px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(15, 23, 42, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(10px);
 }
 
@@ -577,7 +577,7 @@ textarea.input {
   font-size: 42px;
   text-align: center;
   margin: 0 0 60px 0;
-  color: #fff;
+  color: #0f172a;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
@@ -591,21 +591,21 @@ textarea.input {
 }
 
 .feature-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   padding: 32px;
   border-radius: 16px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
 }
 
 .feature-card:hover {
   transform: translateY(-8px);
   border-color: rgba(45, 212, 191, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 12px 40px rgba(45, 212, 191, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 40px rgba(45, 212, 191, 0.1);
 }
 
 .feature-icon {
@@ -621,14 +621,14 @@ textarea.input {
 }
 
 .feature-card h3 {
-  color: #f8fafc;
+  color: #0f172a;
   font-size: 22px;
   margin: 0 0 12px 0;
   font-weight: 700;
 }
 
 .feature-card p {
-  color: #94a3b8;
+  color: #475569;
   line-height: 1.6;
   margin: 0;
   font-size: 15px;
@@ -654,10 +654,10 @@ textarea.input {
 }
 
 .role-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   padding: 28px;
   text-align: left;
@@ -666,14 +666,14 @@ textarea.input {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
 }
 
 .role-card:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.9);
   border-color: #2dd4bf;
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(45, 212, 191, 0.15);
+  box-shadow: 0 12px 30px rgba(45, 212, 191, 0.1);
 }
 
 .role-header {
@@ -684,18 +684,18 @@ textarea.input {
 
 .role-header h3 {
   margin: 0;
-  color: #fff;
+  color: #0f172a;
   font-size: 20px;
   font-weight: 700;
 }
 
 .role-badge {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.05);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
   text-transform: uppercase;
-  color: #cbd5e1;
+  color: #475569;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -712,7 +712,7 @@ textarea.input {
 }
 
 .role-dept {
-  color: #94a3b8;
+  color: #64748b;
   font-size: 14px;
 }
 
@@ -732,8 +732,8 @@ textarea.input {
 
 .landing-footer {
   padding: 40px 48px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
 }
 
@@ -750,7 +750,7 @@ textarea.input {
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #0f172a;
 }
 
 .footer-links {

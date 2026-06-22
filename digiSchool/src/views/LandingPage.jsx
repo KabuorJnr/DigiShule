@@ -136,6 +136,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
             <GraduationCap size={18} className="accent-icon" /> EduOne
           </div>
           <div className="footer-links">
+            <span>Built by <strong>GovTech Builders KE</strong></span>
             <span>© 2026 EduOne Technologies</span>
             <span>Privacy Policy</span>
             <span>Terms of Service</span>
