@@ -345,12 +345,6 @@ export default function App() {
 
   // ---- If not logged in, show Landing or Login ----
   if (!currentUser) {
-    if (needsSetup) {
-      return <SetupWizard onComplete={() => {
-        setNeedsSetup(false);
-        notify('System Initialized successfully!', 'success');
-      }} />;
-    }
     if (showApplication) {
       return <PublicApplication onBack={() => setShowApplication(false)} />;
     }

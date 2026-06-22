@@ -143,7 +143,7 @@ export default function Login({ onDemoLogin }) {
       <style>{`
         .hr-login-container {
           width: 100%;
-          maxWidth: 400px;
+          max-width: 400px;
           background: transparent;
         }
         .hr-login-header {
