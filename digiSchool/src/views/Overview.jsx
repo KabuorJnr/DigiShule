@@ -42,6 +42,26 @@ export default function Overview({ store }) {
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
   const classDistData = useMemo(() => buildClassDistribution(store.settings.levels), [store.settings.levels]);
 
+  const totalStudents = store.students?.length || 0;
+  const totalTeachers = store.teachers?.length || 0;
+  const activeTeachers = store.teachers?.filter(t => t.status === 'active' || t.status === 'Active' || t.status === 'Present').length || 0;
+  const onLeave = totalTeachers - activeTeachers;
+
+  const todayAttendance = fullTrend[fullTrend.length - 1];
+  const attRate = totalStudents > 0 && todayAttendance ? ((todayAttendance.present / totalStudents) * 100).toFixed(1) : '91.3';
+
+  const latestRev = MONTHLY_REVENUE_TREND[MONTHLY_REVENUE_TREND.length - 1]?.revenue || 1400000;
+  const revStr = latestRev > 1000000 ? `${(latestRev / 1000000).toFixed(1)}M` : `${(latestRev / 1000).toFixed(0)}K`;
+
+  const maleCount = store.students?.filter(s => s.gender === 'M').length || 0;
+  const femaleCount = store.students?.filter(s => s.gender === 'F').length || 0;
+  const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 52;
+  const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 48;
+
+  // Simulate boarding/day based on county or just a fixed ratio for now
+  const boardingCount = Math.round(totalStudents * 0.73);
+  const dayCount = totalStudents - boardingCount;
+
   return (
     <div>
       <h2 style={{ fontSize: 22, marginBottom: 4 }}>Overview</h2>
@@ -51,20 +71,20 @@ export default function Overview({ store }) {
 
       {/* KPI Row 1 */}
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value="847" sub="+23 from last term">
+        <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value={totalStudents.toString()} sub="+23 from last term">
           <Sparkline data={sparkData} color="#10B981" />
         </KpiCard>
-        <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value="42" sub="38 active, 4 on leave" />
-        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value="91.3%" accent="#10B981" sub="Above target (90%)" />
-        <KpiCard iconComponent={<DollarSign size={20} />} label="Monthly Revenue" value="KES 1.4M" accent="#0EA5E9" sub="Up 12% from last month" />
+        <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value={totalTeachers.toString()} sub={`${activeTeachers} active, ${onLeave} on leave`} />
+        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#10B981" sub="Above target (90%)" />
+        <KpiCard iconComponent={<DollarSign size={20} />} label="Monthly Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Up 12% from last month" />
       </div>
 
       {/* KPI Row 2 */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
         <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value="KES 450K" sub={<Badge color="amber">Follow-up needed</Badge>} />
         <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value="12" sub="Admissions portal" />
-        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value="52% M / 48% F" sub="Balanced" />
-        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value="620 / 227" sub="73% Boarding" />
+        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub="Balanced" />
+        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub="73% Boarding" />
       </div>
 
       {/* Charts */}
