@@ -389,7 +389,6 @@ textarea.input {
   
   background-color: var(--b-bg-base);
   color: var(--b-text-main);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;

@@ -40,7 +40,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
           <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
-          <button className="bespoke-btn primary" onClick={onApply} style={{ background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
+          <button className="bespoke-btn primary" onClick={onApply}>
             Apply Now
           </button>
         </div>
@@ -58,7 +58,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
           Say goodbye to fragmented tools. EduOne brings academics, finance, operations, and communication into one beautifully designed, lightning-fast platform.
         </p>
         <div style={{ marginTop: '30px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 32px', fontSize: '18px', background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
+          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 32px', fontSize: '18px' }}>
             Start Online Application
           </button>
           <button className="bespoke-btn secondary" onClick={() => document.getElementById('bento').scrollIntoView({ behavior: 'smooth' })} style={{ padding: '16px 32px', fontSize: '18px' }}>
