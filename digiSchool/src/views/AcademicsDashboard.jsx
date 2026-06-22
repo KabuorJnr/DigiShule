@@ -4,6 +4,8 @@ import {
 } from 'recharts';
 import { buildClassPerformanceData, TOP_SUBJECTS_DATA, buildClassPerformanceSummary } from '../data/seed';
 import { Badge, ProgressBar } from '../components/widgets';
+import { exportTablePDF, downloadCSV } from '../utils/exporters';
+import { Download, FileText } from 'lucide-react';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -20,6 +22,40 @@ export default function AcademicsDashboard({ store, user }) {
   
   const classPerfData = useMemo(() => buildClassPerformanceData(settings.levels), [settings.levels]);
   const classPerfSummary = useMemo(() => buildClassPerformanceSummary(settings.levels), [settings.levels]);
+
+  const handleExportClassPerf = () => {
+    const head = ['Class', 'Students', 'Streams', 'Avg Score (%)', 'Pass Rate (%)', 'Marks Status'];
+    const body = classPerfSummary.map(r => [r.class, r.students, r.streams, r.avg, r.passRate, r.marks]);
+    exportTablePDF({
+      school: settings,
+      title: 'Class Performance Summary',
+      subtitle: `Term 2 · Academic Year 2026`,
+      head, body,
+      filename: 'Class_Performance_Summary.pdf'
+    });
+  };
+
+  const handleExportAnalysis = () => {
+    const head = ['Subject', 'Percentage (%)'];
+    const body = TOP_SUBJECTS_DATA.map(r => [r.name, r.score]);
+    exportTablePDF({
+      school: settings,
+      title: 'Exam Analysis & Grade Distribution',
+      subtitle: 'Top Performing Subjects Overview',
+      head, body,
+      filename: 'Exam_Analysis.pdf'
+    });
+  };
+
+  const handleExportPendingMarks = () => {
+    const rows = [
+      ['Class', 'Subject', 'Teacher', 'Status'],
+      ['Grade 7', 'Mathematics', 'Mr. Omondi', 'Pending'],
+      ['Grade 8', 'Science', 'Ms. Wanjiku', 'Pending'],
+      ['Grade 9', 'History', 'Mr. Kiprop', 'Pending']
+    ];
+    downloadCSV('Pending_Marks_Report.csv', rows);
+  };
 
   return (
     <div>
@@ -69,8 +105,9 @@ export default function AcademicsDashboard({ store, user }) {
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Staff Attendance</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('class_teachers')}>Class Teachers</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>Settings</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={handleExportPendingMarks}>
+            <FileText size={16} style={{ marginRight: 6 }}/> Pending Marks
+          </button>
         </div>
       </div>
 
@@ -93,9 +130,14 @@ export default function AcademicsDashboard({ store, user }) {
         </div>
 
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, marginBottom: 16 }}>
-            Top Performing Subjects
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, margin: 0 }}>
+              Top Performing Subjects
+            </h3>
+            <button className="btn btn-sm" onClick={handleExportAnalysis}>
+              <Download size={14} style={{ marginRight: 4 }}/> Exam Analysis
+            </button>
+          </div>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={TOP_SUBJECTS_DATA} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
@@ -117,8 +159,8 @@ export default function AcademicsDashboard({ store, user }) {
           <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, margin: 0 }}>
             Class Performance Summary
           </h3>
-          <button className="btn btn-sm" onClick={() => notify('Generating detailed report...', 'info')}>
-            Detailed Report
+          <button className="btn btn-sm" onClick={handleExportClassPerf}>
+            <Download size={14} style={{ marginRight: 4 }}/> Download Summary
           </button>
         </div>
         <table className="table">

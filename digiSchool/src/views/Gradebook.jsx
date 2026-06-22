@@ -149,9 +149,8 @@ export default function Gradebook({ store }) {
         subtitle="Inspect, edit and analyse student performance"
         actions={
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export Detailed</button>
-            <button className="btn"><Icon name="chart" size={16} /> Summary Stats</button>
-            <button className="btn"><Icon name="print" size={16} /> Print Slips</button>
+            <button className="btn" onClick={exportExcel}><Icon name="file" size={16} /> Export Excel</button>
+            <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
           </div>
         }
       />

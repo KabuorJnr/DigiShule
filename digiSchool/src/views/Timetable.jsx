@@ -166,17 +166,26 @@ export default function Timetable({ store }) {
   function exportPDF() {
     if (!tt) return notify('Generate a timetable first', 'warning');
     const head = ['Period', ...tt.days];
-    const body = tt.grid.map((row, p) => [
-      `P${p + 1}`,
-      ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} (${c.teacher})` : '-')),
-    ]);
+    let body;
+    if (tab === 'teacher') {
+      body = teacherGrid().map((row, p) => [
+        `P${p + 1}`,
+        ...row.map((c) => (c ? `${c.subject} (Grade ${c.cls})` : '-')),
+      ]);
+    } else {
+      body = tt.grid.map((row, p) => [
+        `P${p + 1}`,
+        ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} (${c.teacher})` : '-')),
+      ]);
+    }
+
     exportTablePDF({
       school: settings,
-      title: `Class Timetable — Grade ${cls}`,
+      title: tab === 'teacher' ? `Teacher Timetable — ${teacherSel}` : `Class Timetable — Grade ${cls}`,
       subtitle: `${term} • Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
-      filename: `timetable-${cls}-${term}.pdf`,
+      filename: tab === 'teacher' ? `timetable-teacher-${teacherSel}.pdf` : `timetable-${cls}-${term}.pdf`,
     });
     notify('Timetable exported as PDF', 'success', 'Export');
   }
@@ -184,10 +193,20 @@ export default function Timetable({ store }) {
   function exportExcel() {
     if (!tt) return notify('Generate a timetable first', 'warning');
     const aoa = [['Period', ...tt.days]];
-    tt.grid.forEach((row, p) => {
-      aoa.push([`P${p + 1}`, ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} / ${c.teacher}` : ''))]);
-    });
-    downloadExcel(`timetable-${cls}-${term}.xlsx`, [{ name: `Grade ${cls}`, aoa }]);
+    if (tab === 'teacher') {
+      teacherGrid().forEach((row, p) => {
+        aoa.push([`P${p + 1}`, ...row.map((c) => (c ? `${c.subject} / Grade ${c.cls}` : ''))]);
+      });
+    } else {
+      tt.grid.forEach((row, p) => {
+        aoa.push([`P${p + 1}`, ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} / ${c.teacher}` : ''))]);
+      });
+    }
+    
+    const sheetName = tab === 'teacher' ? teacherSel.slice(0,31) : `Grade ${cls}`.slice(0,31);
+    const filename = tab === 'teacher' ? `timetable-${teacherSel}.xlsx` : `timetable-${cls}-${term}.xlsx`;
+    
+    downloadExcel(filename, [{ name: sheetName, aoa }]);
     notify('Timetable exported as Excel', 'success', 'Export');
   }
 
