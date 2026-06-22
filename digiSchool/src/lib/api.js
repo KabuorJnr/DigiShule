@@ -140,9 +140,11 @@ export async function fetchStudents() {
   if (error) throw error;
   return data.map(s => ({
     ...s,
+    birthCertNo: s.birth_cert_no,
     guardianName: s.guardian_name,
     guardianPhone: s.guardian_phone,
     guardianEmail: s.guardian_email,
+    parentAddress: s.parent_address,
   }));
 }
 
@@ -161,11 +163,13 @@ export async function upsertStudent(student) {
     adm: student.adm,
     class: student.class,
     gender: student.gender,
+    birth_cert_no: student.birthCertNo,
     scores: student.scores,
     flagged: student.flagged,
     guardian_name: student.guardianName,
     guardian_phone: student.guardianPhone,
     guardian_email: student.guardianEmail,
+    parent_address: student.parentAddress,
     school_id: _schoolId,
   });
   if (error) throw error;

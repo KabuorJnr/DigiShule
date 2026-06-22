@@ -18,8 +18,8 @@ const TABS = [
 
 const EMPTY_FORM = {
   name: '', adm: '', class: 'Grade 7A', gender: 'Male',
-  dob: '', guardianName: '', guardianPhone: '', guardianEmail: '',
-  address: '', medicalNotes: '', previousSchool: '',
+  dob: '', birthCertNo: '', guardianName: '', guardianPhone: '', guardianEmail: '',
+  address: '', parentAddress: '', medicalNotes: '', previousSchool: '',
 };
 
 export default function Registrar({ store, user }) {
@@ -84,11 +84,13 @@ export default function Registrar({ store, user }) {
       adm: form.adm,
       class: form.class,
       gender: form.gender,
+      birthCertNo: form.birthCertNo,
       flagged: false,
       scores: {},
       guardianName: form.guardianName,
       guardianPhone: form.guardianPhone,
       guardianEmail: form.guardianEmail,
+      parentAddress: form.parentAddress,
     };
     try {
       await upsertStudent(newStudent);
@@ -349,9 +351,13 @@ export default function Registrar({ store, user }) {
                 <input type="date" className="input" value={form.dob} onChange={e => upForm({ dob: e.target.value })} />
               </div>
               <div>
-                <label className="field-label">Previous School</label>
-                <input className="input" placeholder="Previous institution (if any)" value={form.previousSchool} onChange={e => upForm({ previousSchool: e.target.value })} />
+                <label className="field-label">Birth Certificate No.</label>
+                <input className="input" placeholder="e.g. 1234567" value={form.birthCertNo} onChange={e => upForm({ birthCertNo: e.target.value })} />
               </div>
+            </div>
+            <div>
+              <label className="field-label">Previous School</label>
+              <input className="input" placeholder="Previous institution (if any)" value={form.previousSchool} onChange={e => upForm({ previousSchool: e.target.value })} />
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
             <div style={{ fontWeight: 600, fontSize: 13, color: '#475569' }}>Guardian / Parent Information</div>
@@ -365,9 +371,15 @@ export default function Registrar({ store, user }) {
                 <input className="input" placeholder="+254 7XX XXX XXX" value={form.guardianPhone} onChange={e => upForm({ guardianPhone: e.target.value })} />
               </div>
             </div>
-            <div>
-              <label className="field-label">Guardian Email</label>
-              <input className="input" type="email" value={form.guardianEmail} onChange={e => upForm({ guardianEmail: e.target.value })} />
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Guardian Email</label>
+                <input className="input" type="email" value={form.guardianEmail} onChange={e => upForm({ guardianEmail: e.target.value })} />
+              </div>
+              <div>
+                <label className="field-label">Parent Address</label>
+                <input className="input" placeholder="P.O. Box or Physical Address" value={form.parentAddress} onChange={e => upForm({ parentAddress: e.target.value })} />
+              </div>
             </div>
             <div>
               <label className="field-label">Medical Notes (optional)</label>
@@ -450,6 +462,31 @@ export default function Registrar({ store, user }) {
                 <select className="select" value={editStudent.gender || 'Male'} onChange={e => setEditStudent(s => ({ ...s, gender: e.target.value }))}>
                   <option>Male</option><option>Female</option><option>Other</option>
                 </select>
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Birth Certificate No.</label>
+              <input className="input" value={editStudent.birthCertNo || ''} onChange={e => setEditStudent(s => ({ ...s, birthCertNo: e.target.value }))} />
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Guardian Name</label>
+                <input className="input" value={editStudent.guardianName || ''} onChange={e => setEditStudent(s => ({ ...s, guardianName: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Guardian Phone</label>
+                <input className="input" value={editStudent.guardianPhone || ''} onChange={e => setEditStudent(s => ({ ...s, guardianPhone: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Guardian Email</label>
+                <input className="input" type="email" value={editStudent.guardianEmail || ''} onChange={e => setEditStudent(s => ({ ...s, guardianEmail: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Parent Address</label>
+                <input className="input" value={editStudent.parentAddress || ''} onChange={e => setEditStudent(s => ({ ...s, parentAddress: e.target.value }))} />
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

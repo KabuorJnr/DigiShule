@@ -41,8 +41,13 @@ CREATE TABLE IF NOT EXISTS students (
   adm TEXT UNIQUE NOT NULL,
   class TEXT NOT NULL,
   gender TEXT,
+  birth_cert_no TEXT,
   scores JSONB DEFAULT '{}'::jsonb,
   flagged BOOLEAN DEFAULT false,
+  guardian_name TEXT,
+  guardian_phone TEXT,
+  guardian_email TEXT,
+  parent_address TEXT,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now()
 );
