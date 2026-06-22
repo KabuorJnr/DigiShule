@@ -15,6 +15,7 @@ import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, 
 import LandingPage from './views/LandingPage';
 import Login from './views/Login';
 import PublicApplication from './views/PublicApplication';
+import SetupWizard from './views/SetupWizard';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
 import ExamSchedules from './views/ExamSchedules';
@@ -93,6 +94,8 @@ export default function App() {
   const [feeStructure, setFeeStructure] = useState([]);
   const [notifToggles, setNotifToggles] = useState({});
   const [timetables, setTimetables] = useState({});
+
+  const [needsSetup, setNeedsSetup] = useState(() => !localStorage.getItem('eduone_school_config'));
 
   // Refs mirror the latest state so wrapped setters can compute the next value
   // outside React's updater and persist it without double-firing under StrictMode.
@@ -342,6 +345,12 @@ export default function App() {
 
   // ---- If not logged in, show Landing or Login ----
   if (!currentUser) {
+    if (needsSetup) {
+      return <SetupWizard onComplete={() => {
+        setNeedsSetup(false);
+        notify('System Initialized successfully!', 'success');
+      }} />;
+    }
     if (showApplication) {
       return <PublicApplication onBack={() => setShowApplication(false)} />;
     }

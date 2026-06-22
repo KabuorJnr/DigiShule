@@ -16,6 +16,7 @@ export default function StaffAttendance({ store, user }) {
   const [leaveRequests, setLeaveRequests] = useState(SEED_LEAVE);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
+  const [selectedStaff, setSelectedStaff] = useState(null);
 
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
@@ -158,7 +159,8 @@ export default function StaffAttendance({ store, user }) {
                       <td><Badge color={STATUS_COLOR[s.status]}>{s.status}</Badge></td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-sm" onClick={() => toggleStatus(s.id)}>Change</button>
+                          <button className="btn btn-sm btn-primary" onClick={() => setSelectedStaff(s)}>View Profile</button>
+                          <button className="btn btn-sm" onClick={() => toggleStatus(s.id)}>Change Status</button>
                           {canApprove && (
                             <button className="btn btn-sm" style={{ color: '#dc2626', borderColor: '#fca5a5' }} onClick={() => offboardStaff(s.id)}>Offboard</button>
                           )}
@@ -271,6 +273,79 @@ export default function StaffAttendance({ store, user }) {
           </div>
         </Modal>
       )}
+
+      {selectedStaff && (() => {
+        const fullProfile = store.teachers?.find(t => t.name === selectedStaff.name) || selectedStaff;
+        const subject = fullProfile.subject || selectedStaff.dept;
+        const assignedClass = fullProfile.assignedClass || 'None';
+        
+        // Calculate average performance for their subject
+        let subjectAvg = 0;
+        let totalStudents = 0;
+        if (store.students) {
+          const scores = store.students.map(st => st.scores?.[subject]).filter(Boolean);
+          if (scores.length > 0) {
+            let sum = 0;
+            scores.forEach(s => {
+              const rowAvg = (s.a1 + s.a2 + s.a3 + s.a4) / 4;
+              sum += (rowAvg / 4) * 100; // Normalize 1-4 scale to percentage roughly
+            });
+            subjectAvg = (sum / scores.length).toFixed(1);
+            totalStudents = scores.length;
+          }
+        }
+
+        return (
+          <Modal title={`${selectedStaff.name}'s Profile`} onClose={() => setSelectedStaff(null)} footer={
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn" onClick={() => setSelectedStaff(null)}>Close</button>
+              <button className="btn btn-primary" onClick={() => {
+                notify(`Message composed for ${selectedStaff.name}`, 'info');
+                setSelectedStaff(null);
+              }}>Message Staff</button>
+            </div>
+          }>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#0078D4', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700 }}>
+                  {selectedStaff.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                </div>
+                <div>
+                  <h2 style={{ margin: '0 0 4px' }}>{selectedStaff.name}</h2>
+                  <div style={{ color: '#64748b', fontSize: 14 }}>{selectedStaff.role} · {selectedStaff.dept}</div>
+                  <div style={{ marginTop: 6 }}><Badge color={STATUS_COLOR[selectedStaff.status]}>{selectedStaff.status}</Badge></div>
+                </div>
+              </div>
+
+              <div className="grid grid-2" style={{ gap: 16 }}>
+                <div className="card" style={{ padding: 16, background: '#f8fafc', border: 'none' }}>
+                  <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Teaching Assignment</div>
+                  <div style={{ fontSize: 14, marginBottom: 4 }}><strong>Subject:</strong> {subject}</div>
+                  <div style={{ fontSize: 14 }}><strong>Class Teacher:</strong> {assignedClass}</div>
+                </div>
+                
+                <div className="card" style={{ padding: 16, background: '#f8fafc', border: 'none' }}>
+                  <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Subject Performance</div>
+                  <div style={{ fontSize: 14, marginBottom: 4 }}><strong>Students Taught:</strong> {totalStudents}</div>
+                  <div style={{ fontSize: 14 }}><strong>Average Score:</strong> {subjectAvg > 0 ? `${subjectAvg}%` : 'N/A'}</div>
+                </div>
+              </div>
+
+              <div className="card" style={{ padding: 16, background: '#f8fafc', border: 'none' }}>
+                <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Recent Activity</div>
+                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#334155' }}>
+                  <li style={{ marginBottom: 6 }}>Checked in today at {selectedStaff.checkIn || '07:30 AM'}</li>
+                  <li style={{ marginBottom: 6 }}>Submitted 2 assignments for {assignedClass !== 'None' ? assignedClass : 'Grade 8'}</li>
+                  <li>Logged 3 behavior incidents this week</li>
+                </ul>
+              </div>
+
+            </div>
+          </Modal>
+        );
+      })()}
+
     </div>
   );
 }

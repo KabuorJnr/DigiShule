@@ -91,7 +91,7 @@ export function buildStudents(classList = CLASSES) {
   const list = [];
   classList.forEach((cls, ci) => {
     const rand = mulberry32(1000 + ci * 97);
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 80; i++) {
       list.push(makeStudent(cls, i, rand));
     }
   });
@@ -103,17 +103,28 @@ export function buildAttendanceTrend() {
   const rand = mulberry32(42);
   const total = 847;
   const days = [];
+  let currentRate = 0.92; // start at 92%
+  
   for (let i = 29; i >= 0; i--) {
-    const d = new Date(2026, 5, 9);
+    const d = new Date();
     d.setDate(d.getDate() - i);
-    const rate = 0.86 + rand() * 0.1; // 86-96%
-    const present = Math.round(total * rate);
-    days.push({
-      date: d.toISOString().slice(5, 10),
-      fullDate: d.toISOString().slice(0, 10),
-      present,
-      absent: total - present,
-    });
+    // Skip weekends visually or just simulate lower attendance
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    
+    // Random walk with mean reversion
+    currentRate += (rand() * 0.04 - 0.02) + (0.92 - currentRate) * 0.1;
+    currentRate = Math.max(0.85, Math.min(0.98, currentRate));
+    
+    const present = isWeekend ? 0 : Math.round(total * currentRate);
+    
+    if (!isWeekend) {
+      days.push({
+        date: d.toISOString().slice(5, 10),
+        fullDate: d.toISOString().slice(0, 10),
+        present,
+        absent: total - present,
+      });
+    }
   }
   return days;
 }
@@ -250,14 +261,26 @@ export function buildExamSchedules() {
   ];
 }
 
-export const MONTHLY_REVENUE_TREND = [
-  { month: 'Jan', revenue: 1200000 },
-  { month: 'Feb', revenue: 1500000 },
-  { month: 'Mar', revenue: 900000 },
-  { month: 'Apr', revenue: 800000 },
-  { month: 'May', revenue: 1600000 },
-  { month: 'Jun', revenue: 1400000 },
-];
+export const MONTHLY_REVENUE_TREND = (() => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentMonth = new Date().getMonth();
+  const trend = [];
+  let baseRev = 1100000;
+  const rand = mulberry32(99);
+  
+  for (let i = 5; i >= 0; i--) {
+    let mIdx = currentMonth - i;
+    if (mIdx < 0) mIdx += 12;
+    // Simulate term start spikes
+    const isTermStart = mIdx === 0 || mIdx === 4 || mIdx === 8; 
+    let revenue = baseRev + (rand() * 300000);
+    if (isTermStart) revenue *= 1.8; // Huge spike at beginning of term
+    
+    trend.push({ month: months[mIdx], revenue: Math.round(revenue) });
+    baseRev += 50000; // General growth trend
+  }
+  return trend;
+})();
 
 export function buildClassDistribution(levels = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']) {
   return levels.map((l, i) => ({ name: l, value: 240 - (i * 15) }));

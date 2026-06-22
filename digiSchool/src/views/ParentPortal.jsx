@@ -104,11 +104,30 @@ export default function ParentPortal({ store, user }) {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) return store.notify('Please fill all fields', 'warning');
-    store.notify(`Message sent to ${msgForm.teacher} successfully.`, 'success');
-    setMsgModalOpen(false);
-    setMsgForm({ teacher: 'Class Teacher', subject: '', body: '' });
+    
+    try {
+      const messagePayload = {
+        id: `msg_${Date.now()}`,
+        sender_id: user.id || 'parent',
+        sender_name: user.name || 'Parent',
+        recipient_role: msgForm.teacher,
+        student_id: child.id,
+        student_name: child.name,
+        subject: msgForm.subject,
+        body: msgForm.body,
+        status: 'Unread',
+        created_at: new Date().toISOString()
+      };
+      
+      await upsertRow('messages', messagePayload);
+      store.notify(`Message sent to ${msgForm.teacher} successfully.`, 'success');
+      setMsgModalOpen(false);
+      setMsgForm({ teacher: 'Class Teacher', subject: '', body: '' });
+    } catch (e) {
+      store.notify(`Failed to send message: ${e.message}`, 'error');
+    }
   };
 
   const handleUpdateProfile = () => {

@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export default function TeacherPortal({ store, user }) {
@@ -15,11 +15,46 @@ export default function TeacherPortal({ store, user }) {
   const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
   const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });
 
+  const [messages, setMessages] = useState([]);
+  const [inboxModalOpen, setInboxModalOpen] = useState(false);
+  const [replyText, setReplyText] = useState({});
+
+  useEffect(() => {
+    let active = true;
+    import('../lib/api').then(({ fetchTable }) => {
+      fetchTable('messages').then(res => {
+        if (!active) return;
+        const allMsgs = res || [];
+        const myMsgs = allMsgs.filter(m => {
+          if (m.recipient_role === 'Class Teacher' && assignedClass) return true;
+          if (m.recipient_role.includes(subject)) return true;
+          return false;
+        });
+        setMessages(myMsgs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
+      });
+    });
+    return () => { active = false; };
+  }, [assignedClass, subject]);
+
   const handleLogBehavior = () => {
     if (!behaviorForm.student) return store.notify('Please select a student', 'warning');
     store.notify(`Logged ${behaviorForm.type} (${behaviorForm.points} pts) for ${behaviorForm.student}.`, 'success');
     setBehaviorModalOpen(false);
     setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
+  };
+
+  const handleReplyMessage = async (msgId) => {
+    if (!replyText[msgId]) return;
+    try {
+      const { upsertRow } = await import('../lib/api');
+      const msg = messages.find(m => m.id === msgId);
+      const updatedMsg = { ...msg, status: 'Replied', reply: replyText[msgId], replied_at: new Date().toISOString() };
+      await upsertRow('messages', updatedMsg);
+      setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
+      store.notify('Reply sent successfully', 'success');
+    } catch (e) {
+      store.notify(`Failed to reply: ${e.message}`, 'error');
+    }
   };
 
   const rows = useMemo(() => {
@@ -41,12 +76,12 @@ export default function TeacherPortal({ store, user }) {
   const topPerformer = rows.reduce((best, r) => (!best || r.average > best.average ? r : best), null);
 
   const quickLinks = [
+    { label: 'Parent Messages', icon: MessageSquare, action: 'open_inbox', color: '#EAB308', desc: `${messages.filter(m => m.status === 'Unread').length} unread messages` },
     { label: 'Assignments & Materials', icon: FolderOpen, view: 'teacher_resources', color: '#0078D4', desc: 'Upload PDFs for students' },
     { label: 'Notices Board', icon: Bell, view: 'notices', color: '#7C3AED', desc: 'Post & read announcements' },
     { label: 'School Calendar', icon: Calendar, view: 'school_calendar', color: '#107C10', desc: 'Events & term dates' },
     { label: 'Timetable', icon: ClipboardList, view: 'timetable', color: '#0369A1', desc: 'Your teaching schedule' },
     { label: 'Gradebook', icon: BarChart3, view: 'gradebook', color: '#D13438', desc: 'Full school gradebook' },
-    { label: 'Exam Schedules', icon: BookOpen, view: 'exams', color: '#92400e', desc: 'Upcoming examinations' },
   ];
 
   return (
@@ -105,8 +140,11 @@ export default function TeacherPortal({ store, user }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {quickLinks.map(q => (
             <button
-              key={q.view}
-              onClick={() => navigate(q.view)}
+              key={q.label}
+              onClick={() => {
+                if (q.action === 'open_inbox') setInboxModalOpen(true);
+                else navigate(q.view);
+              }}
               style={{
                 background: '#fff', border: '1px solid var(--border)', borderRadius: 10,
                 padding: '14px 16px', textAlign: 'left', cursor: 'pointer',
@@ -273,6 +311,57 @@ export default function TeacherPortal({ store, user }) {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Inbox Modal */}
+      {inboxModalOpen && (
+        <>
+          <div className="modal-overlay" onMouseDown={() => setInboxModalOpen(false)} />
+          <div className="modal" style={{ maxWidth: 650, padding: 0, overflow: 'hidden' }}>
+            <div className="modal-header">
+              <h3>Parent Messages Inbox</h3>
+              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>✕</button>
+            </div>
+            <div style={{ padding: 24, maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }}>
+              {messages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+                  <MessageSquare size={40} style={{ margin: '0 auto 10px' }} />
+                  <div>No messages found.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {messages.map(m => (
+                    <div key={m.id} className="card card-pad" style={{ background: m.status === 'Unread' ? '#fff' : '#f1f5f9', borderLeft: m.status === 'Unread' ? '4px solid #3b82f6' : '4px solid transparent' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div>
+                          <strong style={{ fontSize: 15 }}>{m.sender_name}</strong>
+                          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Parent of: {m.student_name}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <Badge color={m.status === 'Unread' ? 'blue' : 'green'}>{m.status}</Badge>
+                          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{new Date(m.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{m.subject}</div>
+                      <p style={{ margin: 0, fontSize: 13, color: '#334155', lineHeight: 1.5 }}>{m.body}</p>
+                      
+                      {m.reply ? (
+                        <div style={{ marginTop: 12, padding: 12, background: '#e0f2fe', borderRadius: 6, fontSize: 13, color: '#0369a1' }}>
+                          <strong>Your Reply:</strong> {m.reply}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                          <input type="text" className="input" style={{ flex: 1, padding: '8px 12px' }} placeholder="Type a reply..." value={replyText[m.id] || ''} onChange={e => setReplyText(p => ({ ...p, [m.id]: e.target.value }))} />
+                          <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => handleReplyMessage(m.id)}>Reply</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
