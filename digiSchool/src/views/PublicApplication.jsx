@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+const schoolConfig = (() => {
+  try {
+    const raw = localStorage.getItem('eduone_school_config');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+})();
+const levels = schoolConfig?.levels || schoolConfig?.school?.levels || ['Grade 7', 'Grade 8', 'Grade 9'];
+
 export default function PublicApplication({ onBack }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    studentName: '', kcpeMarks: '', dob: '', gender: 'Male', grade: 'Grade 7',
+    studentName: '', kcpeMarks: '', dob: '', gender: 'Male', grade: levels[0],
     parentName: '', parentPhone: '', parentEmail: '',
     address: '', boarding: 'Day',
   });
@@ -102,9 +110,9 @@ export default function PublicApplication({ onBack }) {
                   <div>
                     <label className="field-label" style={{ fontSize: 14 }}>Grade Applying For *</label>
                     <select className="select" value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}>
-                      <option>Grade 7</option>
-                      <option>Grade 8</option>
-                      <option>Grade 9</option>
+                      {levels.map(level => (
+                        <option key={level} value={level}>{level}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
