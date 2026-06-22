@@ -7,3 +7,8 @@ ADD COLUMN IF NOT EXISTS guardian_email TEXT,
 ADD COLUMN IF NOT EXISTS birth_cert_no TEXT,
 ADD COLUMN IF NOT EXISTS parent_address TEXT,
 ADD COLUMN IF NOT EXISTS admission_letter_url TEXT;
+
+-- 2. Clean up any classes that were saved with the "Grade " prefix.
+UPDATE public.students 
+SET class = REPLACE(class, 'Grade ', '') 
+WHERE class LIKE 'Grade %';

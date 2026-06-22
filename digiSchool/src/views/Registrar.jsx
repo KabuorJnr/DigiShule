@@ -8,9 +8,7 @@ import {
 } from 'lucide-react';
 import { exportReportCardsPDF } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
-import { SUBJECTS } from '../data/seed';
-
-const CLASSES_LIST = ['Grade 7A', 'Grade 7B', 'Grade 8A', 'Grade 8B', 'Grade 9A', 'Grade 9B', 'Grade 10A', 'Grade 10B'];
+import { SUBJECTS, CLASSES } from '../data/seed';
 const TABS = [
   { id: 'register', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
@@ -18,7 +16,7 @@ const TABS = [
 ];
 
 const EMPTY_FORM = {
-  name: '', adm: '', class: 'Grade 7A', gender: 'Male',
+  name: '', adm: '', class: '7A', gender: 'Male',
   dob: '', birthCertNo: '', guardianName: '', guardianPhone: '', guardianEmail: '',
   address: '', parentAddress: '', medicalNotes: '', previousSchool: '',
   admissionLetterFile: null, admissionLetterName: '',
@@ -278,7 +276,7 @@ export default function Registrar({ store, user }) {
             </div>
             <select className="select" style={{ width: 160 }} value={classFilter} onChange={e => setClassFilter(e.target.value)}>
               <option value="All">All Classes</option>
-              {CLASSES_LIST.map(c => <option key={c}>{c}</option>)}
+              {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
             </select>
             <span className="muted" style={{ fontSize: 13 }}>{filtered.length} student{filtered.length !== 1 ? 's' : ''}</span>
           </div>
@@ -352,7 +350,7 @@ export default function Registrar({ store, user }) {
               <div>
                 <label className="field-label">Class</label>
                 <select className="select" value={form.class} onChange={e => upForm({ class: e.target.value })}>
-                  {CLASSES_LIST.map(c => <option key={c}>{c}</option>)}
+                  {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
                 </select>
               </div>
               <div>
@@ -490,7 +488,7 @@ export default function Registrar({ store, user }) {
               <div>
                 <label className="field-label">Class</label>
                 <select className="select" value={editStudent.class} onChange={e => setEditStudent(s => ({ ...s, class: e.target.value }))}>
-                  {CLASSES_LIST.map(c => <option key={c}>{c}</option>)}
+                  {CLASSES.map(c => <option key={c} value={c}>Grade {c}</option>)}
                 </select>
               </div>
               <div>
