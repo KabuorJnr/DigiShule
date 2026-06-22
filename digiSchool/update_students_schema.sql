@@ -5,4 +5,5 @@ ADD COLUMN IF NOT EXISTS guardian_name TEXT,
 ADD COLUMN IF NOT EXISTS guardian_phone TEXT,
 ADD COLUMN IF NOT EXISTS guardian_email TEXT,
 ADD COLUMN IF NOT EXISTS birth_cert_no TEXT,
-ADD COLUMN IF NOT EXISTS parent_address TEXT;
+ADD COLUMN IF NOT EXISTS parent_address TEXT,
+ADD COLUMN IF NOT EXISTS admission_letter_url TEXT;

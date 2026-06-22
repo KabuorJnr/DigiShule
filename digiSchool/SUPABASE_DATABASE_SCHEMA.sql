@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS students (
   guardian_phone TEXT,
   guardian_email TEXT,
   parent_address TEXT,
+  admission_letter_url TEXT,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now()
 );

@@ -84,3 +84,20 @@ export async function downloadFilePDF(storagePath, name) {
   a.download = name || 'file.pdf';
   a.click();
 }
+
+/** Upload a student document (like an admission letter) directly without saving to file_metadata. */
+export async function uploadStudentDocument(studentId, file) {
+  const schoolId = getActiveSchoolId();
+  const ext = file.name.split('.').pop();
+  // Using 'student_docs' as the 'type' folder within the bucket.
+  // The path must match {school_id}/student_docs/... to satisfy RLS.
+  const storagePath = `${schoolId}/student_docs/${studentId}_${Date.now()}.${ext}`;
+
+  const { error: upErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(storagePath, file, { contentType: file.type || 'application/pdf', upsert: true });
+
+  if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+
+  return storagePath;
+}

@@ -145,6 +145,7 @@ export async function fetchStudents() {
     guardianPhone: s.guardian_phone,
     guardianEmail: s.guardian_email,
     parentAddress: s.parent_address,
+    admissionLetterUrl: s.admission_letter_url,
   }));
 }
 
@@ -170,6 +171,7 @@ export async function upsertStudent(student) {
     guardian_phone: student.guardianPhone,
     guardian_email: student.guardianEmail,
     parent_address: student.parentAddress,
+    admission_letter_url: student.admissionLetterUrl,
     school_id: _schoolId,
   });
   if (error) throw error;

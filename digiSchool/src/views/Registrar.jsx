@@ -4,9 +4,10 @@ import Modal from '../components/Modal';
 import { upsertStudent } from '../lib/api';
 import {
   UserPlus, Search, Edit2, FileText, Users,
-  CheckCircle2, AlertTriangle, Download, Filter
+  CheckCircle2, AlertTriangle, Download, Filter, Upload, Loader
 } from 'lucide-react';
 import { exportReportCardsPDF } from '../utils/exporters';
+import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
 import { SUBJECTS } from '../data/seed';
 
 const CLASSES_LIST = ['Grade 7A', 'Grade 7B', 'Grade 8A', 'Grade 8B', 'Grade 9A', 'Grade 9B', 'Grade 10A', 'Grade 10B'];
@@ -20,6 +21,7 @@ const EMPTY_FORM = {
   name: '', adm: '', class: 'Grade 7A', gender: 'Male',
   dob: '', birthCertNo: '', guardianName: '', guardianPhone: '', guardianEmail: '',
   address: '', parentAddress: '', medicalNotes: '', previousSchool: '',
+  admissionLetterFile: null, admissionLetterName: '',
 };
 
 export default function Registrar({ store, user }) {
@@ -37,6 +39,13 @@ export default function Registrar({ store, user }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { notify('File must be under 10MB', 'warning'); return; }
+    setForm(f => ({ ...f, admissionLetterFile: file, admissionLetterName: file.name }));
+  };
 
   // ── REGISTER TAB ──────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -78,21 +87,29 @@ export default function Registrar({ store, user }) {
     if (!form.name.trim() || !form.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
     if (students.find(s => s.adm === form.adm)) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
     setSaving(true);
-    const newStudent = {
-      id: `s${Date.now()}`,
-      name: form.name,
-      adm: form.adm,
-      class: form.class,
-      gender: form.gender,
-      birthCertNo: form.birthCertNo,
-      flagged: false,
-      scores: {},
-      guardianName: form.guardianName,
-      guardianPhone: form.guardianPhone,
-      guardianEmail: form.guardianEmail,
-      parentAddress: form.parentAddress,
-    };
     try {
+      let admissionLetterUrl = null;
+      if (form.admissionLetterFile) {
+        notify('Uploading admission letter...', 'info');
+        admissionLetterUrl = await uploadStudentDocument(`new_${Date.now()}`, form.admissionLetterFile);
+      }
+
+      const newStudent = {
+        id: `s${Date.now()}`,
+        name: form.name,
+        adm: form.adm,
+        class: form.class,
+        gender: form.gender,
+        birthCertNo: form.birthCertNo,
+        flagged: false,
+        scores: {},
+        guardianName: form.guardianName,
+        guardianPhone: form.guardianPhone,
+        guardianEmail: form.guardianEmail,
+        parentAddress: form.parentAddress,
+        admissionLetterUrl,
+      };
+
       await upsertStudent(newStudent);
       setStudents(prev => [...prev, newStudent]);
       setForm(EMPTY_FORM);
@@ -359,6 +376,25 @@ export default function Registrar({ store, user }) {
               <label className="field-label">Previous School</label>
               <input className="input" placeholder="Previous institution (if any)" value={form.previousSchool} onChange={e => upForm({ previousSchool: e.target.value })} />
             </div>
+            <div>
+              <label className="field-label">Admission Letter (optional PDF/Image)</label>
+              <label style={{ display: 'block', cursor: saving ? 'not-allowed' : 'pointer' }}>
+                <div style={{ border: `2px dashed ${form.admissionLetterName ? '#0078D4' : 'var(--border)'}`, borderRadius: 8, padding: 20, textAlign: 'center', background: form.admissionLetterName ? '#e8f0fe' : '#f8fafc', transition: 'all 0.2s' }}>
+                  {form.admissionLetterName ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <FileText size={18} color="#0078D4" />
+                      <span style={{ fontWeight: 600, color: '#0078D4', fontSize: 14 }}>{form.admissionLetterName}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload size={24} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
+                      <div style={{ fontWeight: 600, color: '#475569', fontSize: 13 }}>Click to attach admission letter</div>
+                    </>
+                  )}
+                </div>
+                <input type="file" accept="application/pdf, image/jpeg, image/png" style={{ display: 'none' }} disabled={saving} onChange={handleFileSelect} />
+              </label>
+            </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
             <div style={{ fontWeight: 600, fontSize: 13, color: '#475569' }}>Guardian / Parent Information</div>
             <div className="grid grid-2">
@@ -489,6 +525,17 @@ export default function Registrar({ store, user }) {
                 <input className="input" value={editStudent.parentAddress || ''} onChange={e => setEditStudent(s => ({ ...s, parentAddress: e.target.value }))} />
               </div>
             </div>
+            {editStudent.admissionLetterUrl && (
+              <div style={{ marginTop: 8, padding: 12, background: '#f8fafc', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#334155' }}>Admission Letter attached</div>
+                  <div className="muted" style={{ fontSize: 12 }}>View the uploaded document</div>
+                </div>
+                <button className="btn" onClick={() => openFilePDF(editStudent.admissionLetterUrl)} style={{ gap: 6 }}>
+                  <FileText size={14} /> View Document
+                </button>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input type="checkbox" id="flagged" checked={!!editStudent.flagged} onChange={e => setEditStudent(s => ({ ...s, flagged: e.target.checked }))} />
               <label htmlFor="flagged" style={{ fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
