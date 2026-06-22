@@ -6,7 +6,8 @@ import {
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { fmtKES } from '../data/modules';
-import { fetchTable, upsertRow } from '../lib/api';
+import { fetchTable, upsertRow, getActiveSchoolId } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 import { Icon } from '../components/icons';
 
 const TABS = [
@@ -785,8 +786,6 @@ function FeeStructureTab({ store, user }) {
 
   const handleSendToParents = async () => {
     try {
-      const { supabase } = await import('../lib/supabaseClient');
-      const { getActiveSchoolId } = await import('../lib/api');
       
       const row = {
         title: 'Fee Structure - Current Term',
