@@ -64,7 +64,7 @@ export default function Login({ onDemoLogin }) {
                 <GraduationCap size={40} color="#008f11" />
               )}
             </div>
-            <h1>Log in to {schoolName}</h1>
+            <h1>Log in to EduOne</h1>
             <p className="hr-subtitle">For Administrators, Teachers, and Parents</p>
           </div>
 
