@@ -61,7 +61,7 @@ export default function Login({ onDemoLogin }) {
               {schoolLogo ? (
                 <img src={schoolLogo} alt="School Logo" />
               ) : (
-                <GraduationCap size={40} color="#008f11" />
+                <GraduationCap size={40} color="#0078D4" />
               )}
             </div>
             <h1>Log in to EduOne</h1>
@@ -187,8 +187,8 @@ export default function Login({ onDemoLogin }) {
         }
         .hr-input:focus {
           outline: none;
-          border-color: #008f11;
-          box-shadow: 0 0 0 2px rgba(0, 143, 17, 0.2);
+          border-color: #0078D4;
+          box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
         }
         .hr-pw-wrap {
           position: relative;
@@ -209,7 +209,7 @@ export default function Login({ onDemoLogin }) {
         }
         .hr-btn {
           width: 100%;
-          background: #008f11;
+          background: #0078D4;
           color: #fff;
           border: none;
           border-radius: 4px;
@@ -223,7 +223,7 @@ export default function Login({ onDemoLogin }) {
           align-items: center;
         }
         .hr-btn:hover {
-          background: #007a0e;
+          background: #0062AD;
         }
         .hr-btn:disabled {
           opacity: 0.7;
@@ -238,7 +238,7 @@ export default function Login({ onDemoLogin }) {
           animation: spin 0.8s linear infinite;
         }
         .hr-link {
-          color: #008f11;
+          color: #0078D4;
           text-decoration: none;
           font-size: 14px;
           cursor: pointer;
