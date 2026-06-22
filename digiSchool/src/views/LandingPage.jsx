@@ -67,39 +67,8 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
         </div>
 
         {/* Floating Glass Dashboard Visual */}
-        <div className="b-hero-visual">
-          <div className="b-glass-dashboard">
-            <div className="b-dash-header">
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }} />
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#eab308' }} />
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#22c55e' }} />
-              </div>
-              <div className="b-dash-skeleton" style={{ width: '120px' }} />
-            </div>
-            <div className="b-dash-grid">
-              <div className="b-dash-card">
-                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>Total Active Students</div>
-                <div className="b-dash-skeleton" style={{ width: '80px', height: '32px', marginBottom: '4px' }} />
-                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'flex-end', height: '60px' }}>
-                  <div style={{ width: '16%', height: '40%', background: '#e2e8f0', borderRadius: '4px' }} />
-                  <div style={{ width: '16%', height: '60%', background: '#e2e8f0', borderRadius: '4px' }} />
-                  <div style={{ width: '16%', height: '50%', background: '#e2e8f0', borderRadius: '4px' }} />
-                  <div style={{ width: '16%', height: '80%', background: '#e2e8f0', borderRadius: '4px' }} />
-                  <div style={{ width: '16%', height: '70%', background: '#e2e8f0', borderRadius: '4px' }} />
-                  <div style={{ width: '16%', height: '100%', background: '#3b82f6', borderRadius: '4px' }} />
-                </div>
-              </div>
-              <div className="b-dash-card" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}>
-                <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>System Status</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: '600' }}>
-                  <ShieldCheck size={20} /> All Systems Operational
-                </div>
-                <div className="b-dash-skeleton" style={{ width: '100%', marginTop: '32px', background: 'rgba(255,255,255,0.1)' }} />
-                <div className="b-dash-skeleton" style={{ width: '80%', marginTop: '12px', background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-            </div>
-          </div>
+        <div className="b-hero-visual" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }}>
+          <img src="/dashboard_mockup.png" alt="EduOne System Dashboard" style={{ width: '100%', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'block' }} />
         </div>
       </header>
 

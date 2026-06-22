@@ -50,98 +50,116 @@ export default function Login({ onDemoLogin }) {
   };
 
   return (
-    <div className="spotify-login-wrap">
-      <div className="spotify-login-container">
-        
-        {/* Header / Logo */}
-        <div className="spotify-login-header">
-          <div className="spotify-login-logo">
-            {schoolLogo ? (
-              <img src={schoolLogo} alt="School Logo" />
-            ) : (
-              <GraduationCap size={28} color="#000" />
-            )}
-          </div>
-          <h1>Log in to {schoolName}</h1>
-        </div>
-
-        {/* Divider */}
-        <div className="spotify-divider">Continue with EduOne</div>
-
-        <form onSubmit={submit}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#000' }}>
+      {/* Left Form Side */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: '#0a0a0a' }}>
+        <div className="spotify-login-container" style={{ width: '100%', maxWidth: 450, background: 'transparent' }}>
           
-          {/* Error Message */}
-          {error && (
-            <div className="spotify-error">
-              <Shield size={18} style={{ flexShrink: 0 }} />
-              {error}
+          {/* Header / Logo */}
+          <div className="spotify-login-header">
+            <div className="spotify-login-logo">
+              {schoolLogo ? (
+                <img src={schoolLogo} alt="School Logo" />
+              ) : (
+                <GraduationCap size={28} color="#000" />
+              )}
             </div>
-          )}
-
-          {/* Username */}
-          <div className="spotify-Grade-group">
-            <label className="spotify-label" htmlFor="login-username">
-              Username
-            </label>
-            <input
-              id="login-username"
-              className="spotify-input"
-              autoFocus
-              autoComplete="username"
-              placeholder="Username or email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+            <h1>Log in to {schoolName}</h1>
           </div>
 
-          {/* Password */}
-          <div className="spotify-form-group">
-            <label className="spotify-label" htmlFor="login-password">
-              Password
-            </label>
-            <div className="spotify-pw-wrap">
-              <input
-                id="login-password"
-                className="spotify-input"
-                type={showPw ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="spotify-pw-toggle"
-                onClick={() => setShowPw(s => !s)}
-                aria-label={showPw ? 'Hide password' : 'Show password'}
-              >
-                {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
+          {/* Divider */}
+          <div className="spotify-divider">Continue with EduOne</div>
 
-          {/* Submit Button */}
-          <button
-            className="spotify-btn"
-            type="submit"
-            disabled={busy}
-          >
-            {busy ? (
-              <div style={{ width: 24, height: 24, border: '3px solid rgba(0,0,0,0.3)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            ) : (
-              'Log In'
+          <form onSubmit={submit}>
+            
+            {/* Error Message */}
+            {error && (
+              <div className="spotify-error">
+                <Shield size={18} style={{ flexShrink: 0 }} />
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        <a className="spotify-link">Forgot your password?</a>
-        <div className="spotify-divider"></div>
-        <div style={{ textAlign: 'center', color: '#a7a7a7', fontSize: 14 }}>
-          Don't have an account? <a className="spotify-link" style={{ display: 'inline', marginTop: 0 }}>Contact Administration</a>
+            {/* Username */}
+            <div className="spotify-form-group">
+              <label className="spotify-label" htmlFor="login-username">
+                Username
+              </label>
+              <input
+                id="login-username"
+                className="spotify-input"
+                autoFocus
+                autoComplete="username"
+                placeholder="Username or email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            {/* Password */}
+            <div className="spotify-form-group">
+              <label className="spotify-label" htmlFor="login-password">
+                Password
+              </label>
+              <div className="spotify-pw-wrap">
+                <input
+                  id="login-password"
+                  className="spotify-input"
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="spotify-pw-toggle"
+                  onClick={() => setShowPw(s => !s)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                >
+                  {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              className="spotify-btn"
+              type="submit"
+              disabled={busy}
+            >
+              {busy ? (
+                <div style={{ width: 24, height: 24, border: '3px solid rgba(0,0,0,0.3)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              ) : (
+                'Log In'
+              )}
+            </button>
+          </form>
+
+          <a className="spotify-link">Forgot your password?</a>
+          <div className="spotify-divider"></div>
+          <div style={{ textAlign: 'center', color: '#a7a7a7', fontSize: 14 }}>
+            Don't have an account? <a className="spotify-link" style={{ display: 'inline', marginTop: 0 }}>Contact Administration</a>
+          </div>
         </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      {/* Right Image Side */}
+      <div style={{ 
+        flex: 1.2, 
+        backgroundImage: 'url(/login_background.png)', 
+        backgroundSize: 'cover', 
+        backgroundPosition: 'center',
+        display: 'none',
+        borderLeft: '1px solid rgba(255,255,255,0.1)'
+      }} className="login-image-side" />
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (min-width: 900px) {
+          .login-image-side { display: block !important; }
+        }
+      `}</style>
     </div>
   );
 }
