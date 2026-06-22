@@ -50,44 +50,38 @@ export default function Login({ onDemoLogin }) {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#000' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#fff' }}>
       {/* Left Form Side */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: '#0a0a0a' }}>
-        <div className="spotify-login-container" style={{ width: '100%', maxWidth: 450, background: 'transparent' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: '#fff' }}>
+        <div className="hr-login-container">
           
           {/* Header / Logo */}
-          <div className="spotify-login-header">
-            <div className="spotify-login-logo">
+          <div className="hr-login-header">
+            <div className="hr-login-logo">
               {schoolLogo ? (
                 <img src={schoolLogo} alt="School Logo" />
               ) : (
-                <GraduationCap size={28} color="#000" />
+                <GraduationCap size={40} color="#008f11" />
               )}
             </div>
             <h1>Log in to {schoolName}</h1>
+            <p className="hr-subtitle">For Administrators, Teachers, and Parents</p>
           </div>
 
-          {/* Divider */}
-          <div className="spotify-divider">Continue with EduOne</div>
-
           <form onSubmit={submit}>
-            
             {/* Error Message */}
             {error && (
-              <div className="spotify-error">
+              <div className="hr-error">
                 <Shield size={18} style={{ flexShrink: 0 }} />
                 {error}
               </div>
             )}
 
             {/* Username */}
-            <div className="spotify-form-group">
-              <label className="spotify-label" htmlFor="login-username">
-                Username
-              </label>
+            <div className="hr-form-group">
               <input
                 id="login-username"
-                className="spotify-input"
+                className="hr-input"
                 autoFocus
                 autoComplete="username"
                 placeholder="Username or email"
@@ -97,23 +91,20 @@ export default function Login({ onDemoLogin }) {
             </div>
 
             {/* Password */}
-            <div className="spotify-form-group">
-              <label className="spotify-label" htmlFor="login-password">
-                Password
-              </label>
-              <div className="spotify-pw-wrap">
+            <div className="hr-form-group">
+              <div className="hr-pw-wrap">
                 <input
                   id="login-password"
-                  className="spotify-input"
+                  className="hr-input"
                   type={showPw ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="Password"
+                  placeholder="Your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
-                  className="spotify-pw-toggle"
+                  className="hr-pw-toggle"
                   onClick={() => setShowPw(s => !s)}
                   aria-label={showPw ? 'Hide password' : 'Show password'}
                 >
@@ -122,42 +113,164 @@ export default function Login({ onDemoLogin }) {
               </div>
             </div>
 
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+              <a className="hr-link">Forgot password?</a>
+            </div>
+
             {/* Submit Button */}
             <button
-              className="spotify-btn"
+              className="hr-btn"
               type="submit"
               disabled={busy}
             >
               {busy ? (
-                <div style={{ width: 24, height: 24, border: '3px solid rgba(0,0,0,0.3)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div className="hr-spinner" />
               ) : (
                 'Log In'
               )}
             </button>
           </form>
 
-          <a className="spotify-link">Forgot your password?</a>
-          <div className="spotify-divider"></div>
-          <div style={{ textAlign: 'center', color: '#a7a7a7', fontSize: 14 }}>
-            Don't have an account? <a className="spotify-link" style={{ display: 'inline', marginTop: 0 }}>Contact Administration</a>
+          <div style={{ textAlign: 'center', color: '#576871', fontSize: 14, marginTop: 40 }}>
+            Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }}>Contact Administration</a>
           </div>
         </div>
       </div>
 
       {/* Right Image Side */}
-      <div style={{ 
-        flex: 1.2, 
-        backgroundImage: 'url(/login_background.png)', 
-        backgroundSize: 'cover', 
-        backgroundPosition: 'center',
-        display: 'none',
-        borderLeft: '1px solid rgba(255,255,255,0.1)'
-      }} className="login-image-side" />
+      <div className="login-image-side" />
 
       <style>{`
+        .hr-login-container {
+          width: 100%;
+          maxWidth: 400px;
+          background: transparent;
+        }
+        .hr-login-header {
+          text-align: center;
+          margin-bottom: 40px;
+        }
+        .hr-login-logo {
+          margin-bottom: 24px;
+        }
+        .hr-login-logo img {
+          max-height: 50px;
+          object-fit: contain;
+        }
+        .hr-login-header h1 {
+          font-size: 28px;
+          font-weight: 700;
+          color: #0e141e;
+          margin: 0 0 8px;
+          letter-spacing: -0.5px;
+        }
+        .hr-subtitle {
+          color: #576871;
+          font-size: 15px;
+          margin: 0;
+        }
+        .hr-form-group {
+          margin-bottom: 20px;
+        }
+        .hr-input {
+          width: 100%;
+          background: #fff;
+          border: 1px solid #b7c9cc;
+          border-radius: 4px;
+          padding: 14px 16px;
+          font-size: 15px;
+          color: #0e141e;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .hr-input::placeholder {
+          color: #8b9a9d;
+        }
+        .hr-input:focus {
+          outline: none;
+          border-color: #008f11;
+          box-shadow: 0 0 0 2px rgba(0, 143, 17, 0.2);
+        }
+        .hr-pw-wrap {
+          position: relative;
+        }
+        .hr-pw-toggle {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: #8b9a9d;
+          cursor: pointer;
+          display: flex;
+        }
+        .hr-pw-toggle:hover {
+          color: #0e141e;
+        }
+        .hr-btn {
+          width: 100%;
+          background: #008f11;
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          padding: 16px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .hr-btn:hover {
+          background: #007a0e;
+        }
+        .hr-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        .hr-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        .hr-link {
+          color: #008f11;
+          text-decoration: none;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        .hr-link:hover {
+          text-decoration: underline;
+        }
+        .hr-error {
+          background: #fde8e8;
+          color: #c81e1e;
+          padding: 12px 16px;
+          border-radius: 4px;
+          font-size: 14px;
+          margin-bottom: 24px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .login-image-side {
+          flex: 1.2;
+          background-image: url(/login_background.png);
+          background-size: cover;
+          background-position: center;
+          display: none;
+          border-left: 1px solid #eef2f7;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (min-width: 900px) {
           .login-image-side { display: block !important; }
+        }
+        @media (max-width: 500px) {
+          .hr-login-container { padding: 0 10px; }
         }
       `}</style>
     </div>
