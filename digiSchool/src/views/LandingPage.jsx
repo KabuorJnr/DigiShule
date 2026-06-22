@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Layout, GraduationCap, Users, Heart, ArrowRight, CheckCircle2, DollarSign, Activity, FileText } from 'lucide-react';
+import { BookOpen, Layout, GraduationCap, Users, Heart, ArrowRight, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
 import { USERS } from '../data/users';
 
 const LandingPage = ({ onGetStarted, onDemoLogin }) => {
@@ -8,7 +8,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
   const getRoleUser = (role) => USERS.find(u => u.role === role);
 
   return (
-    <div className="landing-container">
+    <div className="landing-container gusto-theme">
       {/* Navbar */}
       <nav className="landing-nav">
         <div className="landing-brand">
@@ -16,70 +16,31 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
           <span>EduOne</span>
         </div>
         <div className="landing-actions">
-          <button className="landing-btn outline" onClick={onGetStarted}>Standard Login</button>
+          <button className="landing-btn ghost" onClick={onGetStarted}>Sign in</button>
+          <button className="landing-btn primary" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>See Demo</button>
         </div>
       </nav>
 
       {/* 1. Hero Section */}
-      <header className="landing-hero-banner">
-        <div className="hero-content">
+      <header className="gusto-hero">
+        <div className="hero-text-content">
           <h1 className="hero-title">
-            Empower Your School with <span className="highlight-text">Smart Education</span>
+            Manage your entire school community all in one place.
           </h1>
           <p className="hero-subtitle">
-            Manage academics, admissions, finance, and student health seamlessly. EduOne brings your entire school community together on one beautiful, easy-to-use platform.
+            Put the joy back in school administration. Work faster and reduce errors with automated academics, operations, and finance.
           </p>
-          <button className="landing-btn primary hero-cta" onClick={() => {
-            document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
-          }}>
-            Try the Interactive Demo
-          </button>
-        </div>
-      </header>
-
-      {/* 2. Quick Links (Features) Section */}
-      <section className="landing-quick-links">
-        <div className="quick-links-grid">
-          <div className="quick-link-item">
-            <div className="ql-icon orange"><BookOpen size={32} /></div>
-            <h2>Smart Academics</h2>
-            <div className="ql-actions">
-              <a href="#demo-section" className="ql-btn">Timetables & Gradebook &rarr;</a>
-              <a href="#demo-section" className="ql-btn">Assignments & Resources &rarr;</a>
-            </div>
-          </div>
-          <div className="quick-link-item">
-            <div className="ql-icon gray"><Layout size={32} /></div>
-            <h2>School Operations</h2>
-            <div className="ql-actions">
-              <a href="#demo-section" className="ql-btn">Staff Management &rarr;</a>
-              <a href="#demo-section" className="ql-btn">Facilities & Calendars &rarr;</a>
-            </div>
-          </div>
-          <div className="quick-link-item">
-            <div className="ql-icon light-blue"><DollarSign size={32} /></div>
-            <h2>Finance Management</h2>
-            <div className="ql-actions">
-              <a href="#demo-section" className="ql-btn">Automated Invoicing &rarr;</a>
-              <a href="#demo-section" className="ql-btn">Online Fee Collections &rarr;</a>
-            </div>
-          </div>
-          <div className="quick-link-item">
-            <div className="ql-icon blue"><Activity size={32} /></div>
-            <h2>Student Wellbeing</h2>
-            <div className="ql-actions">
-              <a href="#demo-section" className="ql-btn">Clinic Records &rarr;</a>
-              <a href="#demo-section" className="ql-btn">Secure Notifications &rarr;</a>
-            </div>
+          <div className="hero-cta-group">
+            <button className="landing-btn primary hero-btn" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>
+              Try the Interactive Demo
+            </button>
+            <span className="hero-note">No credit card required.</span>
           </div>
         </div>
-      </section>
-
-      {/* 3. Stats Section */}
-      <section className="landing-stats-section">
-        <div className="stats-container">
-          <div className="stats-visual">
-            <div className="dashboard-preview glass-panel">
+        
+        {/* Dashboard Visual Illustration */}
+        <div className="hero-visual-illustration">
+           <div className="dashboard-preview glass-panel">
               <div className="preview-header">
                 <div className="preview-nav">
                   <span className="active">Overview</span>
@@ -101,121 +62,159 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
                     <div className="preview-card-trend">On track</div>
                   </div>
                 </div>
-                <div className="preview-chart glass-panel">
-                  <div className="preview-chart-bars">
-                    <div className="bar" style={{ height: '60%' }}></div>
-                    <div className="bar" style={{ height: '80%' }}></div>
-                    <div className="bar" style={{ height: '40%' }}></div>
-                    <div className="bar" style={{ height: '90%' }}></div>
-                    <div className="bar" style={{ height: '70%' }}></div>
-                    <div className="bar" style={{ height: '100%' }}></div>
-                  </div>
-                </div>
               </div>
             </div>
+        </div>
+      </header>
+
+      {/* 2. Trust Badges */}
+      <section className="gusto-trust-badges">
+        <div className="trust-grid">
+          <div className="trust-item">
+            <strong>#1</strong>
+            <span>Best Software for Schools 2026</span>
           </div>
-          <div className="stats-content">
-            <h2>Run your school efficiently with EduOne</h2>
-            <hr className="stats-divider" />
-            <ul className="stats-list">
-              <li>
-                <span>more than</span>
-                <strong><span>99</span>%</strong>
-                <p>System uptime and reliability for uninterrupted learning</p>
-              </li>
-              <li>
-                <span>trusted by</span>
-                <strong><span>500</span>+</strong>
-                <p>Schools across the country using our platform daily</p>
-              </li>
-              <li>
-                <span>over</span>
-                <strong><span>100</span>k</strong>
-                <p>Active daily users including parents, teachers and students</p>
-              </li>
-            </ul>
-            <div className="stats-cta">
-              <button className="landing-btn outline" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>
-                What makes EduOne unique?
-              </button>
-            </div>
+          <div className="trust-item">
+            <strong>99.9%</strong>
+            <span>System Uptime & Reliability</span>
+          </div>
+          <div className="trust-item">
+            <strong>500+</strong>
+            <span>Active Schools Nationwide</span>
           </div>
         </div>
       </section>
 
-      {/* 4. Select Your Path (Text Block) */}
-      <section className="landing-path-text">
-        <div className="path-text-container">
-          <h2>Experience EduOne by Role</h2>
-          <p>At EduOne, we are driven by a strong commitment to empower everyone involved in the education ecosystem. As a unified platform, we embrace accessibility and flexibility, delivering exceptional tools for administrators, teachers, parents, and students. Choose the portal that fits your role to explore the demo!</p>
+      {/* 3. Alternating Feature Blocks */}
+      <section className="gusto-features-alternating">
+        
+        {/* Feature Block 1 */}
+        <div className="feature-block">
+          <div className="fb-text">
+            <h2>Run your school in minutes with smart technology.</h2>
+            <p>Academics takes just a few clicks. We automatically compile grades, help with curriculum tracking, and generate report cards to help save you hours of manual work.</p>
+            <a href="#demo-section" className="text-link">Learn more about Smart Academics &rarr;</a>
+          </div>
+          <div className="fb-visual bg-orange">
+             <BookOpen size={80} className="floating-icon" />
+          </div>
         </div>
+
+        {/* Feature Block 2 (Reversed) */}
+        <div className="feature-block reversed">
+          <div className="fb-text">
+            <h2>Make a real difference with automated operations.</h2>
+            <p>Supporting your staff is more important than ever. Automate facility scheduling, manage staff attendance, and streamline fee collections seamlessly.</p>
+            <a href="#demo-section" className="text-link">Learn more about Operations &rarr;</a>
+          </div>
+          <div className="fb-visual bg-blue">
+             <Layout size={80} className="floating-icon" />
+          </div>
+        </div>
+
+        {/* Feature Block 3 */}
+        <div className="feature-block">
+          <div className="fb-text">
+            <h2>Keep students healthy and engaged.</h2>
+            <p>Find and support great students from day 1. Use EduOne for clinic records, secure parent communications, and custom behavior tracking.</p>
+            <a href="#demo-section" className="text-link">Learn more about Student Wellbeing &rarr;</a>
+          </div>
+          <div className="fb-visual bg-teal">
+             <Heart size={80} className="floating-icon" />
+          </div>
+        </div>
+
       </section>
 
-      {/* 5. Offerings / Role Cards Grid */}
-      <section id="demo-section" className="landing-offerings">
-        <div className="offerings-grid">
+      {/* 4. "But wait, there's more" - Demo Roles */}
+      <section id="demo-section" className="gusto-more-features">
+        <div className="more-features-header">
+          <h2>But wait, there's more.</h2>
+          <p>Choose from a variety of dedicated portals. Experience EduOne through the eyes of every stakeholder.</p>
+        </div>
+
+        <div className="role-grid-gusto">
           {primaryRoles.map(role => {
             const user = getRoleUser(role);
             if (!user) return null;
             
             const roleDetails = {
-              principal: { title: 'Principal Portal', desc: 'Oversee school operations, view global statistics, and manage staff efficiently.', icon: <Layout size={32} /> },
-              teacher: { title: 'Teacher Portal', desc: 'Streamline your gradebook, assignments, and communicate with students.', icon: <BookOpen size={32} /> },
-              student: { title: 'Student Portal', desc: 'Access your timetable, download resources, and track your performance.', icon: <GraduationCap size={32} /> },
-              parent: { title: 'Parent Portal', desc: 'Stay updated on your child\'s progress, notices, and securely pay fees online.', icon: <Users size={32} /> }
+              principal: { title: 'Principal', desc: 'Oversee operations & stats', icon: <Layout size={24} />, color: 'orange' },
+              teacher: { title: 'Teacher', desc: 'Gradebook & assignments', icon: <BookOpen size={24} />, color: 'blue' },
+              student: { title: 'Student', desc: 'Timetables & resources', icon: <GraduationCap size={24} />, color: 'teal' },
+              parent: { title: 'Parent', desc: 'Progress & fee payments', icon: <Users size={24} />, color: 'gray' }
             };
             const details = roleDetails[role];
 
             return (
-              <div key={role} className={`offering-card ${role}`} onClick={() => onDemoLogin(user)}>
-                <div className="offering-icon">
-                  {details.icon}
-                </div>
-                <h3>{details.title}</h3>
-                <div className="offering-accent"></div>
-                <p>{details.desc}</p>
-                <span className="offering-btn">Log in as {user.name} &rarr;</span>
+              <div key={role} className="gusto-role-card" onClick={() => onDemoLogin(user)}>
+                 <div className={`role-icon-box bg-${details.color}`}>
+                   {details.icon}
+                 </div>
+                 <div className="role-card-text">
+                   <h3>{details.title} Portal</h3>
+                   <p>{details.desc}</p>
+                 </div>
+                 <ArrowRight className="role-arrow" size={20} />
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* 6. Testimonial Section */}
-      <section className="landing-testimonial">
-        <div className="testimonial-container">
-          <div className="testimonial-photo">
-            {/* A placeholder for the photo, matching the AU style */}
-            <div className="photo-placeholder"></div>
+      {/* 5. Social Proof / Testimonial */}
+      <section className="gusto-social-proof">
+        <div className="proof-container">
+          <div className="proof-stat">
+            <h2>Save 10 hours</h2>
+            <p>on administrative tasks each week, on average compared to manual systems.¹</p>
           </div>
-          <div className="testimonial-quote">
-            <blockquote>
-              <p><span>&ldquo;</span> I chose EduOne for the flexibility and the ability to seamlessly connect our entire school. During a busy term, our teachers can easily manage grades, and parents love the online fee payment. It has truly transformed our administrative processes. <span>&rdquo;</span></p>
-            </blockquote>
-            <span className="attribution">
-              <strong>Dr. Jane Kamau</strong>
-              <em>School Principal</em>
-            </span>
+          <div className="proof-stat">
+            <h2>"It gives me more time to focus on education."</h2>
+            <p>85% of surveyed EduOne school principals.¹</p>
+          </div>
+          <div className="proof-stat">
+            <h2>Switch to EduOne</h2>
+            <p>in two weeks or less, on average, according to customers.¹</p>
           </div>
         </div>
+        <p className="disclaimer">¹Based on an August 2026 survey of 450+ EduOne customers</p>
       </section>
 
-      {/* 7. Accent Banner Section */}
-      <section className="landing-accent-banner">
-        <div className="banner-content">
-          <h2>Ready to transform your school?</h2>
-          <p>EduOne provides all the tools you need to build a smarter, more connected educational community. Start your journey with us today and experience the difference.</p>
-          <button className="landing-btn primary" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>
-            Schedule a Live Demo
+      {/* 6. Three Steps Onboarding */}
+      <section className="gusto-three-steps">
+        <div className="steps-header">
+          <h2>You're three steps away from a smarter school.</h2>
+        </div>
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <h3>Create an account.</h3>
+            <p>It's free to sign up. You'll pick your module configuration and add your school details.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <h3>Add your people.</h3>
+            <p>Add your staff and student details. They can even self-onboard to save you time.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <h3>Go live.</h3>
+            <p>Once we have your school structure ready, you can go live with just a few clicks.</p>
+          </div>
+        </div>
+        <div className="steps-cta">
+          <button className="landing-btn primary hero-btn" onClick={() => document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' })}>
+            Explore the Demo
           </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="landing-footer">
+      <footer className="gusto-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <GraduationCap size={18} className="accent-icon" /> EduOne
+            <GraduationCap size={24} className="accent-icon" /> <span>EduOne</span>
           </div>
           <div className="footer-links">
             <span>Built by <strong>GovTech Builders KE</strong></span>
