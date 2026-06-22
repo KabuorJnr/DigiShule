@@ -34,7 +34,7 @@ export default function StudentPortal({ store, user }) {
   const [tab, setTab] = useState('dashboard');
   const [rank, setRank] = useState(null);
   const [payModal, setPayModal] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: 'M-Pesa' });
+  const [payForm, setPayForm] = useState({ reference: '', method: 'M-Pesa' });
   const [feeAccount, setFeeAccount] = useState(STUDENT_FEE_ACCOUNT);
   const [msgModal, setMsgModal] = useState(false);
   const [msgForm, setMsgForm] = useState({ subject: '', body: '' });
@@ -111,13 +111,15 @@ export default function StudentPortal({ store, user }) {
   }, [me, students]);
 
   const handlePay = () => {
-    const amt = Number(payForm.amount);
-    if (!amt || amt <= 0) { notify('Enter a valid amount', 'warning'); return; }
-    const newPayment = { id: `fp${Date.now()}`, date: new Date().toISOString().slice(0, 10), method: payForm.method, ref: `QG${Math.random().toString(36).slice(2, 8).toUpperCase()}`, amount: amt, status: 'Confirmed' };
+    const ref = payForm.reference?.trim();
+    if (!ref) { notify('Enter a valid reference code', 'warning'); return; }
+    // Mock an amount since the user only inputs the reference code for verification
+    const amt = 2500;
+    const newPayment = { id: `fp${Date.now()}`, date: new Date().toISOString().slice(0, 10), method: payForm.method, ref: ref.toUpperCase(), amount: amt, status: 'Verification Pending' };
     setFeeAccount(prev => ({ ...prev, totalPaid: prev.totalPaid + amt, outstanding: prev.outstanding - amt, payments: [newPayment, ...prev.payments] }));
     setPayModal(false);
-    setPayForm({ amount: '', method: 'M-Pesa' });
-    notify(`Payment of ${fmtKES(amt)} recorded successfully`, 'success', 'Payment');
+    setPayForm({ reference: '', method: 'M-Pesa' });
+    notify(`Reference ${ref.toUpperCase()} submitted for verification`, 'success', 'Payment');
   };
 
   const handleMsg = () => {
@@ -613,7 +615,7 @@ export default function StudentPortal({ store, user }) {
         <Modal title="Make a Payment" onClose={() => setPayModal(false)} footer={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setPayModal(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handlePay}>Confirm Payment</button>
+            <button className="btn btn-primary" onClick={handlePay}>Submit Reference</button>
           </div>
         }>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -621,8 +623,8 @@ export default function StudentPortal({ store, user }) {
               <strong>Outstanding Balance:</strong> {fmtKES(feeAccount.outstanding)}
             </div>
             <div>
-              <label className="field-label">Amount (KES) *</label>
-              <input type="number" className="input" placeholder="Enter amount" value={payForm.amount} onChange={e => setPayForm(p => ({ ...p, amount: e.target.value }))} />
+              <label className="field-label">Reference Code *</label>
+              <input type="text" className="input" placeholder="e.g. QGF123456" value={payForm.reference} onChange={e => setPayForm(p => ({ ...p, reference: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Payment Method</label>
@@ -637,8 +639,8 @@ export default function StudentPortal({ store, user }) {
                 1. Go to M-Pesa → Lipa na M-Pesa → Pay Bill<br />
                 2. Business No: <strong>123456</strong><br />
                 3. Account No: <strong>{me.adm}</strong><br />
-                4. Amount: Enter the amount above<br />
-                5. Confirm and enter your M-Pesa PIN
+                4. Amount: Enter the amount you wish to pay<br />
+                5. Enter the M-Pesa transaction code above
               </div>
             )}
             {payForm.method === 'Bank Transfer' && (
