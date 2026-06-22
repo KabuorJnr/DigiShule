@@ -35,7 +35,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
       {/* Navbar */}
       <nav className="bespoke-nav">
         <div className="bespoke-brand">
-          <GraduationCap size={28} />
+          <img src="/logo.png" alt="EduOne Logo" style={{ height: '36px' }} />
           EduOne
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
@@ -181,7 +181,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin }) => {
       <footer className="bespoke-footer">
         <div className="b-footer-content">
           <div className="bespoke-brand" style={{ fontSize: '20px' }}>
-            <GraduationCap size={20} />
+            <img src="/logo.png" alt="EduOne Logo" style={{ height: '24px' }} />
             EduOne
           </div>
           <div>
