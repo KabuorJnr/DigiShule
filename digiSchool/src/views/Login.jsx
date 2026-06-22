@@ -95,7 +95,7 @@ export default function Login({ onDemoLogin }) {
           </div>
 
           {/* Password */}
-          <div className="spotify-Grade-group">
+          <div className="spotify-form-group">
             <label className="spotify-label" htmlFor="login-password">
               Password
             </label>

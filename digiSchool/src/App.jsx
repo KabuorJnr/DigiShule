@@ -12,6 +12,7 @@ import {
 import { Icon, NAV_ICON_MAP } from './components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
 
+import LandingPage from './views/LandingPage';
 import Login from './views/Login';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
@@ -337,11 +338,15 @@ export default function App() {
     );
   }
 
-  // ---- If not logged in, show Login ----
+  // ---- If not logged in, show Landing or Login ----
   if (!currentUser) {
     return (
       <>
-        <Login onDemoLogin={handleDemoLogin} />
+        {!showLogin ? (
+          <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} />
+        ) : (
+          <Login onDemoLogin={handleDemoLogin} />
+        )}
         {/* Toasts render even on login page */}
         <div className="toast-wrap">
           {toasts.map((t) => (
