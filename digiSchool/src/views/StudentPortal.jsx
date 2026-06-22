@@ -6,7 +6,7 @@ import { LIBRARY_BOOKS } from '../data/modules';
 import { fetchClassRank } from '../lib/api';
 import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
 import Modal from '../components/Modal';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import {
   BarChart3, Trophy, FileText, Wallet, CreditCard, Mail, ClipboardList,
   Calendar, CheckCircle2, Clock, XCircle, DollarSign, AlertTriangle,
@@ -21,10 +21,21 @@ const TABS = [
   { id: 'attendance', label: 'Attendance' },
   { id: 'results', label: 'Results' },
   { id: 'resources', label: 'Resources' },
+  { id: 'timetable', label: 'Timetable' },
   { id: 'finance', label: 'Finance' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'notices', label: 'Notices' },
 ];
+
+const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const PERIODS = ['08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'];
+const MOCK_TIMETABLE = {
+  'Monday': ['Mathematics', 'English', 'Science', 'Break', 'History', 'Geography', 'Lunch', 'P.E.'],
+  'Tuesday': ['Science', 'Mathematics', 'Art', 'Break', 'English', 'Computer', 'Lunch', 'History'],
+  'Wednesday': ['Geography', 'Science', 'Mathematics', 'Break', 'Music', 'English', 'Lunch', 'Clubs'],
+  'Thursday': ['English', 'History', 'Mathematics', 'Break', 'Science', 'Geography', 'Lunch', 'Art'],
+  'Friday': ['Mathematics', 'Science', 'English', 'Break', 'P.E.', 'Computer', 'Lunch', 'Assembly'],
+};
 
 const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
@@ -94,6 +105,13 @@ export default function StudentPortal({ store, user }) {
   }, [me, gradeBoundaries]);
 
   const overallAvg = subjects.length ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1) : 0;
+
+  const trendData = useMemo(() => [
+    { term: 'Last Year T3', avg: 72 },
+    { term: 'Term 1', avg: 76 },
+    { term: 'Term 2', avg: Number(overallAvg) || 78 }
+  ], [overallAvg]);
+
   const upcomingExams = (examSchedules || []).filter(e => e.sessions?.some(s => s.status === 'Upcoming'));
 
   const attLog = STUDENT_ATTENDANCE_LOG;
@@ -174,21 +192,37 @@ export default function StudentPortal({ store, user }) {
             <div className="grid grid-4" style={{ gap: 10 }}>
               <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setTab('results')}><BarChart3 size={16} /> View Assessment</button>
               <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setTab('assignments')}><ClipboardList size={16} /> View Assignments</button>
+              <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setTab('timetable')}><Calendar size={16} /> Weekly Timetable</button>
               <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}><Mail size={16} /> Message School</button>
-              <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setTab('finance')}><CreditCard size={16} /> Make Payment</button>
             </div>
           </div>
 
-          {/* Recent Notices */}
-          <div className="card card-pad" style={{ marginBottom: 16 }}>
-            <h3 className="section-title">Recent Notices</h3>
-            {NOTICES.filter(n => n.audience.includes('all') || n.audience.includes('students')).slice(0, 3).map(n => (
-              <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{n.date} — {n.postedBy}</div>
-              </div>
-            ))}
-            <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setTab('notices')}>View All Notices →</button>
+          <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
+            {/* Performance Trend */}
+            <div className="card card-pad">
+              <h3 className="section-title">Performance Trend</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="term" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  <Line type="monotone" dataKey="avg" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} name="Average %" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Recent Notices */}
+            <div className="card card-pad">
+              <h3 className="section-title">Recent Notices</h3>
+              {NOTICES.filter(n => n.audience.includes('all') || n.audience.includes('students')).slice(0, 3).map(n => (
+                <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{n.date} — {n.postedBy}</div>
+                </div>
+              ))}
+              <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setTab('notices')}>View All Notices →</button>
+            </div>
           </div>
         </>
       )}
@@ -224,6 +258,50 @@ export default function StudentPortal({ store, user }) {
             </div>
           </div>
         </>
+      )}
+
+      {/* ===== TIMETABLE ===== */}
+      {tab === 'timetable' && (
+        <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Weekly Class Timetable</h3>
+            <Badge color="blue">Grade {me.class}</Badge>
+          </div>
+          <div className="scroll-x">
+            <table className="table" style={{ minWidth: 800 }}>
+              <thead>
+                <tr>
+                  <th style={{ width: 100 }}>Time</th>
+                  {WEEK_DAYS.map(day => <th key={day} style={{ textAlign: 'center' }}>{day}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {PERIODS.map((time, idx) => (
+                  <tr key={time}>
+                    <td className="muted" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{time}</td>
+                    {WEEK_DAYS.map(day => {
+                      const subject = MOCK_TIMETABLE[day][idx];
+                      const isBreak = subject === 'Break' || subject === 'Lunch';
+                      return (
+                        <td key={day} style={{ textAlign: 'center', padding: isBreak ? 8 : 12 }}>
+                          {isBreak ? (
+                            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '4px', fontSize: 12, color: '#94a3b8', border: '1px dashed #cbd5e1' }}>
+                              {subject}
+                            </div>
+                          ) : (
+                            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: 8, padding: '8px', fontSize: 13, fontWeight: 500 }}>
+                              {subject}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* ===== MY SUBJECTS ===== */}

@@ -3,7 +3,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
-import { SUBJECTS, ATTENDANCE_RECORDS } from '../data/seed';
+import { SUBJECTS, ATTENDANCE_RECORDS, STUDENT_ATTENDANCE_LOG } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
@@ -31,6 +31,15 @@ export default function ParentPortal({ store, user }) {
   const [payments, setPayments] = useState([]);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payForm, setPayForm] = useState({ amount: '', method: 'M-Pesa' });
+  
+  const [msgModalOpen, setMsgModalOpen] = useState(false);
+  const [msgForm, setMsgForm] = useState({ teacher: 'Class Teacher', subject: '', body: '' });
+
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ phone: '+254 700 000000', email: user?.email || '', emergencyContact: 'John Doe', emergencyPhone: '+254 711 111111' });
+
+  // Detailed Attendance
+  const [attendanceLog, setAttendanceLog] = useState(STUDENT_ATTENDANCE_LOG);
 
   useEffect(() => {
     if (!child?.adm) return;
@@ -95,6 +104,19 @@ export default function ParentPortal({ store, user }) {
     }
   };
 
+  const handleSendMessage = () => {
+    if (!msgForm.subject.trim() || !msgForm.body.trim()) return store.notify('Please fill all fields', 'warning');
+    store.notify(`Message sent to ${msgForm.teacher} successfully.`, 'success');
+    setMsgModalOpen(false);
+    setMsgForm({ teacher: 'Class Teacher', subject: '', body: '' });
+  };
+
+  const handleUpdateProfile = () => {
+    if (!profileForm.phone || !profileForm.emergencyContact) return store.notify('Please fill required fields', 'warning');
+    store.notify('Profile and emergency contacts updated successfully.', 'success');
+    setProfileModalOpen(false);
+  };
+
   if (!child) {
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', marginTop: 40 }}>
@@ -118,6 +140,21 @@ export default function ParentPortal({ store, user }) {
         <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
         <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
         <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Upcoming Exams" value={upcomingExams.length} accent="#F59E0B" />
+      </div>
+
+      <div className="card card-pad" style={{ marginBottom: 14 }}>
+        <h3 className="section-title">Quick Actions</h3>
+        <div className="grid grid-3" style={{ gap: 12 }}>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModalOpen(true)}>
+            <Icon name="message" size={18} /> Message Teacher
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setProfileModalOpen(true)}>
+            <Icon name="settings" size={18} /> Update Contact Info
+          </button>
+          <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
+            <Icon name="finance" size={18} /> Pay School Fees
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-2" style={{ alignItems: 'start' }}>
@@ -146,7 +183,6 @@ export default function ParentPortal({ store, user }) {
           <div className="card card-pad" style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div className="section-title" style={{ margin: 0 }}>Fee Statement</div>
-              <button className="btn btn-primary btn-sm" onClick={() => setPayModalOpen(true)}>Pay Fees</button>
             </div>
             <table className="table">
               <tbody>
@@ -169,6 +205,34 @@ export default function ParentPortal({ store, user }) {
               ))}
             </div>
           )}
+
+          <div className="card card-pad" style={{ marginTop: 14 }}>
+            <div className="section-title">Detailed Attendance Log</div>
+            <div className="scroll-x" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <table className="table">
+                <thead style={{ position: 'sticky', top: 0, background: '#fff' }}>
+                  <tr><th>Date</th><th>Status</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                  {attendanceLog.length === 0 ? (
+                    <tr><td colSpan={3} className="muted">No attendance records found.</td></tr>
+                  ) : (
+                    attendanceLog.map((log, idx) => (
+                      <tr key={idx}>
+                        <td>{log.date}</td>
+                        <td>
+                          <Badge color={log.status === 'Present' ? 'green' : log.status === 'Late' ? 'amber' : 'red'}>
+                            {log.status}
+                          </Badge>
+                        </td>
+                        <td className="muted">{log.notes || '—'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -250,6 +314,66 @@ export default function ParentPortal({ store, user }) {
           </div>
           <p className="muted" style={{ marginTop: 16, fontSize: 13 }}>
             Payments made here will automatically reflect on the finance portal.
+          </p>
+        </Modal>
+      )}
+
+      {msgModalOpen && (
+        <Modal title="Message Teacher" onClose={() => setMsgModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setMsgModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSendMessage}>Send Message</button>
+          </>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="field-label">Recipient</label>
+              <select className="select" value={msgForm.teacher} onChange={e => setMsgForm(f => ({ ...f, teacher: e.target.value }))}>
+                <option>Class Teacher</option>
+                <option>Math Teacher</option>
+                <option>Science Teacher</option>
+                <option>Principal</option>
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Subject</label>
+              <input type="text" className="input" value={msgForm.subject} onChange={e => setMsgForm(f => ({ ...f, subject: e.target.value }))} placeholder="e.g. Absence note for tomorrow" />
+            </div>
+            <div>
+              <label className="field-label">Message</label>
+              <textarea className="input" rows={4} value={msgForm.body} onChange={e => setMsgForm(f => ({ ...f, body: e.target.value }))} placeholder="Type your message here..."></textarea>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {profileModalOpen && (
+        <Modal title="Emergency Contacts & Profile" onClose={() => setProfileModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setProfileModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleUpdateProfile}>Save Changes</button>
+          </>
+        }>
+          <div className="grid grid-2" style={{ gap: 16 }}>
+            <div>
+              <label className="field-label">Your Phone Number</label>
+              <input type="text" className="input" value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Your Email</label>
+              <input type="email" className="input" value={profileForm.email} onChange={e => setProfileForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Emergency Contact Name</label>
+              <input type="text" className="input" value={profileForm.emergencyContact} onChange={e => setProfileForm(f => ({ ...f, emergencyContact: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Emergency Contact Phone</label>
+              <input type="text" className="input" value={profileForm.emergencyPhone} onChange={e => setProfileForm(f => ({ ...f, emergencyPhone: e.target.value }))} />
+            </div>
+          </div>
+          <p className="muted" style={{ marginTop: 16, fontSize: 13 }}>
+            This information will be used by the school in case of medical emergencies or critical alerts.
           </p>
         </Modal>
       )}
