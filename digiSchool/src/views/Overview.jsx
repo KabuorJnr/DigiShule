@@ -48,19 +48,24 @@ export default function Overview({ store }) {
   const onLeave = totalTeachers - activeTeachers;
 
   const todayAttendance = fullTrend[fullTrend.length - 1];
-  const attRate = totalStudents > 0 && todayAttendance ? ((todayAttendance.present / totalStudents) * 100).toFixed(1) : '91.3';
+  const attRate = totalStudents > 0 ? (todayAttendance ? ((todayAttendance.present / totalStudents) * 100).toFixed(1) : '91.3') : '0.0';
 
   const latestRev = MONTHLY_REVENUE_TREND[MONTHLY_REVENUE_TREND.length - 1]?.revenue || 1400000;
-  const revStr = latestRev > 1000000 ? `${(latestRev / 1000000).toFixed(1)}M` : `${(latestRev / 1000).toFixed(0)}K`;
+  const revStr = totalStudents > 0 ? (latestRev > 1000000 ? `${(latestRev / 1000000).toFixed(1)}M` : `${(latestRev / 1000).toFixed(0)}K`) : '0';
 
   const maleCount = store.students?.filter(s => s.gender === 'M').length || 0;
   const femaleCount = store.students?.filter(s => s.gender === 'F').length || 0;
-  const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 52;
-  const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 48;
+  const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 0;
+  const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 0;
 
   // Simulate boarding/day based on county or just a fixed ratio for now
-  const boardingCount = Math.round(totalStudents * 0.73);
-  const dayCount = totalStudents - boardingCount;
+  const boardingCount = totalStudents > 0 ? Math.round(totalStudents * 0.73) : 0;
+  const dayCount = totalStudents > 0 ? totalStudents - boardingCount : 0;
+
+  const displayTrend = totalStudents > 0 ? MONTHLY_REVENUE_TREND : [];
+  const displayClassDist = totalStudents > 0 ? classDistData : [];
+  const displayAlerts = totalStudents > 0 ? SEED_ALERTS.slice(0, 4) : [];
+  const displayEvents = totalStudents > 0 ? UPCOMING_EVENTS : [];
 
   return (
     <div>
@@ -81,10 +86,10 @@ export default function Overview({ store }) {
 
       {/* KPI Row 2 */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value="KES 450K" sub={<Badge color="amber">Follow-up needed</Badge>} />
-        <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value="12" sub="Admissions portal" />
-        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub="Balanced" />
-        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub="73% Boarding" />
+        <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${totalStudents > 0 ? '450K' : '0'}`} sub={totalStudents > 0 ? <Badge color="amber">Follow-up needed</Badge> : 'All clear'} />
+        <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={totalStudents > 0 ? "12" : "0"} sub="Admissions portal" />
+        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub={totalStudents > 0 ? "Balanced" : "N/A"} />
+        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "73% Boarding" : "N/A"} />
       </div>
 
       {/* Charts */}
@@ -94,29 +99,41 @@ export default function Overview({ store }) {
             <h3 className="section-title" style={{ margin: 0 }}>Monthly Revenue Trend</h3>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={MONTHLY_REVENUE_TREND} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-              <Legend />
-              <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#0078D4" strokeWidth={2} dot={true} />
-            </LineChart>
+            {displayTrend.length > 0 ? (
+              <LineChart data={displayTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
+                <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#0078D4" strokeWidth={2} dot={true} />
+              </LineChart>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+                No revenue data available
+              </div>
+            )}
           </ResponsiveContainer>
         </div>
 
         <div className="card card-pad">
           <h3 className="section-title">Class Distribution</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie data={classDistData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                {classDistData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={['#0078D4', '#0EA5E9', '#107C10', '#FFB900'][index % 4]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
+            {displayClassDist.length > 0 ? (
+              <PieChart>
+                <Pie data={displayClassDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                  {displayClassDist.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={['#0078D4', '#0EA5E9', '#107C10', '#FFB900'][index % 4]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+                No students enrolled
+              </div>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
@@ -125,7 +142,7 @@ export default function Overview({ store }) {
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
         <div className="card card-pad">
           <h3 className="section-title">Recent Activity & Alerts</h3>
-          {SEED_ALERTS.slice(0, 4).map((a) => {
+          {displayAlerts.length > 0 ? displayAlerts.map((a) => {
             const AlertIcon = ALERT_ICON_MAP[a.icon] || AlertCircle;
             return (
               <div key={a.id} className="alert-row">
@@ -136,12 +153,16 @@ export default function Overview({ store }) {
                 </div>
               </div>
             );
-          })}
+          }) : (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              No recent activity to display.
+            </div>
+          )}
         </div>
 
         <div className="card card-pad">
           <h3 className="section-title">Upcoming Events</h3>
-          {UPCOMING_EVENTS.map((e) => (
+          {displayEvents.length > 0 ? displayEvents.map((e) => (
             <div key={e.id} className="alert-row">
               <div className="alert-icon" style={{ background: '#e8f0fe', color: '#0078D4' }}><CalendarDays size={16} /></div>
               <div style={{ flex: 1 }}>
@@ -149,7 +170,11 @@ export default function Overview({ store }) {
                 <div className="muted" style={{ fontSize: 11 }}>{e.date} • {e.desc}</div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              No upcoming events scheduled.
+            </div>
+          )}
         </div>
 
         <div>
