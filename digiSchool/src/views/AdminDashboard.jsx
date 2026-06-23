@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Badge, ProgressBar } from '../components/widgets';
 import { fmtKES } from '../data/modules';
-const STAFF = [];
-const FACILITIES = [];
-const DISCIPLINARY_RECORDS = [];
 
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -23,15 +20,22 @@ export default function AdminDashboard({ store, user }) {
   const [disciplineModal, setDisciplineModal] = useState(null);
   const [leaveActions, setLeaveActions] = useState({});
   const [expenses, setExpenses] = useState([]);
+  
+  const [dbStaff, setDbStaff] = useState([]);
+  const [dbFacilities, setDbFacilities] = useState([]);
+  const [dbDiscipline, setDbDiscipline] = useState([]);
 
   useEffect(() => {
     fetchTable('expenses').then(setExpenses).catch(() => {});
+    fetchTable('staff').then(setDbStaff).catch(() => {});
+    fetchTable('facilities').then(setDbFacilities).catch(() => {});
+    fetchTable('disciplinaryRecords').then(setDbDiscipline).catch(() => {});
   }, []);
 
-  const presentStaff = STAFF.filter(s => s.status === 'Present').length;
-  const operationalFac = FACILITIES.filter(f => f.status === 'Operational').length;
+  const presentStaff = dbStaff.filter(s => s.status === 'Present' || s.status === 'Active' || s.status === 'active').length;
+  const operationalFac = dbFacilities.filter(f => f.status === 'Operational').length;
   const pendingLeave = 0;
-  const openDiscipline = DISCIPLINARY_RECORDS.filter(d => d.status === 'Open').length;
+  const openDiscipline = dbDiscipline.filter(d => d.status === 'Open').length;
 
   const handleLeaveAction = (id, action) => {
     setLeaveActions(prev => ({ ...prev, [id]: action }));
@@ -73,10 +77,10 @@ export default function AdminDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Staff" value={STAFF.length} sub={`${presentStaff} present today`} color="#000000" />
+        <Stat label="Total Staff" value={dbStaff.length} sub={`${presentStaff} present today`} color="#000000" />
         <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#FFB900" />
         <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#D13438" />
-        <Stat label="Facilities" value={`${operationalFac}/${FACILITIES.length}`} sub="Operational" color="#107C10" />
+        <Stat label="Facilities" value={`${operationalFac}/${dbFacilities.length}`} sub="Operational" color="#107C10" />
       </div>
 
       {/* Quick Actions */}
@@ -99,7 +103,7 @@ export default function AdminDashboard({ store, user }) {
         {/* Discipline Cases */}
         <div className="card card-pad">
           <h3 className="section-title" style={{ color: '#000000' }}>Discipline Cases</h3>
-          {DISCIPLINARY_RECORDS.map(d => (
+          {dbDiscipline.slice(0, 5).map(d => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{d.student} — {d.category}</div>
@@ -109,12 +113,13 @@ export default function AdminDashboard({ store, user }) {
               <Badge color={d.status === 'Open' ? 'red' : 'green'}>{d.status}</Badge>
             </div>
           ))}
+          {dbDiscipline.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No discipline cases recorded.</div>}
         </div>
 
         {/* Facilities */}
         <div className="card card-pad">
           <h3 className="section-title" style={{ color: '#000000' }}>Facilities Overview</h3>
-          {FACILITIES.map(f => (
+          {dbFacilities.slice(0, 5).map(f => (
             <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{f.name}</div>
@@ -123,6 +128,7 @@ export default function AdminDashboard({ store, user }) {
               <Badge color={f.status === 'Operational' ? 'green' : 'amber'}>{f.status}</Badge>
             </div>
           ))}
+          {dbFacilities.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No facilities added.</div>}
           <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('facilities')}>
             Manage Facilities
           </button>

@@ -394,6 +394,7 @@ CREATE TABLE IF NOT EXISTS staff (
   name TEXT NOT NULL,
   role TEXT,
   dept TEXT,
+  subject TEXT,
   email TEXT,
   status TEXT,
   check_in TEXT,

@@ -148,6 +148,8 @@ export default function StaffAttendance({ store, user }) {
         name: addForm.name,
         role: addForm.role,
         dept: addForm.dept,
+        subject: addForm.subject,
+        email: addForm.email,
         status: 'Present',
         check_in: '07:00 AM'
       };
@@ -185,7 +187,7 @@ export default function StaffAttendance({ store, user }) {
         const teacherObj = {
           id: newStaff.id,
           name: newStaff.name,
-          subject: newStaff.dept,
+          subject: newStaff.subject || newStaff.dept,
           role: 'teacher',
           emp_id: newStaff.id,
           phone: addForm.phone,
@@ -209,7 +211,7 @@ export default function StaffAttendance({ store, user }) {
       setTimeout(() => {
         setProvisionStep(null);
         setShowAddModal(false);
-        setAddForm({ name: '', email: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+        setAddForm({ name: '', email: '', role: 'Teacher', dept: '', subject: '', phone: '', empId: '' });
         notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
       }, 1500);
 
@@ -505,15 +507,21 @@ export default function StaffAttendance({ store, user }) {
                 </select>
               </div>
               <div>
-                <label className="field-label">Department / Subject *</label>
-                <input className="input" placeholder="e.g. Mathematics" value={addForm.dept} onChange={e => setAddForm(p => ({ ...p, dept: e.target.value }))} />
+                <label className="field-label">Department *</label>
+                <input className="input" placeholder="e.g. Science" value={addForm.dept} onChange={e => setAddForm(p => ({ ...p, dept: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-2">
               <div>
+                <label className="field-label">Subject Taught</label>
+                <input className="input" placeholder="e.g. Mathematics" value={addForm.subject} onChange={e => setAddForm(p => ({ ...p, subject: e.target.value }))} />
+              </div>
+              <div>
                 <label className="field-label">Employee ID (Optional)</label>
                 <input className="input" placeholder="e.g. EMP1024" value={addForm.empId} onChange={e => setAddForm(p => ({ ...p, empId: e.target.value }))} />
               </div>
+            </div>
+            <div className="grid grid-2">
               <div>
                 <label className="field-label">Phone (Optional)</label>
                 <input className="input" placeholder="07XX XXX XXX" value={addForm.phone} onChange={e => setAddForm(p => ({ ...p, phone: e.target.value }))} />
