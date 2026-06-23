@@ -276,3 +276,24 @@ ON school_events FOR UPDATE USING (school_id = my_school_id());
 
 CREATE POLICY ""Users can delete their school's events""
 ON school_events FOR DELETE USING (school_id = my_school_id());
+
+-- 15. Job Applications Table
+CREATE TABLE IF NOT EXISTS job_applications (
+  id TEXT PRIMARY KEY,
+  applicant_name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  department TEXT,
+  phone TEXT,
+  email TEXT,
+  experience_years INT,
+  applied_date DATE NOT NULL,
+  status TEXT DEFAULT 'New',
+  interview_date DATE,
+  interview_time TIME,
+  interview_type TEXT,
+  notes TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE job_applications DISABLE ROW LEVEL SECURITY;

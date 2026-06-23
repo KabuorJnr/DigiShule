@@ -7,7 +7,7 @@ import { KpiCard, Sparkline, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, UserCheck, Building, FileText, Megaphone, CalendarDays, CreditCard, AlertCircle } from 'lucide-react';
-import { buildAttendanceTrend, SEED_ALERTS, MONTHLY_REVENUE_TREND, buildClassDistribution, UPCOMING_EVENTS } from '../data/seed';
+
 
 const ALERT_ICON_MAP = {
   '👨‍🏫': Users,
@@ -27,7 +27,7 @@ const QUICK_ACTIONS = [
 
 export default function Overview({ store }) {
   const { navigate, notify } = store;
-  const fullTrend = useMemo(() => buildAttendanceTrend(), []);
+  const fullTrend = [];
   const [alertModal, setAlertModal] = useState(null);
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ audience: 'All Parents', message: '', type: 'SMS & Email' });
@@ -40,7 +40,14 @@ export default function Overview({ store }) {
   };
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
-  const classDistData = useMemo(() => buildClassDistribution(store.settings.levels), [store.settings.levels]);
+  const classDistData = useMemo(() => {
+    if (!store.students) return [];
+    const dist = {};
+    store.students.forEach(s => {
+      dist[s.class] = (dist[s.class] || 0) + 1;
+    });
+    return Object.keys(dist).map(k => ({ name: `Grade ${k}`, value: dist[k] }));
+  }, [store.students]);
 
   const totalStudents = store.students?.length || 0;
   const totalTeachers = store.teachers?.length || 0;
@@ -50,7 +57,7 @@ export default function Overview({ store }) {
   const todayAttendance = fullTrend[fullTrend.length - 1];
   const attRate = totalStudents > 0 ? (todayAttendance ? ((todayAttendance.present / totalStudents) * 100).toFixed(1) : '91.3') : '0.0';
 
-  const latestRev = MONTHLY_REVENUE_TREND[MONTHLY_REVENUE_TREND.length - 1]?.revenue || 1400000;
+  const latestRev = 1400000;
   const revStr = totalStudents > 0 ? (latestRev > 1000000 ? `${(latestRev / 1000000).toFixed(1)}M` : `${(latestRev / 1000).toFixed(0)}K`) : '0';
 
   const maleCount = store.students?.filter(s => s.gender === 'M').length || 0;
@@ -62,10 +69,10 @@ export default function Overview({ store }) {
   const boardingCount = totalStudents > 0 ? Math.round(totalStudents * 0.73) : 0;
   const dayCount = totalStudents > 0 ? totalStudents - boardingCount : 0;
 
-  const displayTrend = totalStudents > 0 ? MONTHLY_REVENUE_TREND : [];
+  const displayTrend = [];
   const displayClassDist = totalStudents > 0 ? classDistData : [];
-  const displayAlerts = totalStudents > 0 ? SEED_ALERTS.slice(0, 4) : [];
-  const displayEvents = totalStudents > 0 ? UPCOMING_EVENTS : [];
+  const displayAlerts = [];
+  const displayEvents = [];
 
   return (
     <div>

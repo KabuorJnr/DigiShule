@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '../components/widgets';
-import { CLASSES, SUBJECTS, DEPARTMENTS } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS } from '../data/seed';
 
 const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
@@ -14,7 +14,7 @@ export default function Settings({ store, user }) {
 
   // local copies for editing
   const [form, setForm] = useState(settings);
-  const [classList, setClassList] = useState(CLASSES.map((c) => ({ name: `Grade ${c}`, capacity: 40 })));
+  const [classList, setClassList] = useState([]);
   const [newClass, setNewClass] = useState('');
   const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
   const [newSubj, setNewSubj] = useState('');

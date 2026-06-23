@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
-import { SUBJECTS, NOTICES, ASSIGNMENTS_LIST, STUDENT_ATTENDANCE_LOG, STUDY_MATERIALS, REVISION_DOWNLOADS, STUDENT_FEE_ACCOUNT, UPCOMING_EVENTS } from '../data/seed';
+import { SUBJECTS } from '../data/seed';
 import { LIBRARY_BOOKS } from '../data/modules';
 import { fetchClassRank } from '../lib/api';
 import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
@@ -40,7 +40,7 @@ const MOCK_TIMETABLE = {
 const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
 export default function StudentPortal({ store, user, params }) {
-  const { students, gradeBoundaries, examSchedules, feeStructure, navigate, notify } = store;
+  const { students, gradeBoundaries, examSchedules, feeStructure, navigate, notify, notifications } = store;
   const me = useMemo(() => {
     if (!students || students.length === 0) return null;
     const targetId = params?.childId || user?.link || user?.id;
@@ -50,7 +50,7 @@ export default function StudentPortal({ store, user, params }) {
   const [rank, setRank] = useState(null);
   const [payModal, setPayModal] = useState(false);
   const [payForm, setPayForm] = useState({ reference: '', method: 'M-Pesa' });
-  const [feeAccount, setFeeAccount] = useState(STUDENT_FEE_ACCOUNT);
+  const [feeAccount, setFeeAccount] = useState({ totalBilled: 0, totalPaid: 0, outstanding: 0, payments: [], structure: [], dueDate: '' });
   const [msgModal, setMsgModal] = useState(false);
   const [msgForm, setMsgForm] = useState({ subject: '', body: '' });
   const [subFilter, setSubFilter] = useState('All');
@@ -63,14 +63,16 @@ export default function StudentPortal({ store, user, params }) {
 
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [libraryLoans, setLibraryLoans] = useState([]);
+  const [schoolEvents, setSchoolEvents] = useState([]);
 
   useEffect(() => {
     let active = true;
     import('../lib/api').then(({ fetchTable }) => {
-      Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')]).then(([bks, lns]) => {
+      Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans'), fetchTable('schoolEvents')]).then(([bks, lns, evs]) => {
         if (!active) return;
         setLibraryBooks(bks || []);
         setLibraryLoans(lns || []);
+        setSchoolEvents(evs || []);
       });
     });
     return () => { active = false; };
@@ -132,7 +134,7 @@ export default function StudentPortal({ store, user, params }) {
 
   const upcomingExams = (examSchedules || []).filter(e => e.sessions?.some(s => s.status === 'Upcoming'));
 
-  const attLog = STUDENT_ATTENDANCE_LOG;
+  const attLog = [];
   const attTotals = useMemo(() => ({
     total: attLog.length,
     present: attLog.filter(a => a.status === 'Present').length,
@@ -233,10 +235,10 @@ export default function StudentPortal({ store, user, params }) {
             {/* Recent Notices */}
             <div className="card card-pad">
               <h3 className="section-title">Recent Notices</h3>
-              {NOTICES.filter(n => n.audience.includes('all') || n.audience.includes('students')).slice(0, 3).map(n => (
+              {(notifications || []).filter(n => (n.audience || []).includes('all') || (n.audience || []).includes('students')).slice(0, 3).map(n => (
                 <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{n.date} — {n.postedBy}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by}</div>
                 </div>
               ))}
               <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setTab('notices')}>View All Notices →</button>
@@ -370,22 +372,22 @@ export default function StudentPortal({ store, user, params }) {
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {ASSIGNMENTS_LIST.filter(a => subFilter === 'All' || a.subject === subFilter).map(a => (
+            {cloudAssignments.filter(a => subFilter === 'All' || a.subject === subFilter).map(a => (
               <div key={a.id} className="card card-pad">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h4 style={{ margin: 0, fontSize: 14 }}>{a.title}</h4>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
                       <Badge color="blue">{a.subject}</Badge>
-                      <span className="muted" style={{ fontSize: 12 }}>by {a.teacher}</span>
+                      <span className="muted" style={{ fontSize: 12 }}>by {a.uploaded_by}</span>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: new Date(a.dueDate) < new Date() ? '#D13438' : '#107C10' }}>Due: {a.dueDate}</div>
-                    <Badge color={a.status === 'Active' ? 'green' : 'gray'}>{a.status}</Badge>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: new Date(a.due_date) < new Date() ? '#D13438' : '#107C10' }}>Due: {a.due_date}</div>
+                    <Badge color="green">Active</Badge>
                   </div>
                 </div>
-                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#444', lineHeight: 1.5 }}>{a.description}</p>
+                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#444', lineHeight: 1.5 }}>{a.description || a.name}</p>
               </div>
             ))}
           </div>
@@ -539,7 +541,7 @@ export default function StudentPortal({ store, user, params }) {
           {resTab === 'materials' && (
             <div className="card card-pad">
               <h3 className="section-title">
-                Study Materials ({STUDY_MATERIALS.length + cloudMaterials.length})
+                Study Materials ({cloudMaterials.length})
                 {cloudLoading && <Loader size={14} style={{ marginLeft: 8, opacity: 0.5 }} />}
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -558,19 +560,6 @@ export default function StudentPortal({ store, user, params }) {
                       <button className="btn btn-sm btn-primary" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudOpen(m)}>
                         {actionId === m.id + '_o' ? <Loader size={13} /> : <Eye size={14} />} View
                       </button>
-                    </div>
-                  </div>
-                ))}
-                {/* Seed study materials */}
-                {STUDY_MATERIALS.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{m.title}</div>
-                      <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploadedBy} · {m.date}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="muted" style={{ fontSize: 11 }}>{m.size}</span>
-                      <button className="btn btn-sm btn-primary" style={{ gap: 4 }} onClick={() => notify(`Opening ${m.title}`, 'info')}><Eye size={14} /> View</button>
                     </div>
                   </div>
                 ))}
@@ -614,16 +603,7 @@ export default function StudentPortal({ store, user, params }) {
                 <table className="table">
                   <thead><tr><th>Title</th><th>Subject</th><th>Year</th><th>Type</th><th>Size</th><th></th></tr></thead>
                   <tbody>
-                    {REVISION_DOWNLOADS.map(d => (
-                      <tr key={d.id}>
-                        <td style={{ fontWeight: 600 }}>{d.title}</td>
-                        <td>{d.subject}</td>
-                        <td>{d.year}</td>
-                        <td><Badge color={d.type === 'Past Paper' ? 'blue' : 'green'}>{d.type}</Badge></td>
-                        <td className="muted">{d.size}</td>
-                        <td><button className="btn btn-sm" style={{ gap: 4 }} onClick={() => notify(`Downloading ${d.title}...`, 'info')}><Download size={14} /> Download</button></td>
-                      </tr>
-                    ))}
+                    {/* Empty placeholder since no DB table exists yet for revision downloads */}
                   </tbody>
                 </table>
               </div>
@@ -692,11 +672,11 @@ export default function StudentPortal({ store, user, params }) {
         <div className="card card-pad">
           <h3 className="section-title">School Calendar & Events</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {UPCOMING_EVENTS.map(e => (
+            {schoolEvents.map(e => (
               <div key={e.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: '#e8f0fe', color: '#0078D4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
-                  <div style={{ fontSize: 16 }}>{e.date.split(' ')[1]}</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{e.date.split(' ')[0]}</div>
+                  <div style={{ fontSize: 16 }}>{e.date?.split(' ')?.[1] || '—'}</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{e.date?.split(' ')?.[0] || '—'}</div>
                 </div>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{e.title}</div>
@@ -722,13 +702,13 @@ export default function StudentPortal({ store, user, params }) {
       {/* ===== NOTICES ===== */}
       {tab === 'notices' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {NOTICES.filter(n => n.audience.includes('all') || n.audience.includes('students')).map(n => (
+          {(notifications || []).filter(n => (n.audience || []).includes('all') || (n.audience || []).includes('students')).map(n => (
             <div key={n.id} className="card card-pad">
               <h4 style={{ margin: 0, fontSize: 14 }}>{n.title}</h4>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-                <span className="muted" style={{ fontSize: 12 }}>{n.date}</span>
+                <span className="muted" style={{ fontSize: 12 }}>{(n.created_at || '').slice(0, 10)}</span>
                 <Badge color="blue">{n.role}</Badge>
-                <span className="muted" style={{ fontSize: 12 }}>by {n.postedBy}</span>
+                <span className="muted" style={{ fontSize: 12 }}>by {n.posted_by}</span>
               </div>
               <p style={{ margin: 0, fontSize: 13, color: '#444', lineHeight: 1.6 }}>{n.body}</p>
             </div>

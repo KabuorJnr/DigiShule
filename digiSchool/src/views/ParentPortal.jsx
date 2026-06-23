@@ -3,7 +3,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
-import { SUBJECTS, ATTENDANCE_RECORDS, STUDENT_ATTENDANCE_LOG } from '../data/seed';
+import { SUBJECTS } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { Download } from 'lucide-react';
@@ -41,7 +41,7 @@ export default function ParentPortal({ store, user }) {
   const [profileForm, setProfileForm] = useState({ phone: '+254 700 000000', email: user?.email || '', emergencyContact: 'John Doe', emergencyPhone: '+254 711 111111' });
 
   // Detailed Attendance
-  const [attendanceLog, setAttendanceLog] = useState(STUDENT_ATTENDANCE_LOG);
+  const [attendanceLog, setAttendanceLog] = useState([]);
 
   useEffect(() => {
     if (!child?.adm) return;
@@ -75,7 +75,7 @@ export default function ParentPortal({ store, user }) {
     : 0;
 
   // Attendance (school-wide rate used as proxy)
-  const latestAtt = ATTENDANCE_RECORDS[ATTENDANCE_RECORDS.length - 1];
+  const latestAtt = null;
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
   // Calculate paid dynamically instead of fixed seed

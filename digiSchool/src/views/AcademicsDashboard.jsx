@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
-import { buildClassPerformanceData, TOP_SUBJECTS_DATA, buildClassPerformanceSummary } from '../data/seed';
+import { buildClassPerformanceData, buildClassPerformanceSummary } from '../data/seed';
+const TOP_SUBJECTS_DATA = [];
 import { Badge, ProgressBar } from '../components/widgets';
 import { exportTablePDF, downloadCSV } from '../utils/exporters';
 import { Download, FileText } from 'lucide-react';

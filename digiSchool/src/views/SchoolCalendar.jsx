@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { UPCOMING_EVENTS } from '../data/seed';
 import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 import { Badge } from '../components/widgets';
 import { Calendar, ExternalLink, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -32,10 +31,10 @@ export default function SchoolCalendar({ store, user }) {
         if (data && data.length > 0) {
           setLocalEvents(data.sort((a, b) => a.date.localeCompare(b.date)));
         } else {
-          setLocalEvents(UPCOMING_EVENTS.sort((a, b) => a.date.localeCompare(b.date)));
+          setLocalEvents([]);
         }
       })
-      .catch(() => setLocalEvents(UPCOMING_EVENTS.sort((a, b) => a.date.localeCompare(b.date))));
+      .catch(() => setLocalEvents([]));
   }, []);
 
   const openAdd = () => {

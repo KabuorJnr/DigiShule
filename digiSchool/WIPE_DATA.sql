@@ -11,7 +11,8 @@ TRUNCATE TABLE
   exam_schedules,
   teachers,
   students,
-  staff
+  staff,
+  job_applications
 RESTART IDENTITY CASCADE;
 
 -- If you have the newer finance tables, you can run:

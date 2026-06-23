@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, TEACHERS, CLASSES, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
 const EXAM_TYPES = ['Mid-Term', 'End-Term', 'Mock', 'CAT'];
@@ -351,7 +351,8 @@ function SessionRows({ rows, setRows, venues, dynamicClasses }) {
               </td>
               <td>
                 <select className="select" value={r.invigilator} style={{ height: 32, width: 130 }} onChange={(e) => update(i, { invigilator: e.target.value })}>
-                  {TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}
+                  <option value="">Select Invigilator</option>
+                  {(window.store?.teachers || []).map((t) => <option key={t.id}>{t.name}</option>)}
                 </select>
               </td>
               <td><button className="btn btn-icon btn-sm" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button></td>
@@ -368,8 +369,9 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues, dynamicClas
   const [type, setType] = useState(defaultType);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const defaultTeacherName = (window.store?.teachers && window.store.teachers.length > 0) ? window.store.teachers[0].name : '';
   const [rows, setRows] = useState([
-    { date: '', classes: 'Grade 7', subject: 'Mathematics', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name },
+    { date: '', classes: 'Grade 7', subject: 'Mathematics', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: defaultTeacherName },
   ]);
 
   function save() {
@@ -395,7 +397,7 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues, dynamicClas
       </div>
       <label className="field-label">Sessions</label>
       <SessionRows rows={rows} setRows={setRows} venues={venues} dynamicClasses={dynamicClasses} />
-      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: dynamicClasses[0] || '7A', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: TEACHERS[0].name }])}>+ Add Session</button>
+      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: dynamicClasses[0] || '7A', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: defaultTeacherName }])}>+ Add Session</button>
     </Modal>
   );
 }
@@ -418,7 +420,11 @@ function EditSessionModal({ session, onClose, onSave, venues }) {
         <div><label className="field-label">Venue</label>
           <select className="select" value={f.venue} onChange={(e) => up({ venue: e.target.value })}>{venues.map((v) => <option key={v.id}>{v.name}</option>)}</select></div>
         <div><label className="field-label">Invigilator</label>
-          <select className="select" value={f.invigilator} onChange={(e) => up({ invigilator: e.target.value })}>{TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}</select></div>
+          <select className="select" value={f.invigilator} onChange={(e) => up({ invigilator: e.target.value })}>
+            <option value="">Select Invigilator</option>
+            {(window.store?.teachers || []).map((t) => <option key={t.id}>{t.name}</option>)}
+          </select>
+        </div>
       </div>
     </Modal>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
-import { NOTICES as SEED_NOTICES } from '../data/seed';
+
 import Modal from '../components/Modal';
 import { supabase } from '../lib/supabaseClient';
 import { getActiveSchoolId } from '../lib/api';
@@ -93,7 +93,7 @@ export default function Notices({ store, user }) {
   useEffect(() => { loadNotices(); }, [loadNotices]);
 
   // Merge seed + db; filter by audience
-  const seedNotices = SEED_NOTICES.map(n => ({ ...n, source: 'seed' }));
+  const seedNotices = [];
   const allNotices = [
     ...dbNotices.map(n => ({
       id: n.id, title: n.title || n.message, body: n.body || n.message,

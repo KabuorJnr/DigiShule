@@ -3,7 +3,6 @@ import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { fetchTable, upsertRow } from '../lib/api';
 import Modal from '../components/Modal';
-import { LEAVE_REQUESTS as SEED_LEAVE } from '../data/seed';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -13,7 +12,7 @@ export default function StaffAttendance({ store, user }) {
   const [staff, setStaff] = useState([]);
   const [filter, setFilter] = useState('All');
   const [tab, setTab] = useState('attendance');
-  const [leaveRequests, setLeaveRequests] = useState(SEED_LEAVE);
+  const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -26,6 +25,12 @@ export default function StaffAttendance({ store, user }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', role: 'Teacher', dept: '', phone: '', empId: '' });
 
+  // Recruitment State
+  const [jobApps, setJobApps] = useState([]);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({ date: '', time: '', type: 'In-person', notes: '' });
+  const [selectedApp, setSelectedApp] = useState(null);
+
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
   useEffect(() => {
@@ -34,6 +39,13 @@ export default function StaffAttendance({ store, user }) {
         .map((s) => ({ ...s, checkIn: s.check_in }))
         .sort((a, b) => a.name.localeCompare(b.name))))
       .catch((e) => notify(`Failed to load staff: ${e.message}`, 'error'));
+      
+    fetchTable('job_applications')
+      .then((rows) => {
+        if (rows && rows.length > 0) setJobApps(rows);
+        else setJobApps([]);
+      })
+      .catch((e) => setJobApps([]));
   }, [notify]);
 
   const totals = useMemo(() => ({
@@ -161,6 +173,84 @@ export default function StaffAttendance({ store, user }) {
     }
   };
 
+  const scheduleInterview = async () => {
+    if (!interviewForm.date || !interviewForm.time) {
+      notify('Please select date and time', 'warning');
+      return;
+    }
+    const updated = {
+      ...selectedApp,
+      status: 'Interview Scheduled',
+      interview_date: interviewForm.date,
+      interview_time: interviewForm.time,
+      interview_type: interviewForm.type,
+      notes: interviewForm.notes
+    };
+    try {
+      await upsertRow('job_applications', updated);
+      setJobApps(prev => prev.map(a => a.id === updated.id ? updated : a));
+      
+      // Auto-schedule in school events for admins
+      await upsertRow('schoolEvents', {
+        id: `ev_int_${Date.now()}`,
+        title: `Interview: ${updated.applicant_name} (${updated.role})`,
+        desc: `${updated.interview_type} interview. Notes: ${updated.notes}`,
+        date: updated.interview_date,
+        type: 'meeting'
+      });
+
+      notify('Interview scheduled and added to calendar', 'success');
+      setShowInterviewModal(false);
+    } catch (e) {
+      notify(`Error scheduling interview: ${e.message}`, 'error');
+    }
+  };
+
+  const hireApplicant = async (app) => {
+    setAddForm({ name: app.applicant_name, role: app.role, dept: app.department || '', phone: app.phone || '', empId: '' });
+    setShowAddModal(true);
+    // Mark app as hired
+    const updated = { ...app, status: 'Hired' };
+    try {
+      await upsertRow('job_applications', updated);
+      setJobApps(prev => prev.map(a => a.id === updated.id ? updated : a));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const rejectApplicant = async (app) => {
+    const updated = { ...app, status: 'Rejected' };
+    try {
+      await upsertRow('job_applications', updated);
+      setJobApps(prev => prev.map(a => a.id === updated.id ? updated : a));
+      notify(`Applicant ${app.applicant_name} rejected`, 'info');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addNewDummyApp = async () => {
+    const newApp = {
+      id: `app_${Date.now()}`,
+      applicant_name: 'New Candidate',
+      role: 'Teacher',
+      department: 'Mathematics',
+      phone: '0700000000',
+      email: 'candidate@example.com',
+      experience_years: 3,
+      status: 'New',
+      applied_date: new Date().toISOString().slice(0, 10),
+    };
+    try {
+      await upsertRow('job_applications', newApp);
+      setJobApps(prev => [newApp, ...prev]);
+      notify('New dummy application received (for demo)', 'success');
+    } catch (e) {
+      notify('Error adding application', 'error');
+    }
+  };
+
   const shown = filter === 'All' 
     ? staff.filter(s => s.status !== 'Inactive') 
     : staff.filter((s) => s.status === filter && s.status !== 'Inactive');
@@ -171,12 +261,17 @@ export default function StaffAttendance({ store, user }) {
 
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid var(--border)' }}>
         <button className={`tab${tab === 'attendance' ? ' active' : ''}`} onClick={() => setTab('attendance')}>
-          <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Attendance
+          <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Staff Roster
         </button>
         <button className={`tab${tab === 'leave' ? ' active' : ''}`} onClick={() => setTab('leave')}>
           <Icon name="clipboard" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Leave Requests
           {leaveTotals.pending > 0 && <Badge color="amber" style={{ marginLeft: 8 }}>{leaveTotals.pending}</Badge>}
         </button>
+        {canApprove && (
+          <button className={`tab${tab === 'recruitment' ? ' active' : ''}`} onClick={() => setTab('recruitment')}>
+            <Icon name="file" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Recruitment & HR
+          </button>
+        )}
       </div>
 
       {tab === 'attendance' && (
@@ -484,6 +579,95 @@ export default function StaffAttendance({ store, user }) {
             <div>
               <label className="field-label">Message</label>
               <textarea className="input" rows={5} placeholder="Type your message here..." value={messageForm.body} onChange={e => setMessageForm(f => ({ ...f, body: e.target.value }))} />
+            </div>
+          </div>
+        </Modal>
+      )}
+      {tab === 'recruitment' && canApprove && (
+        <>
+          <div className="card card-pad">
+            <div className="toolbar" style={{ marginBottom: 14, justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: 15 }}>Job Applications</h3>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-sm" onClick={addNewDummyApp}>Simulate App</button>
+                <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>+ Hire Directly</button>
+              </div>
+            </div>
+            <div className="scroll-x">
+              <table className="table">
+                <thead>
+                  <tr><th>Applicant</th><th>Applied Role</th><th>Exp. (Yrs)</th><th>Applied Date</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {jobApps.map(app => (
+                    <tr key={app.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{app.applicant_name}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>{app.email}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{app.role}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>{app.department}</div>
+                      </td>
+                      <td>{app.experience_years} yrs</td>
+                      <td className="muted">{app.applied_date}</td>
+                      <td>
+                        <Badge color={app.status === 'Hired' ? 'green' : app.status === 'Rejected' ? 'red' : app.status === 'Interview Scheduled' ? 'blue' : 'amber'}>
+                          {app.status}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {app.status !== 'Hired' && app.status !== 'Rejected' && (
+                            <>
+                              <button className="btn btn-sm btn-primary" onClick={() => { setSelectedApp(app); setShowInterviewModal(true); }}>Schedule Interview</button>
+                              <button className="btn btn-sm btn-success" onClick={() => hireApplicant(app)}>Hire</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => rejectApplicant(app)}>Reject</button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {jobApps.length === 0 && (
+                    <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 24 }}>No active job applications.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showInterviewModal && selectedApp && (
+        <Modal title={`Schedule Interview: ${selectedApp.applicant_name}`} onClose={() => setShowInterviewModal(false)} footer={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn" onClick={() => setShowInterviewModal(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={scheduleInterview}>Schedule & Add to Calendar</button>
+          </div>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Date *</label>
+                <input type="date" className="input" value={interviewForm.date} onChange={e => setInterviewForm(f => ({ ...f, date: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Time *</label>
+                <input type="time" className="input" value={interviewForm.time} onChange={e => setInterviewForm(f => ({ ...f, time: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Type</label>
+              <select className="select" value={interviewForm.type} onChange={e => setInterviewForm(f => ({ ...f, type: e.target.value }))}>
+                <option>In-person</option>
+                <option>Video Call (Zoom/Meet)</option>
+                <option>Phone Call</option>
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Notes / Instructions</label>
+              <textarea className="input" rows={3} placeholder="e.g. Bring copies of certificates" value={interviewForm.notes} onChange={e => setInterviewForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
           </div>
         </Modal>

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, TEACHERS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -15,10 +15,11 @@ const deptColorBg = {
   Math: '#fef3c7',
 };
 
-function defaultAssignments() {
+function defaultAssignments(teachers = []) {
+  if (teachers.length === 0) return [];
   return SUBJECTS.map((sub, i) => ({
     subject: sub,
-    teacher: TEACHERS[i % TEACHERS.length].name,
+    teacher: teachers[i % teachers.length]?.name || 'TBD',
     perWeek: sub === 'Mathematics' || sub === 'English' ? 5 : 4,
   }));
 }
@@ -64,12 +65,12 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
 }
 
 export default function Timetable({ store }) {
-  const { timetables, setTimetables, notify, settings, students } = store;
+  const { timetables, setTimetables, notify, settings, students, teachers } = store;
   const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
   const [term, setTerm] = useState('Term 2');
   const [cls, setCls] = useState(dynamicClasses[0] || '7A');
   const [tab, setTab] = useState('class');
-  const [teacherSel, setTeacherSel] = useState(TEACHERS[0].name);
+  const [teacherSel, setTeacherSel] = useState(teachers?.[0]?.name || '');
 
   const [workingDays, setWorkingDays] = useState(DAYS.map(() => true));
   const [periodsPerDay, setPeriodsPerDay] = useState(8);
@@ -78,7 +79,14 @@ export default function Timetable({ store }) {
     { period: 3, label: 'Break' },
     { period: 6, label: 'Lunch' },
   ]);
-  const [assignments, setAssignments] = useState(defaultAssignments);
+  const [assignments, setAssignments] = useState(() => defaultAssignments(teachers || []));
+
+  useEffect(() => {
+    if (teachers && teachers.length > 0 && assignments.length === 0) {
+      setAssignments(defaultAssignments(teachers));
+      if (!teacherSel) setTeacherSel(teachers[0].name);
+    }
+  }, [teachers]);
 
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -299,7 +307,8 @@ export default function Timetable({ store }) {
                   <td>
                     <select className="select" value={a.teacher} style={{ height: 34 }}
                       onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
-                      {TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}
+                      <option value="">-- Select --</option>
+                      {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
                     </select>
                   </td>
                   <td>
@@ -335,7 +344,7 @@ export default function Timetable({ store }) {
             <div style={{ marginBottom: 12, maxWidth: 240 }}>
               <label className="field-label">Select Teacher</label>
               <select className="select" value={teacherSel} onChange={(e) => setTeacherSel(e.target.value)}>
-                {TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}
+                {(teachers || []).map((t) => <option key={t.id}>{t.name}</option>)}
               </select>
             </div>
           )}
@@ -417,7 +426,7 @@ export default function Timetable({ store }) {
       )}
 
       {editCell && (
-        <EditCellModal cell={editCell} onClose={() => setEditCell(null)} onSave={saveCell} />
+        <EditCellModal cell={editCell} onClose={() => setEditCell(null)} onSave={saveCell} teachers={teachers} />
       )}
 
       {importOpen && (
@@ -427,9 +436,9 @@ export default function Timetable({ store }) {
   );
 }
 
-function EditCellModal({ cell, onClose, onSave }) {
+function EditCellModal({ cell, onClose, onSave, teachers }) {
   const [subject, setSubject] = useState(cell.subject || SUBJECTS[0]);
-  const [teacher, setTeacher] = useState(cell.teacher || TEACHERS[0].name);
+  const [teacher, setTeacher] = useState(cell.teacher || (teachers?.[0]?.name || ''));
   const [notes, setNotes] = useState(cell.notes || '');
   return (
     <Modal
@@ -452,7 +461,7 @@ function EditCellModal({ cell, onClose, onSave }) {
         <div>
           <label className="field-label">Teacher</label>
           <select className="select" value={teacher} onChange={(e) => setTeacher(e.target.value)}>
-            {TEACHERS.map((t) => <option key={t.id}>{t.name}</option>)}
+            {(teachers || []).map((t) => <option key={t.id}>{t.name}</option>)}
           </select>
         </div>
         <div>

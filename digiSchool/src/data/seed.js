@@ -2,7 +2,7 @@
 export const CLASSES = ['7A', '7B', '8A', '8B', '9A', '9B', '10A', '10B'];
 export const getDynamicClasses = (students = []) => {
   const existing = students.map(s => s.class).filter(Boolean);
-  return [...new Set([...CLASSES, ...existing])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return [...new Set(existing)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 };
 
 export const DEPARTMENTS = {

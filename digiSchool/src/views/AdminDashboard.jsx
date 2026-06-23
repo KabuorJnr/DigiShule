@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Badge, ProgressBar } from '../components/widgets';
 import { STAFF, FACILITIES, DISCIPLINARY_RECORDS, fmtKES } from '../data/modules';
-import { LEAVE_REQUESTS } from '../data/seed';
+
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 
@@ -27,7 +27,7 @@ export default function AdminDashboard({ store, user }) {
 
   const presentStaff = STAFF.filter(s => s.status === 'Present').length;
   const operationalFac = FACILITIES.filter(f => f.status === 'Operational').length;
-  const pendingLeave = LEAVE_REQUESTS.filter(l => l.status === 'Pending').length;
+  const pendingLeave = 0;
   const openDiscipline = DISCIPLINARY_RECORDS.filter(d => d.status === 'Open').length;
 
   const handleLeaveAction = (id, action) => {
@@ -133,27 +133,8 @@ export default function AdminDashboard({ store, user }) {
             <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
             <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
           </div>
-          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').map(l => {
-            const action = leaveActions[l.id];
-            return (
-              <div key={l.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{l.staff} — {l.type} Leave</div>
-                  <div className="muted" style={{ fontSize: 12 }}>{l.start} to {l.end} ({l.days} days)</div>
-                  <div className="muted" style={{ fontSize: 11 }}>{l.reason}</div>
-                </div>
-                {action ? (
-                  <Badge color={action === 'Approved' ? 'green' : 'red'}>{action}</Badge>
-                ) : (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-sm btn-success" onClick={() => handleLeaveAction(l.id, 'Approved')}>Approve</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}>Reject</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {LEAVE_REQUESTS.filter(l => l.status === 'Pending').length === 0 && (
+          {[]}
+          {true && (
             <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
           )}
         </div>
