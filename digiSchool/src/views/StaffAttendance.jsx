@@ -157,10 +157,9 @@ export default function StaffAttendance({ store, user }) {
       setProvisionStep('password');
       const tempPassword = generateSecurePassword(10);
       const username = await generateSequentialUsername('TCH');
-      const authEmail = `${username.toLowerCase()}@edu1app.tech`;
       
       const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
-        email: authEmail,
+        email: addForm.email,
         password: tempPassword,
         options: { data: { role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin' } }
       });
