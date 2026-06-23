@@ -74,8 +74,9 @@ export default function Overview({ store }) {
   const totalStudents = store.students?.length || 0;
   
   // Real Staff Metrics
-  const totalTeachers = dbStaff.length > 0 ? dbStaff.length : (store.teachers?.length || 0);
-  const activeTeachers = dbStaff.length > 0 ? dbStaff.filter(t => t.status !== 'On Leave').length : (store.teachers?.filter(t => t.status === 'active' || t.status === 'Active' || t.status === 'Present').length || 0);
+  const activeStaffList = dbStaff.filter(t => t.status !== 'Inactive');
+  const totalTeachers = activeStaffList.length > 0 ? activeStaffList.length : (store.teachers?.length || 0);
+  const activeTeachers = activeStaffList.length > 0 ? activeStaffList.filter(t => t.status !== 'On Leave').length : (store.teachers?.filter(t => t.status === 'active' || t.status === 'Active' || t.status === 'Present').length || 0);
   const onLeave = totalTeachers - activeTeachers;
 
   // Real Attendance (Placeholder until Attendance Module is fully linked)

@@ -21,7 +21,8 @@ export default function AcademicsDashboard({ store, user }) {
   const { navigate, notify, settings, students = [], teachers = [], examSchedules = [] } = store;
   
   const classesCount = settings.levels?.length || 0;
-  const activeTeachers = teachers.filter(t => t.status === 'Active').length;
+  const activeTeacherList = teachers.filter(t => t.status !== 'Inactive');
+  const activeTeachers = activeTeacherList.filter(t => t.status === 'Active').length;
   
   const classPerfData = [];
   const classPerfSummary = [];
@@ -82,7 +83,7 @@ export default function AcademicsDashboard({ store, user }) {
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
         <Stat label="Total Students" value={students.length} sub="Enrolled" color="#0078D4" />
-        <Stat label="Teaching Staff" value={teachers.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
+        <Stat label="Teaching Staff" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
         <Stat label="Classes & Streams" value={`${classesCount} / ${classesCount * 2}`} sub="Levels / Streams" color="#107C10" />
         <Stat label="Subjects" value="8" sub="Active subjects" color="#FFB900" />
       </div>

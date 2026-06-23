@@ -32,7 +32,8 @@ export default function AdminDashboard({ store, user }) {
     fetchTable('disciplinaryRecords').then(setDbDiscipline).catch(() => {});
   }, []);
 
-  const presentStaff = dbStaff.filter(s => s.status === 'Present' || s.status === 'Active' || s.status === 'active').length;
+  const activeStaffList = dbStaff.filter(s => s.status !== 'Inactive');
+  const presentStaff = activeStaffList.filter(s => s.status === 'Present' || s.status === 'Active' || s.status === 'active').length;
   const operationalFac = dbFacilities.filter(f => f.status === 'Operational').length;
   const pendingLeave = 0;
   const openDiscipline = dbDiscipline.filter(d => d.status === 'Open').length;
@@ -77,7 +78,7 @@ export default function AdminDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Staff" value={dbStaff.length} sub={`${presentStaff} present today`} color="#000000" />
+        <Stat label="Total Staff" value={activeStaffList.length} sub={`${presentStaff} present today`} color="#000000" />
         <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#FFB900" />
         <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#D13438" />
         <Stat label="Facilities" value={`${operationalFac}/${dbFacilities.length}`} sub="Operational" color="#107C10" />

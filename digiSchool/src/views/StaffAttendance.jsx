@@ -52,12 +52,15 @@ export default function StaffAttendance({ store, user }) {
       .catch((e) => setJobApps([]));
   }, [notify]);
 
-  const totals = useMemo(() => ({
-    total: staff.length,
-    present: staff.filter((s) => s.status === 'Present').length,
-    absent: staff.filter((s) => s.status === 'Absent').length,
-    leave: staff.filter((s) => s.status === 'On Leave').length,
-  }), [staff]);
+  const totals = useMemo(() => {
+    const activeStaff = staff.filter(s => s.status !== 'Inactive');
+    return {
+      total: activeStaff.length,
+      present: activeStaff.filter((s) => s.status === 'Present').length,
+      absent: activeStaff.filter((s) => s.status === 'Absent').length,
+      leave: activeStaff.filter((s) => s.status === 'On Leave').length,
+    };
+  }, [staff]);
 
   const leaveTotals = useMemo(() => ({
     total: leaveRequests.length,
