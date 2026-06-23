@@ -5,10 +5,6 @@
 -- Use ONLY if you want to start the database completely fresh.
 
 TRUNCATE TABLE 
-  expenses,
-  finance_payments,
-  invoices,
-  school_events,
   notifications,
   timetables,
   exam_sessions,
@@ -17,6 +13,9 @@ TRUNCATE TABLE
   students,
   staff
 RESTART IDENTITY CASCADE;
+
+-- If you have the newer finance tables, you can run:
+-- TRUNCATE TABLE expenses, finance_payments, invoices, school_events RESTART IDENTITY CASCADE;
 
 -- If you also want to wipe the schools themselves (and app configs) uncomment below:
 -- TRUNCATE TABLE schools RESTART IDENTITY CASCADE;
