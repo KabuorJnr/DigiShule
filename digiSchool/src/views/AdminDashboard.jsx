@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Badge, ProgressBar } from '../components/widgets';
-import { STAFF, FACILITIES, DISCIPLINARY_RECORDS, fmtKES } from '../data/modules';
+import { fmtKES } from '../data/modules';
+const STAFF = [];
+const FACILITIES = [];
+const DISCIPLINARY_RECORDS = [];
 
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';

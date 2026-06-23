@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
-import { LIBRARY_BOOKS } from '../data/modules';
+const LIBRARY_BOOKS = [];
 import { fetchClassRank } from '../lib/api';
 import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
 import Modal from '../components/Modal';
