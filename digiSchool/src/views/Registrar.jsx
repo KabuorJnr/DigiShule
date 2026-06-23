@@ -89,6 +89,7 @@ export default function Registrar({ store, user }) {
   // ── ENROLMENT TAB ─────────────────────────────────────────────
   const handleEnroll = async () => {
     if (!form.name.trim() || !form.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
+    if (form.adm.trim().length < 7) { notify('Admission No. must be at least 7 characters (e.g., 26/1234) for secure passwords.', 'warning'); return; }
     if (students.find(s => s.adm === form.adm)) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
     setSaving(true);
     try {
