@@ -263,6 +263,22 @@ CREATE TABLE IF NOT EXISTS school_events (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 15. RPC for RLS
+CREATE OR REPLACE FUNCTION my_school_id()
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_school_id UUID;
+BEGIN
+  SELECT school_id INTO v_school_id
+  FROM profiles
+  WHERE id = auth.uid();
+  RETURN v_school_id;
+END;
+$$;
+
 ALTER TABLE school_events ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their school's events"
