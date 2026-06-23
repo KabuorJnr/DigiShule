@@ -300,21 +300,24 @@ const TABLES = {
   disciplinaryRecords: 'disciplinary_records', staff: 'staff',
   facilities: 'facilities', notifications: 'notifications',
   schoolEvents: 'school_events', job_applications: 'job_applications',
+  messages: 'messages'
 };
 
 export async function fetchTable(key) {
-  const { data, error } = await supabase.from(TABLES[key]).select('*');
+  const { data, error } = await supabase.from(TABLES[key] || key).select('*');
   if (error) throw error;
   return data;
 }
 
 export async function upsertRow(key, row) {
-  const { error } = await supabase.from(TABLES[key]).upsert({ ...row, school_id: _schoolId });
+  if (!_schoolId) throw new Error('No active school selected');
+  const payload = { ...row, school_id: _schoolId };
+  const { error } = await supabase.from(TABLES[key] || key).upsert(payload);
   if (error) throw error;
 }
 
 export async function deleteRow(key, id, idColumn = 'id') {
-  const { error } = await supabase.from(TABLES[key]).delete().eq(idColumn, id);
+  const { error } = await supabase.from(TABLES[key] || key).delete().eq(idColumn, id);
   if (error) throw error;
 }
 
