@@ -611,7 +611,6 @@ export default function StaffAttendance({ store, user }) {
             <button className="btn btn-primary" onClick={async () => {
               if (!messageForm.subject || !messageForm.body) return notify('Subject and Body required', 'warning');
               try {
-                const { upsertRow } = await import('../lib/api');
                 await upsertRow('messages', {
                   id: `msg_${Date.now()}`,
                   sender_id: user?.id || 'admin',
