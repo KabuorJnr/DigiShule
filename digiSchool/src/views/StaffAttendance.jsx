@@ -3,6 +3,9 @@ import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { fetchTable, upsertRow } from '../lib/api';
 import Modal from '../components/Modal';
+import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
+import { generateSecurePassword, provisionAccount } from '../utils/auth';
+import { secondaryAuthClient } from '../lib/supabaseClient';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -23,7 +26,8 @@ export default function StaffAttendance({ store, user }) {
 
   // Add Staff Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+  const [provisionStep, setProvisionStep] = useState(null);
 
   // Recruitment State
   const [jobApps, setJobApps] = useState([]);
@@ -132,23 +136,38 @@ export default function StaffAttendance({ store, user }) {
   };
 
   const submitAddStaff = async () => {
-    if (!addForm.name || !addForm.role || !addForm.dept) {
-      notify('Please fill in Name, Role, and Department', 'warning', 'Validation');
+    if (!addForm.name || !addForm.role || !addForm.dept || !addForm.email) {
+      notify('Please fill in Name, Email, Role, and Department', 'warning', 'Validation');
       return;
     }
-    const newStaff = {
-      id: addForm.empId || `stf_${Date.now()}`,
-      name: addForm.name,
-      role: addForm.role,
-      dept: addForm.dept,
-      status: 'Present',
-      check_in: '07:00 AM'
-    };
+    setProvisionStep('provisioning');
+    
     try {
+      const newStaff = {
+        id: addForm.empId || `stf_${Date.now()}`,
+        name: addForm.name,
+        role: addForm.role,
+        dept: addForm.dept,
+        status: 'Present',
+        check_in: '07:00 AM'
+      };
+
+      setProvisionStep('password');
+      const tempPassword = generateSecurePassword(10);
+      
+      const { error: signUpError } = await secondaryAuthClient.auth.signUp({
+        email: addForm.email,
+        password: tempPassword,
+        options: { data: { role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin' } }
+      });
+      
+      if (signUpError && !signUpError.message.includes('already')) {
+        throw new Error(signUpError.message);
+      }
+
       await upsertRow('staff', newStaff);
       setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
       
-      // If role is Teacher, also add to global store and teachers table
       if (addForm.role === 'Teacher') {
         const teacherObj = {
           id: newStaff.id,
@@ -160,15 +179,28 @@ export default function StaffAttendance({ store, user }) {
           status: 'Active',
           assignedClass: null
         };
-        if (store.addTeacher) {
-          store.addTeacher(teacherObj);
-        }
+        if (store.addTeacher) store.addTeacher(teacherObj);
       }
       
-      setShowAddModal(false);
-      setAddForm({ name: '', role: 'Teacher', dept: '', phone: '', empId: '' });
-      notify(`${newStaff.name} added successfully!`, 'success', 'Staff Management');
+      setProvisionStep('email');
+      await provisionAccount({
+        email: addForm.email,
+        password: tempPassword,
+        name: addForm.name,
+        role: 'teacher',
+        schoolName: store.settings?.name || 'EduOne'
+      });
+      
+      setProvisionStep('done');
+      setTimeout(() => {
+        setProvisionStep(null);
+        setShowAddModal(false);
+        setAddForm({ name: '', email: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+        notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
+      }, 1500);
+
     } catch (e) {
+      setProvisionStep(null);
       notify(`Failed to add staff: ${e.message}`, 'error', 'Error');
     }
   };
@@ -436,9 +468,15 @@ export default function StaffAttendance({ store, user }) {
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label className="field-label">Full Name *</label>
-              <input className="input" placeholder="e.g. John Doe" value={addForm.name} onChange={e => setAddForm(p => ({ ...p, name: e.target.value }))} />
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Full Name *</label>
+                <input className="input" placeholder="e.g. John Doe" value={addForm.name} onChange={e => setAddForm(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">System Email *</label>
+                <input className="input" type="email" placeholder="staff@school.edu" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} />
+              </div>
             </div>
             <div className="grid grid-2">
               <div>
@@ -666,12 +704,18 @@ export default function StaffAttendance({ store, user }) {
               </select>
             </div>
             <div>
+              <label className="field-label">Email Address (for Invite)</label>
+              <input type="email" className="input" placeholder="applicant@example.com" value={interviewForm.email} onChange={e => setInterviewForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
               <label className="field-label">Notes / Instructions</label>
               <textarea className="input" rows={3} placeholder="e.g. Bring copies of certificates" value={interviewForm.notes} onChange={e => setInterviewForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
           </div>
         </Modal>
       )}
+
+      {provisionStep && <RegistrationLoadingModal step={provisionStep} />}
 
     </div>
   );

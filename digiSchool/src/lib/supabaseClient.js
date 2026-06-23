@@ -17,6 +17,13 @@ export const supabase = createClient(url, anonKey, {
   },
 });
 
+export const secondaryAuthClient = createClient(url, anonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
+
 /**
  * Sign in using username + password.
  *

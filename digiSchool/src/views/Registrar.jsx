@@ -9,6 +9,9 @@ import {
 import { exportReportCardsPDF } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
 import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
+import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
+import { generateSecurePassword, provisionAccount } from '../utils/auth';
+import { secondaryAuthClient } from '../lib/supabaseClient';
 const TABS = [
   { id: 'register', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
@@ -26,6 +29,7 @@ export default function Registrar({ store, user }) {
   const { students, setStudents, notify } = store;
   const [tab, setTab] = useState('register');
   const [search, setSearch] = useState('');
+  const [provisionStep, setProvisionStep] = useState(null);
   const [classFilter, setClassFilter] = useState('All');
   const [editModal, setEditModal] = useState(false);
   const [editStudent, setEditStudent] = useState(null);
@@ -115,16 +119,39 @@ export default function Registrar({ store, user }) {
       setForm(EMPTY_FORM);
       
       if (form.guardianEmail) {
-        notify(
-          `${form.name} enrolled. Parent portal account provisioned for ${form.guardianEmail}. Temporary Password: Parent@2026`,
-          'success',
-          'Parent Registered'
-        );
+        setProvisionStep('password');
+        const tempPassword = generateSecurePassword(10);
+        
+        const { error: signUpError } = await secondaryAuthClient.auth.signUp({
+          email: form.guardianEmail,
+          password: tempPassword,
+          options: { data: { role: 'parent' } }
+        });
+        
+        if (signUpError && !signUpError.message.includes('already')) {
+          console.warn('Auth provision warning:', signUpError.message);
+        }
+
+        setProvisionStep('email');
+        await provisionAccount({
+          email: form.guardianEmail,
+          password: tempPassword,
+          name: form.guardianName || 'Parent/Guardian',
+          role: 'parent',
+          schoolName: store.settings?.name || 'EduOne'
+        });
+
+        setProvisionStep('done');
+        setTimeout(() => {
+          setProvisionStep(null);
+          notify(`${form.name} enrolled. Parent portal account provisioned!`, 'success', 'Parent Registered');
+          setTab('register');
+        }, 1500);
       } else {
         notify(`${form.name} enrolled successfully in ${form.class}`, 'success', 'Registrar');
+        setTab('register');
       }
       
-      setTab('register');
     } catch (e) {
       notify(`Enrolment failed: ${e.message}`, 'error');
     } finally { setSaving(false); }
