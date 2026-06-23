@@ -265,16 +265,16 @@ CREATE TABLE IF NOT EXISTS school_events (
 
 ALTER TABLE school_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY ""Users can view their school's events""
+CREATE POLICY "Users can view their school's events"
 ON school_events FOR SELECT USING (school_id = my_school_id());
 
-CREATE POLICY ""Users can insert their school's events""
+CREATE POLICY "Users can insert their school's events"
 ON school_events FOR INSERT WITH CHECK (school_id = my_school_id());
 
-CREATE POLICY ""Users can update their school's events""
+CREATE POLICY "Users can update their school's events"
 ON school_events FOR UPDATE USING (school_id = my_school_id());
 
-CREATE POLICY ""Users can delete their school's events""
+CREATE POLICY "Users can delete their school's events"
 ON school_events FOR DELETE USING (school_id = my_school_id());
 
 -- 15. Job Applications Table
