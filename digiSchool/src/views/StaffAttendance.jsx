@@ -4,8 +4,8 @@ import { Icon } from '../components/icons';
 import { fetchTable, upsertRow } from '../lib/api';
 import Modal from '../components/Modal';
 import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
-import { generateSecurePassword, provisionAccount } from '../utils/auth';
-import { secondaryAuthClient } from '../lib/supabaseClient';
+import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
+import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -154,15 +154,28 @@ export default function StaffAttendance({ store, user }) {
 
       setProvisionStep('password');
       const tempPassword = generateSecurePassword(10);
+      const username = await generateSequentialUsername('TCH');
+      const authEmail = `${username.toLowerCase()}@edu1app.tech`;
       
-      const { error: signUpError } = await secondaryAuthClient.auth.signUp({
-        email: addForm.email,
+      const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
+        email: authEmail,
         password: tempPassword,
         options: { data: { role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin' } }
       });
       
       if (signUpError && !signUpError.message.includes('already')) {
         throw new Error(signUpError.message);
+      }
+
+      if (authData?.user) {
+        await supabase.from('profiles').upsert({
+          id: authData.user.id,
+          username,
+          full_name: addForm.name,
+          role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin',
+          dept: addForm.dept,
+          teacher_id: newStaff.id
+        });
       }
 
       await upsertRow('staff', newStaff);
@@ -185,6 +198,7 @@ export default function StaffAttendance({ store, user }) {
       setProvisionStep('email');
       await provisionAccount({
         email: addForm.email,
+        username,
         password: tempPassword,
         name: addForm.name,
         role: 'teacher',

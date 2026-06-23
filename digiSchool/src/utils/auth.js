@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabaseClient';
+
 export function generateSecurePassword(length = 10) {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let retVal = "";
@@ -7,12 +9,12 @@ export function generateSecurePassword(length = 10) {
   return retVal;
 }
 
-export async function provisionAccount({ email, password, name, role, schoolName }) {
+export async function provisionAccount({ email, username, password, name, role, schoolName }) {
   // Call the Vercel API
   const res = await fetch('/api/send-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, name, role, schoolName })
+    body: JSON.stringify({ email, username, password, name, role, schoolName })
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
@@ -20,3 +22,23 @@ export async function provisionAccount({ email, password, name, role, schoolName
   }
   return await res.json();
 }
+
+export async function generateSequentialUsername(prefix) {
+  // Fetch the latest username with this prefix
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('username')
+    .ilike('username', `${prefix}%`)
+    .order('username', { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return `${prefix}001`;
+  }
+  
+  const highest = data[0].username;
+  const numPart = highest.substring(prefix.length);
+  const nextNum = parseInt(numPart, 10) || 0;
+  return `${prefix}${(nextNum + 1).toString().padStart(3, '0')}`;
+}
+

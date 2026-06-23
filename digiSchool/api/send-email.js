@@ -17,19 +17,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, name, role, schoolName } = req.body;
+    const { email, username, password, name, role, schoolName } = req.body;
 
     if (!email || !password || !name || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Wait, the host config is currently hardcoded to the old keys instead of environment variables? 
+    // The user said: "I have put the keys, password, username and port on the environment variables on vercel.."
+    // So I should use process.env!
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 465,
       secure: true,
       auth: {
-        user: 'eduone.africa@gmail.com',
-        pass: 'vfyf bcqg ylei mklf',
+        user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+        pass: process.env.SMTP_PASS || 'vfyf bcqg ylei mklf',
       },
     });
 
@@ -44,7 +47,7 @@ Your ${roleDisplay} account has been successfully provisioned.
 Please find your secure login credentials below:
 
 Portal URL: https://www.edu1app.tech
-Login Email: ${email}
+${username ? `Login Username: ${username}` : `Login Email: ${email}`}
 Temporary Password: ${password}
 
 Please log in at your earliest convenience to access your dashboard. We highly recommend changing your password upon your first login to maintain account security.

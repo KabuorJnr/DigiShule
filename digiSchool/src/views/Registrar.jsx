@@ -10,8 +10,8 @@ import { exportReportCardsPDF } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
 import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
 import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
-import { generateSecurePassword, provisionAccount } from '../utils/auth';
-import { secondaryAuthClient } from '../lib/supabaseClient';
+import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
+import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 const TABS = [
   { id: 'register', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
@@ -121,9 +121,11 @@ export default function Registrar({ store, user }) {
       if (form.guardianEmail) {
         setProvisionStep('password');
         const tempPassword = generateSecurePassword(10);
+        const username = await generateSequentialUsername('PRN');
+        const authEmail = `${username.toLowerCase()}@edu1app.tech`;
         
-        const { error: signUpError } = await secondaryAuthClient.auth.signUp({
-          email: form.guardianEmail,
+        const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
+          email: authEmail,
           password: tempPassword,
           options: { data: { role: 'parent' } }
         });
@@ -132,9 +134,20 @@ export default function Registrar({ store, user }) {
           console.warn('Auth provision warning:', signUpError.message);
         }
 
+        if (authData?.user) {
+          await supabase.from('profiles').upsert({
+            id: authData.user.id,
+            username,
+            full_name: form.guardianName || 'Parent / Guardian',
+            role: 'parent',
+            student_id: newStudent.id
+          });
+        }
+
         setProvisionStep('email');
         await provisionAccount({
           email: form.guardianEmail,
+          username,
           password: tempPassword,
           name: form.guardianName || 'Parent/Guardian',
           role: 'parent',
