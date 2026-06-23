@@ -22,6 +22,10 @@ export default function StaffAttendance({ store, user }) {
   const [composeModal, setComposeModal] = useState(false);
   const [messageForm, setMessageForm] = useState({ subject: '', body: '' });
 
+  // Add Staff Modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
   useEffect(() => {
@@ -115,6 +119,48 @@ export default function StaffAttendance({ store, user }) {
     notify('Leave request submitted successfully', 'success', 'Leave');
   };
 
+  const submitAddStaff = async () => {
+    if (!addForm.name || !addForm.role || !addForm.dept) {
+      notify('Please fill in Name, Role, and Department', 'warning', 'Validation');
+      return;
+    }
+    const newStaff = {
+      id: addForm.empId || `stf_${Date.now()}`,
+      name: addForm.name,
+      role: addForm.role,
+      dept: addForm.dept,
+      status: 'Present',
+      check_in: '07:00 AM'
+    };
+    try {
+      await upsertRow('staff', newStaff);
+      setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
+      
+      // If role is Teacher, also add to global store and teachers table
+      if (addForm.role === 'Teacher') {
+        const teacherObj = {
+          id: newStaff.id,
+          name: newStaff.name,
+          subject: newStaff.dept,
+          role: 'teacher',
+          emp_id: newStaff.id,
+          phone: addForm.phone,
+          status: 'Active',
+          assignedClass: null
+        };
+        if (store.addTeacher) {
+          store.addTeacher(teacherObj);
+        }
+      }
+      
+      setShowAddModal(false);
+      setAddForm({ name: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+      notify(`${newStaff.name} added successfully!`, 'success', 'Staff Management');
+    } catch (e) {
+      notify(`Failed to add staff: ${e.message}`, 'error', 'Error');
+    }
+  };
+
   const shown = filter === 'All' 
     ? staff.filter(s => s.status !== 'Inactive') 
     : staff.filter((s) => s.status === filter && s.status !== 'Inactive');
@@ -143,10 +189,17 @@ export default function StaffAttendance({ store, user }) {
           </div>
 
           <div className="card card-pad">
-            <div className="toolbar" style={{ marginBottom: 14 }}>
-              {['All', 'Present', 'Absent', 'On Leave'].map((f) => (
-                <button key={f} className={`btn btn-sm${filter === f ? ' btn-primary' : ''}`} onClick={() => setFilter(f)}>{f}</button>
-              ))}
+            <div className="toolbar" style={{ marginBottom: 14, justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['All', 'Present', 'Absent', 'On Leave'].map((f) => (
+                  <button key={f} className={`btn btn-sm${filter === f ? ' btn-primary' : ''}`} onClick={() => setFilter(f)}>{f}</button>
+                ))}
+              </div>
+              {canApprove && (
+                <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
+                  + Add Staff
+                </button>
+              )}
             </div>
             <div className="scroll-x">
               <table className="table">
@@ -273,6 +326,51 @@ export default function StaffAttendance({ store, user }) {
             </div>
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 12, fontSize: 13, color: '#0369a1' }}>
               ℹ️ Leave requests are reviewed by the Deputy Admin or Principal. You will be notified once a decision is made.
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {showAddModal && (
+        <Modal title="Add Staff Member" onClose={() => setShowAddModal(false)}
+          footer={
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={submitAddStaff}>Add Staff</button>
+            </div>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="field-label">Full Name *</label>
+              <input className="input" placeholder="e.g. John Doe" value={addForm.name} onChange={e => setAddForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Role *</label>
+                <select className="select" value={addForm.role} onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
+                  <option>Teacher</option>
+                  <option>Administrator</option>
+                  <option>Nurse</option>
+                  <option>Librarian</option>
+                  <option>Finance</option>
+                  <option>Support Staff</option>
+                </select>
+              </div>
+              <div>
+                <label className="field-label">Department / Subject *</label>
+                <input className="input" placeholder="e.g. Mathematics" value={addForm.dept} onChange={e => setAddForm(p => ({ ...p, dept: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Employee ID (Optional)</label>
+                <input className="input" placeholder="e.g. EMP1024" value={addForm.empId} onChange={e => setAddForm(p => ({ ...p, empId: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Phone (Optional)</label>
+                <input className="input" placeholder="07XX XXX XXX" value={addForm.phone} onChange={e => setAddForm(p => ({ ...p, phone: e.target.value }))} />
+              </div>
             </div>
           </div>
         </Modal>

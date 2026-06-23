@@ -135,6 +135,21 @@ export async function updateTeacher(id, patch) {
   if (error) throw error;
 }
 
+export async function upsertTeacher(teacher) {
+  const { error } = await supabase.from('teachers').upsert({
+    id: teacher.id,
+    name: teacher.name,
+    subject: teacher.subject || teacher.dept,
+    role: teacher.role,
+    emp_id: teacher.emp_id || teacher.id,
+    phone: teacher.phone,
+    status: teacher.status || 'Active',
+    assigned_class: teacher.assignedClass || null,
+    school_id: _schoolId,
+  });
+  if (error) throw error;
+}
+
 export async function fetchStudents() {
   const { data, error } = await supabase.from('students').select('*').order('class').order('adm');
   if (error) throw error;

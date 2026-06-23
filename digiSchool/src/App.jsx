@@ -168,6 +168,11 @@ export default function App() {
     api.updateTeacher(id, patch).catch(onSaveError);
   }, [onSaveError]);
 
+  const addTeacher = useCallback((teacher) => {
+    setTeachers((prev) => [...prev, teacher]);
+    api.upsertTeacher(teacher).catch(onSaveError);
+  }, [onSaveError]);
+
   const markRead = (id) => {
     setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
     api.setNotificationRead(id, true).catch(onSaveError);
@@ -183,7 +188,7 @@ export default function App() {
       settings, setSettings: setSettingsP,
       schoolId,
       students, setStudents, updateStudent,
-      teachers, setTeachers, updateTeacher,
+      teachers, setTeachers, updateTeacher, addTeacher,
       examSchedules, setExamSchedules: setExamsP,
       venues, setVenues: setVenuesP,
       gradeBoundaries, setGradeBoundaries: setBoundsP,
@@ -194,7 +199,7 @@ export default function App() {
       navigate: (v, p = {}) => { setViewParams(p); setView(v); },
     }),
     [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
-      setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher]
+      setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher, addTeacher]
   );
 
   // ---- Demo mode flag (ref so loadAllData closure reads latest value) ----
