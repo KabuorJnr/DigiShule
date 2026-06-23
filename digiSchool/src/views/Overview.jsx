@@ -32,6 +32,28 @@ export default function Overview({ store }) {
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ audience: 'All Parents', message: '', type: 'SMS & Email' });
 
+  // Real data state for metrics
+  const [dbStaff, setDbStaff] = useState([]);
+  const [dbPayments, setDbPayments] = useState([]);
+  const [dbInvoices, setDbInvoices] = useState([]);
+  const [dbAdmissions, setDbAdmissions] = useState([]);
+
+  useEffect(() => {
+    import('../lib/api').then(({ fetchTable }) => {
+      Promise.all([
+        fetchTable('staff').catch(() => []),
+        fetchTable('financePayments').catch(() => []),
+        fetchTable('invoices').catch(() => []),
+        fetchTable('admissions').catch(() => [])
+      ]).then(([staffData, pays, invs, adm]) => {
+        setDbStaff(staffData || []);
+        setDbPayments(pays || []);
+        setDbInvoices(invs || []);
+        setDbAdmissions(adm || []);
+      });
+    });
+  }, []);
+
   const handleBroadcast = () => {
     if (!broadcastForm.message.trim()) return notify('Please enter a message to broadcast', 'warning');
     notify(`Broadcast queued for ${broadcastForm.audience} via ${broadcastForm.type}.`, 'success');
@@ -50,24 +72,34 @@ export default function Overview({ store }) {
   }, [store.students]);
 
   const totalStudents = store.students?.length || 0;
-  const totalTeachers = store.teachers?.length || 0;
-  const activeTeachers = store.teachers?.filter(t => t.status === 'active' || t.status === 'Active' || t.status === 'Present').length || 0;
+  
+  // Real Staff Metrics
+  const totalTeachers = dbStaff.length > 0 ? dbStaff.length : (store.teachers?.length || 0);
+  const activeTeachers = dbStaff.length > 0 ? dbStaff.filter(t => t.status !== 'On Leave').length : (store.teachers?.filter(t => t.status === 'active' || t.status === 'Active' || t.status === 'Present').length || 0);
   const onLeave = totalTeachers - activeTeachers;
 
-  const todayAttendance = fullTrend[fullTrend.length - 1];
-  const attRate = totalStudents > 0 ? (todayAttendance ? ((todayAttendance.present / totalStudents) * 100).toFixed(1) : '91.3') : '0.0';
+  // Real Attendance (Placeholder until Attendance Module is fully linked)
+  const attRate = totalStudents > 0 ? '0.0' : '0.0';
 
-  const latestRev = 1400000;
-  const revStr = totalStudents > 0 ? (latestRev > 1000000 ? `${(latestRev / 1000000).toFixed(1)}M` : `${(latestRev / 1000).toFixed(0)}K`) : '0';
+  // Real Revenue Metrics
+  const totalRevenue = dbPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const revStr = totalRevenue > 1000000 ? `${(totalRevenue / 1000000).toFixed(1)}M` : (totalRevenue > 1000 ? `${(totalRevenue / 1000).toFixed(0)}K` : totalRevenue.toString());
 
-  const maleCount = store.students?.filter(s => s.gender === 'M').length || 0;
-  const femaleCount = store.students?.filter(s => s.gender === 'F').length || 0;
+  // Real Outstanding Fees
+  const totalInvoiced = dbInvoices.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+  const outstandingFees = Math.max(0, totalInvoiced - totalRevenue);
+  const outStr = outstandingFees > 1000000 ? `${(outstandingFees / 1000000).toFixed(1)}M` : (outstandingFees > 1000 ? `${(outstandingFees / 1000).toFixed(0)}K` : outstandingFees.toString());
+
+  // Real Admissions
+  const pendingApps = dbAdmissions.filter(a => a.status === 'Pending').length;
+
+  const maleCount = store.students?.filter(s => s.gender === 'M' || s.gender === 'Male').length || 0;
+  const femaleCount = store.students?.filter(s => s.gender === 'F' || s.gender === 'Female').length || 0;
   const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 0;
   const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 0;
 
-  // Simulate boarding/day based on county or just a fixed ratio for now
-  const boardingCount = totalStudents > 0 ? Math.round(totalStudents * 0.73) : 0;
-  const dayCount = totalStudents > 0 ? totalStudents - boardingCount : 0;
+  const boardingCount = store.students?.filter(s => s.type === 'Boarding').length || 0;
+  const dayCount = store.students?.filter(s => s.type === 'Day').length || 0;
 
   const displayTrend = [];
   const displayClassDist = totalStudents > 0 ? classDistData : [];
@@ -83,20 +115,20 @@ export default function Overview({ store }) {
 
       {/* KPI Row 1 */}
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value={totalStudents.toString()} sub="+23 from last term">
+        <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value={totalStudents.toString()} sub="Enrolled">
           <Sparkline data={sparkData} color="#10B981" />
         </KpiCard>
         <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value={totalTeachers.toString()} sub={`${activeTeachers} active, ${onLeave} on leave`} />
-        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#10B981" sub="Above target (90%)" />
-        <KpiCard iconComponent={<DollarSign size={20} />} label="Monthly Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Up 12% from last month" />
+        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#10B981" sub="Pending Logs" />
+        <KpiCard iconComponent={<DollarSign size={20} />} label="Total Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Recorded Payments" />
       </div>
 
       {/* KPI Row 2 */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${totalStudents > 0 ? '450K' : '0'}`} sub={totalStudents > 0 ? <Badge color="amber">Follow-up needed</Badge> : 'All clear'} />
-        <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={totalStudents > 0 ? "12" : "0"} sub="Admissions portal" />
-        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub={totalStudents > 0 ? "Balanced" : "N/A"} />
-        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "73% Boarding" : "N/A"} />
+        <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${outStr}`} sub={outstandingFees > 0 ? <Badge color="amber">Unpaid Invoices</Badge> : 'All clear'} />
+        <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={pendingApps.toString()} sub="Admissions portal" />
+        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub={totalStudents > 0 ? "Actual Ratio" : "N/A"} />
+        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "Enrolled Type" : "N/A"} />
       </div>
 
       {/* Charts */}
