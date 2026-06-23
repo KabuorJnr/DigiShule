@@ -18,7 +18,10 @@ function Stat({ label, value, color, sub }) {
 }
 
 export default function AcademicsDashboard({ store, user }) {
-  const { navigate, notify, settings } = store;
+  const { navigate, notify, settings, students = [], teachers = [], examSchedules = [] } = store;
+  
+  const classesCount = settings.levels?.length || 0;
+  const activeTeachers = teachers.filter(t => t.status === 'Active').length;
   
   const classPerfData = [];
   const classPerfSummary = [];
@@ -49,10 +52,7 @@ export default function AcademicsDashboard({ store, user }) {
 
   const handleExportPendingMarks = () => {
     const rows = [
-      ['Class', 'Subject', 'Teacher', 'Status'],
-      ['Grade 7', 'Mathematics', 'Mr. Omondi', 'Pending'],
-      ['Grade 8', 'Science', 'Ms. Wanjiku', 'Pending'],
-      ['Grade 9', 'History', 'Mr. Kiprop', 'Pending']
+      ['Class', 'Subject', 'Teacher', 'Status']
     ];
     downloadCSV('Pending_Marks_Report.csv', rows);
   };
@@ -81,17 +81,17 @@ export default function AcademicsDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Students" value="847" sub="Boarding: 620 | Day: 227" color="#0078D4" />
-        <Stat label="Teaching Staff" value="42" sub="38 active, 4 on leave" color="#0EA5E9" />
-        <Stat label="Classes & Streams" value="4 / 8" sub="Forms 1-4, 2 streams each" color="#107C10" />
+        <Stat label="Total Students" value={students.length} sub="Enrolled" color="#0078D4" />
+        <Stat label="Teaching Staff" value={teachers.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
+        <Stat label="Classes & Streams" value={`${classesCount} / ${classesCount * 2}`} sub="Levels / Streams" color="#107C10" />
         <Stat label="Subjects" value="8" sub="Active subjects" color="#FFB900" />
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 24 }}>
-        <Stat label="Total Exams" value="5" sub="5 published" />
+        <Stat label="Total Exams" value={examSchedules.length} sub={`${examSchedules.length} published`} />
         <Stat label="Pending Marks Entry" value="0" sub="All marks entered" color="#107C10" />
-        <Stat label="Awaiting Approval" value="2" sub="Results to approve" color="#D13438" />
-        <Stat label="Avg Performance" value="66.0%" sub="Overall average score" color="#107C10" />
+        <Stat label="Awaiting Approval" value="0" sub="Results to approve" color="#D13438" />
+        <Stat label="Avg Performance" value="0.0%" sub="Overall average score" color="#107C10" />
       </div>
 
       {/* Quick Actions */}
