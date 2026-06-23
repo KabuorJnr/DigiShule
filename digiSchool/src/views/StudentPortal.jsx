@@ -5,6 +5,7 @@ import { SUBJECTS } from '../data/seed';
 const LIBRARY_BOOKS = [];
 import { fetchClassRank } from '../lib/api';
 import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
+import { supabase } from '../lib/supabaseClient';
 import Modal from '../components/Modal';
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import {
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'finance', label: 'Finance' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'notices', label: 'Notices' },
+  { id: 'settings', label: 'Profile & Settings' },
 ];
 
 const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -60,6 +62,25 @@ export default function StudentPortal({ store, user, params }) {
   const [cloudAssignments, setCloudAssignments] = useState([]);
   const [cloudLoading, setCloudLoading] = useState(false);
   const [actionId, setActionId] = useState(null);
+  const [pwForm, setPwForm] = useState({ newPw: '', confirmPw: '' });
+  const [pwBusy, setPwBusy] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (pwForm.newPw.length < 6) return notify('Password must be at least 6 characters long', 'warning');
+    if (pwForm.newPw !== pwForm.confirmPw) return notify('Passwords do not match', 'warning');
+    
+    setPwBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: pwForm.newPw });
+    setPwBusy(false);
+    
+    if (error) {
+      notify(`Failed to update password: ${error.message}`, 'error');
+    } else {
+      notify('Password successfully updated!', 'success');
+      setPwForm({ newPw: '', confirmPw: '' });
+    }
+  };
 
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [libraryLoans, setLibraryLoans] = useState([]);
@@ -713,6 +734,43 @@ export default function StudentPortal({ store, user, params }) {
               <p style={{ margin: 0, fontSize: 13, color: '#444', lineHeight: 1.6 }}>{n.body}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ===== SETTINGS ===== */}
+      {tab === 'settings' && (
+        <div className="card card-pad" style={{ maxWidth: 500, margin: '0 auto' }}>
+          <h3 className="section-title">Change Password</h3>
+          <p className="muted" style={{ fontSize: 13, marginBottom: 20 }}>
+            Enter a new password below. It must be at least 6 characters long.
+          </p>
+          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label className="field-label">New Password</label>
+              <input 
+                type="password" 
+                className="input" 
+                placeholder="••••••" 
+                value={pwForm.newPw} 
+                onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} 
+                required 
+              />
+            </div>
+            <div>
+              <label className="field-label">Confirm Password</label>
+              <input 
+                type="password" 
+                className="input" 
+                placeholder="••••••" 
+                value={pwForm.confirmPw} 
+                onChange={e => setPwForm(p => ({ ...p, confirmPw: e.target.value }))} 
+                required 
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: 10 }} disabled={pwBusy}>
+              {pwBusy ? 'Updating...' : 'Update Password'}
+            </button>
+          </form>
         </div>
       )}
 
