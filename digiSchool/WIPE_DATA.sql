@@ -12,7 +12,13 @@ TRUNCATE TABLE
   teachers,
   students,
   staff,
-  job_applications
+  job_applications,
+  library_books,
+  library_loans,
+  clinic_visits,
+  admissions,
+  disciplinary_records,
+  facilities
 RESTART IDENTITY CASCADE;
 
 TRUNCATE TABLE expenses, finance_payments, invoices, school_events RESTART IDENTITY CASCADE;

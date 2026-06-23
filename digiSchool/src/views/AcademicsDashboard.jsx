@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
-import { buildClassPerformanceData, buildClassPerformanceSummary } from '../data/seed';
 const TOP_SUBJECTS_DATA = [];
 import { Badge, ProgressBar } from '../components/widgets';
 import { exportTablePDF, downloadCSV } from '../utils/exporters';
@@ -21,8 +20,8 @@ function Stat({ label, value, color, sub }) {
 export default function AcademicsDashboard({ store, user }) {
   const { navigate, notify, settings } = store;
   
-  const classPerfData = useMemo(() => buildClassPerformanceData(settings.levels), [settings.levels]);
-  const classPerfSummary = useMemo(() => buildClassPerformanceSummary(settings.levels), [settings.levels]);
+  const classPerfData = [];
+  const classPerfSummary = [];
 
   const handleExportClassPerf = () => {
     const head = ['Class', 'Students', 'Streams', 'Avg Score (%)', 'Pass Rate (%)', 'Marks Status'];

@@ -313,3 +313,103 @@ CREATE TABLE IF NOT EXISTS job_applications (
 );
 
 ALTER TABLE job_applications DISABLE ROW LEVEL SECURITY;
+
+-- 16. Library Books
+CREATE TABLE IF NOT EXISTS library_books (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT,
+  isbn TEXT,
+  category TEXT,
+  copies INT DEFAULT 1,
+  available INT DEFAULT 1,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE library_books DISABLE ROW LEVEL SECURITY;
+
+-- 17. Library Loans
+CREATE TABLE IF NOT EXISTS library_loans (
+  id TEXT PRIMARY KEY,
+  book TEXT NOT NULL,
+  student TEXT NOT NULL,
+  adm TEXT,
+  student_id TEXT,
+  borrowed TEXT,
+  due TEXT,
+  status TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE library_loans DISABLE ROW LEVEL SECURITY;
+
+-- 18. Clinic Visits
+CREATE TABLE IF NOT EXISTS clinic_visits (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  student TEXT NOT NULL,
+  adm TEXT,
+  complaint TEXT,
+  treatment TEXT,
+  outcome TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE clinic_visits DISABLE ROW LEVEL SECURITY;
+
+-- 19. Admissions
+CREATE TABLE IF NOT EXISTS admissions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  kcpe INT,
+  gender TEXT,
+  "Grade" TEXT,
+  date TEXT,
+  status TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE admissions DISABLE ROW LEVEL SECURITY;
+
+-- 20. Disciplinary Records
+CREATE TABLE IF NOT EXISTS disciplinary_records (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  student TEXT NOT NULL,
+  adm TEXT,
+  class TEXT,
+  category TEXT,
+  description TEXT,
+  action TEXT,
+  severity TEXT,
+  status TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE disciplinary_records DISABLE ROW LEVEL SECURITY;
+
+-- 21. Staff
+CREATE TABLE IF NOT EXISTS staff (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT,
+  dept TEXT,
+  status TEXT,
+  checkIn TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE staff DISABLE ROW LEVEL SECURITY;
+
+-- 22. Facilities
+CREATE TABLE IF NOT EXISTS facilities (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT,
+  capacity INT,
+  status TEXT,
+  note TEXT,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE facilities DISABLE ROW LEVEL SECURITY;
