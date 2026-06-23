@@ -615,7 +615,27 @@ export default function StaffAttendance({ store, user }) {
                   status: 'Unread',
                   created_at: new Date().toISOString()
                 });
-                notify(`Message sent to ${composeModal.name}`, 'success');
+
+                // Send email simultaneously
+                if (composeModal.email) {
+                  try {
+                    await fetch('/api/send-message', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: composeModal.email,
+                        name: composeModal.name,
+                        subject: messageForm.subject,
+                        body: messageForm.body,
+                        schoolName: store.settings?.name || 'EduOne'
+                      })
+                    });
+                  } catch (e) {
+                    console.error('Email send error:', e);
+                  }
+                }
+
+                notify(`Message sent to ${composeModal.name} via Portal & Email`, 'success');
                 setComposeModal(null);
               } catch (err) {
                 notify(`Failed to send message: ${err.message}`, 'error');
