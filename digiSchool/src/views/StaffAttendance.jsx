@@ -488,8 +488,8 @@ export default function StaffAttendance({ store, user }) {
                 <input className="input" placeholder="e.g. John Doe" value={addForm.name} onChange={e => setAddForm(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div>
-                <label className="field-label">System Email *</label>
-                <input className="input" type="email" placeholder="staff@school.edu" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} />
+                <label className="field-label">Personal Email *</label>
+                <input className="input" type="email" placeholder="e.g. teacher@gmail.com" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-2">
