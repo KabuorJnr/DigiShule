@@ -118,20 +118,43 @@ export default function Registrar({ store, user }) {
       setStudents(prev => [...prev, newStudent]);
       setForm(EMPTY_FORM);
       
+      // ── 1. Create Student Portal Account ──
+      setProvisionStep('password');
+      const studentPassword = form.adm;
+      const studentAuthEmail = `${form.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
+      
+      const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
+        email: studentAuthEmail,
+        password: studentPassword,
+        options: { data: { role: 'student' } }
+      });
+      
+      if (studentSignUpError && !studentSignUpError.message.includes('already')) {
+        console.warn('Student Auth provision warning:', studentSignUpError.message);
+      } else if (studentAuthData?.user) {
+        await supabase.from('profiles').upsert({
+          id: studentAuthData.user.id,
+          username: form.adm,
+          full_name: form.name,
+          role: 'student',
+          student_id: newStudent.id
+        });
+      }
+      
+      // ── 2. Create Parent Portal Account (If email provided) ──
       if (form.guardianEmail) {
-        setProvisionStep('password');
         const tempPassword = generateSecurePassword(10);
         const username = await generateSequentialUsername('PRN');
         const authEmail = `${username.toLowerCase()}@edu1app.tech`;
         
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
-          email: authEmail,
+          email: form.guardianEmail, // Using real email so parent gets it natively
           password: tempPassword,
           options: { data: { role: 'parent' } }
         });
         
         if (signUpError && !signUpError.message.includes('already')) {
-          console.warn('Auth provision warning:', signUpError.message);
+          console.warn('Parent Auth provision warning:', signUpError.message);
         }
 
         if (authData?.user) {
