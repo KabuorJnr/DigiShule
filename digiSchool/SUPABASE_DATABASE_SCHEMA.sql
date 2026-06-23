@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS staff (
   role TEXT,
   dept TEXT,
   status TEXT,
-  checkIn TEXT,
+  check_in TEXT,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now()
 );
