@@ -300,7 +300,8 @@ const TABLES = {
   disciplinaryRecords: 'disciplinary_records', staff: 'staff',
   facilities: 'facilities', notifications: 'notifications',
   schoolEvents: 'school_events', job_applications: 'job_applications',
-  messages: 'messages'
+  messages: 'messages', studentAttendance: 'student_attendance',
+  assignmentSubmissions: 'assignment_submissions'
 };
 
 export async function fetchTable(key) {

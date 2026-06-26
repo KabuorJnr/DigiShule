@@ -20,6 +20,7 @@ const TABS = [
   { id: 'subjects', label: 'My Subjects' },
   { id: 'assignments', label: 'Assignments' },
   { id: 'attendance', label: 'Attendance' },
+  { id: 'health', label: 'Health & Clinic' },
   { id: 'results', label: 'Results' },
   { id: 'resources', label: 'Resources' },
   { id: 'timetable', label: 'Timetable' },
@@ -85,19 +86,28 @@ export default function StudentPortal({ store, user, params }) {
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [libraryLoans, setLibraryLoans] = useState([]);
   const [schoolEvents, setSchoolEvents] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [healthRecords, setHealthRecords] = useState([]);
 
   useEffect(() => {
     let active = true;
     import('../lib/api').then(({ fetchTable }) => {
-      Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans'), fetchTable('schoolEvents')]).then(([bks, lns, evs]) => {
+      Promise.all([
+        fetchTable('libraryBooks'), fetchTable('libraryLoans'), fetchTable('schoolEvents'),
+        fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('clinicVisits')
+      ]).then(([bks, lns, evs, att, subs, health]) => {
         if (!active) return;
         setLibraryBooks(bks || []);
         setLibraryLoans(lns || []);
         setSchoolEvents(evs || []);
+        setAttendanceRecords((att || []).filter(a => a.student_id === me?.id || a.adm === me?.adm));
+        setSubmissions((subs || []).filter(s => s.student_id === me?.id || s.adm === me?.adm));
+        setHealthRecords((health || []).filter(h => h.adm === me?.adm));
       });
     });
     return () => { active = false; };
-  }, []);
+  }, [me?.id, me?.adm]);
   useEffect(() => {
     let active = true;
     fetchClassRank().then(r => { if (active) setRank(r); }).catch(() => {});
@@ -155,7 +165,14 @@ export default function StudentPortal({ store, user, params }) {
 
   const upcomingExams = (examSchedules || []).filter(e => e.sessions?.some(s => s.status === 'Upcoming'));
 
-  const attLog = [];
+  const attLog = useMemo(() => {
+    return attendanceRecords.map(a => {
+      const d = new Date(a.date);
+      const day = d.toLocaleDateString('en-US', { weekday: 'long' });
+      return { ...a, day };
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [attendanceRecords]);
+
   const attTotals = useMemo(() => ({
     total: attLog.length,
     present: attLog.filter(a => a.status === 'Present').length,
@@ -404,24 +421,46 @@ export default function StudentPortal({ store, user, params }) {
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {cloudAssignments.filter(a => subFilter === 'All' || a.subject === subFilter).map(a => (
-              <div key={a.id} className="card card-pad">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: 14 }}>{a.title}</h4>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-                      <Badge color="blue">{a.subject}</Badge>
-                      <span className="muted" style={{ fontSize: 12 }}>by {a.uploaded_by}</span>
+            {cloudAssignments.filter(a => subFilter === 'All' || a.subject === subFilter).map(a => {
+              const sub = submissions.find(s => s.assignment_id === a.id);
+              const isDue = new Date(a.due_date) < new Date();
+              return (
+                <div key={a.id} className="card card-pad">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 14 }}>{a.title}</h4>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+                        <Badge color="blue">{a.subject}</Badge>
+                        <span className="muted" style={{ fontSize: 12 }}>by {a.uploaded_by}</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: isDue ? '#D13438' : '#107C10' }}>Due: {a.due_date}</div>
+                      {sub ? (
+                        <Badge color={sub.status === 'Graded' ? 'green' : 'amber'}>{sub.status}</Badge>
+                      ) : (
+                        <Badge color={isDue ? 'red' : 'gray'}>{isDue ? 'Missing' : 'Pending'}</Badge>
+                      )}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: new Date(a.due_date) < new Date() ? '#D13438' : '#107C10' }}>Due: {a.due_date}</div>
-                    <Badge color="green">Active</Badge>
-                  </div>
+                  <p style={{ margin: '10px 0', fontSize: 13, color: '#444', lineHeight: 1.5 }}>{a.description || a.name}</p>
+                  
+                  {sub ? (
+                    <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span><strong>Submitted:</strong> {new Date(sub.submitted_at).toLocaleString()}</span>
+                        {sub.grade && <span><strong>Grade:</strong> <Badge color="blue">{sub.grade}</Badge></span>}
+                      </div>
+                      {sub.feedback && <div style={{ marginTop: 8, color: '#475569' }}><strong>Feedback:</strong> {sub.feedback}</div>}
+                    </div>
+                  ) : (
+                    <button className="btn btn-sm btn-primary" onClick={() => notify('Submission upload modal would open here. (Feature coming soon)', 'info')}>
+                      <Send size={14} style={{ marginRight: 6 }} /> Mark as Done / Upload
+                    </button>
+                  )}
                 </div>
-                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#444', lineHeight: 1.5 }}>{a.description || a.name}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -460,6 +499,38 @@ export default function StudentPortal({ store, user, params }) {
             </div>
           </div>
         </>
+      )}
+
+      {/* ===== HEALTH & CLINIC ===== */}
+      {tab === 'health' && (
+        <div className="card card-pad">
+          <h3 className="section-title">Health & Clinic Records</h3>
+          {healthRecords.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <div style={{ width: 60, height: 60, background: '#e0e7ff', color: '#4f46e5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <CheckCircle2 size={24} />
+              </div>
+              <h4 style={{ margin: '0 0 8px' }}>No Medical Records Found</h4>
+              <p className="muted" style={{ maxWidth: 300, margin: '0 auto' }}>You have no clinic visits or health incidents recorded on file.</p>
+            </div>
+          ) : (
+            <div className="scroll-x">
+              <table className="table">
+                <thead><tr><th>Date</th><th>Complaint</th><th>Treatment</th><th>Notes</th></tr></thead>
+                <tbody>
+                  {healthRecords.map(v => (
+                    <tr key={v.id}>
+                      <td style={{ fontWeight: 600 }}>{v.date}</td>
+                      <td>{v.complaint}</td>
+                      <td>{v.treatment}</td>
+                      <td className="muted">{v.notes || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ===== RESULTS ===== */}
