@@ -172,8 +172,12 @@ export default function Admissions({ store }) {
 
       <div className="grid grid-2" style={{ marginBottom: 18, alignItems: 'start' }}>
         <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Student Applications</h3>
+            <button className="btn btn-sm btn-primary" onClick={() => store.navigate('registrar')}>View Enrolled Students Registry</button>
+          </div>
           <div className="toolbar" style={{ marginBottom: 12 }}>
-            <input className="input" placeholder="Search by name..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 220 }} />
+            <input className="input" placeholder="Search applications..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 220 }} />
             <select className="select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ width: 140 }}>
               <option value="All">All Status</option>
               {STATUS_CYCLE.map(s => <option key={s} value={s}>{s}</option>)}
