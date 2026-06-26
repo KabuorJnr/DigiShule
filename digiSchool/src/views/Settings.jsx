@@ -36,8 +36,8 @@ export default function Settings({ store, user }) {
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
-    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList }));
-    notify('Academic settings saved', 'success', 'Settings');
+    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList }));
+    notify('Academic settings saved successfully', 'success', 'Settings');
   }
   function saveFees() {
     setFeeStructure(fees);
@@ -93,7 +93,6 @@ export default function Settings({ store, user }) {
               <div><label className="field-label">Term Start</label><input className="input" type="date" value={form.termStart} onChange={(e) => upForm({ termStart: e.target.value })} /></div>
               <div><label className="field-label">Term End</label><input className="input" type="date" value={form.termEnd} onChange={(e) => upForm({ termEnd: e.target.value })} /></div>
             </div>
-            <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={saveAcademic}>Save Term Dates</button>
           </div>
 
           <div className="card card-pad">
@@ -141,13 +140,15 @@ export default function Settings({ store, user }) {
               </table>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <input className="input" placeholder="New subject" value={newSubj} style={{ maxWidth: 200 }} onChange={(e) => setNewSubj(e.target.value)} />
-              <select className="select" value={newSubjDept} style={{ width: 150 }} onChange={(e) => setNewSubjDept(e.target.value)}>
+              <input className="input" placeholder="New subject (e.g. Computer Science)" value={newSubj} style={{ maxWidth: 200 }} onChange={(e) => setNewSubj(e.target.value)} />
+              <select className="select" value={newSubjDept} onChange={(e) => setNewSubjDept(e.target.value)}>
                 {DEPT_LIST.map((d) => <option key={d}>{d}</option>)}
               </select>
               <button className="btn btn-primary btn-sm" disabled={!newSubj} onClick={() => { setSubjList((sl) => [...sl, { name: newSubj, dept: newSubjDept }]); setNewSubj(''); notify('Subject added', 'success', 'Settings'); }}>+ Add Subject</button>
             </div>
           </div>
+          
+          <button className="btn btn-primary" onClick={saveAcademic} style={{ alignSelf: 'flex-start' }}>Save Academic Settings</button>
         </div>
       )}
 
