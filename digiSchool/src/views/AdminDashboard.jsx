@@ -16,8 +16,16 @@ function Stat({ label, value, color, sub }) {
 }
 
 export default function AdminDashboard({ store, user }) {
-  const { navigate, notify } = store;
+  const { navigate, notify, students } = store;
   const [disciplineModal, setDisciplineModal] = useState(null);
+  const [reportDisciplineOpen, setReportDisciplineOpen] = useState(false);
+  const [reportForm, setReportForm] = useState({
+    adm: '',
+    category: 'Absenteeism',
+    description: '',
+    action: '',
+    severity: 'Medium'
+  });
   const [leaveActions, setLeaveActions] = useState({});
   const [expenses, setExpenses] = useState([]);
   
@@ -51,6 +59,34 @@ export default function AdminDashboard({ store, user }) {
       notify(`Expense ${action.toLowerCase()} successfully.`);
     } catch (e) {
       notify(`Failed to update expense: ${e.message}`, 'error');
+    }
+  };
+
+  const handleReportDiscipline = async () => {
+    if (!reportForm.adm || !reportForm.description) return notify('Please fill all required fields.', 'warning');
+    const studentObj = (students || []).find(s => s.adm === reportForm.adm);
+    if (!studentObj) return notify('Student not found with this ADM number.', 'error');
+
+    try {
+      const payload = {
+        id: `disc_${Date.now()}`,
+        date: new Date().toISOString().slice(0, 10),
+        student: studentObj.name,
+        adm: studentObj.adm,
+        class: studentObj.class,
+        category: reportForm.category,
+        description: reportForm.description,
+        action: reportForm.action,
+        severity: reportForm.severity,
+        status: 'Open'
+      };
+      await upsertRow('disciplinaryRecords', payload);
+      setDbDiscipline(prev => [payload, ...prev]);
+      notify('Disciplinary report filed successfully.', 'success');
+      setReportDisciplineOpen(false);
+      setReportForm({ adm: '', category: 'Absenteeism', description: '', action: '', severity: 'Medium' });
+    } catch (err) {
+      notify(`Failed to file report: ${err.message}`, 'error');
     }
   };
 
@@ -103,7 +139,10 @@ export default function AdminDashboard({ store, user }) {
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         {/* Discipline Cases */}
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#000000' }}>Discipline Cases</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ color: '#000000', margin: 0 }}>Discipline Cases</h3>
+            <button className="btn btn-sm btn-primary" onClick={() => setReportDisciplineOpen(true)}>File Report</button>
+          </div>
           {dbDiscipline.slice(0, 5).map(d => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
               <div style={{ flex: 1 }}>
@@ -191,6 +230,50 @@ export default function AdminDashboard({ store, user }) {
             <div><span className="field-label">Description</span><div style={{ lineHeight: 1.5 }}>{disciplineModal.description}</div></div>
             <div><span className="field-label">Action Taken</span><div>{disciplineModal.action || 'Pending review'}</div></div>
             <div><span className="field-label">Status</span><div><Badge color={disciplineModal.status === 'Open' ? 'red' : 'green'}>{disciplineModal.status}</Badge></div></div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Report Discipline Modal */}
+      {reportDisciplineOpen && (
+        <Modal title="File Disciplinary Report" onClose={() => setReportDisciplineOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setReportDisciplineOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleReportDiscipline}>Submit Report</button>
+          </>
+        }>
+          <div className="grid grid-2" style={{ gap: 16 }}>
+            <div>
+              <label className="field-label">Student ADM Number</label>
+              <input type="text" className="input" value={reportForm.adm} onChange={e => setReportForm(f => ({ ...f, adm: e.target.value }))} placeholder="e.g. ADM-101" />
+            </div>
+            <div>
+              <label className="field-label">Category</label>
+              <select className="select" value={reportForm.category} onChange={e => setReportForm(f => ({ ...f, category: e.target.value }))}>
+                <option>Absenteeism</option>
+                <option>Bullying</option>
+                <option>Vandalism</option>
+                <option>Insubordination</option>
+                <option>Dress Code</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label">Description of Incident</label>
+              <textarea className="input" rows={3} value={reportForm.description} onChange={e => setReportForm(f => ({ ...f, description: e.target.value }))} placeholder="Provide details..."></textarea>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label">Action Taken (Optional)</label>
+              <textarea className="input" rows={2} value={reportForm.action} onChange={e => setReportForm(f => ({ ...f, action: e.target.value }))} placeholder="E.g., Warning given, Parents called..."></textarea>
+            </div>
+            <div>
+              <label className="field-label">Severity</label>
+              <select className="select" value={reportForm.severity} onChange={e => setReportForm(f => ({ ...f, severity: e.target.value }))}>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
           </div>
         </Modal>
       )}
