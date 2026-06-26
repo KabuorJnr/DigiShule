@@ -66,7 +66,11 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
 
 export default function Timetable({ store }) {
   const { timetables, setTimetables, notify, settings, students, teachers } = store;
-  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
+  const dynamicClasses = useMemo(() => {
+    const saved = (store.settings?.classes || []).map(c => c.name);
+    const dynamic = getDynamicClasses(students);
+    return [...new Set([...saved, ...dynamic])];
+  }, [students, store.settings]);
   const [term, setTerm] = useState('Term 2');
   const [cls, setCls] = useState(dynamicClasses[0] || '7A');
   const [tab, setTab] = useState('class');

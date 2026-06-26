@@ -137,7 +137,7 @@ export default function StudentPortal({ store, user, params }) {
   const subjects = useMemo(() => {
     if (!me) return [];
     return SUBJECTS.map(sub => {
-      const scores = me.scores[sub];
+      const scores = (me.scores || {})[sub];
       if (!scores) return null;
       const row = computeRow(scores);
       const grade = gradeFor(row.average, gradeBoundaries);

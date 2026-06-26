@@ -14,7 +14,7 @@ export default function Settings({ store, user }) {
 
   // local copies for editing
   const [form, setForm] = useState(settings);
-  const [classList, setClassList] = useState([]);
+  const [classList, setClassList] = useState(settings.classes || []);
   const [newClass, setNewClass] = useState('');
   const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
   const [newSubj, setNewSubj] = useState('');
@@ -36,7 +36,7 @@ export default function Settings({ store, user }) {
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
-    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd }));
+    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList }));
     notify('Academic settings saved', 'success', 'Settings');
   }
   function saveFees() {

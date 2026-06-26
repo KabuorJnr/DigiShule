@@ -42,7 +42,11 @@ export default function Registrar({ store, user }) {
 
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
 
-  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
+  const dynamicClasses = useMemo(() => {
+    const saved = (store.settings?.classes || []).map(c => c.name);
+    const dynamic = getDynamicClasses(students);
+    return [...new Set([...saved, ...dynamic])];
+  }, [students, store.settings]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
