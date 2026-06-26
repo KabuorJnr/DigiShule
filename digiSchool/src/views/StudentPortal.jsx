@@ -89,14 +89,16 @@ export default function StudentPortal({ store, user, params }) {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [healthRecords, setHealthRecords] = useState([]);
+  const [disciplinary, setDisciplinary] = useState([]);
 
   useEffect(() => {
     let active = true;
     import('../lib/api').then(({ fetchTable }) => {
       Promise.all([
         fetchTable('libraryBooks'), fetchTable('libraryLoans'), fetchTable('schoolEvents'),
-        fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('clinicVisits')
-      ]).then(([bks, lns, evs, att, subs, health]) => {
+        fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('clinicVisits'),
+        fetchTable('disciplinaryRecords')
+      ]).then(([bks, lns, evs, att, subs, health, disc]) => {
         if (!active) return;
         setLibraryBooks(bks || []);
         setLibraryLoans(lns || []);
@@ -104,6 +106,7 @@ export default function StudentPortal({ store, user, params }) {
         setAttendanceRecords((att || []).filter(a => a.student_id === me?.id || a.adm === me?.adm));
         setSubmissions((subs || []).filter(s => s.student_id === me?.id || s.adm === me?.adm));
         setHealthRecords((health || []).filter(h => h.adm === me?.adm));
+        setDisciplinary((disc || []).filter(d => d.adm === me?.adm));
       });
     });
     return () => { active = false; };
@@ -239,6 +242,17 @@ export default function StudentPortal({ store, user, params }) {
           </div>
           <div style={{ flex: 1 }}>
             <strong>Parental Administrative Access Active.</strong> You are viewing {me.name}'s portal with elevated permissions.
+          </div>
+        </div>
+      )}
+
+      {/* Disciplinary Notice */}
+      {disciplinary.filter(c => c.status !== 'Resolved').length > 0 && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <AlertTriangle size={20} style={{ color: '#dc2626', marginTop: 2 }} />
+          <div>
+            <strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>Active Disciplinary Notice</strong>
+            <div style={{ fontSize: 14 }}>You have unresolved disciplinary records that require your attention. Please check with the administration.</div>
           </div>
         </div>
       )}

@@ -213,6 +213,17 @@ export default function ParentPortal({ store, user }) {
     <div>
       <PageHeader title="My Child" subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
 
+      {/* Disciplinary Notice */}
+      {disciplinary.filter(c => c.status !== 'Resolved').length > 0 && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <Icon name="warning" size={20} style={{ color: '#dc2626', marginTop: 2 }} />
+          <div>
+            <strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>Active Disciplinary Notice</strong>
+            <div style={{ fontSize: 14 }}>There are unresolved disciplinary records for {child.name}. Please review the Disciplinary Records section below and contact the school administration if necessary.</div>
+          </div>
+        </div>
+      )}
+
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
         <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
