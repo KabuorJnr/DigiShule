@@ -366,6 +366,11 @@ CREATE TABLE IF NOT EXISTS admissions (
   "Grade" TEXT,
   date TEXT,
   status TEXT,
+  dob TEXT,
+  "parentName" TEXT,
+  "parentPhone" TEXT,
+  "parentEmail" TEXT,
+  "boardingStatus" TEXT,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -422,6 +427,7 @@ CREATE TABLE IF NOT EXISTS messages (
   sender_id TEXT,
   sender_name TEXT,
   recipient_role TEXT,
+  student_id TEXT,
   student_name TEXT,
   subject TEXT,
   body TEXT,

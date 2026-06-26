@@ -154,6 +154,37 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
         </div>
       </section>
 
+      {/* 5. School Gallery */}
+      <section className="bespoke-gallery" style={{ padding: '80px 5%', background: '#fff' }}>
+        <div className="b-section-header" style={{ marginBottom: 40 }}>
+          <h2>Life at Our School</h2>
+          <p>A glimpse into our vibrant community, modern facilities, and dynamic events.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
+            <img src="/gallery_1.png" alt="School Campus" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
+            <div style={{ padding: '16px', background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Modern Campus</h4>
+              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>State-of-the-art facilities surrounded by nature.</p>
+            </div>
+          </div>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
+            <img src="/gallery_2.png" alt="Science Laboratory" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
+            <div style={{ padding: '16px', background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Science & Innovation</h4>
+              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>Hands-on learning in our fully equipped laboratories.</p>
+            </div>
+          </div>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
+            <img src="/gallery_3.png" alt="Sports Day" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
+            <div style={{ padding: '16px', background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Annual Sports Day</h4>
+              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>Fostering teamwork and physical excellence.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bespoke-footer">
         <div className="b-footer-content">

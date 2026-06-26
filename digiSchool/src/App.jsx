@@ -329,6 +329,22 @@ export default function App() {
     };
   }, [loadUser, handleDemoLogin]);
 
+  // ---- Global Realtime Sync ----
+  useEffect(() => {
+    if (!currentUser || isDemoRef.current) return;
+    
+    const channel = supabase.channel('global-sync')
+      .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+        // Refetch all core data when a change occurs to keep state perfectly in sync
+        loadAllData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, loadAllData]);
+
   const handleLogout = async () => {
     isDemoRef.current = false;
     localStorage.removeItem('eduone_demo_user');

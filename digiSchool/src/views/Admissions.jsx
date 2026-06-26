@@ -2,14 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { getDynamicClasses } from '../data/seed';
-import { fetchTable, upsertRow } from '../lib/api';
+import { fetchTable, upsertRow, upsertStudent } from '../lib/api';
+import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
+import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 import { ClipboardList, CheckCircle2, Clock, GraduationCap } from 'lucide-react';
 
 const STATUS_COLOR = { Admitted: 'green', Pending: 'amber', Waitlisted: 'blue', Rejected: 'red' };
 const STATUS_CYCLE = ['Pending', 'Admitted', 'Waitlisted', 'Rejected'];
 
 export default function Admissions({ store }) {
-  const { notify, students } = store;
+  const { notify, students, setStudents } = store;
   const [apps, setApps] = useState([]);
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -41,7 +43,89 @@ export default function Admissions({ store }) {
     const updated = { ...app, status: next };
     try { await upsertRow('admissions', updated); } catch (e) { notify(`Could not update status: ${e.message}`, 'error'); return; }
     setApps(as => as.map(a => a.id === id ? updated : a));
-    notify(`Status changed to ${next}`, 'info', 'Admissions');
+
+    // Auto-enroll into students table when admitted
+    if (next === 'Admitted') {
+      const newStudent = {
+        id: `s_${app.id}`,
+        name: app.name,
+        adm: `ADM/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`,
+        class: app.Grade || '7A',
+        gender: app.gender === 'M' ? 'Male' : app.gender === 'F' ? 'Female' : app.gender,
+        scores: {},
+        flagged: false,
+        guardianName: app.parentName || '',
+        guardianPhone: app.parentPhone || '',
+        guardianEmail: app.parentEmail || '',
+      };
+      try {
+        await upsertStudent(newStudent);
+        setStudents(prev => [...prev, newStudent]);
+        
+        // ── 1. Create Student Portal Account ──
+        const studentPassword = newStudent.adm;
+        const studentAuthEmail = `${newStudent.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
+        
+        const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
+          email: studentAuthEmail,
+          password: studentPassword,
+          options: { data: { role: 'student' } }
+        });
+        
+        if (studentSignUpError && !studentSignUpError.message.includes('already')) {
+          console.warn('Student Auth provision warning:', studentSignUpError.message);
+        } else if (studentAuthData?.user) {
+          await supabase.from('profiles').upsert({
+            id: studentAuthData.user.id,
+            username: newStudent.adm,
+            full_name: newStudent.name,
+            role: 'student',
+            student_id: newStudent.id
+          });
+        }
+        
+        // ── 2. Create Parent Portal Account (If email provided) ──
+        if (newStudent.guardianEmail) {
+          const tempPassword = generateSecurePassword(10);
+          const username = await generateSequentialUsername('PRN');
+          
+          const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
+            email: newStudent.guardianEmail,
+            password: tempPassword,
+            options: { data: { role: 'parent' } }
+          });
+          
+          if (signUpError && !signUpError.message.includes('already')) {
+            console.warn('Parent Auth provision warning:', signUpError.message);
+          }
+
+          if (authData?.user) {
+            await supabase.from('profiles').upsert({
+              id: authData.user.id,
+              username,
+              full_name: newStudent.guardianName || 'Parent / Guardian',
+              role: 'parent',
+              student_id: newStudent.id
+            });
+
+            // Send provisioning email
+            provisionAccount({
+              email: newStudent.guardianEmail,
+              username,
+              password: tempPassword,
+              name: newStudent.guardianName || 'Parent / Guardian',
+              role: 'parent'
+            }).catch(e => console.warn('Email dispatch failed:', e.message));
+          }
+        }
+        
+        notify(`${app.name} admitted and enrolled in Grade ${app.Grade || '7A'}`, 'success', 'Admissions');
+      } catch (e) {
+        notify(`Admitted but failed to enroll: ${e.message}`, 'warning');
+      }
+    } else {
+      notify(`Status changed to ${next}`, 'info', 'Admissions');
+    }
   };
 
   const addApplicant = async () => {

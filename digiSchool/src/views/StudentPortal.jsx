@@ -214,6 +214,17 @@ export default function StudentPortal({ store, user, params }) {
           </button>
         ))}
       </div>
+      
+      {user?.role === 'parent' && (
+        <div style={{ background: '#e0e7ff', color: '#3730a3', padding: '12px 16px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ background: '#4f46e5', color: '#fff', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Award size={14} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong>Parental Administrative Access Active.</strong> You are viewing {me.name}'s portal with elevated permissions.
+          </div>
+        </div>
+      )}
 
       {/* ===== DASHBOARD ===== */}
       {tab === 'dashboard' && (
