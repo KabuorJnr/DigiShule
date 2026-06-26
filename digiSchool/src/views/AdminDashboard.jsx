@@ -4,6 +4,8 @@ import { fmtKES } from '../data/modules';
 
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
+import { exportTablePDF } from '../utils/exporters';
+import { Download } from 'lucide-react';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -90,6 +92,21 @@ export default function AdminDashboard({ store, user }) {
     }
   };
 
+  const handleDownloadDiscipline = () => {
+    const head = ['Date', 'Student', 'Class', 'Category', 'Severity', 'Status'];
+    const body = dbDiscipline.map(d => [
+      d.date, d.student, d.class, d.category, d.severity, d.status
+    ]);
+    exportTablePDF({
+      school: store.settings,
+      title: 'Disciplinary Records',
+      subtitle: `Exported on ${new Date().toLocaleDateString()}`,
+      head,
+      body,
+      filename: `Discipline_Records_${new Date().toISOString().slice(0, 10)}.pdf`
+    });
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -141,7 +158,12 @@ export default function AdminDashboard({ store, user }) {
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ color: '#000000', margin: 0 }}>Discipline Cases</h3>
-            <button className="btn btn-sm btn-primary" onClick={() => setReportDisciplineOpen(true)}>File Report</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-sm" onClick={handleDownloadDiscipline} title="Download Records">
+                <Download size={14} />
+              </button>
+              <button className="btn btn-sm btn-primary" onClick={() => setReportDisciplineOpen(true)}>File Report</button>
+            </div>
           </div>
           {dbDiscipline.slice(0, 5).map(d => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
