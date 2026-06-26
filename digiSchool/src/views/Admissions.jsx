@@ -54,7 +54,7 @@ export default function Admissions({ store }) {
         id: `s_${app.id}`,
         name: app.name,
         adm: `ADM/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`,
-        class: app.Grade || '7A',
+        class: app.Grade || app.form || app.grade || '7A',
         gender: app.gender === 'M' ? 'Male' : app.gender === 'F' ? 'Female' : app.gender,
         scores: {},
         flagged: false,
@@ -123,7 +123,7 @@ export default function Admissions({ store }) {
           }
         }
         
-        notify(`${app.name} admitted and enrolled in Grade ${app.Grade || '7A'}`, 'success', 'Admissions');
+        notify(`${app.name} admitted and enrolled in Grade ${app.Grade || app.form || app.grade || '7A'}`, 'success', 'Admissions');
       } catch (e) {
         notify(`Admitted but failed to enroll: ${e.message}`, 'warning');
       }
@@ -136,7 +136,7 @@ export default function Admissions({ store }) {
     if (!form.name || !form.kcpe) { notify('Name and KCPE marks are required.', 'error'); return; }
     const applicant = {
       id: `ad${Date.now()}`, name: form.name, kcpe: Number(form.kcpe), gender: form.gender,
-      Grade: form.Grade, date: new Date().toISOString().slice(0, 10), status: 'Pending',
+      form: form.Grade, date: new Date().toISOString().slice(0, 10), status: 'Pending',
       dob: form.dob, parentName: form.parentName, parentPhone: form.parentPhone, parentEmail: form.parentEmail,
       boardingStatus: form.boardingStatus,
     };
@@ -190,7 +190,7 @@ export default function Admissions({ store }) {
                     <td style={{ fontWeight: 600, cursor: 'pointer', color: '#0078D4' }} onClick={() => setViewStudent(a)}>{a.name}</td>
                     <td>{a.kcpe}</td>
                     <td>{a.gender}</td>
-                    <td>{a.Grade}</td>
+                    <td>{a.Grade || a.form || a.grade}</td>
                     <td className="muted">{a.date}</td>
                     <td><Badge color={STATUS_COLOR[a.status]}>{a.status}</Badge></td>
                     <td><button className="btn btn-sm" onClick={() => cycleStatus(a.id)}>Change</button></td>
@@ -303,7 +303,7 @@ export default function Admissions({ store }) {
               <div><span className="field-label">Gender</span><div>{viewStudent.gender}</div></div>
             </div>
             <div className="grid grid-2">
-              <div><span className="field-label">Grade</span><div>{viewStudent.Grade}</div></div>
+              <div><span className="field-label">Grade</span><div>{viewStudent.Grade || viewStudent.form || viewStudent.grade}</div></div>
               <div><span className="field-label">Application Date</span><div>{viewStudent.date}</div></div>
             </div>
             {viewStudent.dob && <div><span className="field-label">Date of Birth</span><div>{viewStudent.dob}</div></div>}

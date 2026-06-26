@@ -29,7 +29,7 @@ export default function PublicApplication({ onBack }) {
         name: form.studentName,
         kcpe: Number(form.kcpeMarks),
         gender: form.gender[0],
-        Grade: form.grade,
+        form: form.grade,
         date: new Date().toISOString().slice(0, 10),
         status: 'Pending',
         dob: form.dob,
