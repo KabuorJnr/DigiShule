@@ -310,8 +310,7 @@ export async function fetchTable(key) {
 }
 
 export async function upsertRow(key, row) {
-  if (!_schoolId) throw new Error('No active school selected');
-  const payload = { ...row, school_id: _schoolId };
+  const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
   const { error } = await supabase.from(TABLES[key] || key).upsert(payload);
   if (error) throw error;
 }
