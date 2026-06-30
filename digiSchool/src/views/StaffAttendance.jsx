@@ -306,26 +306,7 @@ export default function StaffAttendance({ store, user }) {
     }
   };
 
-  const addNewDummyApp = async () => {
-    const newApp = {
-      id: `app_${Date.now()}`,
-      applicant_name: 'New Candidate',
-      role: 'Teacher',
-      department: 'Mathematics',
-      phone: '0700000000',
-      email: 'candidate@example.com',
-      experience_years: 3,
-      status: 'New',
-      applied_date: new Date().toISOString().slice(0, 10),
-    };
-    try {
-      await upsertRow('job_applications', newApp);
-      setJobApps(prev => [newApp, ...prev]);
-      notify('New dummy application received (for demo)', 'success');
-    } catch (e) {
-      notify('Error adding application', 'error');
-    }
-  };
+
 
   const shown = filter === 'All' 
     ? staff.filter(s => s.status !== 'Inactive') 
@@ -685,7 +666,6 @@ export default function StaffAttendance({ store, user }) {
             <div className="toolbar" style={{ marginBottom: 14, justifyContent: 'space-between' }}>
               <h3 style={{ margin: 0, fontSize: 15 }}>Job Applications</h3>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn btn-sm" onClick={addNewDummyApp}>Simulate App</button>
                 <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>+ Hire Directly</button>
               </div>
             </div>

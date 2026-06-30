@@ -160,29 +160,26 @@ export default function ParentPortal({ store, user }) {
     
     setPaywallSaving(true);
     
-    // Simulate Daraja API verification delay
-    setTimeout(async () => {
-      try {
-        const payment = {
-          id: `pay_${Date.now()}`,
-          student_id: child.id,
-          amount: Number(payForm.amount),
-          method: 'M-Pesa',
-          ref: payForm.code.toUpperCase(),
-          date: new Date().toISOString().slice(0, 10),
-          created_at: new Date().toISOString()
-        };
-        await upsertRow('financePayments', payment);
-        setPayments(prev => [...prev, payment]);
-        store.notify(`Payment of KES ${payment.amount} successful!`);
-        setPayModalOpen(false);
-        setPayForm({ amount: '', code: '' });
-      } catch (e) {
-        setPaywallError(`Payment failed: ${e.message}`);
-      } finally {
-        setPaywallSaving(false);
-      }
-    }, 1500);
+    try {
+      const payment = {
+        id: `pay_${Date.now()}`,
+        student_id: child.id,
+        amount: Number(payForm.amount),
+        method: 'M-Pesa',
+        ref: payForm.code.toUpperCase(),
+        date: new Date().toISOString().slice(0, 10),
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('financePayments', payment);
+      setPayments(prev => [...prev, payment]);
+      store.notify(`Payment of KES ${payment.amount} successful!`);
+      setPayModalOpen(false);
+      setPayForm({ amount: '', code: '' });
+    } catch (e) {
+      setPaywallError(`Payment processing failed: ${e.message}`);
+    } finally {
+      setPaywallSaving(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -501,7 +498,7 @@ export default function ParentPortal({ store, user }) {
             <div>
               <label className="field-label">Recipient</label>
               <select className="select" value={msgForm.teacher} onChange={e => setMsgForm(f => ({ ...f, teacher: e.target.value }))}>
-                <option>Class Teacher</option>
+                <option value="Class Teacher">{store.teachers?.find(t => t.assignedClass === child.class)?.name ? `${store.teachers.find(t => t.assignedClass === child.class).name} (Class Teacher)` : 'Class Teacher'}</option>
                 <option>Math Teacher</option>
                 <option>Science Teacher</option>
                 <option>Principal</option>

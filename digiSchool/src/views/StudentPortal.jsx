@@ -32,13 +32,7 @@ const TABS = [
 
 const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const PERIODS = ['08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'];
-const MOCK_TIMETABLE = {
-  'Monday': ['Mathematics', 'English', 'Science', 'Break', 'History', 'Geography', 'Lunch', 'P.E.'],
-  'Tuesday': ['Science', 'Mathematics', 'Art', 'Break', 'English', 'Computer', 'Lunch', 'History'],
-  'Wednesday': ['Geography', 'Science', 'Mathematics', 'Break', 'Music', 'English', 'Lunch', 'Clubs'],
-  'Thursday': ['English', 'History', 'Mathematics', 'Break', 'Science', 'Geography', 'Lunch', 'Art'],
-  'Friday': ['Mathematics', 'Science', 'English', 'Break', 'P.E.', 'Computer', 'Lunch', 'Assembly'],
-};
+
 
 const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
@@ -66,7 +60,7 @@ export default function StudentPortal({ store, user, params }) {
   const [rank, setRank] = useState(null);
   const [payModal, setPayModal] = useState(false);
   const [payForm, setPayForm] = useState({ reference: '', method: 'M-Pesa' });
-  const [feeAccount, setFeeAccount] = useState({ totalBilled: 0, totalPaid: 0, outstanding: 0, payments: [], structure: [], dueDate: '' });
+  const [payments, setPayments] = useState([]);
   const [msgModal, setMsgModal] = useState(false);
   const [msgForm, setMsgForm] = useState({ subject: '', body: '' });
   const [subFilter, setSubFilter] = useState('All');
@@ -110,7 +104,7 @@ export default function StudentPortal({ store, user, params }) {
       Promise.all([
         fetchTable('libraryBooks'), fetchTable('libraryLoans'), fetchTable('schoolEvents'),
         fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('clinicVisits'),
-        fetchTable('disciplinaryRecords')
+        fetchTable('disciplinaryRecords'), fetchTable('financePayments')
       ]).then(([bks, lns, evs, att, subs, health, disc]) => {
         if (!active) return;
         setLibraryBooks(bks || []);
@@ -120,6 +114,7 @@ export default function StudentPortal({ store, user, params }) {
         setSubmissions((subs || []).filter(s => s.student_id === me?.id || s.adm === me?.adm));
         setHealthRecords((health || []).filter(h => h.adm === me?.adm));
         setDisciplinary((disc || []).filter(d => d.adm === me?.adm));
+        setPayments((pays || []).filter(p => p.student_id === me?.id || p.adm === me?.adm));
       });
     });
     return () => { active = false; };
@@ -196,21 +191,56 @@ export default function StudentPortal({ store, user, params }) {
   }), [attLog]);
   const attPct = attTotals.total ? ((attTotals.present + attTotals.late) / attTotals.total * 100).toFixed(1) : 0;
 
+  const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
+  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const outstanding = termFees - totalPaid;
+  const dueDate = '2026-07-05'; // Hardcoded or dynamic from settings
+
+  const feeAccount = {
+    totalBilled: termFees,
+    totalPaid,
+    outstanding,
+    payments,
+    structure: feeStructure || [],
+    dueDate
+  };
+
   const classmates = useMemo(() => {
     if (!me) return [];
     return students.filter(s => s.class === me.class).sort((a, b) => a.name.localeCompare(b.name));
   }, [me, students]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     const ref = payForm.reference?.trim();
     if (!ref) { notify('Enter a valid reference code', 'warning'); return; }
-    // Mock an amount since the user only inputs the reference code for verification
-    const amt = 2500;
-    const newPayment = { id: `fp${Date.now()}`, date: new Date().toISOString().slice(0, 10), method: payForm.method, ref: ref.toUpperCase(), amount: amt, status: 'Verification Pending' };
-    setFeeAccount(prev => ({ ...prev, totalPaid: prev.totalPaid + amt, outstanding: prev.outstanding - amt, payments: [newPayment, ...prev.payments] }));
-    setPayModal(false);
-    setPayForm({ reference: '', method: 'M-Pesa' });
-    notify(`Reference ${ref.toUpperCase()} submitted for verification`, 'success', 'Payment');
+    
+    try {
+      const { upsertRow } = await import('../lib/api');
+      // For real implementation, you would typically verify the M-Pesa transaction here
+      // For this step, we allow any amount user inputs for testing (or fixed to what they billed)
+      // Since there's no amount input in StudentPortal's modal right now, let's just create a payment entry
+      const amt = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0; // Paying full term fees
+      
+      const newPayment = { 
+        id: `pay_${Date.now()}`, 
+        date: new Date().toISOString().slice(0, 10), 
+        method: payForm.method, 
+        ref: ref.toUpperCase(), 
+        amount: amt, 
+        status: 'Verification Pending',
+        student_id: me.id,
+        adm: me.adm,
+        created_at: new Date().toISOString()
+      };
+      
+      await upsertRow('financePayments', newPayment);
+      setPayments(prev => [newPayment, ...prev]);
+      setPayModal(false);
+      setPayForm({ reference: '', method: 'M-Pesa' });
+      notify(`Reference ${ref.toUpperCase()} submitted for verification`, 'success', 'Payment');
+    } catch (e) {
+      notify(`Payment error: ${e.message}`, 'error', 'Payment');
+    }
   };
 
   const handleMsg = () => {
@@ -330,7 +360,7 @@ export default function StudentPortal({ store, user, params }) {
             <div className="grid grid-4" style={{ gap: 12 }}>
               <div><span className="muted" style={{ fontSize: 12 }}>Grade</span><div style={{ fontWeight: 600, fontSize: 18 }}>Grade {me.class}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Stream</span><div style={{ fontWeight: 600, fontSize: 18 }}>{me.class.slice(1)}</div></div>
-              <div><span className="muted" style={{ fontSize: 12 }}>Class Teacher</span><div style={{ fontWeight: 600 }}>Mr. Omondi</div></div>
+              <div><span className="muted" style={{ fontSize: 12 }}>Class Teacher</span><div style={{ fontWeight: 600 }}>{store.teachers?.find(t => t.assignedClass === me.class)?.name || 'Not Assigned'}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Total Students</span><div style={{ fontWeight: 600, fontSize: 18 }}>{classmates.length}</div></div>
             </div>
           </div>
@@ -374,9 +404,10 @@ export default function StudentPortal({ store, user, params }) {
                 {PERIODS.map((time, idx) => (
                   <tr key={time}>
                     <td className="muted" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{time}</td>
-                    {WEEK_DAYS.map(day => {
-                      const subject = MOCK_TIMETABLE[day][idx];
-                      const isBreak = subject === 'Break' || subject === 'Lunch';
+                    {WEEK_DAYS.map((day, dayIdx) => {
+                      const cell = store.timetables?.[me.class]?.grid?.[idx]?.[dayIdx];
+                      const subject = cell?.type === 'lesson' ? cell.subject : cell?.label || (idx === 3 ? 'Break' : idx === 6 ? 'Lunch' : '-');
+                      const isBreak = cell?.type === 'break' || subject === 'Break' || subject === 'Lunch';
                       return (
                         <td key={day} style={{ textAlign: 'center', padding: isBreak ? 8 : 12 }}>
                           {isBreak ? (

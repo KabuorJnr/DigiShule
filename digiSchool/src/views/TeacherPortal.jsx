@@ -10,7 +10,7 @@ export default function TeacherPortal({ store, user }) {
   const teacherName = user?.name || 'Teacher';
   const subject = user?.dept || 'Mathematics';
 
-  const teacherProfile = useMemo(() => store.teachers.find(t => t.name === teacherName) || {}, [store.teachers, teacherName]);
+  const teacherProfile = useMemo(() => store.teachers.find(t => t.id === user?.id || t.name === teacherName) || {}, [store.teachers, user?.id, teacherName]);
   const assignedClass = teacherProfile.assignedClass || null;
 
   const [loadedStudents, setLoadedStudents] = useState([]);
