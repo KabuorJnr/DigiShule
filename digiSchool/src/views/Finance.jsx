@@ -42,14 +42,14 @@ export default function Finance({ store, user, params = {} }) {
       fetchTable('invoices').catch(() => []),
       fetchTable('financePayments').catch(() => []),
       fetchTable('expenses').catch(() => []),
-      store.students // from global store
-    ]).then(([invs, pays, exps]) => {
+      import('../lib/api').then(({ fetchStudents }) => fetchStudents(0, 1000).then(r => r.data || [])).catch(() => [])
+    ]).then(([invs, pays, exps, stus]) => {
       setInvoices(invs);
       setPayments(pays);
       setExpenses(exps);
-      setStudents(store.students || []);
+      setStudents(stus || []);
     });
-  }, [store.students]);
+  }, []);
 
   return (
     <div>

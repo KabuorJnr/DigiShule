@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { fetchTable, upsertRow } from '../lib/api';
+import { fetchTable, upsertRow, fetchStudents } from '../lib/api';
 import { Icon } from '../components/icons';
 
 const OUTCOME_COLOR = { 'Returned to class': 'green', 'Sent home': 'amber', 'Referred to hospital': 'red' };
 
 export default function Clinic({ store }) {
-  const { notify, students = [] } = store;
+  const { notify } = store;
+  const [students, setStudents] = useState([]);
   const [visits, setVisits] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const [form, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
@@ -15,9 +16,16 @@ export default function Clinic({ store }) {
   const [parentMsg, setParentMsg] = useState('');
 
   useEffect(() => {
+    let active = true;
     fetchTable('clinicVisits')
-      .then((rows) => setVisits(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))))
+      .then((rows) => { if (active) setVisits(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))); })
       .catch((e) => notify(`Failed to load clinic visits: ${e.message}`, 'error'));
+      
+    fetchStudents(0, 1000).then(res => {
+      if (active) setStudents(res.data || []);
+    }).catch(() => {});
+    
+    return () => { active = false; };
   }, [notify]);
 
   const totals = useMemo(() => ({

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
@@ -18,7 +18,14 @@ function Stat({ label, value, color, sub }) {
 }
 
 export default function AcademicsDashboard({ store, user }) {
-  const { navigate, notify, settings, students = [], teachers = [], examSchedules = [] } = store;
+  const { navigate, notify, settings, teachers = [], examSchedules = [] } = store;
+  const [students, setStudents] = useState([]);
+  
+  useEffect(() => {
+    import('../lib/api').then(({ fetchStudents }) => {
+      fetchStudents(0, 1000).then(r => setStudents(r.data || [])).catch(() => {});
+    });
+  }, []);
   
   const classesCount = settings.levels?.length || 0;
   const activeTeacherList = teachers.filter(t => t.status !== 'Inactive');

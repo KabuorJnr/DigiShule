@@ -425,8 +425,8 @@ export default function TeacherPortal({ store, user }) {
             <div>
               <label className="field-label">Student</label>
               <select className="select" value={behaviorForm.student} onChange={e => setBehaviorForm(f => ({ ...f, student: e.target.value }))}>
-                <option value="">-- Select Student --</option>
-                {students.filter(s => !assignedClass || s.class === assignedClass).map(s => (
+                <option value="">Select student...</option>
+                {loadedStudents.filter(s => !assignedClass || s.class === assignedClass).map(s => (
                   <option key={s.id} value={s.name}>{s.name} ({s.adm})</option>
                 ))}
               </select>

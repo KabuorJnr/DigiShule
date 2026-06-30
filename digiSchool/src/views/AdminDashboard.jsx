@@ -3,7 +3,7 @@ import { Badge, ProgressBar } from '../components/widgets';
 import { fmtKES } from '../data/modules';
 
 import Modal from '../components/Modal';
-import { fetchTable, upsertRow } from '../lib/api';
+import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
 import { Download, UserPlus, Shield, CheckCircle2 } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
@@ -73,10 +73,10 @@ export default function AdminDashboard({ store, user }) {
 
   const handleReportDiscipline = async () => {
     if (!reportForm.adm || !reportForm.description) return notify('Please fill all required fields.', 'warning');
-    const studentObj = (students || []).find(s => s.adm === reportForm.adm);
-    if (!studentObj) return notify('Student not found with this ADM number.', 'error');
-
+    
     try {
+      const studentObj = await fetchStudentByQuery('adm', reportForm.adm);
+      if (!studentObj) return notify('Student not found with this ADM number.', 'error');
       const payload = {
         id: `disc_${Date.now()}`,
         date: new Date().toISOString().slice(0, 10),
