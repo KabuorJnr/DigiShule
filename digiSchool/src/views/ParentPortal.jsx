@@ -13,6 +13,24 @@ const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 
 export default function ParentPortal({ store, user }) {
+  const [hasPaid, setHasPaid] = useState(() => localStorage.getItem('eduone_parent_paid') === 'true');
+  const [paywallCode, setPaywallCode] = useState('');
+  const [paywallSaving, setPaywallSaving] = useState(false);
+  const [paywallError, setPaywallError] = useState('');
+
+  const handleActivateSubscription = () => {
+    setPaywallError('');
+    if (paywallCode.trim().length < 10) {
+      return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
+    }
+    setPaywallSaving(true);
+    setTimeout(() => {
+      localStorage.setItem('eduone_parent_paid', 'true');
+      setHasPaid(true);
+      setPaywallSaving(false);
+    }, 1500);
+  };
+
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
   const child = useMemo(() => {
@@ -37,6 +55,9 @@ export default function ParentPortal({ store, user }) {
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [payForm, setPayForm] = useState({ amount: '', method: 'M-Pesa' });
   
   const [msgModalOpen, setMsgModalOpen] = useState(false);
   const [msgForm, setMsgForm] = useState({ teacher: 'Class Teacher', subject: '', body: '' });
@@ -53,13 +74,14 @@ export default function ParentPortal({ store, user }) {
     if (!child?.adm) return;
     let active = true;
     Promise.all([
-      fetchTable('clinicVisits'), fetchTable('disciplinaryRecords'),
+      fetchTable('clinicVisits'), fetchTable('disciplinaryRecords'), fetchTable('financePayments'),
       fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), listFiles('assignments').catch(() => [])
     ])
-      .then(([visits, cases, att, subs, assigns]) => {
+      .then(([visits, cases, pays, att, subs, assigns]) => {
         if (!active) return;
         setHealthRecords((visits || []).filter((v) => v.adm === child.adm));
         setDisciplinary((cases || []).filter((c) => c.adm === child.adm));
+        setPayments((pays || []).filter((p) => p.student_id === child.id));
         setAttendanceLog((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
         setSubmissions((subs || []).filter(s => s.student_id === child.id || s.adm === child.adm));
         setCloudAssignments(assigns || []);
@@ -93,6 +115,10 @@ export default function ParentPortal({ store, user }) {
   const attPct = attTotals.total ? Math.round(((attTotals.present + attTotals.late) / attTotals.total) * 100) : 0;
   const latestAtt = { rate: attPct || 91 };
 
+  const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
+  const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const balance = termFees - paid;
+
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
 
   const handleDownloadTranscript = () => {
@@ -119,6 +145,45 @@ export default function ParentPortal({ store, user }) {
       },
       filename: `${child.name}_Transcript.pdf`
     });
+  };
+
+  const handleDownloadStatement = () => {
+    const head = ['Date', 'Reference', 'Method', 'Amount (KES)'];
+    const body = payments.map(p => [p.date, p.ref, p.method, Number(p.amount).toLocaleString()]);
+    body.push(['', '', 'Term Fees Billed:', termFees.toLocaleString()]);
+    body.push(['', '', 'Total Paid:', paid.toLocaleString()]);
+    body.push(['', '', 'Balance Due:', balance.toLocaleString()]);
+    
+    exportTablePDF({
+      school: store.settings,
+      title: 'Fee Statement',
+      subtitle: `Student: ${child.name} | Adm: ${child.adm}`,
+      head,
+      body,
+      filename: `${child.name}_Fee_Statement.pdf`
+    });
+  };
+
+  const handlePayFees = async () => {
+    if (!payForm.amount) return store.notify('Please enter an amount.', 'error');
+    try {
+      const payment = {
+        id: `pay_${Date.now()}`,
+        student_id: child.id,
+        amount: Number(payForm.amount),
+        method: payForm.method,
+        ref: 'PORTAL-PAY',
+        date: new Date().toISOString().slice(0, 10),
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('financePayments', payment);
+      setPayments(prev => [...prev, payment]);
+      store.notify(`Payment of KES ${payment.amount} successful!`);
+      setPayModalOpen(false);
+      setPayForm({ amount: '', method: 'M-Pesa' });
+    } catch (e) {
+      store.notify(`Payment failed: ${e.message}`, 'error');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -153,6 +218,59 @@ export default function ParentPortal({ store, user }) {
     setProfileModalOpen(false);
   };
 
+  if (!hasPaid) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', padding: 20 }}>
+        <div className="card" style={{ maxWidth: 500, width: '100%', padding: 40, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)' }}>
+          <CreditCard size={48} color="#10B981" style={{ marginBottom: 20 }} />
+          <h2 style={{ margin: '0 0 10px 0', color: '#0f172a' }}>Activate Termly Access</h2>
+          <p className="muted" style={{ marginBottom: 30 }}>Unlock real-time grades, attendance tracking, and instant alerts for your child's portal.</p>
+          
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center', marginBottom: 30 }}>
+            <div style={{ fontSize: 14, color: '#166534', fontWeight: 600, marginBottom: 8 }}>TERMLY SUBSCRIPTION</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#14532d', marginBottom: 16 }}>KES 250</div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534', textAlign: 'left', background: '#fff', padding: 16, borderRadius: 8 }}>
+              <div>1. Go to M-Pesa on your phone</div>
+              <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
+              <div>3. Enter Business No: <strong style={{ color: '#000' }}>123456</strong></div>
+              <div>4. Enter Account No: <strong style={{ color: '#000' }}>{child?.adm || 'EDUONE'}</strong></div>
+              <div>5. Enter Amount: <strong>250</strong></div>
+            </div>
+          </div>
+
+          {paywallError && (
+            <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, marginBottom: 20, fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left' }}>
+              <Shield size={16} /> {paywallError}
+            </div>
+          )}
+
+          <div style={{ textAlign: 'left', marginBottom: 20 }}>
+            <label className="field-label">Enter M-Pesa Transaction Code *</label>
+            <input 
+              className="input" 
+              value={paywallCode} 
+              onChange={e => setPaywallCode(e.target.value.toUpperCase())} 
+              placeholder="e.g. SAJ1234XYZ" 
+              style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}
+              maxLength={10}
+            />
+          </div>
+
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={handleActivateSubscription} 
+            disabled={paywallSaving} 
+            style={{ background: '#10B981', borderColor: '#10B981', padding: '12px 24px', width: '100%', color: '#fff' }}
+          >
+            {paywallSaving ? 'Verifying...' : 'Verify & Activate'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!child) {
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', marginTop: 40 }}>
@@ -185,6 +303,7 @@ export default function ParentPortal({ store, user }) {
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
         <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
         <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Behavior Score" value="45 pts" accent="#10B981" sub="Good Standing" />
       </div>
 
@@ -200,8 +319,14 @@ export default function ParentPortal({ store, user }) {
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8, background: '#eef2ff', color: '#4f46e5', borderColor: '#c7d2fe' }} onClick={() => store.navigate('student', { childId: child.id })}>
             <Icon name="analytics" size={18} /> View Child's Portal
           </button>
+          <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
+            <Icon name="finance" size={18} /> Pay School Fees
+          </button>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
             <Download size={18} /> Download Transcript
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadStatement}>
+            <Download size={18} /> Download Statement
           </button>
         </div>
       </div>
@@ -229,6 +354,20 @@ export default function ParentPortal({ store, user }) {
         </div>
 
         <div>
+          <div className="card card-pad" style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className="section-title" style={{ margin: 0 }}>Fee Statement</div>
+            </div>
+            <table className="table">
+              <tbody>
+                <tr><td className="muted">Term Total</td><td style={{ fontWeight: 700 }}>KES {termFees.toLocaleString()}</td></tr>
+                <tr><td className="muted">Amount Paid</td><td style={{ fontWeight: 700, color: '#10B981' }}>KES {paid.toLocaleString()}</td></tr>
+                <tr><td className="muted">Balance</td><td style={{ fontWeight: 700, color: '#EF4444' }}>KES {balance.toLocaleString()}</td></tr>
+              </tbody>
+            </table>
+            <div style={{ marginTop: 8 }}><ProgressBar value={73} color="#10B981" /></div>
+          </div>
+
           {upcomingExams.length > 0 && (
             <div className="card card-pad">
               <div className="section-title">Upcoming Exams</div>
@@ -356,6 +495,32 @@ export default function ParentPortal({ store, user }) {
           </div>
         </div>
       </div>
+
+      {payModalOpen && (
+        <Modal title="Pay School Fees" onClose={() => setPayModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setPayModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handlePayFees}>Confirm Payment</button>
+          </>
+        }>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label">Amount (KES)</label>
+              <input type="number" className="input" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))} placeholder="e.g. 5000" />
+            </div>
+            <div>
+              <label className="field-label">Payment Method</label>
+              <select className="select" value={payForm.method} onChange={e => setPayForm(f => ({ ...f, method: e.target.value }))}>
+                <option>M-Pesa</option>
+                <option>Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+          <p className="muted" style={{ marginTop: 16, fontSize: 13 }}>
+            Payments made here will automatically reflect on the finance portal.
+          </p>
+        </Modal>
+      )}
 
       {msgModalOpen && (
         <Modal title="Message Teacher" onClose={() => setMsgModalOpen(false)} footer={
