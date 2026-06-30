@@ -41,6 +41,7 @@ export default function AdminDashboard({ store, user }) {
   const [commissionForm, setCommissionForm] = useState({ name: '', email: '', role: 'admin' });
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionSuccess, setCommissionSuccess] = useState(false);
+  const [commissionGeneratedPassword, setCommissionGeneratedPassword] = useState('');
 
   useEffect(() => {
     fetchTable('expenses').then(setExpenses).catch(() => {});
@@ -112,6 +113,63 @@ export default function AdminDashboard({ store, user }) {
       body,
       filename: `Discipline_Records_${new Date().toISOString().slice(0, 10)}.pdf`
     });
+  };
+
+  const handleCommissionStaff = async () => {
+    if (!commissionForm.name || !commissionForm.email || !commissionForm.role) {
+      return notify('Please fill all required fields.', 'warning');
+    }
+    
+    setCommissionSaving(true);
+    try {
+      // 1. Generate temp password
+      const tempPass = `EduOne@${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      // 2. Create Auth User using secondary client to preserve Principal session
+      const { data: authData, error: authErr } = await secondaryAuthClient.auth.signUp({
+        email: commissionForm.email,
+        password: tempPass,
+        options: { data: { role: commissionForm.role } }
+      });
+      
+      if (authErr) throw new Error(`Auth Error: ${authErr.message}`);
+      if (!authData?.user) throw new Error('Failed to create credentials.');
+      
+      const schoolId = store.settings?.id || localStorage.getItem('eduone_school_id');
+      
+      // 3. Create Profile
+      const { error: profileErr } = await supabase.from('profiles').upsert({
+        id: authData.user.id,
+        username: commissionForm.email,
+        full_name: commissionForm.name,
+        role: commissionForm.role,
+        school_id: schoolId
+      });
+      
+      if (profileErr) throw new Error(`Profile Error: ${profileErr.message}`);
+      
+      // 4. Create Staff Record
+      const newStaff = {
+        id: authData.user.id,
+        name: commissionForm.name,
+        email: commissionForm.email,
+        phone: '',
+        role: commissionForm.role,
+        department: 'General',
+        status: 'Active',
+        school_id: schoolId
+      };
+      await upsertRow('staff', newStaff);
+      setDbStaff(prev => [...prev, newStaff]);
+      
+      // 5. Show Success
+      setCommissionGeneratedPassword(tempPass);
+      setCommissionSuccess(true);
+    } catch (err) {
+      notify(`Failed to commission staff: ${err.message}`, 'error');
+    } finally {
+      setCommissionSaving(false);
+    }
   };
 
   return (
@@ -317,7 +375,13 @@ export default function AdminDashboard({ store, user }) {
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
               <CheckCircle2 size={64} color="#10B981" style={{ margin: '0 auto 16px' }} />
               <h3 style={{ margin: '0 0 8px' }}>Staff Commissioned!</h3>
-              <p className="muted">An email invitation has been sent to <strong>{commissionForm.email}</strong> with their secure login credentials.</p>
+              <p className="muted">The account has been created for <strong>{commissionForm.email}</strong>.</p>
+              <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', margin: '24px 0', textAlign: 'left' }}>
+                <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Temporary Password</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', letterSpacing: 1 }}>{commissionGeneratedPassword}</div>
+              </div>
+              <p style={{ fontSize: 14, color: '#D13438', fontWeight: 500 }}>Please copy this password and share it with the staff member securely. They will need it for their first login.</p>
+              <button className="btn btn-primary" style={{ marginTop: 24, width: '100%' }} onClick={() => setCommissionModalOpen(false)}>Done</button>
             </div>
           ) : (
             <>
@@ -333,6 +397,7 @@ export default function AdminDashboard({ store, user }) {
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label className="field-label">Role</label>
                   <select className="select" value={commissionForm.role} onChange={e => setCommissionForm(f => ({ ...f, role: e.target.value }))}>
+                    <option value="teacher">Teacher</option>
                     <option value="admin">Admin</option>
                     <option value="deputy_admin">Deputy Principal (Admin)</option>
                     <option value="deputy_academic">Deputy Principal (Academics)</option>
