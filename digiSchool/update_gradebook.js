@@ -16,7 +16,7 @@ code = code.replace(
 // Inject tab navigation and start entry
 code = code.replace(
   /<div className="card" style=\{\{ overflow: 'hidden', marginBottom: 16 \}\}>/,
-        {/* Tabs View logic */}
+  `      {/* Tabs View logic */}
       <div className="tab-container" style={{ display: 'flex', gap: 16, marginBottom: 16, borderBottom: '1px solid var(--border)' }}>
         {['entry', 'analysis', 'overview'].map(t => (
           <div key={t} style={{
@@ -30,7 +30,7 @@ code = code.replace(
       </div>
 
       {activeTab === 'entry' && (
-      <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
+      <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>`
 );
 
 // Wrap table end and start Analysis tab
@@ -42,7 +42,7 @@ code = code.replace(
 // Wrap Analysis end and start Overview tab
 code = code.replace(
   /<div className="grid grid-2">\n        <div className="card card-pad">\n          <h3 className="section-title">Top 5 Students<\/h3>/,
-        )}
+  `      )}
 
       {/* Overview View */}
       {activeTab === 'overview' && (
@@ -55,7 +55,7 @@ code = code.replace(
           </div>
           <div className="grid grid-2">
             <div className="card card-pad">
-              <h3 className="section-title">Top 5 Students</h3>
+              <h3 className="section-title">Top 5 Students</h3>`
 );
 
 // Close Overview tab

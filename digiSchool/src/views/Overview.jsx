@@ -62,16 +62,16 @@ export default function Overview({ store }) {
   };
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
-  const classDistData = useMemo(() => {
-    if (!store.students) return [];
-    const dist = {};
-    store.students.forEach(s => {
-      dist[s.class] = (dist[s.class] || 0) + 1;
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    import('../lib/api').then(({ fetchStudentStats }) => {
+      fetchStudentStats().then(setStats).catch(() => {});
     });
-    return Object.keys(dist).map(k => ({ name: `Grade ${k}`, value: dist[k] }));
-  }, [store.students]);
+  }, []);
 
-  const totalStudents = store.students?.length || 0;
+  const classDistData = [];
+
+  const totalStudents = stats?.total_active || 0;
   
   // Real Staff Metrics
   const activeStaffList = dbStaff.filter(t => t.status !== 'Inactive');
@@ -94,13 +94,13 @@ export default function Overview({ store }) {
   // Real Admissions
   const pendingApps = dbAdmissions.filter(a => a.status === 'Pending').length;
 
-  const maleCount = store.students?.filter(s => s.gender === 'M' || s.gender === 'Male').length || 0;
-  const femaleCount = store.students?.filter(s => s.gender === 'F' || s.gender === 'Female').length || 0;
+  const maleCount = stats?.male || 0;
+  const femaleCount = stats?.female || 0;
   const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 0;
   const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 0;
 
-  const boardingCount = store.students?.filter(s => s.type === 'Boarding').length || 0;
-  const dayCount = store.students?.filter(s => s.type === 'Day').length || 0;
+  const boardingCount = 0;
+  const dayCount = totalStudents;
 
   const displayTrend = [];
   const displayClassDist = totalStudents > 0 ? classDistData : [];

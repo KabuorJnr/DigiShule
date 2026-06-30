@@ -4,11 +4,7 @@ import { supabase, signOutAll } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
-import {
-  buildStudents, TEACHERS, buildExamSchedules,
-  DEFAULT_SETTINGS, DEFAULT_GRADE_BOUNDARIES, buildDefaultFees,
-  DEFAULT_NOTIF_TOGGLES, DEFAULT_VENUES, SEED_NOTIFICATIONS,
-} from './data/seed';
+
 import { Icon, NAV_ICON_MAP } from './components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
 
@@ -202,48 +198,28 @@ export default function App() {
       notifications, setNotifications,
       notify,
       navigate: (v, p = {}) => { setViewParams(p); setView(v); },
+      removeToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
     }),
     [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notifications, notify,
       setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher, addTeacher]
   );
 
-  // ---- Demo mode flag (ref so loadAllData closure reads latest value) ----
-  const isDemoRef = useRef(!!localStorage.getItem('eduone_demo_user'));
-
   // ---- Load all domain data after a user is known ----
   const loadAllData = useCallback(async () => {
     setDataLoading(true);
     try {
-      if (isDemoRef.current) {
-        // ── Demo mode: use seed data, no Supabase calls ──
-        const savedConfig = JSON.parse(localStorage.getItem('eduone_school_config') || '{}');
-        setSettings({ ...DEFAULT_SETTINGS, ...savedConfig.school, levels: savedConfig.levels, classes: savedConfig.classes });
-        setGradeBoundaries(DEFAULT_GRADE_BOUNDARIES);
-        const demoLevels = savedConfig.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
-        setFeeStructure(buildDefaultFees(demoLevels));
-        setNotifToggles(DEFAULT_NOTIF_TOGGLES);
-        setVenues(DEFAULT_VENUES);
-        setStudents(buildStudents(savedConfig.classes || undefined));
-        setTeachers(TEACHERS);
-        setExamSchedules(buildExamSchedules());
-        setTimetables({});
-        setNotifications(SEED_NOTIFICATIONS);
-      } else {
-        // ── Real mode: fetch from Supabase ──
-        const [cfg, st, tch, ex, tt, notifs] = await Promise.all([
-          api.fetchConfig(),
-          api.fetchStudents(),
-          api.fetchTeachers(),
-          api.fetchExamSchedules(),
-          api.fetchTimetables(),
-          api.fetchTable('notifications'),
-        ]);
-        setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
-        setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
-        setVenues(cfg.venues);
-        setStudents(st); setTeachers(tch); setExamSchedules(ex); setTimetables(tt);
-        setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
-      }
+      // ── Real mode: fetch from Supabase ──
+      const [cfg, ex, tt, notifs] = await Promise.all([
+        api.fetchConfig(),
+        api.fetchExamSchedules(),
+        api.fetchTimetables(),
+        api.fetchTable('notifications'),
+      ]);
+      setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
+      setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
+      setVenues(cfg.venues);
+      setExamSchedules(ex); setTimetables(tt);
+      setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
     } catch (e) {
       notify(`Failed to load data: ${e.message || e}`, 'error');
     } finally {
@@ -274,56 +250,18 @@ export default function App() {
     }
   }, [loadAllData, notify]);
 
-  // ---- Demo login handler (called directly by Login.jsx via prop) ----
-  const handleDemoLogin = useCallback((seedUser) => {
-    isDemoRef.current = true;
-    const mockProfile = {
-      username: seedUser.username,
-      name: seedUser.name,
-      role: seedUser.role,
-      dept: seedUser.dept,
-      teacherId: seedUser.link || null,
-      studentId: seedUser.link || null,
-      schoolId: localStorage.getItem('eduone_school_id') || null,
-    };
-    setCurrentUser(mockProfile);
-    setView(ROLES[seedUser.role]?.home || 'overview');
-    notify(`Welcome, ${seedUser.name}`, 'success', 'Signed In');
-    setAuthChecked(true);
-    loadAllData();
-  }, [loadAllData, notify]);
-
   // ---- Auth bootstrap ----
   useEffect(() => {
     let active = true;
 
-    // STEP 1: Set demo flag BEFORE registering Supabase listener so
-    // onAuthStateChange ignores events when in demo mode.
-    const storedDemo = localStorage.getItem('eduone_demo_user');
-    if (storedDemo) isDemoRef.current = true;
-
-    // STEP 2: Re-hydrate demo session on page refresh
-    if (storedDemo) {
-      try {
-        const seedUser = JSON.parse(storedDemo);
-        handleDemoLogin(seedUser);
-      } catch {
-        localStorage.removeItem('eduone_demo_user');
-        isDemoRef.current = false;
-      }
-    }
-
-    // STEP 3: Supabase real-auth listener
-    // When isDemoRef is true, this is a no-op — demo session owns the UI.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      if (isDemoRef.current) return;
 
       if (session?.user) {
         loadUser(session.user.id, event === 'SIGNED_IN');
       } else {
         setCurrentUser(null);
-        setView(null);
+        setView('login');
         setAuthChecked(true);
       }
     });
@@ -332,11 +270,11 @@ export default function App() {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [loadUser, handleDemoLogin]);
+  }, [loadUser]);
 
   // ---- Global Realtime Sync ----
   useEffect(() => {
-    if (!currentUser || isDemoRef.current) return;
+    if (!currentUser) return;
     
     const channel = supabase.channel('global-sync')
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
@@ -351,12 +289,10 @@ export default function App() {
   }, [currentUser, loadAllData]);
 
   const handleLogout = async () => {
-    isDemoRef.current = false;
-    localStorage.removeItem('eduone_demo_user');
+    await signOutAll();
     setCurrentUser(null);
     setActiveRoleOverride(null);
-    setView(null);
-    await signOutAll();
+    setView('login');
     notify('You have been logged out.', 'info', 'Logout');
   };
 
@@ -384,12 +320,11 @@ export default function App() {
         {!showLogin ? (
           <LandingPage 
             onGetStarted={() => setShowLogin(true)} 
-            onDemoLogin={handleDemoLogin} 
             onApply={() => setShowApplication(true)} 
             onSignUp={() => setShowParentSignup(true)}
           />
         ) : (
-          <Login onDemoLogin={handleDemoLogin} onSignUp={() => setShowParentSignup(true)} />
+          <Login onSignUp={() => setShowParentSignup(true)} />
         )}
         {/* Toasts render even on login page */}
         <div className="toast-wrap">

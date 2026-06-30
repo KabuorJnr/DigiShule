@@ -11,8 +11,11 @@ const TABS = [
 ];
 
 export default function TeacherResources({ store, user }) {
-  const { notify, students } = store;
-  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
+  const { notify } = store;
+  const dynamicClasses = useMemo(() => {
+    const saved = (store.settings?.classes || []).map(c => c.name);
+    return saved.length ? saved : ['1A', '2A', '3A']; // Fallback
+  }, [store.settings]);
   const [tab, setTab] = useState('assignments');
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);

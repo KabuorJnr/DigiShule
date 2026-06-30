@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
@@ -68,9 +68,8 @@ export default function Timetable({ store }) {
   const { timetables, setTimetables, notify, settings, students, teachers } = store;
   const dynamicClasses = useMemo(() => {
     const saved = (store.settings?.classes || []).map(c => c.name);
-    const dynamic = getDynamicClasses(students);
-    return [...new Set([...saved, ...dynamic])];
-  }, [students, store.settings]);
+    return saved.length ? saved : ['1A', '2A', '3A']; // Fallback since students array is no longer global
+  }, [store.settings]);
   const [term, setTerm] = useState('Term 2');
   const [cls, setCls] = useState(dynamicClasses[0] || '7A');
   const [tab, setTab] = useState('class');
@@ -86,9 +85,9 @@ export default function Timetable({ store }) {
   const [assignments, setAssignments] = useState(() => defaultAssignments(teachers || []));
 
   useEffect(() => {
-    if (teachers && teachers.length > 0 && assignments.length === 0) {
-      setAssignments(defaultAssignments(teachers));
-      if (!teacherSel) setTeacherSel(teachers[0].name);
+    if (teachers && teachers.length > 0) {
+      setAssignments(prev => prev.length === 0 ? defaultAssignments(teachers) : prev);
+      setTeacherSel(prev => prev ? prev : teachers[0].name);
     }
   }, [teachers]);
 

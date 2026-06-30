@@ -5,12 +5,25 @@ import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, Clipboa
 import Modal from '../components/Modal';
 
 export default function TeacherPortal({ store, user }) {
-  const { students, gradeBoundaries, navigate } = store;
+  const { gradeBoundaries, navigate } = store;
   const teacherName = user?.name || 'Teacher';
   const subject = user?.dept || 'Mathematics';
 
   const teacherProfile = useMemo(() => store.teachers.find(t => t.name === teacherName) || {}, [store.teachers, teacherName]);
   const assignedClass = teacherProfile.assignedClass || null;
+
+  const [loadedStudents, setLoadedStudents] = useState([]);
+  
+  useEffect(() => {
+    let active = true;
+    import('../lib/api').then(({ fetchStudents }) => {
+      // Fetch up to 200 students for quick overview, typically from their assigned class
+      fetchStudents(0, 200, { class: assignedClass || null }).then(res => {
+        if (active) setLoadedStudents(res.data);
+      }).catch(() => {});
+    });
+    return () => { active = false; };
+  }, [assignedClass]);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
   const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });
@@ -63,7 +76,7 @@ export default function TeacherPortal({ store, user }) {
     store.notify('Downloading Class Attendance Summary PDF...', 'info');
     const { exportTablePDF } = await import('../utils/exporters');
     const head = ['Student Name', 'Present', 'Absent', 'Late', 'Attendance %'];
-    const body = store.students.filter(s => s.class === assignedClass).map(s => [
+    const body = loadedStudents.filter(s => s.class === assignedClass).map(s => [
       s.name, '45', '2', '1', '95%'
     ]);
     exportTablePDF({
@@ -87,11 +100,13 @@ export default function TeacherPortal({ store, user }) {
 
   function saveScore(id, field, value) {
     const v = Math.max(0, Math.min(4, Number(value) || 0));
-    const target = students.find((s) => s.id === id);
+    const target = loadedStudents.find((s) => s.id === id);
     if (target) {
       const currentScores = target.scores || {};
       const subjectScores = currentScores[subject] || {};
-      store.updateStudent({ ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } });
+      const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
+      store.updateStudent(updated);
+      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     }
     setEditing(null);
   }
@@ -116,7 +131,7 @@ export default function TeacherPortal({ store, user }) {
   };
 
   const rows = useMemo(() => {
-    return students
+    return loadedStudents
       .filter((s) => s.scores?.[subject])
       .map((s) => {
         const scores = s.scores[subject];
@@ -124,7 +139,7 @@ export default function TeacherPortal({ store, user }) {
         const grade = gradeFor(row.average, gradeBoundaries);
         return { ...s, ...row, grade };
       });
-  }, [students, gradeBoundaries, subject]);
+  }, [loadedStudents, gradeBoundaries, subject]);
 
   const classes = [...new Set(rows.map((r) => r.class))].sort();
   const avgOverall = rows.length

@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { USERS } from '../data/users';
 
 const url = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
@@ -30,11 +29,6 @@ export const secondaryAuthClient = createClient(url, anonKey, {
  * Strategy:
  * 1. Try Supabase: look up email via `email_for_username` RPC → signInWithPassword.
  *    ONLY proceeds with Supabase session if a profile row also exists (role is known).
- * 2. If Supabase has no profile row, signs out and falls through to seed credentials.
- * 3. If RPC missing / no match → falls through to seed credentials.
- *
- * This means demo/seed credentials ALWAYS work, even when a Supabase auth
- * account exists but the profile row hasn't been created yet.
  */
 export async function signInWithUsername(username, password) {
   const uname = (username || '').trim();
@@ -83,40 +77,15 @@ export async function signInWithUsername(username, password) {
       }
     }
   } catch (err) {
-    // Network error or RPC doesn't exist — fall through to seed.
+    // Network error or RPC doesn't exist.
     console.warn('Supabase auth catch block:', err);
+    return { error: { message: 'Network error or invalid credentials. Please try again.' } };
   }
 
-  // ── 2. Demo / seed fallback ──────────────────────────────────────
-  let seedUser = USERS.find(
-    (u) =>
-      u.username.toLowerCase() === uname.toLowerCase() &&
-      u.password === password
-  );
-
-  if (!seedUser && password === '7777') {
-    const un = uname.toUpperCase();
-    if (un.startsWith('STU')) {
-      const adm = un.substring(3);
-      seedUser = { username: uname, password, role: 'student', name: 'Student ' + adm, dept: 'Student', link: adm };
-    } else if (un.startsWith('PAR')) {
-      const adm = un.substring(3);
-      seedUser = { username: uname, password, role: 'parent', name: 'Parent of ' + adm, dept: 'Parent', link: adm };
-    }
-  }
-
-  if (!seedUser) {
-    return { error: { message: 'Invalid username or password. Please try again.' } };
-  }
-
-  // Store the seed user as a mock session (persists across refreshes)
-  localStorage.setItem('eduone_demo_user', JSON.stringify(seedUser));
-  // Return demoUser — Login.jsx calls App.jsx's onDemoLogin prop directly.
-  return { data: { demoUser: seedUser } };
+  return { error: { message: 'Invalid username or password. Please try again.' } };
 }
 
-/** Sign out — clears both Supabase session and demo session. */
+/** Sign out — clears Supabase session. */
 export async function signOutAll() {
-  localStorage.removeItem('eduone_demo_user');
   await supabase.auth.signOut();
 }

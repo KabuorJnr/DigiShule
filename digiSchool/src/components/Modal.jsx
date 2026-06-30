@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function Modal({ title, onClose, children, footer, wide }) {
+export default function Modal({ title, onClose, children, footer, wide, hideClose }) {
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
@@ -18,9 +18,11 @@ export default function Modal({ title, onClose, children, footer, wide }) {
       >
         <div className="modal-header">
           <h3>{title}</h3>
-          <button className="btn btn-icon btn-sm" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          {!hideClose && (
+            <button className="btn btn-icon btn-sm" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
+          )}
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}

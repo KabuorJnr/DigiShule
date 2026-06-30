@@ -541,20 +541,9 @@ export default function StaffAttendance({ store, user }) {
         const assignedClass = fullProfile.assignedClass || 'None';
         
         // Calculate average performance for their subject
-        let subjectAvg = 0;
-        let totalStudents = 0;
-        if (store.students) {
-          const scores = store.students.map(st => st.scores?.[subject]).filter(Boolean);
-          if (scores.length > 0) {
-            let sum = 0;
-            scores.forEach(s => {
-              const rowAvg = (s.a1 + s.a2 + s.a3 + s.a4) / 4;
-              sum += (rowAvg / 4) * 100; // Normalize 1-4 scale to percentage roughly
-            });
-            subjectAvg = (sum / scores.length).toFixed(1);
-            totalStudents = scores.length;
-          }
-        }
+        // Subject averages should be fetched via a dedicated RPC when students scale to 20k+.
+        let subjectAvg = '-';
+        let totalStudents = '-';
 
         return (
           <Modal title={`${selectedStaff.name}'s Profile`} onClose={() => setSelectedStaff(null)} footer={

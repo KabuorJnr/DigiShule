@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { fetchStudents } from '../lib/api';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -14,20 +15,43 @@ const GRADE_COLORS = { EE: '#10B981', ME: '#3B82F6', AE: '#F59E0B', BE: '#EF4444
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
-  const { students, updateStudent, gradeBoundaries, settings, notify } = store;
-  const [cls, setCls] = useState('1A');
+  const { updateStudent, gradeBoundaries, settings, notify } = store;
+  const [cls, setCls] = useState('7A');
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
   const [assessment, setAssessment] = useState('All');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null); // {id, field}
   const [selected, setSelected] = useState([]);
+  
+  const [loadedStudents, setLoadedStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const dynamicClasses = useMemo(() => getDynamicClasses(students), [students]);
+  useEffect(() => {
+    let active = true;
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const { data } = await fetchStudents(0, 200, { class: cls });
+        if (active) setLoadedStudents(data);
+      } catch (e) {
+        notify('Failed to load gradebook', 'error');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    loadData();
+    return () => { active = false; };
+  }, [cls]);
+
+  const dynamicClasses = useMemo(() => {
+    const saved = (settings?.classes || []).map(c => c.name);
+    return saved.length ? saved : CLASSES;
+  }, [settings]);
 
   const classStudents = useMemo(
-    () => students.filter((s) => s.class === cls && s.name.toLowerCase().includes(search.toLowerCase())),
-    [students, cls, search]
+    () => loadedStudents.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),
+    [loadedStudents, search]
   );
 
   const rows = useMemo(() =>
@@ -62,18 +86,24 @@ export default function Gradebook({ store }) {
 
   function saveScore(id, field, value) {
     const v = Math.max(0, Math.min(4, Number(value) || 0));
-    const target = students.find((s) => s.id === id);
+    const target = loadedStudents.find((s) => s.id === id);
     if (target) {
       const currentScores = target.scores || {};
       const subjectScores = currentScores[subject] || {};
-      updateStudent({ ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } });
+      const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
+      updateStudent(updated);
+      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     }
     setEditing(null);
   }
 
   function flagStudent(id) {
-    const target = students.find((s) => s.id === id);
-    if (target) updateStudent({ ...target, flagged: true });
+    const target = loadedStudents.find((s) => s.id === id);
+    if (target) {
+      const updated = { ...target, flagged: true };
+      updateStudent(updated);
+      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
+    }
     notify('Student flagged for support', 'success', 'Gradebook');
   }
 

@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Layout, GraduationCap, Users, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
-import { USERS } from '../data/users';
-
-const LandingPage = ({ onGetStarted, onDemoLogin, onApply, onSignUp }) => {
+const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
   const [activeTab, setActiveTab] = useState('principal');
-  
-  const getRoleUser = (role) => USERS.find(u => u.role === role);
 
   const roleDetails = {
     principal: { 
@@ -39,7 +35,6 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply, onSignUp }) => {
           EduOne
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button className="bespoke-btn ghost" onClick={onSignUp} style={{ color: '#10B981', borderColor: '#10B981' }}>Parents: Activate Student Portal (KES 250)</button>
           <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
           <button className="bespoke-btn primary" onClick={onApply}>
             Apply Now
@@ -143,9 +138,9 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply, onSignUp }) => {
               <p>{roleDetails[activeTab].desc}</p>
               <button 
                 className="bespoke-btn primary"
-                onClick={() => onDemoLogin(getRoleUser(activeTab))}
+                onClick={onGetStarted}
               >
-                Launch {roleDetails[activeTab].title.split(' ')[0]} Demo <ArrowRight size={16} />
+                Sign in to {roleDetails[activeTab].title.split(' ')[0]} Portal <ArrowRight size={16} />
               </button>
             </div>
             <div className="b-role-visual">

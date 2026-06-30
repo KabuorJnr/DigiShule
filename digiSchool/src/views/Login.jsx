@@ -14,7 +14,7 @@ const schoolConfig = (() => {
 const schoolName  = schoolConfig?.school?.name  || 'EduOne School Portal';
 const schoolLogo  = schoolConfig?.school?.logo  || null;
 
-export default function Login({ onDemoLogin, onSignUp }) {
+export default function Login({ onSignUp }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -64,18 +64,7 @@ export default function Login({ onDemoLogin, onSignUp }) {
       return;
     }
     
-    // Seed / demo login — call App.jsx directly via prop
-    if (data?.demoUser) {
-      console.log('[Login] Found demo user, calling onDemoLogin:', data.demoUser);
-      if (onDemoLogin) {
-        onDemoLogin(data.demoUser);
-      } else {
-        console.error('[Login] ERROR: onDemoLogin prop is undefined!');
-        setError('System error: login handler missing. Please refresh the page.');
-      }
-    } else {
-      console.log('[Login] Real Supabase user detected, waiting for onAuthStateChange to fire.');
-    }
+    console.log('[Login] Real Supabase user detected, waiting for onAuthStateChange to fire.');
   };
 
   return (

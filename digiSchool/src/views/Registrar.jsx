@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { upsertStudent } from '../lib/api';
+import { upsertStudent, fetchStudents, fetchStudentStats } from '../lib/api';
 import {
   UserPlus, Search, Edit2, FileText, Users,
   CheckCircle2, AlertTriangle, Download, Filter, Upload, Loader
@@ -26,8 +26,46 @@ const EMPTY_FORM = {
 };
 
 export default function Registrar({ store, user }) {
-  const { students, setStudents, notify } = store;
+  const { notify } = store;
+  const parentCredsRef = useRef(null);
   const [tab, setTab] = useState('register');
+  const [localStudents, setLocalStudents] = useState([]);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [page, setPage] = useState(0);
+  const [stats, setStats] = useState(null);
+  const [loadingList, setLoadingList] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchPage = async () => {
+      setLoadingList(true);
+      try {
+        const { data, count } = await fetchStudents(page, 50, { search, class: classFilter === 'All' ? null : classFilter });
+        if (active) {
+          setLocalStudents(data);
+          setTotalStudents(count);
+        }
+      } catch (e) {
+        notify('Failed to load students', 'error');
+      } finally {
+        if (active) setLoadingList(false);
+      }
+    };
+    fetchPage();
+    return () => { active = false; };
+  }, [page, search, classFilter]);
+
+  useEffect(() => {
+    let active = true;
+    const loadStats = async () => {
+      try {
+        const s = await fetchStudentStats();
+        if (active) setStats(s);
+      } catch(e) {}
+    };
+    loadStats();
+    return () => { active = false; };
+  }, [tab]);
   const [search, setSearch] = useState('');
   const [provisionStep, setProvisionStep] = useState(null);
   const [classFilter, setClassFilter] = useState('All');
@@ -44,9 +82,9 @@ export default function Registrar({ store, user }) {
 
   const dynamicClasses = useMemo(() => {
     const saved = (store.settings?.classes || []).map(c => c.name);
-    const dynamic = getDynamicClasses(students);
+    const dynamic = getDynamicClasses(localStudents);
     return [...new Set([...saved, ...dynamic])];
-  }, [students, store.settings]);
+  }, [localStudents, store.settings]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -57,15 +95,11 @@ export default function Registrar({ store, user }) {
 
   // ── REGISTER TAB ──────────────────────────────────────────────
   const filtered = useMemo(() => {
-    return students.filter(s => {
-      // Hide offboarded students from the active register
+    return localStudents.filter(s => {
       if (s.status === 'Inactive' || s.status === 'Graduated') return false;
-      const matchClass = classFilter === 'All' || s.class === classFilter;
-      const q = search.toLowerCase();
-      const matchSearch = !q || s.name?.toLowerCase().includes(q) || s.adm?.toLowerCase().includes(q);
-      return matchClass && matchSearch;
+      return true;
     });
-  }, [students, search, classFilter]);
+  }, [localStudents]);
 
   const byClass = useMemo(() => {
     const map = {};
@@ -82,7 +116,7 @@ export default function Registrar({ store, user }) {
     setSaving(true);
     try {
       await upsertStudent(editStudent);
-      setStudents(prev => prev.map(s => s.id === editStudent.id ? editStudent : s));
+      setLocalStudents(prev => prev.map(s => s.id === editStudent.id ? editStudent : s));
       setEditModal(false);
       notify('Student record updated', 'success', 'Registrar');
     } catch (e) {
@@ -94,7 +128,8 @@ export default function Registrar({ store, user }) {
   const handleEnroll = async () => {
     if (!form.name.trim() || !form.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
     if (form.adm.trim().length < 7) { notify('Admission No. must be at least 7 characters (e.g., 26/1234) for secure passwords.', 'warning'); return; }
-    if (students.find(s => s.adm === form.adm)) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
+    const { data: existing } = await supabase.from('students').select('id').eq('adm', form.adm).maybeSingle();
+    if (existing) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
     setSaving(true);
 
     // Capture form values before any state reset so provisioning code can use them
@@ -124,7 +159,8 @@ export default function Registrar({ store, user }) {
       };
 
       await upsertStudent(newStudent);
-      setStudents(prev => [...prev, newStudent]);
+      setLocalStudents(prev => [...prev, newStudent]);
+      setTotalStudents(prev => prev + 1);
       
       // ── 1. Create Student Portal Account ──
       setProvisionStep('password');
@@ -219,7 +255,7 @@ export default function Registrar({ store, user }) {
     if (!transferForm.studentId || !transferForm.reason || !transferForm.date) {
       notify('All fields are required', 'warning'); return;
     }
-    const student = students.find(s => s.id === transferForm.studentId);
+    const student = localStudents.find(s => s.id === transferForm.studentId);
     if (!student) return;
 
     setSaving(true);
@@ -228,7 +264,7 @@ export default function Registrar({ store, user }) {
 
     try {
       await upsertStudent(updatedStudent);
-      setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+      setLocalStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
       
       const record = { ...transferForm, studentName: student.name, id: `tr${Date.now()}` };
       setTransfers(prev => [record, ...prev]);
@@ -236,14 +272,7 @@ export default function Registrar({ store, user }) {
       setTransferForm({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
       notify(`Transfer record saved and ${student.name} marked as ${newStatus}`, 'success', 'Registrar');
     } catch (e) {
-      // Mock fallback
-      console.warn('API error ignored for mock:', e.message);
-      setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
-      const record = { ...transferForm, studentName: student.name, id: `tr${Date.now()}` };
-      setTransfers(prev => [record, ...prev]);
-      setTransferModal(false);
-      setTransferForm({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
-      notify(`Transfer record saved and ${student.name} marked as ${newStatus}`, 'success', 'Registrar');
+      notify(`Transfer failed: ${e.message}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -330,10 +359,10 @@ export default function Registrar({ store, user }) {
       {/* KPI Bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Active Students', value: students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#0078D4' },
-          { label: 'Male', value: students.filter(s => s.gender === 'Male' && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#0369A1' },
-          { label: 'Female', value: students.filter(s => s.gender === 'Female' && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#7C3AED' },
-          { label: 'Flagged', value: students.filter(s => s.flagged && s.status !== 'Inactive' && s.status !== 'Graduated').length, color: '#D13438' },
+          { label: 'Total Students', value: stats ? stats.total_active : '-', color: '#0078D4' },
+          { label: 'Male', value: stats ? stats.male : '-', color: '#0369A1' },
+          { label: 'Female', value: stats ? stats.female : '-', color: '#7C3AED' },
+          { label: 'Flagged', value: stats ? stats.flagged : '-', color: '#D13438' },
         ].map(k => (
           <div key={k.label} className="card card-pad" style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
@@ -363,7 +392,13 @@ export default function Registrar({ store, user }) {
               <option value="All">All Classes</option>
               {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
             </select>
-            <span className="muted" style={{ fontSize: 13 }}>{filtered.length} student{filtered.length !== 1 ? 's' : ''}</span>
+            <span className="muted" style={{ fontSize: 13, alignSelf: 'center' }}>{totalStudents} total student{totalStudents !== 1 ? 's' : ''}</span>
+            {loadingList && <Loader size={14} className="spin" style={{ color: '#0078D4', alignSelf: 'center' }} />}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+               <button className="btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Prev</button>
+               <span style={{ fontSize: 13, alignSelf: 'center' }}>Page {page + 1}</span>
+               <button className="btn" disabled={localStudents.length < 50} onClick={() => setPage(p => p + 1)}>Next</button>
+            </div>
           </div>
 
           {Object.entries(byClass).length === 0 ? (

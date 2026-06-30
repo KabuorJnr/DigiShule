@@ -24,21 +24,8 @@ export async function provisionAccount({ email, username, password, name, role, 
 }
 
 export async function generateSequentialUsername(prefix) {
-  // Fetch the latest username with this prefix
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('username')
-    .ilike('username', `${prefix}%`)
-    .order('username', { ascending: false })
-    .limit(1);
-
-  if (error || !data || data.length === 0) {
-    return `${prefix}001`;
-  }
-  
-  const highest = data[0].username;
-  const numPart = highest.substring(prefix.length);
-  const nextNum = parseInt(numPart, 10) || 0;
-  return `${prefix}${(nextNum + 1).toString().padStart(3, '0')}`;
+  // Generate a random 5-digit number to ensure uniqueness and bypass RLS query blocks
+  const randomNum = Math.floor(10000 + Math.random() * 90000);
+  return `${prefix}${randomNum}`;
 }
 

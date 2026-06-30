@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
-import { fetchTable, upsertRow } from '../lib/api';
+import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
 import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
@@ -15,25 +15,26 @@ const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 export default function ParentPortal({ store, user }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  const child = useMemo(() => {
-    if (!students || students.length === 0) return null;
-    // For Supabase auth parents, profile has student_id that links to the child
-    const sId = user?.student_id || user?.studentId;
-    if (sId) {
-      const match = students.find(s => s.id === sId);
-      if (match) return match;
-    }
-    if (user?.link) {
-      const match = students.find(s => s.id === user.link || s.adm === user.link);
-      if (match) return match;
-    }
-    const idStr = (user?.email || user?.username || '').toLowerCase();
-    if (idStr) {
-      const match = students.find(s => s.guardianEmail?.toLowerCase() === idStr);
-      if (match) return match;
-    }
-    return null;
-  }, [students, user]);
+  const [child, setChild] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadChild = async () => {
+      const sId = user?.student_id || user?.studentId;
+      const linkId = user?.link;
+      const email = (user?.email || user?.username || '').toLowerCase();
+      
+      let res = null;
+      if (sId) res = await fetchStudentByQuery('id', sId);
+      if (!res && linkId) res = await fetchStudentByQuery('id', linkId);
+      if (!res && linkId) res = await fetchStudentByQuery('adm', linkId);
+      if (!res && email) res = await fetchStudentByQuery('guardian_email', email);
+      
+      if (active && res) setChild(res);
+    };
+    loadChild();
+    return () => { active = false; };
+  }, [user]);
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
@@ -97,7 +98,7 @@ export default function ParentPortal({ store, user }) {
     late: attendanceLog.filter(a => a.status === 'Late').length
   }), [attendanceLog]);
   const attPct = attTotals.total ? Math.round(((attTotals.present + attTotals.late) / attTotals.total) * 100) : 0;
-  const latestAtt = { rate: attPct || 91 };
+  const latestAtt = { rate: attPct || 0 };
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
   const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
@@ -112,7 +113,7 @@ export default function ParentPortal({ store, user }) {
       classSize: 40,
       average: overallAvg,
       grade: gradeFor(overallAvg, gradeBoundaries),
-      attendance: latestAtt?.rate || 91
+      attendance: latestAtt?.rate || 0
     };
     exportReportCardsPDF({
       school: store.settings,
@@ -247,9 +248,9 @@ export default function ParentPortal({ store, user }) {
 
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
-        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 91}%`} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 0}%`} accent="#10B981" />
         <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
-        <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Behavior Score" value="45 pts" accent="#10B981" sub="Good Standing" />
+        <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 14 }}>
@@ -310,7 +311,7 @@ export default function ParentPortal({ store, user }) {
                 <tr><td className="muted">Balance</td><td style={{ fontWeight: 700, color: '#EF4444' }}>KES {balance.toLocaleString()}</td></tr>
               </tbody>
             </table>
-            <div style={{ marginTop: 8 }}><ProgressBar value={73} color="#10B981" /></div>
+            <div style={{ marginTop: 8 }}><ProgressBar value={termFees > 0 ? Math.min(100, Math.round((paid / termFees) * 100)) : 0} color="#10B981" /></div>
           </div>
 
           {upcomingExams.length > 0 && (

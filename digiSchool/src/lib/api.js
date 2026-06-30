@@ -150,7 +150,57 @@ export async function upsertTeacher(teacher) {
   if (error) throw error;
 }
 
-export async function fetchStudents() {
+export async function fetchStudents(page = 0, limit = 50, filters = {}) {
+  let query = supabase.from('students').select('*', { count: 'exact' });
+  
+  if (filters.search) {
+    query = query.or(`name.ilike.%${filters.search}%,adm.ilike.%${filters.search}%`);
+  }
+  if (filters.class) {
+    query = query.eq('class', filters.class);
+  }
+
+  const { data, error, count } = await query
+    .order('class')
+    .order('adm')
+    .range(page * limit, (page + 1) * limit - 1);
+
+  if (error) throw error;
+  
+  const mapped = data.map(s => ({
+    ...s,
+    birthCertNo: s.birth_cert_no,
+    guardianName: s.guardian_name,
+    guardianPhone: s.guardian_phone,
+    guardianEmail: s.guardian_email,
+    parentAddress: s.parent_address,
+    admissionLetterUrl: s.admission_letter_url,
+  }));
+  return { data: mapped, count };
+}
+
+export async function fetchStudentByQuery(field, value) {
+  const { data, error } = await supabase.from('students').select('*').eq(field, value).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    birthCertNo: data.birth_cert_no,
+    guardianName: data.guardian_name,
+    guardianPhone: data.guardian_phone,
+    guardianEmail: data.guardian_email,
+    parentAddress: data.parent_address,
+    admissionLetterUrl: data.admission_letter_url,
+  };
+}
+
+export async function fetchStudentStats() {
+  const { data, error } = await supabase.rpc('get_student_stats');
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchAllStudentsUnpaginated() {
   const { data, error } = await supabase.from('students').select('*').order('class').order('adm');
   if (error) throw error;
   return data.map(s => ({

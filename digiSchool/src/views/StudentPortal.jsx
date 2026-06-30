@@ -3,7 +3,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
 const LIBRARY_BOOKS = [];
-import { fetchClassRank } from '../lib/api';
+import { fetchClassRank, fetchStudentByQuery } from '../lib/api';
 import { listFiles, openFilePDF, downloadFilePDF } from '../lib/fileStore';
 import { supabase } from '../lib/supabaseClient';
 import Modal from '../components/Modal';
@@ -44,17 +44,24 @@ const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
 export default function StudentPortal({ store, user, params }) {
   const { students, gradeBoundaries, examSchedules, feeStructure, navigate, notify, notifications } = store;
-  const me = useMemo(() => {
-    if (!students || students.length === 0) return null;
-    // For Supabase auth users, profile has studentId (links to students.id)
-    // For seed/demo users, user.link is an adm number or student id
-    const targetId = params?.childId || user?.student_id || user?.studentId || user?.link || user?.id;
-    // Also try matching by username as adm (for seed student logins like STU2640494)
-    const targetAdm = user?.username;
-    return students.find(s =>
-      s.id === targetId || s.adm === targetId || s.adm === targetAdm
-    ) || students[0];
-  }, [students, user, params]);
+  const [me, setMe] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadMe = async () => {
+      const targetId = params?.childId || user?.student_id || user?.studentId || user?.link || user?.id;
+      const targetAdm = user?.username;
+      
+      let res = null;
+      if (targetId) res = await fetchStudentByQuery('id', targetId);
+      if (!res && targetAdm) res = await fetchStudentByQuery('adm', targetAdm);
+      if (!res && targetId) res = await fetchStudentByQuery('adm', targetId);
+      
+      if (active && res) setMe(res);
+    };
+    loadMe();
+    return () => { active = false; };
+  }, [user, params]);
   const [tab, setTab] = useState('dashboard');
   const [rank, setRank] = useState(null);
   const [payModal, setPayModal] = useState(false);
@@ -167,9 +174,8 @@ export default function StudentPortal({ store, user, params }) {
   const overallAvg = subjects.length ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1) : 0;
 
   const trendData = useMemo(() => [
-    { term: 'Last Year T3', avg: 72 },
-    { term: 'Term 1', avg: 76 },
-    { term: 'Term 2', avg: Number(overallAvg) || 78 }
+    { term: 'Term 1', avg: 0 },
+    { term: 'Term 2', avg: Number(overallAvg) || 0 }
   ], [overallAvg]);
 
   const upcomingExams = (examSchedules || []).filter(e => e.sessions?.some(s => s.status === 'Upcoming'));
@@ -269,7 +275,7 @@ export default function StudentPortal({ store, user, params }) {
           <div className="stat-tiles">
             <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#0078D4" />
             <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={rank ? `${rank.position} / ${rank.classSize}` : '—'} />
-            <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="45 pts" accent="#107C10" sub="Good Standing" />
+            <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />
             <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(feeAccount.outstanding)} accent={feeAccount.outstanding > 0 ? '#D13438' : '#107C10'}>
               <div style={{ marginTop: 6 }}><ProgressBar value={(feeAccount.totalPaid / feeAccount.totalBilled) * 100} color="#107C10" /></div>
             </KpiCard>

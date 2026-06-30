@@ -5,7 +5,7 @@ import { Icon } from '../components/icons';
 import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 
 export default function Library({ store }) {
-  const { notify, students = [] } = store;
+  const { notify } = store;
   const [tab, setTab] = useState('catalog');
   const [books, setBooks] = useState([]);
   const [loans, setLoans] = useState([]);
@@ -13,7 +13,7 @@ export default function Library({ store }) {
   const [categoryFilter, setCategoryFilter] = useState('All');
   
   const [issueOpen, setIssueOpen] = useState(false);
-  const [form, setForm] = useState({ book: '', student_id: '', due: '' });
+  const [form, setForm] = useState({ book: '', student_adm: '', due: '' });
 
   const [addAssetOpen, setAddAssetOpen] = useState(false);
   const [assetForm, setAssetForm] = useState({ title: '', author: '', isbn: '', category: 'Book', copies: 1 });
@@ -43,12 +43,16 @@ export default function Library({ store }) {
   const categories = ['All', ...new Set(books.map(b => b.category))];
 
   const issueBook = async () => {
-    if (!form.book || !form.student_id) {
-      notify('Book and student are required.', 'error');
+    if (!form.book || !form.student_adm) {
+      notify('Book and Student Admission Number are required.', 'error');
       return;
     }
-    const student = students.find(s => s.id === form.student_id);
-    if (!student) return;
+    const { fetchStudentByQuery } = await import('../lib/api');
+    const student = await fetchStudentByQuery('adm', form.student_adm);
+    if (!student) {
+      notify(`Student with Adm No. ${form.student_adm} not found.`, 'error');
+      return;
+    }
 
     const bk = books.find((b) => b.id === form.book);
     if (!bk || bk.available <= 0) {
@@ -237,11 +241,8 @@ export default function Library({ store }) {
             ))}
           </select>
           
-          <label className="field-label" style={{ marginTop: 12 }}>Student</label>
-          <select className="select" value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))}>
-            <option value="">-- Choose Student --</option>
-            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.adm_no})</option>)}
-          </select>
+          <label className="field-label" style={{ marginTop: 12 }}>Student Admission No.</label>
+          <input className="input" placeholder="e.g. 26/1234" value={form.student_adm} onChange={(e) => setForm((f) => ({ ...f, student_adm: e.target.value }))} />
 
           <label className="field-label" style={{ marginTop: 12 }}>Due Date</label>
           <input type="date" className="input" value={form.due} onChange={(e) => setForm((f) => ({ ...f, due: e.target.value }))} />
