@@ -149,18 +149,7 @@ export default function Login({ onSignUp }) {
           </form>
 
           <div style={{ textAlign: 'center', color: '#576871', fontSize: 14, marginTop: 40 }}>
-            {onSignUp ? (
-              <button
-                type="button"
-                className="btn"
-                style={{ background: 'transparent', border: 'none', color: '#10B981', cursor: 'pointer', fontWeight: 600, fontSize: 15 }}
-                onClick={onSignUp}
-              >
-                Parents: Register for the Portal
-              </button>
-            ) : (
-              <span>Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }} onClick={() => setContactModalOpen(true)}>Contact Administration</a></span>
-            )}
+            <span>Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }} onClick={() => setContactModalOpen(true)}>Contact Administration</a></span>
           </div>
         </div>
       </div>
