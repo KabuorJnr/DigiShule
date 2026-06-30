@@ -18,6 +18,7 @@ export default function StaffAttendance({ store, user }) {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
+  const [leaveSaving, setLeaveSaving] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   
   // Messaging Staff
@@ -50,6 +51,13 @@ export default function StaffAttendance({ store, user }) {
         else setJobApps([]);
       })
       .catch((e) => setJobApps([]));
+
+    // Load leave requests from database
+    fetchTable('leave_requests')
+      .then((rows) => {
+        if (rows && rows.length > 0) setLeaveRequests(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      })
+      .catch(() => {});
   }, [notify]);
 
   const totals = useMemo(() => {
@@ -104,14 +112,21 @@ export default function StaffAttendance({ store, user }) {
     notify(`${member.name} has been offboarded.`, 'success', 'Staff Management');
   };
 
-  const handleLeaveAction = (id, action) => {
+  const handleLeaveAction = async (id, action) => {
+    const updated = { status: action, approved_by: user?.name || 'Admin' };
     setLeaveRequests(prev => prev.map(l =>
-      l.id === id ? { ...l, status: action, approvedBy: user?.name || 'Admin' } : l
+      l.id === id ? { ...l, ...updated } : l
     ));
+    try {
+      const leaveRow = leaveRequests.find(l => l.id === id);
+      if (leaveRow) await upsertRow('leave_requests', { ...leaveRow, ...updated });
+    } catch (e) {
+      console.warn('Failed to persist leave action:', e.message);
+    }
     notify(`Leave request ${action.toLowerCase()}`, action === 'Approved' ? 'success' : 'warning', 'Leave');
   };
 
-  const submitLeave = () => {
+  const submitLeave = async () => {
     if (!leaveForm.start || !leaveForm.end || !leaveForm.reason) {
       notify('Please fill all fields', 'warning', 'Leave');
       return;
@@ -119,23 +134,32 @@ export default function StaffAttendance({ store, user }) {
     const start = new Date(leaveForm.start);
     const end = new Date(leaveForm.end);
     const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
-    const newReq = {
-      id: `lr${Date.now()}`,
-      staff: user?.name || 'Staff Member',
-      dept: user?.dept || 'Department',
-      type: leaveForm.type,
-      start: leaveForm.start,
-      end: leaveForm.end,
-      days,
-      reason: leaveForm.reason,
-      status: 'Pending',
-      approvedBy: null,
-      date: new Date().toISOString().slice(0, 10),
-    };
-    setLeaveRequests(prev => [newReq, ...prev]);
-    setShowLeaveModal(false);
-    setLeaveForm({ type: 'Annual', start: '', end: '', reason: '' });
-    notify('Leave request submitted successfully', 'success', 'Leave');
+    setLeaveSaving(true);
+    try {
+      const newReq = {
+        id: `lr_${Date.now()}`,
+        staff_name: user?.name || 'Staff Member',
+        staff_id: user?.id || null,
+        dept: user?.dept || 'Department',
+        type: leaveForm.type,
+        start_date: leaveForm.start,
+        end_date: leaveForm.end,
+        days,
+        reason: leaveForm.reason,
+        status: 'Pending',
+        approved_by: null,
+        created_at: new Date().toISOString(),
+      };
+      await upsertRow('leave_requests', newReq);
+      setLeaveRequests(prev => [newReq, ...prev]);
+      setShowLeaveModal(false);
+      setLeaveForm({ type: 'Annual', start: '', end: '', reason: '' });
+      notify('Leave request submitted successfully', 'success', 'Leave');
+    } catch (e) {
+      notify(`Failed to submit leave: ${e.message}`, 'error', 'Leave');
+    } finally {
+      setLeaveSaving(false);
+    }
   };
 
   const submitAddStaff = async () => {
@@ -407,11 +431,11 @@ export default function StaffAttendance({ store, user }) {
                   {leaveRequests.map(l => (
                     <tr key={l.id}>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{l.staff}</div>
+                        <div style={{ fontWeight: 600 }}>{l.staff_name || l.staff}</div>
                         <div className="muted" style={{ fontSize: 11 }}>{l.dept}</div>
                       </td>
                       <td><Badge color={l.type === 'Sick' ? 'red' : l.type === 'Emergency' ? 'amber' : 'blue'}>{l.type}</Badge></td>
-                      <td className="muted" style={{ fontSize: 12 }}>{l.start} → {l.end}</td>
+                      <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} → {l.end_date || l.end}</td>
                       <td style={{ fontWeight: 600 }}>{l.days}</td>
                       <td style={{ maxWidth: 200, fontSize: 12 }}>{l.reason}</td>
                       <td><Badge color={LEAVE_COLOR[l.status]}>{l.status}</Badge></td>
@@ -423,7 +447,7 @@ export default function StaffAttendance({ store, user }) {
                               <button className="btn btn-sm btn-danger" onClick={() => handleLeaveAction(l.id, 'Rejected')}><Icon name="close" size={14} /></button>
                             </div>
                           ) : (
-                            <span className="muted" style={{ fontSize: 11 }}>{l.approvedBy}</span>
+                            <span className="muted" style={{ fontSize: 11 }}>{l.approved_by || l.approvedBy}</span>
                           )}
                         </td>
                       )}

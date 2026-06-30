@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../components/Modal';
+import { fetchTable, upsertRow } from '../lib/api';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
@@ -33,6 +34,13 @@ export default function TeacherPortal({ store, user }) {
   const [replyText, setReplyText] = useState({});
   const [editing, setEditing] = useState(null);
 
+  // ── Leave Application State ──
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
+  const [leaveSaving, setLeaveSaving] = useState(false);
+  const [leaveTab, setLeaveTab] = useState('apply'); // 'apply' | 'history'
+
   useEffect(() => {
     let active = true;
     import('../lib/api').then(({ fetchTable }) => {
@@ -51,11 +59,64 @@ export default function TeacherPortal({ store, user }) {
     return () => { active = false; };
   }, [assignedClass, subject]);
 
+  // ── Load Leave Requests ──
+  useEffect(() => {
+    let active = true;
+    fetchTable('leave_requests').then(rows => {
+      if (!active) return;
+      const myLeaves = (rows || []).filter(l => l.staff_name === teacherName || l.staff_id === user?.id);
+      setLeaveRequests(myLeaves.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [teacherName, user?.id]);
+
   const handleLogBehavior = () => {
     if (!behaviorForm.student) return store.notify('Please select a student', 'warning');
     store.notify(`Logged ${behaviorForm.type} (${behaviorForm.points} pts) for ${behaviorForm.student}.`, 'success');
     setBehaviorModalOpen(false);
     setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
+  };
+
+  // ── Submit Leave Request ──
+  const submitLeaveRequest = async () => {
+    if (!leaveForm.start || !leaveForm.end || !leaveForm.reason.trim()) {
+      store.notify('Please fill in all leave fields', 'warning', 'Leave');
+      return;
+    }
+    const startDate = new Date(leaveForm.start);
+    const endDate = new Date(leaveForm.end);
+    if (endDate < startDate) {
+      store.notify('End date must be after start date', 'warning', 'Leave');
+      return;
+    }
+    const days = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+    
+    setLeaveSaving(true);
+    try {
+      const newReq = {
+        id: `lr_${Date.now()}`,
+        staff_name: teacherName,
+        staff_id: user?.id || null,
+        dept: subject,
+        type: leaveForm.type,
+        start_date: leaveForm.start,
+        end_date: leaveForm.end,
+        days,
+        reason: leaveForm.reason,
+        status: 'Pending',
+        approved_by: null,
+        created_at: new Date().toISOString(),
+      };
+      await upsertRow('leave_requests', newReq);
+      setLeaveRequests(prev => [newReq, ...prev]);
+      setShowLeaveModal(false);
+      setLeaveForm({ type: 'Annual', start: '', end: '', reason: '' });
+      store.notify('Leave request submitted successfully! Your HOD/Principal will review it.', 'success', 'Leave');
+    } catch (e) {
+      store.notify(`Failed to submit leave: ${e.message}`, 'error', 'Leave');
+    } finally {
+      setLeaveSaving(false);
+    }
   };
 
   const handleReplyMessage = async (msgId) => {
@@ -148,7 +209,11 @@ export default function TeacherPortal({ store, user }) {
   const atRisk = rows.filter((r) => r.average < 40).length;
   const topPerformer = rows.reduce((best, r) => (!best || r.average > best.average ? r : best), null);
 
+  const pendingLeaves = leaveRequests.filter(l => l.status === 'Pending').length;
+  const approvedLeaves = leaveRequests.filter(l => l.status === 'Approved').length;
+
   const quickLinks = [
+    { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#059669', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
     { label: 'Parent Messages', icon: MessageSquare, action: 'open_inbox', color: '#EAB308', desc: `${messages.filter(m => m.status === 'Unread').length} unread messages` },
     { label: 'Assignments & Materials', icon: FolderOpen, view: 'teacher_resources', color: '#0078D4', desc: 'Upload PDFs for students' },
     { label: 'Notices Board', icon: Bell, view: 'notices', color: '#7C3AED', desc: 'Post & read announcements' },
@@ -218,7 +283,8 @@ export default function TeacherPortal({ store, user }) {
             <button
               key={q.label}
               onClick={() => {
-                if (q.action === 'open_inbox') setInboxModalOpen(true);
+                if (q.action === 'open_leave') setShowLeaveModal(true);
+                else if (q.action === 'open_inbox') setInboxModalOpen(true);
                 else navigate(q.view);
               }}
               style={{
@@ -429,6 +495,157 @@ export default function TeacherPortal({ store, user }) {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== LEAVE APPLICATION MODAL ===== */}
+      {showLeaveModal && (
+        <>
+          <div className="modal-overlay" onMouseDown={() => setShowLeaveModal(false)} />
+          <div className="modal" style={{ maxWidth: 700, padding: 0, overflow: 'hidden' }}>
+            <div className="modal-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <PlaneTakeoff size={20} /> Leave Application
+              </h3>
+              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>✕</button>
+            </div>
+
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
+              <button
+                onClick={() => setLeaveTab('apply')}
+                style={{
+                  flex: 1, padding: '12px 16px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                  background: leaveTab === 'apply' ? '#fff' : 'transparent',
+                  borderBottom: leaveTab === 'apply' ? '3px solid #059669' : '3px solid transparent',
+                  color: leaveTab === 'apply' ? '#059669' : '#64748b'
+                }}
+              >
+                <PlaneTakeoff size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Apply for Leave
+              </button>
+              <button
+                onClick={() => setLeaveTab('history')}
+                style={{
+                  flex: 1, padding: '12px 16px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                  background: leaveTab === 'history' ? '#fff' : 'transparent',
+                  borderBottom: leaveTab === 'history' ? '3px solid #0078D4' : '3px solid transparent',
+                  color: leaveTab === 'history' ? '#0078D4' : '#64748b'
+                }}
+              >
+                <Clock size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> My Leave History ({leaveRequests.length})
+              </button>
+            </div>
+
+            <div style={{ padding: 24, maxHeight: '60vh', overflowY: 'auto' }}>
+              {leaveTab === 'apply' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {/* Leave Summary Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div style={{ background: '#fef3c7', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#B45309' }}>{pendingLeaves}</div>
+                      <div style={{ fontSize: 11, color: '#92400E', fontWeight: 600 }}>Pending</div>
+                    </div>
+                    <div style={{ background: '#d1fae5', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#059669' }}>{approvedLeaves}</div>
+                      <div style={{ fontSize: 11, color: '#065F46', fontWeight: 600 }}>Approved</div>
+                    </div>
+                    <div style={{ background: '#e0e7ff', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#4338CA' }}>{leaveRequests.length}</div>
+                      <div style={{ fontSize: 11, color: '#3730A3', fontWeight: 600 }}>Total Requests</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="field-label">Leave Type</label>
+                    <select className="select" value={leaveForm.type} onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))}>
+                      <option value="Annual">Annual Leave</option>
+                      <option value="Sick">Sick Leave</option>
+                      <option value="Maternity">Maternity Leave</option>
+                      <option value="Paternity">Paternity Leave</option>
+                      <option value="Compassionate">Compassionate Leave</option>
+                      <option value="Study">Study Leave</option>
+                      <option value="Emergency">Emergency Leave</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-2">
+                    <div>
+                      <label className="field-label">Start Date</label>
+                      <input type="date" className="input" value={leaveForm.start} onChange={e => setLeaveForm(f => ({ ...f, start: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="field-label">End Date</label>
+                      <input type="date" className="input" value={leaveForm.end} onChange={e => setLeaveForm(f => ({ ...f, end: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  {leaveForm.start && leaveForm.end && new Date(leaveForm.end) >= new Date(leaveForm.start) && (
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#166534', fontWeight: 600 }}>
+                      Duration: {Math.max(1, Math.ceil((new Date(leaveForm.end) - new Date(leaveForm.start)) / (1000 * 60 * 60 * 24)) + 1)} day(s)
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="field-label">Reason / Justification</label>
+                    <textarea
+                      className="input" rows={4}
+                      placeholder="Please describe the reason for your leave request..."
+                      value={leaveForm.reason}
+                      onChange={e => setLeaveForm(f => ({ ...f, reason: e.target.value }))}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                    <button className="btn" onClick={() => setShowLeaveModal(false)}>Cancel</button>
+                    <button className="btn btn-primary" disabled={leaveSaving} onClick={submitLeaveRequest}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#059669', borderColor: '#059669' }}>
+                      <PlaneTakeoff size={16} /> {leaveSaving ? 'Submitting...' : 'Submit Leave Request'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Leave History Tab */
+                <div>
+                  {leaveRequests.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+                      <PlaneTakeoff size={40} style={{ margin: '0 auto 10px' }} />
+                      <div>No leave requests yet.</div>
+                      <div style={{ fontSize: 13, marginTop: 6 }}>Click "Apply for Leave" to submit your first request.</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {leaveRequests.map(lr => (
+                        <div key={lr.id} style={{
+                          background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 18px',
+                          borderLeft: `4px solid ${lr.status === 'Approved' ? '#10b981' : lr.status === 'Rejected' ? '#ef4444' : '#f59e0b'}`
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {lr.status === 'Approved' ? <CheckCircle2 size={16} color="#10b981" /> :
+                               lr.status === 'Rejected' ? <XCircle size={16} color="#ef4444" /> :
+                               <Clock size={16} color="#f59e0b" />}
+                              <span style={{ fontWeight: 700, fontSize: 14 }}>{lr.type} Leave</span>
+                            </div>
+                            <Badge color={lr.status === 'Approved' ? 'green' : lr.status === 'Rejected' ? 'red' : 'amber'}>{lr.status}</Badge>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 12, color: '#475569', marginBottom: 6 }}>
+                            <div><strong>From:</strong> {lr.start_date}</div>
+                            <div><strong>To:</strong> {lr.end_date}</div>
+                            <div><strong>Days:</strong> {lr.days}</div>
+                          </div>
+                          <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.5 }}>{lr.reason}</div>
+                          {lr.approved_by && (
+                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>Reviewed by: {lr.approved_by}</div>
+                          )}
+                          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Submitted: {new Date(lr.created_at).toLocaleDateString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
