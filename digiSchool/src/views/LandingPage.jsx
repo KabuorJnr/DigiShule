@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, Layout, GraduationCap, Users, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
 import { USERS } from '../data/users';
 
-const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
+const LandingPage = ({ onGetStarted, onDemoLogin, onApply, onSignUp }) => {
   const [activeTab, setActiveTab] = useState('principal');
   
   const getRoleUser = (role) => USERS.find(u => u.role === role);
@@ -39,6 +39,7 @@ const LandingPage = ({ onGetStarted, onDemoLogin, onApply }) => {
           EduOne
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
+          <button className="bespoke-btn ghost" onClick={onSignUp} style={{ color: '#10B981', borderColor: '#10B981' }}>Parents: Activate Student Portal (KES 250)</button>
           <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
           <button className="bespoke-btn primary" onClick={onApply}>
             Apply Now

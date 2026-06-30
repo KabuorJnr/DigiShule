@@ -178,6 +178,8 @@ export default function Registrar({ store, user }) {
           if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
         }
 
+        parentCredsRef.current = { username, password: tempPassword };
+
         setProvisionStep('email');
         await provisionAccount({
           email: captured.guardianEmail,

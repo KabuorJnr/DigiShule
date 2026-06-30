@@ -13,7 +13,7 @@ const schoolConfig = (() => {
 const schoolName  = schoolConfig?.school?.name  || 'EduOne School Portal';
 const schoolLogo  = schoolConfig?.school?.logo  || null;
 
-export default function Login({ onDemoLogin }) {
+export default function Login({ onDemoLogin, onSignUp }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -112,7 +112,6 @@ export default function Login({ onDemoLogin }) {
                 </button>
               </div>
             </div>
-
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
               <a className="hr-link">Forgot password?</a>
             </div>
@@ -132,7 +131,18 @@ export default function Login({ onDemoLogin }) {
           </form>
 
           <div style={{ textAlign: 'center', color: '#576871', fontSize: 14, marginTop: 40 }}>
-            Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }}>Contact Administration</a>
+            {onSignUp ? (
+              <button
+                type="button"
+                className="btn"
+                style={{ background: 'transparent', border: 'none', color: '#10B981', cursor: 'pointer', fontWeight: 600, fontSize: 15 }}
+                onClick={onSignUp}
+              >
+                Parents: Activate Student Portal (KES 250)
+              </button>
+            ) : (
+              <span>Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }}>Contact Administration</a></span>
+            )}
           </div>
         </div>
       </div>

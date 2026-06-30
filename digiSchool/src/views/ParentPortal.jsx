@@ -7,12 +7,30 @@ import { SUBJECTS } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
-import { Download, ClipboardList, Send, Loader } from 'lucide-react';
+import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 
 export default function ParentPortal({ store, user }) {
+  const [hasPaid, setHasPaid] = useState(() => localStorage.getItem('eduone_parent_paid') === 'true');
+  const [paywallCode, setPaywallCode] = useState('');
+  const [paywallSaving, setPaywallSaving] = useState(false);
+  const [paywallError, setPaywallError] = useState('');
+
+  const handleActivateSubscription = () => {
+    setPaywallError('');
+    if (paywallCode.trim().length < 10) {
+      return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
+    }
+    setPaywallSaving(true);
+    setTimeout(() => {
+      localStorage.setItem('eduone_parent_paid', 'true');
+      setHasPaid(true);
+      setPaywallSaving(false);
+    }, 1500);
+  };
+
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
   const child = useMemo(() => {
@@ -200,6 +218,59 @@ export default function ParentPortal({ store, user }) {
     store.notify('Profile and emergency contacts updated successfully.', 'success');
     setProfileModalOpen(false);
   };
+
+  if (!hasPaid) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', padding: 20 }}>
+        <div className="card" style={{ maxWidth: 500, width: '100%', padding: 40, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)' }}>
+          <CreditCard size={48} color="#10B981" style={{ marginBottom: 20 }} />
+          <h2 style={{ margin: '0 0 10px 0', color: '#0f172a' }}>Activate Termly Access</h2>
+          <p className="muted" style={{ marginBottom: 30 }}>Unlock real-time grades, attendance tracking, and instant alerts for your child's portal.</p>
+          
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center', marginBottom: 30 }}>
+            <div style={{ fontSize: 14, color: '#166534', fontWeight: 600, marginBottom: 8 }}>TERMLY SUBSCRIPTION</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#14532d', marginBottom: 16 }}>KES 250</div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534', textAlign: 'left', background: '#fff', padding: 16, borderRadius: 8 }}>
+              <div>1. Go to M-Pesa on your phone</div>
+              <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
+              <div>3. Enter Business No: <strong style={{ color: '#000' }}>123456</strong></div>
+              <div>4. Enter Account No: <strong style={{ color: '#000' }}>{child?.adm || 'EDUONE'}</strong></div>
+              <div>5. Enter Amount: <strong>250</strong></div>
+            </div>
+          </div>
+
+          {paywallError && (
+            <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, marginBottom: 20, fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left' }}>
+              <Shield size={16} /> {paywallError}
+            </div>
+          )}
+
+          <div style={{ textAlign: 'left', marginBottom: 20 }}>
+            <label className="field-label">Enter M-Pesa Transaction Code *</label>
+            <input 
+              className="input" 
+              value={paywallCode} 
+              onChange={e => setPaywallCode(e.target.value.toUpperCase())} 
+              placeholder="e.g. SAJ1234XYZ" 
+              style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}
+              maxLength={10}
+            />
+          </div>
+
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={handleActivateSubscription} 
+            disabled={paywallSaving} 
+            style={{ background: '#10B981', borderColor: '#10B981', padding: '12px 24px', width: '100%', color: '#fff' }}
+          >
+            {paywallSaving ? 'Verifying...' : 'Verify & Activate'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!child) {
     return (

@@ -15,6 +15,8 @@ import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, 
 import LandingPage from './views/LandingPage';
 import Login from './views/Login';
 import PublicApplication from './views/PublicApplication';
+import SignupWizard from './views/SignupWizard';
+import ParentSignupWizard from './views/ParentSignupWizard';
 import SetupWizard from './views/SetupWizard';
 import Overview from './views/Overview';
 import Timetable from './views/Timetable';
@@ -70,6 +72,8 @@ let toastId = 0;
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [showParentSignup, setShowParentSignup] = useState(false);
   const [showApplication, setShowApplication] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null); // set on login
@@ -365,17 +369,27 @@ export default function App() {
     );
   }
 
-  // ---- If not logged in, show Landing or Login ----
   if (!currentUser) {
     if (showApplication) {
       return <PublicApplication onBack={() => setShowApplication(false)} />;
     }
+    if (showSignup) {
+      return <SignupWizard onComplete={() => setShowSignup(false)} onCancel={() => setShowSignup(false)} />;
+    }
+    if (showParentSignup) {
+      return <ParentSignupWizard onComplete={() => setShowParentSignup(false)} onCancel={() => setShowParentSignup(false)} />;
+    }
     return (
       <>
         {!showLogin ? (
-          <LandingPage onGetStarted={() => setShowLogin(true)} onDemoLogin={handleDemoLogin} onApply={() => setShowApplication(true)} />
+          <LandingPage 
+            onGetStarted={() => setShowLogin(true)} 
+            onDemoLogin={handleDemoLogin} 
+            onApply={() => setShowApplication(true)} 
+            onSignUp={() => setShowParentSignup(true)}
+          />
         ) : (
-          <Login onDemoLogin={handleDemoLogin} />
+          <Login onDemoLogin={handleDemoLogin} onSignUp={() => setShowParentSignup(true)} />
         )}
         {/* Toasts render even on login page */}
         <div className="toast-wrap">
