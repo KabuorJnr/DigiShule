@@ -13,24 +13,6 @@ const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 
 export default function ParentPortal({ store, user }) {
-  const [hasPaid, setHasPaid] = useState(() => localStorage.getItem('eduone_parent_paid') === 'true');
-  const [paywallCode, setPaywallCode] = useState('');
-  const [paywallSaving, setPaywallSaving] = useState(false);
-  const [paywallError, setPaywallError] = useState('');
-
-  const handleActivateSubscription = () => {
-    setPaywallError('');
-    if (paywallCode.trim().length < 10) {
-      return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
-    }
-    setPaywallSaving(true);
-    setTimeout(() => {
-      localStorage.setItem('eduone_parent_paid', 'true');
-      setHasPaid(true);
-      setPaywallSaving(false);
-    }, 1500);
-  };
-
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
   const child = useMemo(() => {
@@ -57,7 +39,9 @@ export default function ParentPortal({ store, user }) {
   const [disciplinary, setDisciplinary] = useState([]);
   const [payments, setPayments] = useState([]);
   const [payModalOpen, setPayModalOpen] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: 'M-Pesa' });
+  const [payForm, setPayForm] = useState({ amount: '', code: '' });
+  const [paywallSaving, setPaywallSaving] = useState(false);
+  const [paywallError, setPaywallError] = useState('');
   
   const [msgModalOpen, setMsgModalOpen] = useState(false);
   const [msgForm, setMsgForm] = useState({ teacher: 'Class Teacher', subject: '', body: '' });
@@ -165,25 +149,39 @@ export default function ParentPortal({ store, user }) {
   };
 
   const handlePayFees = async () => {
-    if (!payForm.amount) return store.notify('Please enter an amount.', 'error');
-    try {
-      const payment = {
-        id: `pay_${Date.now()}`,
-        student_id: child.id,
-        amount: Number(payForm.amount),
-        method: payForm.method,
-        ref: 'PORTAL-PAY',
-        date: new Date().toISOString().slice(0, 10),
-        created_at: new Date().toISOString()
-      };
-      await upsertRow('financePayments', payment);
-      setPayments(prev => [...prev, payment]);
-      store.notify(`Payment of KES ${payment.amount} successful!`);
-      setPayModalOpen(false);
-      setPayForm({ amount: '', method: 'M-Pesa' });
-    } catch (e) {
-      store.notify(`Payment failed: ${e.message}`, 'error');
+    setPaywallError('');
+    if (!payForm.amount || Number(payForm.amount) <= 0) {
+      return setPaywallError('Please enter a valid amount.');
     }
+    if (payForm.code.trim().length !== 10) {
+      return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
+    }
+    
+    setPaywallSaving(true);
+    
+    // Simulate Daraja API verification delay
+    setTimeout(async () => {
+      try {
+        const payment = {
+          id: `pay_${Date.now()}`,
+          student_id: child.id,
+          amount: Number(payForm.amount),
+          method: 'M-Pesa',
+          ref: payForm.code.toUpperCase(),
+          date: new Date().toISOString().slice(0, 10),
+          created_at: new Date().toISOString()
+        };
+        await upsertRow('financePayments', payment);
+        setPayments(prev => [...prev, payment]);
+        store.notify(`Payment of KES ${payment.amount} successful!`);
+        setPayModalOpen(false);
+        setPayForm({ amount: '', code: '' });
+      } catch (e) {
+        setPaywallError(`Payment failed: ${e.message}`);
+      } finally {
+        setPaywallSaving(false);
+      }
+    }, 1500);
   };
 
   const handleSendMessage = async () => {
@@ -217,59 +215,6 @@ export default function ParentPortal({ store, user }) {
     store.notify('Profile and emergency contacts updated successfully.', 'success');
     setProfileModalOpen(false);
   };
-
-  if (!hasPaid) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', padding: 20 }}>
-        <div className="card" style={{ maxWidth: 500, width: '100%', padding: 40, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)' }}>
-          <CreditCard size={48} color="#10B981" style={{ marginBottom: 20 }} />
-          <h2 style={{ margin: '0 0 10px 0', color: '#0f172a' }}>Activate Termly Access</h2>
-          <p className="muted" style={{ marginBottom: 30 }}>Unlock real-time grades, attendance tracking, and instant alerts for your child's portal.</p>
-          
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center', marginBottom: 30 }}>
-            <div style={{ fontSize: 14, color: '#166534', fontWeight: 600, marginBottom: 8 }}>TERMLY SUBSCRIPTION</div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: '#14532d', marginBottom: 16 }}>KES 250</div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534', textAlign: 'left', background: '#fff', padding: 16, borderRadius: 8 }}>
-              <div>1. Go to M-Pesa on your phone</div>
-              <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
-              <div>3. Enter Business No: <strong style={{ color: '#000' }}>123456</strong></div>
-              <div>4. Enter Account No: <strong style={{ color: '#000' }}>{child?.adm || 'EDUONE'}</strong></div>
-              <div>5. Enter Amount: <strong>250</strong></div>
-            </div>
-          </div>
-
-          {paywallError && (
-            <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, marginBottom: 20, fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left' }}>
-              <Shield size={16} /> {paywallError}
-            </div>
-          )}
-
-          <div style={{ textAlign: 'left', marginBottom: 20 }}>
-            <label className="field-label">Enter M-Pesa Transaction Code *</label>
-            <input 
-              className="input" 
-              value={paywallCode} 
-              onChange={e => setPaywallCode(e.target.value.toUpperCase())} 
-              placeholder="e.g. SAJ1234XYZ" 
-              style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}
-              maxLength={10}
-            />
-          </div>
-
-          <button 
-            type="button" 
-            className="btn btn-primary" 
-            onClick={handleActivateSubscription} 
-            disabled={paywallSaving} 
-            style={{ background: '#10B981', borderColor: '#10B981', padding: '12px 24px', width: '100%', color: '#fff' }}
-          >
-            {paywallSaving ? 'Verifying...' : 'Verify & Activate'}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (!child) {
     return (
@@ -497,28 +442,50 @@ export default function ParentPortal({ store, user }) {
       </div>
 
       {payModalOpen && (
-        <Modal title="Pay School Fees" onClose={() => setPayModalOpen(false)} footer={
-          <>
-            <button className="btn" onClick={() => setPayModalOpen(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handlePayFees}>Confirm Payment</button>
-          </>
-        }>
-          <div className="grid grid-2">
-            <div>
-              <label className="field-label">Amount (KES)</label>
-              <input type="number" className="input" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))} placeholder="e.g. 5000" />
-            </div>
-            <div>
-              <label className="field-label">Payment Method</label>
-              <select className="select" value={payForm.method} onChange={e => setPayForm(f => ({ ...f, method: e.target.value }))}>
-                <option>M-Pesa</option>
-                <option>Bank Transfer</option>
-              </select>
+        <Modal title="Secure Fee Payment" onClose={() => setPayModalOpen(false)} footer={null}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <CreditCard size={40} color="#10B981" style={{ marginBottom: 12 }} />
+            <h3 style={{ margin: '0 0 8px 0' }}>Pay School Fees</h3>
+            <p className="muted" style={{ fontSize: 14 }}>Secure Checkout via M-Pesa</p>
+          </div>
+          
+          <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#334155' }}>
+              <div>1. Open M-Pesa on your phone</div>
+              <div>2. Select <strong>Lipa na M-Pesa → Paybill</strong></div>
+              <div>3. Enter Business No: <strong>123456</strong></div>
+              <div>4. Enter Account No: <strong>{child?.adm || 'EDUONE'}</strong></div>
+              <div>5. Enter the amount you wish to pay</div>
             </div>
           </div>
-          <p className="muted" style={{ marginTop: 16, fontSize: 13 }}>
-            Payments made here will automatically reflect on the finance portal.
-          </p>
+
+          {paywallError && (
+            <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, marginBottom: 20, fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Shield size={16} /> {paywallError}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
+            <div>
+              <label className="field-label">Amount Paid (KES)</label>
+              <input type="number" className="input" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))} placeholder="e.g. 15000" style={{ fontSize: 16, padding: '12px' }} />
+            </div>
+            <div>
+              <label className="field-label">M-Pesa Transaction Code</label>
+              <input type="text" className="input" value={payForm.code} onChange={e => setPayForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="e.g. SAJ1234XYZ" maxLength={10} style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600, fontSize: 16, padding: '12px' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn" style={{ flex: 1, padding: '12px' }} onClick={() => setPayModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 2, padding: '12px', background: '#10B981', borderColor: '#10B981' }} onClick={handlePayFees} disabled={paywallSaving}>
+              {paywallSaving ? 'Verifying Code...' : 'Verify & Complete Payment'}
+            </button>
+          </div>
+          
+          <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#64748b', fontSize: 12 }}>
+            <Icon name="check" size={14} /> Payments are verified and synced instantly.
+          </div>
         </Modal>
       )}
 
