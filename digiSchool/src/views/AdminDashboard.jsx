@@ -5,7 +5,8 @@ import { fmtKES } from '../data/modules';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
-import { Download } from 'lucide-react';
+import { Download, UserPlus, Shield, CheckCircle2 } from 'lucide-react';
+import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -34,6 +35,12 @@ export default function AdminDashboard({ store, user }) {
   const [dbStaff, setDbStaff] = useState([]);
   const [dbFacilities, setDbFacilities] = useState([]);
   const [dbDiscipline, setDbDiscipline] = useState([]);
+
+  // Staff Commissioning State
+  const [commissionModalOpen, setCommissionModalOpen] = useState(false);
+  const [commissionForm, setCommissionForm] = useState({ name: '', email: '', role: 'admin' });
+  const [commissionSaving, setCommissionSaving] = useState(false);
+  const [commissionSuccess, setCommissionSuccess] = useState(false);
 
   useEffect(() => {
     fetchTable('expenses').then(setExpenses).catch(() => {});
@@ -130,14 +137,25 @@ export default function AdminDashboard({ store, user }) {
         </div>
       </div>
 
-      <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Staff" value={activeStaffList.length} sub={`${presentStaff} present today`} color="#000000" />
-        <Stat label="Leave Requests" value={pendingLeave} sub="Pending approval" color="#FFB900" />
-        <Stat label="Discipline Cases" value={openDiscipline} sub="Open cases" color="#D13438" />
-        <Stat label="Facilities" value={`${operationalFac}/${dbFacilities.length}`} sub="Operational" color="#107C10" />
+      <div className="grid grid-4" style={{ marginBottom: 24 }}>
+        <Stat label="Total Students" value={students?.length || 0} color="#10B981" />
+        <Stat label="Active Staff" value={activeStaffList.length} color="#3B82F6" sub={`${presentStaff} Present Today`} />
+        <Stat label="Facilities" value={dbFacilities.length} color="#8B5CF6" sub={`${operationalFac} Operational`} />
+        <Stat label="Pending Leaves" value={pendingLeave} color="#F59E0B" />
       </div>
 
-      {/* Quick Actions */}
+      <div className="card card-pad" style={{ marginBottom: 24 }}>
+        <h3 className="section-title">Principal Quick Actions</h3>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setReportDisciplineOpen(true)}>
+            <Shield size={18} /> File Disciplinary Report
+          </button>
+          <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setCommissionModalOpen(true)}>
+            <UserPlus size={18} /> Commission Staff
+          </button>
+        </div>
+      </div>
+
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
@@ -154,7 +172,6 @@ export default function AdminDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        {/* Discipline Cases */}
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ color: '#000000', margin: 0 }}>Discipline Cases</h3>
@@ -178,7 +195,6 @@ export default function AdminDashboard({ store, user }) {
           {dbDiscipline.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No discipline cases recorded.</div>}
         </div>
 
-        {/* Facilities */}
         <div className="card card-pad">
           <h3 className="section-title" style={{ color: '#000000' }}>Facilities Overview</h3>
           {dbFacilities.slice(0, 5).map(f => (
@@ -197,14 +213,12 @@ export default function AdminDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* Leave Requests & Expense Approvals */}
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
             <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
           </div>
-          {[]}
           {true && (
             <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
           )}
@@ -234,7 +248,6 @@ export default function AdminDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* Discipline Modal */}
       {disciplineModal && (
         <Modal title="Discipline Case Details" onClose={() => setDisciplineModal(null)} footer={
           <div style={{ display: 'flex', gap: 8 }}>
@@ -256,13 +269,12 @@ export default function AdminDashboard({ store, user }) {
         </Modal>
       )}
 
-      {/* Report Discipline Modal */}
       {reportDisciplineOpen && (
         <Modal title="File Disciplinary Report" onClose={() => setReportDisciplineOpen(false)} footer={
-          <>
-            <button className="btn" onClick={() => setReportDisciplineOpen(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleReportDiscipline}>Submit Report</button>
-          </>
+          <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
+            <button className="btn" style={{ flex: 1 }} onClick={() => setReportDisciplineOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 1, background: '#ef4444', borderColor: '#ef4444' }} onClick={handleReportDiscipline}>File Report</button>
+          </div>
         }>
           <div className="grid grid-2" style={{ gap: 16 }}>
             <div>
@@ -297,6 +309,48 @@ export default function AdminDashboard({ store, user }) {
               </select>
             </div>
           </div>
+        </Modal>
+      )}
+      {commissionModalOpen && (
+        <Modal title="Commission Staff Account" onClose={() => setCommissionModalOpen(false)} footer={null}>
+          {commissionSuccess ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <CheckCircle2 size={64} color="#10B981" style={{ margin: '0 auto 16px' }} />
+              <h3 style={{ margin: '0 0 8px' }}>Staff Commissioned!</h3>
+              <p className="muted">An email invitation has been sent to <strong>{commissionForm.email}</strong> with their secure login credentials.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-2" style={{ gap: 16 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="field-label">Full Name</label>
+                  <input className="input" value={commissionForm.name} onChange={e => setCommissionForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Jane Doe" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="field-label">Email Address (Used for Login & Invite)</label>
+                  <input type="email" className="input" value={commissionForm.email} onChange={e => setCommissionForm(f => ({ ...f, email: e.target.value }))} placeholder="e.g. jane@school.edu" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="field-label">Role</label>
+                  <select className="select" value={commissionForm.role} onChange={e => setCommissionForm(f => ({ ...f, role: e.target.value }))}>
+                    <option value="admin">Admin</option>
+                    <option value="deputy_admin">Deputy Principal (Admin)</option>
+                    <option value="deputy_academic">Deputy Principal (Academics)</option>
+                    <option value="clinic">Clinic / Nurse</option>
+                    <option value="librarian">Librarian</option>
+                    <option value="finance">Bursar / Finance</option>
+                    <option value="registrar">Registrar</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                <button className="btn" style={{ flex: 1 }} onClick={() => setCommissionModalOpen(false)}>Cancel</button>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleCommissionStaff} disabled={commissionSaving}>
+                  {commissionSaving ? 'Sending Invite...' : 'Commission Account'}
+                </button>
+              </div>
+            </>
+          )}
         </Modal>
       )}
     </div>
