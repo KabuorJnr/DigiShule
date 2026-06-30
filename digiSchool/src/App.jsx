@@ -250,7 +250,7 @@ export default function App() {
   const loadUser = useCallback(async (userId, greet) => {
     try {
       const profile = await api.fetchProfile(userId);
-      const sid = profile.schoolId || localStorage.getItem('eduone_school_id');
+      const sid = profile.school_id || profile.schoolId || localStorage.getItem('eduone_school_id');
       if (sid) {
         setActiveSchoolId(sid);
         setSchoolId(sid);
