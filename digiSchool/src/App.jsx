@@ -321,7 +321,7 @@ export default function App() {
           <LandingPage 
             onGetStarted={() => setShowLogin(true)} 
             onApply={() => setShowApplication(true)} 
-            onSignUp={() => setShowParentSignup(true)}
+            onSignUp={() => setShowSignup(true)}
           />
         ) : (
           <Login onSignUp={() => setShowParentSignup(true)} />

@@ -36,6 +36,7 @@ const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
           <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
+          <button className="bespoke-btn ghost" onClick={onSignUp}>Sign Up</button>
           <button className="bespoke-btn primary" onClick={onApply}>
             Apply Now
           </button>
