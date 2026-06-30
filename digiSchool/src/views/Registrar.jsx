@@ -96,37 +96,40 @@ export default function Registrar({ store, user }) {
     if (form.adm.trim().length < 7) { notify('Admission No. must be at least 7 characters (e.g., 26/1234) for secure passwords.', 'warning'); return; }
     if (students.find(s => s.adm === form.adm)) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
     setSaving(true);
+
+    // Capture form values before any state reset so provisioning code can use them
+    const captured = { ...form };
+
     try {
       let admissionLetterUrl = null;
-      if (form.admissionLetterFile) {
+      if (captured.admissionLetterFile) {
         notify('Uploading admission letter...', 'info');
-        admissionLetterUrl = await uploadStudentDocument(`new_${Date.now()}`, form.admissionLetterFile);
+        admissionLetterUrl = await uploadStudentDocument(`new_${Date.now()}`, captured.admissionLetterFile);
       }
 
       const newStudent = {
         id: `s${Date.now()}`,
-        name: form.name,
-        adm: form.adm,
-        class: form.class,
-        gender: form.gender,
-        birthCertNo: form.birthCertNo,
+        name: captured.name,
+        adm: captured.adm,
+        class: captured.class,
+        gender: captured.gender,
+        birthCertNo: captured.birthCertNo,
         flagged: false,
         scores: {},
-        guardianName: form.guardianName,
-        guardianPhone: form.guardianPhone,
-        guardianEmail: form.guardianEmail,
-        parentAddress: form.parentAddress,
+        guardianName: captured.guardianName,
+        guardianPhone: captured.guardianPhone,
+        guardianEmail: captured.guardianEmail,
+        parentAddress: captured.parentAddress,
         admissionLetterUrl,
       };
 
       await upsertStudent(newStudent);
       setStudents(prev => [...prev, newStudent]);
-      setForm(EMPTY_FORM);
       
       // ── 1. Create Student Portal Account ──
       setProvisionStep('password');
-      const studentPassword = form.adm;
-      const studentAuthEmail = `${form.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
+      const studentPassword = captured.adm;
+      const studentAuthEmail = `${captured.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
       
       const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
         email: studentAuthEmail,
@@ -139,21 +142,21 @@ export default function Registrar({ store, user }) {
       } else if (studentAuthData?.user) {
         await supabase.from('profiles').upsert({
           id: studentAuthData.user.id,
-          username: form.adm,
-          full_name: form.name,
+          username: captured.adm,
+          full_name: captured.name,
           role: 'student',
-          student_id: newStudent.id
+          student_id: newStudent.id,
+          school_id: store.schoolId || null
         });
       }
       
       // ── 2. Create Parent Portal Account (If email provided) ──
-      if (form.guardianEmail) {
+      if (captured.guardianEmail) {
         const tempPassword = generateSecurePassword(10);
         const username = await generateSequentialUsername('PRN');
-        const authEmail = `${username.toLowerCase()}@edu1app.tech`;
         
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
-          email: form.guardianEmail, // Using real email so parent gets it natively
+          email: captured.guardianEmail, // Using real email so parent gets it natively
           password: tempPassword,
           options: { data: { role: 'parent' } }
         });
@@ -166,35 +169,43 @@ export default function Registrar({ store, user }) {
           await supabase.from('profiles').upsert({
             id: authData.user.id,
             username,
-            full_name: form.guardianName || 'Parent / Guardian',
+            full_name: captured.guardianName || 'Parent / Guardian',
             role: 'parent',
-            student_id: newStudent.id
+            student_id: newStudent.id,
+            school_id: store.schoolId || null
           });
         }
 
         setProvisionStep('email');
         await provisionAccount({
-          email: form.guardianEmail,
+          email: captured.guardianEmail,
           username,
           password: tempPassword,
-          name: form.guardianName || 'Parent/Guardian',
+          name: captured.guardianName || 'Parent/Guardian',
           role: 'parent',
           schoolName: store.settings?.name || 'EduOne'
         });
 
         setProvisionStep('done');
+        setForm(EMPTY_FORM);
         setTimeout(() => {
           setProvisionStep(null);
-          notify(`${form.name} enrolled. Parent portal account provisioned!`, 'success', 'Parent Registered');
+          notify(`${captured.name} enrolled. Parent portal account provisioned!`, 'success', 'Parent Registered');
           setTab('register');
         }, 1500);
       } else {
-        notify(`${form.name} enrolled successfully in ${form.class}`, 'success', 'Registrar');
-        setTab('register');
+        setForm(EMPTY_FORM);
+        setProvisionStep('done');
+        setTimeout(() => {
+          setProvisionStep(null);
+          notify(`${captured.name} enrolled successfully in ${captured.class}`, 'success', 'Registrar');
+          setTab('register');
+        }, 1500);
       }
       
     } catch (e) {
       notify(`Enrolment failed: ${e.message}`, 'error');
+      setProvisionStep(null);
     } finally { setSaving(false); }
   };
 
@@ -757,6 +768,8 @@ export default function Registrar({ store, user }) {
           </Modal>
         );
       })()}
+
+      {provisionStep && <RegistrationLoadingModal step={provisionStep} />}
     </div>
   );
 }

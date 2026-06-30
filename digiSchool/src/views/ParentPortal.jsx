@@ -17,6 +17,11 @@ export default function ParentPortal({ store, user }) {
 
   const child = useMemo(() => {
     if (!students || students.length === 0) return null;
+    // For Supabase auth parents, profile has studentId that links to the child
+    if (user?.studentId) {
+      const match = students.find(s => s.id === user.studentId);
+      if (match) return match;
+    }
     if (user?.link) {
       const match = students.find(s => s.id === user.link || s.adm === user.link);
       if (match) return match;

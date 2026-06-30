@@ -195,10 +195,11 @@ export default function App() {
       feeStructure, setFeeStructure: setFeeP,
       notifToggles, setNotifToggles: setTogglesP,
       timetables, setTimetables: setTimetablesP,
+      notifications, setNotifications,
       notify,
       navigate: (v, p = {}) => { setViewParams(p); setView(v); },
     }),
-    [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notify,
+    [settings, schoolId, students, teachers, examSchedules, venues, gradeBoundaries, feeStructure, notifToggles, timetables, notifications, notify,
       setSettingsP, setExamsP, setVenuesP, setBoundsP, setFeeP, setTogglesP, setTimetablesP, updateStudent, updateTeacher, addTeacher]
   );
 

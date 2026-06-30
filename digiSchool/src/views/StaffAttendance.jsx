@@ -26,7 +26,7 @@ export default function StaffAttendance({ store, user }) {
 
   // Add Staff Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'Teacher', dept: '', phone: '', empId: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'Teacher', dept: '', subject: '', phone: '', empId: '' });
   const [provisionStep, setProvisionStep] = useState(null);
 
   // Recruitment State
@@ -178,7 +178,8 @@ export default function StaffAttendance({ store, user }) {
           full_name: addForm.name,
           role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin',
           dept: addForm.dept,
-          teacher_id: newStaff.id
+          teacher_id: newStaff.id,
+          school_id: store.schoolId || null
         });
       }
 
@@ -257,7 +258,7 @@ export default function StaffAttendance({ store, user }) {
   };
 
   const hireApplicant = async (app) => {
-    setAddForm({ name: app.applicant_name, role: app.role, dept: app.department || '', phone: app.phone || '', empId: '' });
+    setAddForm({ name: app.applicant_name, email: app.email || '', role: app.role, dept: app.department || '', subject: app.department || '', phone: app.phone || '', empId: '' });
     setShowAddModal(true);
     // Mark app as hired
     const updated = { ...app, status: 'Hired' };

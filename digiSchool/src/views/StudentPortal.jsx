@@ -46,8 +46,14 @@ export default function StudentPortal({ store, user, params }) {
   const { students, gradeBoundaries, examSchedules, feeStructure, navigate, notify, notifications } = store;
   const me = useMemo(() => {
     if (!students || students.length === 0) return null;
-    const targetId = params?.childId || user?.link || user?.id;
-    return students.find(s => s.id === targetId || s.adm === targetId) || students[0];
+    // For Supabase auth users, profile has studentId (links to students.id)
+    // For seed/demo users, user.link is an adm number or student id
+    const targetId = params?.childId || user?.studentId || user?.link || user?.id;
+    // Also try matching by username as adm (for seed student logins like STU2640494)
+    const targetAdm = user?.username;
+    return students.find(s =>
+      s.id === targetId || s.adm === targetId || s.adm === targetAdm
+    ) || students[0];
   }, [students, user, params]);
   const [tab, setTab] = useState('dashboard');
   const [rank, setRank] = useState(null);
