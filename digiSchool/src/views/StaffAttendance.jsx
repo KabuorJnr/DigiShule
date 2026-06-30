@@ -168,11 +168,11 @@ export default function StaffAttendance({ store, user }) {
       });
       
       if (signUpError && !signUpError.message.includes('already')) {
-        throw new Error(signUpError.message);
+        throw new Error(`Teacher Auth Error: ${signUpError.message}`);
       }
 
       if (authData?.user) {
-        await supabase.from('profiles').upsert({
+        const { error: profileErr } = await supabase.from('profiles').upsert({
           id: authData.user.id,
           username,
           full_name: addForm.name,
@@ -181,6 +181,7 @@ export default function StaffAttendance({ store, user }) {
           teacher_id: newStaff.id,
           school_id: store.schoolId || null
         });
+        if (profileErr) throw new Error(`Teacher Profile Error: ${profileErr.message}`);
       }
 
       await upsertRow('staff', newStaff);

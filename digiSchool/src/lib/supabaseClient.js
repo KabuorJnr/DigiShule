@@ -42,16 +42,31 @@ export async function signInWithUsername(username, password) {
 
   // ── 1. Try Supabase Auth ─────────────────────────────────────────
   try {
-    const { data: email, error: rpcError } = await supabase.rpc('email_for_username', {
-      p_username: uname,
-    });
+    let emailToUse = null;
+    
+    // If the username looks like an email, use it directly
+    if (uname.includes('@')) {
+      emailToUse = uname;
+    } else {
+      // Otherwise, look up the email via RPC
+      const { data: email, error: rpcError } = await supabase.rpc('email_for_username', {
+        p_username: uname,
+      });
+      if (!rpcError && email) {
+        emailToUse = email;
+      }
+    }
 
-    if (!rpcError && email) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (emailToUse) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
 
-      if (!error && data?.user) {
+      if (error) {
+        // Return the actual Supabase error (e.g. 'Email not confirmed' or 'Invalid login credentials')
+        return { error };
+      }
+
+      if (data?.user) {
         // Supabase auth succeeded — verify a profile row exists.
-        // Without a profile row the app cannot determine the user's role.
         const { data: profileRow } = await supabase
           .from('profiles')
           .select('id')
@@ -66,11 +81,10 @@ export async function signInWithUsername(username, password) {
         // No profile row yet — sign out of Supabase and fall through to seed.
         await supabase.auth.signOut();
       }
-      // Wrong password OR no profile → fall through to seed below.
     }
-    // rpcError or email null → no Supabase user, fall through to seed.
-  } catch {
+  } catch (err) {
     // Network error or RPC doesn't exist — fall through to seed.
+    console.warn('Supabase auth catch block:', err);
   }
 
   // ── 2. Demo / seed fallback ──────────────────────────────────────

@@ -138,9 +138,9 @@ export default function Registrar({ store, user }) {
       });
       
       if (studentSignUpError && !studentSignUpError.message.includes('already')) {
-        console.warn('Student Auth provision warning:', studentSignUpError.message);
+        throw new Error(`Student Auth Error: ${studentSignUpError.message}`);
       } else if (studentAuthData?.user) {
-        await supabase.from('profiles').upsert({
+        const { error: profileErr } = await supabase.from('profiles').upsert({
           id: studentAuthData.user.id,
           username: captured.adm,
           full_name: captured.name,
@@ -148,6 +148,7 @@ export default function Registrar({ store, user }) {
           student_id: newStudent.id,
           school_id: store.schoolId || null
         });
+        if (profileErr) throw new Error(`Student Profile Error: ${profileErr.message}`);
       }
       
       // ── 2. Create Parent Portal Account (If email provided) ──
@@ -162,11 +163,11 @@ export default function Registrar({ store, user }) {
         });
         
         if (signUpError && !signUpError.message.includes('already')) {
-          console.warn('Parent Auth provision warning:', signUpError.message);
+          throw new Error(`Parent Auth Error: ${signUpError.message}`);
         }
 
         if (authData?.user) {
-          await supabase.from('profiles').upsert({
+          const { error: profileErr } = await supabase.from('profiles').upsert({
             id: authData.user.id,
             username,
             full_name: captured.guardianName || 'Parent / Guardian',
@@ -174,6 +175,7 @@ export default function Registrar({ store, user }) {
             student_id: newStudent.id,
             school_id: store.schoolId || null
           });
+          if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
         }
 
         setProvisionStep('email');
