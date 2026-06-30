@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { signInWithUsername } from '../lib/supabaseClient';
-import { Eye, EyeOff, Shield, GraduationCap } from 'lucide-react';
+import { signInWithUsername, supabase } from '../lib/supabaseClient';
+import { Eye, EyeOff, Shield, GraduationCap, CheckCircle2, Mail, Phone } from 'lucide-react';
+import Modal from '../components/Modal';
 
 // Read school config set by the Setup Wizard
 const schoolConfig = (() => {
@@ -19,6 +20,34 @@ export default function Login({ onDemoLogin, onSignUp }) {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [busy, setBusy]         = useState(false);
+
+  // Modal states
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) { setForgotError('Please enter your email address.'); return; }
+    setForgotError('');
+    setForgotBusy(true);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: window.location.origin + '/reset-password',
+    });
+    
+    setForgotBusy(false);
+    
+    if (error) {
+      setForgotError(error.message);
+    } else {
+      setForgotSuccess(true);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -113,7 +142,7 @@ export default function Login({ onDemoLogin, onSignUp }) {
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-              <a className="hr-link">Forgot password?</a>
+              <a className="hr-link" onClick={() => { setForgotModalOpen(true); setForgotSuccess(false); setForgotError(''); setForgotEmail(''); }}>Forgot password?</a>
             </div>
 
             {/* Submit Button */}
@@ -138,14 +167,89 @@ export default function Login({ onDemoLogin, onSignUp }) {
                 style={{ background: 'transparent', border: 'none', color: '#10B981', cursor: 'pointer', fontWeight: 600, fontSize: 15 }}
                 onClick={onSignUp}
               >
-                Parents: Activate Student Portal (KES 250)
+                Parents: Register for the Portal
               </button>
             ) : (
-              <span>Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }}>Contact Administration</a></span>
+              <span>Don't have an account? <a className="hr-link" style={{ fontWeight: 600 }} onClick={() => setContactModalOpen(true)}>Contact Administration</a></span>
             )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {forgotModalOpen && (
+        <Modal title="Reset Password" onClose={() => setForgotModalOpen(false)} footer={null}>
+          {forgotSuccess ? (
+            <div style={{ textAlign: 'center', padding: '30px 10px' }}>
+              <CheckCircle2 size={50} color="#10B981" style={{ marginBottom: 16 }} />
+              <h3 style={{ margin: '0 0 10px' }}>Reset Link Sent!</h3>
+              <p style={{ color: '#576871' }}>We have sent a secure password reset link to <strong>{forgotEmail}</strong>. Please check your inbox.</p>
+              <button className="hr-btn" style={{ marginTop: 24 }} onClick={() => setForgotModalOpen(false)}>Back to Login</button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ margin: '0 0 10px', color: '#576871', fontSize: 14 }}>
+                Enter the email address associated with your account and we will send you a link to reset your password.
+              </p>
+              
+              {forgotError && (
+                <div className="hr-error" style={{ marginBottom: 0 }}>
+                  <Shield size={16} /> {forgotError}
+                </div>
+              )}
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600 }}>Email Address</label>
+                <input
+                  type="email"
+                  className="hr-input"
+                  placeholder="your@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button type="button" className="btn" style={{ flex: 1 }} onClick={() => setForgotModalOpen(false)}>Cancel</button>
+                <button type="submit" className="hr-btn" style={{ flex: 1, padding: '10px' }} disabled={forgotBusy}>
+                  {forgotBusy ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal>
+      )}
+
+      {contactModalOpen && (
+        <Modal title="Contact Administration" onClose={() => setContactModalOpen(false)} footer={
+          <button className="hr-btn" onClick={() => setContactModalOpen(false)}>Close</button>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <p style={{ margin: 0, color: '#576871', fontSize: 14 }}>
+              To get an account or resolve login issues, please contact the school administration directly using the details below:
+            </p>
+            
+            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: 16 }}>{schoolName}</h4>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <Mail size={18} color="#64748b" />
+                <a href={`mailto:${schoolConfig?.school?.email || 'admin@school.edu'}`} className="hr-link" style={{ fontWeight: 600 }}>
+                  {schoolConfig?.school?.email || 'admin@school.edu'}
+                </a>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Phone size={18} color="#64748b" />
+                <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                  {schoolConfig?.school?.phone || '+254 (0) 700 000 000'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Right Image Side */}
       <div className="login-image-side" />
