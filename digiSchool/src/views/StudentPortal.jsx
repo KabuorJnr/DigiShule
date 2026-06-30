@@ -48,7 +48,7 @@ export default function StudentPortal({ store, user, params }) {
     if (!students || students.length === 0) return null;
     // For Supabase auth users, profile has studentId (links to students.id)
     // For seed/demo users, user.link is an adm number or student id
-    const targetId = params?.childId || user?.studentId || user?.link || user?.id;
+    const targetId = params?.childId || user?.student_id || user?.studentId || user?.link || user?.id;
     // Also try matching by username as adm (for seed student logins like STU2640494)
     const targetAdm = user?.username;
     return students.find(s =>
