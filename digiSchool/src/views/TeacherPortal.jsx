@@ -138,7 +138,7 @@ export default function TeacherPortal({ store, user }) {
     const { exportTablePDF } = await import('../utils/exporters');
     const head = ['Student Name', 'Present', 'Absent', 'Late', 'Attendance %'];
     const body = loadedStudents.filter(s => s.class === assignedClass).map(s => [
-      s.name, '45', '2', '1', '95%'
+      s.name, '-', '-', '-', '-'
     ]);
     exportTablePDF({
       school: store.settings,
@@ -153,8 +153,9 @@ export default function TeacherPortal({ store, user }) {
     const { downloadCSV } = await import('../utils/exporters');
     const rows = [
       ['Student Name', 'Date', 'Status', 'Remarks'],
-      ['John Doe', '2026-06-20', 'Present', ''],
-      ['Jane Smith', '2026-06-20', 'Absent', 'Sick leave']
+      ...loadedStudents.filter(s => s.class === assignedClass).map(s => [
+        s.name, new Date().toISOString().slice(0, 10), '-', ''
+      ])
     ];
     downloadCSV(`attendance_report_${assignedClass}.csv`, rows);
   };
@@ -388,7 +389,7 @@ export default function TeacherPortal({ store, user }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.filter(s => s.class === assignedClass).map((s, idx) => (
+                  {loadedStudents.filter(s => s.class === assignedClass).map((s, idx) => (
                     <tr key={s.id}>
                       <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{idx + 1}</td>
                       <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{s.adm}</td>
@@ -396,7 +397,7 @@ export default function TeacherPortal({ store, user }) {
                       <td style={{ borderBottom: '1px solid #e2e8f0', padding: 8 }}>{s.gender || '-'}</td>
                     </tr>
                   ))}
-                  {students.filter(s => s.class === assignedClass).length === 0 && (
+                  {loadedStudents.filter(s => s.class === assignedClass).length === 0 && (
                     <tr>
                       <td colSpan={4} style={{ textAlign: 'center', padding: 24 }} className="muted">No students assigned to {assignedClass}.</td>
                     </tr>
