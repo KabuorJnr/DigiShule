@@ -27,3 +27,7 @@ CREATE TABLE IF NOT EXISTS public.assignment_submissions (
 );
 
 ALTER TABLE public.assignment_submissions DISABLE ROW LEVEL SECURITY;
+
+-- 3. Disable RLS on messages table to allow Parent Portal messages
+ALTER TABLE public.messages DISABLE ROW LEVEL SECURITY;
+

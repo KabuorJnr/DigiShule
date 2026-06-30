@@ -116,8 +116,7 @@ export default function ParentPortal({ store, user }) {
   const latestAtt = { rate: attPct || 91 };
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
-  // Calculate paid dynamically instead of fixed seed
-  const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0) || Math.round(termFees * 0.73);
+  const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
   const balance = termFees - paid;
 
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
