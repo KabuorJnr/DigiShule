@@ -6,7 +6,7 @@ import {
   UserPlus, Search, Edit2, FileText, Users,
   CheckCircle2, AlertTriangle, Download, Filter, Upload, Loader
 } from 'lucide-react';
-import { exportReportCardsPDF } from '../utils/exporters';
+import { exportReportCardsPDF, exportNemisCSV } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
 import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
 import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
@@ -277,6 +277,11 @@ export default function Registrar({ store, user }) {
     }
   };
 
+  const exportNEMIS = () => {
+    exportNemisCSV(filtered, 'NEMIS_Export_Term2.csv');
+    notify('NEMIS file generated successfully', 'success');
+  };
+
   const exportCSV = () => {
     const rows = [
       ['Adm No.', 'Name', 'Class', 'Gender'],
@@ -349,6 +354,7 @@ export default function Registrar({ store, user }) {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" style={{ gap: 6 }} onClick={exportCSV}><Download size={15} /> Student Roster</button>
             <button className="btn" style={{ gap: 6 }} onClick={exportContactsCSV}><Download size={15} /> Parent Contacts</button>
+            <button className="btn btn-outline" style={{ gap: 6, borderColor: '#0ea5e9', color: '#0ea5e9' }} onClick={exportNEMIS}><Download size={15} /> NEMIS Export</button>
             <button className="btn" style={{ gap: 6 }} onClick={handleDownloadReportCards}><FileText size={15} /> Batch Report Cards</button>
             <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => setTab('enroll')}><UserPlus size={15} /> New Enrolment</button>
           </div>

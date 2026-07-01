@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
-const TOP_SUBJECTS_DATA = [];
 import { Badge, ProgressBar } from '../components/widgets';
 import { exportTablePDF, downloadCSV } from '../utils/exporters';
 import { Download, FileText } from 'lucide-react';
@@ -20,10 +19,12 @@ function Stat({ label, value, color, sub }) {
 export default function AcademicsDashboard({ store, user }) {
   const { navigate, notify, settings, teachers = [], examSchedules = [] } = store;
   const [students, setStudents] = useState([]);
+  const [analytics, setAnalytics] = useState({ top_subjects: [] });
   
   useEffect(() => {
-    import('../lib/api').then(({ fetchStudents }) => {
+    import('../lib/api').then(({ fetchStudents, fetchAcademicAnalytics }) => {
       fetchStudents(0, 1000).then(r => setStudents(r.data || [])).catch(() => {});
+      fetchAcademicAnalytics().then(r => setAnalytics(r || { top_subjects: [] })).catch(() => {});
     });
   }, []);
   
@@ -48,7 +49,7 @@ export default function AcademicsDashboard({ store, user }) {
 
   const handleExportAnalysis = () => {
     const head = ['Subject', 'Percentage (%)'];
-    const body = TOP_SUBJECTS_DATA.map(r => [r.name, r.score]);
+    const body = analytics.top_subjects.map(r => [r.name, r.score]);
     exportTablePDF({
       school: settings,
       title: 'Exam Analysis & Grade Distribution',
@@ -146,19 +147,21 @@ export default function AcademicsDashboard({ store, user }) {
               <Download size={14} style={{ marginRight: 4 }}/> Exam Analysis
             </button>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={TOP_SUBJECTS_DATA} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
-              <XAxis dataKey="name" tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis tickLine={false} tick={{ fontSize: 12 }} tickFormatter={val => `${val}%`} />
-              <Tooltip formatter={value => `${value}%`} cursor={{ fill: '#f8fafc' }} />
-              <Bar dataKey="score" name="Percentage (%)" radius={[4, 4, 0, 0]} maxBarSize={60}>
-                {TOP_SUBJECTS_DATA.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ height: 250 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.top_subjects} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                  {analytics.top_subjects.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index < 3 ? '#3b82f6' : '#94a3b8'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
