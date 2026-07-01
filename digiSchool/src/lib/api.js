@@ -213,6 +213,16 @@ export async function fetchStudentByQuery(field, value) {
   };
 }
 
+export async function fetchAcademicAnalytics() {
+  if (!_schoolId) return { top_subjects: [] };
+  const { data, error } = await supabase.rpc('get_academic_analytics');
+  if (error) {
+    console.error("Error fetching academic analytics", error);
+    return { top_subjects: [] };
+  }
+  return data || { top_subjects: [] };
+}
+
 export async function fetchStudentStats() {
   const { data, error } = await supabase.rpc('get_student_stats');
   if (error) throw error;
