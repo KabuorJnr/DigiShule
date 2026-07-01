@@ -32,8 +32,22 @@ export async function registerSchool({
   return data; // returns school UUID
 }
 
-export async function fetchTable(table) {
+// ---- Generic module tables ------------------------------------------------
+const TABLES = {
+  libraryBooks: 'library_books', libraryLoans: 'library_loans',
+  financePayments: 'finance_payments', feeSummary: 'fee_summary',
+  invoices: 'invoices', expenses: 'expenses',
+  admissions: 'admissions', clinicVisits: 'clinic_visits',
+  disciplinaryRecords: 'disciplinary_records', staff: 'staff',
+  facilities: 'facilities', notifications: 'notifications',
+  schoolEvents: 'school_events', job_applications: 'job_applications',
+  messages: 'messages', studentAttendance: 'student_attendance',
+  assignmentSubmissions: 'assignment_submissions'
+};
+
+export async function fetchTable(key) {
   if (!_schoolId) return [];
+  const table = TABLES[key] || key;
   try {
     const { data, error } = await supabase
       .from(table)
@@ -410,26 +424,6 @@ export async function saveTimetables(map, term) {
   if (error) throw error;
 }
 
-// ---- Generic module tables ------------------------------------------------
-const TABLES = {
-  libraryBooks: 'library_books', libraryLoans: 'library_loans',
-  financePayments: 'finance_payments', feeSummary: 'fee_summary',
-  invoices: 'invoices', expenses: 'expenses',
-  admissions: 'admissions', clinicVisits: 'clinic_visits',
-  disciplinaryRecords: 'disciplinary_records', staff: 'staff',
-  facilities: 'facilities', notifications: 'notifications',
-  schoolEvents: 'school_events', job_applications: 'job_applications',
-  messages: 'messages', studentAttendance: 'student_attendance',
-  assignmentSubmissions: 'assignment_submissions'
-};
-
-export async function fetchTable(key) {
-  let query = supabase.from(TABLES[key] || key).select('*');
-  if (_schoolId) query = query.eq('school_id', _schoolId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
-}
 
 export async function upsertRow(key, row) {
   const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
