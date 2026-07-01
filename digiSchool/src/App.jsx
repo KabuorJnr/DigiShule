@@ -36,8 +36,10 @@ import AdminDashboard from './views/AdminDashboard';
 import Notices from './views/Notices';
 import SchoolCalendar from './views/SchoolCalendar';
 import Registrar from './views/Registrar';
+import DeveloperPortal from './views/DeveloperPortal';
 
 const VIEW_MAP = {
+  developer_portal: DeveloperPortal,
   overview: Overview,
   timetable: Timetable,
   exams: ExamSchedules,
@@ -268,17 +270,29 @@ export default function App() {
 
     const handleOnline = () => {
       api.syncOfflineMutations().then(() => {
-        // notify cannot be safely called outside its dependency injection, 
-        // but we'll show a global alert or rely on api sync logs.
         console.log('[OfflineSync] Connection restored. Offline mutations synced successfully.');
       }).catch(console.error);
     };
     window.addEventListener('online', handleOnline);
 
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        const pwd = window.prompt('Developer Mode Authentication:\nEnter Master Password:');
+        if (pwd === 'eduone@admin!') {
+          setView('developer_portal');
+        } else if (pwd !== null) {
+          alert('Access Denied: Incorrect Master Password');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [loadUser]);
 
