@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS } from '../data/seed';
 
@@ -21,6 +21,10 @@ export default function Settings({ store, user }) {
   const [newSubjDept, setNewSubjDept] = useState('Sciences');
   const [fees, setFees] = useState(feeStructure);
   const [bounds, setBounds] = useState(gradeBoundaries);
+
+  useEffect(() => {
+    setFees(store.feeStructure || []);
+  }, [store.feeStructure]);
 
   const upForm = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -160,7 +164,10 @@ export default function Settings({ store, user }) {
               <tbody>
                 {fees.map((f, i) => (
                   <tr key={i}>
-                    <td>{f.type}</td>
+                    <td>
+                      <input className="input" value={f.type} style={{ width: 150, height: 32 }}
+                        onChange={(e) => setFees((fs) => fs.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))} />
+                    </td>
                     {levels.map((l) => (
                       <td key={l}>
                         <input className="input" type="number" value={f[l] || ''} style={{ width: 110, height: 32 }}
@@ -172,7 +179,10 @@ export default function Settings({ store, user }) {
               </tbody>
             </table>
           </div>
-          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={saveFees}>Save Fee Structure</button>
+          <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
+            <button className="btn btn-sm" onClick={() => setFees(fs => [...fs, { type: 'New Component' }])}>+ Add Fee Component</button>
+            <button className="btn btn-primary" onClick={saveFees}>Save Fee Structure</button>
+          </div>
         </div>
       )}
 

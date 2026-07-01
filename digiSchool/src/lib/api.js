@@ -117,7 +117,9 @@ export async function saveConfig(patch) {
 
 // ---- Teachers / students --------------------------------------------------
 export async function fetchTeachers() {
-  const { data, error } = await supabase.from('teachers').select('*').order('id');
+  let query = supabase.from('teachers').select('*').order('id');
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query;
   if (error) throw error;
   return data.map(t => ({
     ...t,
@@ -159,6 +161,9 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
   if (filters.class) {
     query = query.eq('class', filters.class);
   }
+  if (_schoolId) {
+    query = query.eq('school_id', _schoolId);
+  }
 
   const { data, error, count } = await query
     .order('class')
@@ -180,7 +185,9 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
 }
 
 export async function fetchStudentByQuery(field, value) {
-  const { data, error } = await supabase.from('students').select('*').eq(field, value).maybeSingle();
+  let query = supabase.from('students').select('*').eq(field, value);
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
@@ -201,7 +208,9 @@ export async function fetchStudentStats() {
 }
 
 export async function fetchAllStudentsUnpaginated() {
-  const { data, error } = await supabase.from('students').select('*').order('class').order('adm');
+  let query = supabase.from('students').select('*').order('class').order('adm');
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query;
   if (error) throw error;
   return data.map(s => ({
     ...s,
@@ -244,9 +253,15 @@ export async function upsertStudent(student) {
 
 // ---- Exam schedules + sessions --------------------------------------------
 export async function fetchExamSchedules() {
+  let q1 = supabase.from('exam_schedules').select('*').order('start_date');
+  let q2 = supabase.from('exam_sessions').select('*');
+  if (_schoolId) {
+    q1 = q1.eq('school_id', _schoolId);
+    q2 = q2.eq('school_id', _schoolId);
+  }
   const [{ data: exams, error: e1 }, { data: sessions, error: e2 }] = await Promise.all([
-    supabase.from('exam_schedules').select('*').order('start_date'),
-    supabase.from('exam_sessions').select('*'),
+    q1,
+    q2,
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
@@ -317,7 +332,9 @@ export async function replaceAllExams(exams) {
 
 // ---- Timetables -----------------------------------------------------------
 export async function fetchTimetables() {
-  const { data, error } = await supabase.from('timetables').select('*');
+  let query = supabase.from('timetables').select('*');
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query;
   if (error) throw error;
   const map = {};
   (data || []).forEach((row) => { map[row.class] = row.data; });
@@ -355,7 +372,9 @@ const TABLES = {
 };
 
 export async function fetchTable(key) {
-  const { data, error } = await supabase.from(TABLES[key] || key).select('*');
+  let query = supabase.from(TABLES[key] || key).select('*');
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 }
