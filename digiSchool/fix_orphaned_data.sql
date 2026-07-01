@@ -20,6 +20,9 @@ ALTER TABLE clinic_visits ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES sch
 ALTER TABLE library_books ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
 ALTER TABLE library_loans ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
 ALTER TABLE facilities ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
+ALTER TABLE school_events ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
+ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
+ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
 
 
 -- Now, link all orphaned data to your original school.
@@ -50,5 +53,8 @@ BEGIN
     UPDATE library_books SET school_id = first_school_id WHERE school_id IS NULL;
     UPDATE library_loans SET school_id = first_school_id WHERE school_id IS NULL;
     UPDATE facilities SET school_id = first_school_id WHERE school_id IS NULL;
+    UPDATE school_events SET school_id = first_school_id WHERE school_id IS NULL;
+    UPDATE job_applications SET school_id = first_school_id WHERE school_id IS NULL;
+    UPDATE leave_requests SET school_id = first_school_id WHERE school_id IS NULL;
   END IF;
 END $$;
