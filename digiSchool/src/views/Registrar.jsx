@@ -34,7 +34,17 @@ export default function Registrar({ store, user }) {
   const [page, setPage] = useState(0);
   const [stats, setStats] = useState(null);
   const [loadingList, setLoadingList] = useState(false);
-
+  const [search, setSearch] = useState('');
+  const [provisionStep, setProvisionStep] = useState(null);
+  const [classFilter, setClassFilter] = useState('All');
+  const [editModal, setEditModal] = useState(false);
+  const [editStudent, setEditStudent] = useState(null);
+  const [enrollModal, setEnrollModal] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [transferModal, setTransferModal] = useState(false);
+  const [transferForm, setTransferForm] = useState({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
+  const [selectedStudent, setSelectedStudent] = useState(null);
   useEffect(() => {
     let active = true;
     const fetchPage = async () => {
@@ -66,17 +76,6 @@ export default function Registrar({ store, user }) {
     loadStats();
     return () => { active = false; };
   }, [tab]);
-  const [search, setSearch] = useState('');
-  const [provisionStep, setProvisionStep] = useState(null);
-  const [classFilter, setClassFilter] = useState('All');
-  const [editModal, setEditModal] = useState(false);
-  const [editStudent, setEditStudent] = useState(null);
-  const [enrollModal, setEnrollModal] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [transferModal, setTransferModal] = useState(false);
-  const [transferForm, setTransferForm] = useState({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
-  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
 
