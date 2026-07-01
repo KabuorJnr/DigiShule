@@ -266,9 +266,19 @@ export default function App() {
       }
     });
 
+    const handleOnline = () => {
+      api.syncOfflineMutations().then(() => {
+        // notify cannot be safely called outside its dependency injection, 
+        // but we'll show a global alert or rely on api sync logs.
+        console.log('[OfflineSync] Connection restored. Offline mutations synced successfully.');
+      }).catch(console.error);
+    };
+    window.addEventListener('online', handleOnline);
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener('online', handleOnline);
     };
   }, [loadUser]);
 

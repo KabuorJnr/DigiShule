@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { saveToCache, getFromCache, queueMutation } from './offlineSync';
 
 /**
  * api.js — Supabase query layer, multi-tenant edition.
@@ -29,6 +30,29 @@ export async function registerSchool({
   });
   if (error) throw error;
   return data; // returns school UUID
+}
+
+export async function fetchTable(table) {
+  if (!_schoolId) return [];
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('school_id', _schoolId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    
+    // Save to cache for offline use
+    saveToCache(`table_${table}`, data);
+    return data;
+  } catch (error) {
+    if (!navigator.onLine || error.message.includes('Failed to fetch')) {
+      console.warn(`[Offline] Falling back to cache for ${table}`);
+      const cached = await getFromCache(`table_${table}`);
+      if (cached) return cached;
+    }
+    throw error;
+  }
 }
 
 export async function fetchSchool(schoolId) {
@@ -409,19 +433,68 @@ export async function fetchTable(key) {
 
 export async function upsertRow(key, row) {
   const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
-  const { error } = await supabase.from(TABLES[key] || key).upsert(payload);
-  if (error) throw error;
+  const table = TABLES[key] || key;
+  
+  if (!navigator.onLine) {
+    console.warn(`[Offline] Queueing upsert for ${table}`);
+    await queueMutation('upsert', { table, payload });
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from(table).upsert(payload);
+    if (error) throw error;
+  } catch (error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.warn(`[Offline fallback] Queueing upsert for ${table}`);
+      await queueMutation('upsert', { table, payload });
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function deleteRow(key, id, idColumn = 'id') {
-  const { error } = await supabase.from(TABLES[key] || key).delete().eq(idColumn, id);
-  if (error) throw error;
+  const table = TABLES[key] || key;
+
+  if (!navigator.onLine) {
+    console.warn(`[Offline] Queueing delete for ${table}`);
+    await queueMutation('delete', { table, payload: { id, idColumn } });
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from(table).delete().eq(idColumn, id);
+    if (error) throw error;
+  } catch (error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.warn(`[Offline fallback] Queueing delete for ${table}`);
+      await queueMutation('delete', { table, payload: { id, idColumn } });
+      return;
+    }
+    throw error;
+  }
 }
 
 // ---- Notifications --------------------------------------------------------
 export async function setNotificationRead(id, read) {
   const { error } = await supabase.from('notifications').update({ read }).eq('id', id);
   if (error) throw error;
+}
+
+import { flushSyncQueue } from './offlineSync';
+
+export async function syncOfflineMutations() {
+  await flushSyncQueue(async (action, payload) => {
+    console.log(`[Syncing] ${action} on ${payload.table}...`);
+    if (action === 'upsert') {
+      const { error } = await supabase.from(payload.table).upsert(payload.payload);
+      if (error) throw error;
+    } else if (action === 'delete') {
+      const { error } = await supabase.from(payload.table).delete().eq(payload.payload.idColumn, payload.payload.id);
+      if (error) throw error;
+    }
+  });
 }
 
 export async function markAllNotificationsRead() {
