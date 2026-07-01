@@ -27,7 +27,7 @@ export default function StaffAttendance({ store, user }) {
 
   // Add Staff Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'Teacher', dept: '', subject: '', phone: '', empId: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
   const [provisionStep, setProvisionStep] = useState(null);
 
   // Recruitment State
@@ -188,7 +188,7 @@ export default function StaffAttendance({ store, user }) {
       const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
         email: addForm.email,
         password: tempPassword,
-        options: { data: { role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin' } }
+        options: { data: { role: addForm.role } }
       });
       
       if (signUpError && !signUpError.message.includes('already')) {
@@ -200,7 +200,7 @@ export default function StaffAttendance({ store, user }) {
           id: authData.user.id,
           username,
           full_name: addForm.name,
-          role: addForm.role.toLowerCase() === 'teacher' ? 'teacher' : 'admin',
+          role: addForm.role,
           dept: addForm.dept,
           teacher_id: newStaff.id,
           school_id: store.schoolId || null
@@ -211,7 +211,7 @@ export default function StaffAttendance({ store, user }) {
       await upsertRow('staff', newStaff);
       setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
       
-      if (addForm.role === 'Teacher') {
+      if (addForm.role === 'teacher') {
         const teacherObj = {
           id: newStaff.id,
           name: newStaff.name,
@@ -231,7 +231,7 @@ export default function StaffAttendance({ store, user }) {
         username,
         password: tempPassword,
         name: addForm.name,
-        role: 'teacher',
+        role: addForm.role,
         schoolName: store.settings?.name || 'EduOne'
       });
       
@@ -239,7 +239,7 @@ export default function StaffAttendance({ store, user }) {
       setTimeout(() => {
         setProvisionStep(null);
         setShowAddModal(false);
-        setAddForm({ name: '', email: '', role: 'Teacher', dept: '', subject: '', phone: '', empId: '' });
+        setAddForm({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
         notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
       }, 1500);
 
@@ -507,12 +507,12 @@ export default function StaffAttendance({ store, user }) {
               <div>
                 <label className="field-label">Role *</label>
                 <select className="select" value={addForm.role} onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
-                  <option>Teacher</option>
-                  <option>Administrator</option>
-                  <option>Nurse</option>
-                  <option>Librarian</option>
-                  <option>Finance</option>
-                  <option>Support Staff</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="principal">Principal</option>
+                  <option value="deputy_academic">Deputy Academic</option>
+                  <option value="deputy_admin">Deputy Admin</option>
+                  <option value="registrar">Registrar</option>
+                  <option value="finance">Finance</option>
                 </select>
               </div>
               <div>
