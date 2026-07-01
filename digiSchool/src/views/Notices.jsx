@@ -66,7 +66,7 @@ export default function Notices({ store, user }) {
   const [loading, setLoading] = useState(true);
   const [showPost, setShowPost] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', audience: 'all', specificUser: '' });
+  const [form, setForm] = useState({ title: '', body: '', audience: 'all', specificUser: '', sendSms: false });
   const [expanded, setExpanded] = useState(null);
   const [audienceFilter, setAudienceFilter] = useState('all');
 
@@ -139,8 +139,43 @@ export default function Notices({ store, user }) {
       if (error) throw error;
       await loadNotices();
       setShowPost(false);
-      setForm({ title: '', body: '', audience: 'all', specificUser: '' });
+      setForm({ title: '', body: '', audience: 'all', specificUser: '', sendSms: false });
       notify('Notice posted successfully', 'success', 'Notices');
+      
+      // SMS Logic
+      if (form.sendSms) {
+        notify('Preparing SMS broadcast...', 'info');
+        let phones = [];
+        if (form.audience === 'parents' || form.audience === 'all') {
+          const { data: stds } = await supabase.from('students').select('guardian_phone').eq('school_id', schoolId);
+          if (stds) phones.push(...stds.map(s => s.guardian_phone));
+        }
+        if (form.audience === 'teachers' || form.audience === 'all') {
+          const { data: tchrs } = await supabase.from('teachers').select('phone').eq('school_id', schoolId);
+          if (tchrs) phones.push(...tchrs.map(t => t.phone));
+        }
+        if (form.audience === 'staff' || form.audience === 'all') {
+          const { data: stf } = await supabase.from('staff').select('phone').eq('school_id', schoolId);
+          if (stf) phones.push(...stf.map(s => s.phone));
+        }
+        
+        phones = [...new Set(phones.filter(Boolean))];
+
+        if (phones.length > 0) {
+          try {
+            const { data, error } = await supabase.functions.invoke('send-sms', {
+              body: { recipients: phones, message: form.body }
+            });
+            if (error || data?.error) throw new Error(error?.message || data?.error);
+            notify(`SMS sent to ${phones.length} recipients`, 'success', 'SMS');
+          } catch (err) {
+            console.error('SMS Error:', err);
+            notify('Failed to send SMS: ' + err.message, 'error', 'SMS');
+          }
+        } else {
+          notify('No valid phone numbers found for this audience', 'warning', 'SMS');
+        }
+      }
     } catch (e) {
       // Fallback to local if Supabase fails
       setDbNotices(prev => [{
@@ -149,7 +184,7 @@ export default function Notices({ store, user }) {
         audience: form.audience === 'specific' ? [form.specificUser] : [form.audience], created_at: new Date().toISOString(),
       }, ...prev]);
       setShowPost(false);
-      setForm({ title: '', body: '', audience: 'all', specificUser: '' });
+      setForm({ title: '', body: '', audience: 'all', specificUser: '', sendSms: false });
       notify('Notice posted (local only — sync when online)', 'warning', 'Notices');
     } finally { setPosting(false); }
   };
@@ -272,6 +307,22 @@ export default function Notices({ store, user }) {
                 </select>
               </div>
             )}
+            <div style={{ marginTop: 8 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', fontWeight: 500, color: '#1e293b' }}>
+                <input 
+                  type="checkbox" 
+                  checked={form.sendSms} 
+                  onChange={e => setForm(p => ({ ...p, sendSms: e.target.checked }))} 
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                Also send via SMS to registered phone numbers
+              </label>
+              {form.sendSms && (
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, marginLeft: 24 }}>
+                  Uses Africa's Talking API. Ensure phone numbers are correctly formatted.
+                </div>
+              )}
+            </div>
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 10, fontSize: 12, color: '#0369a1' }}>
               This notice will be saved to Supabase and visible to all users of this school.
             </div>
