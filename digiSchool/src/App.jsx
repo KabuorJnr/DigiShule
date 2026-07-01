@@ -276,7 +276,7 @@ export default function App() {
     window.addEventListener('online', handleOnline);
 
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+      if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'd') {
         e.preventDefault();
         const pwd = window.prompt('Developer Mode Authentication:\nEnter Master Password:');
         if (pwd === 'eduone@admin!') {
