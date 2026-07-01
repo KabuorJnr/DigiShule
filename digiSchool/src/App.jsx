@@ -211,17 +211,21 @@ export default function App() {
     setDataLoading(true);
     try {
       // ── Real mode: fetch from Supabase ──
-      const [cfg, ex, tt, notifs] = await Promise.all([
+      const [cfg, ex, tt, notifs, st, tch] = await Promise.all([
         api.fetchConfig(),
         api.fetchExamSchedules(),
         api.fetchTimetables(),
         api.fetchTable('notifications'),
+        api.fetchAllStudentsUnpaginated(),
+        api.fetchTeachers()
       ]);
       setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
       setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
       setVenues(cfg.venues);
       setExamSchedules(ex); setTimetables(tt);
-      setNotifications(notifs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      setStudents(st || []);
+      setTeachers(tch || []);
+      setNotifications((notifs || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
     } catch (e) {
       notify(`Failed to load data: ${e.message || e}`, 'error');
     } finally {

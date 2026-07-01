@@ -154,10 +154,8 @@ export default function AdminDashboard({ store, user }) {
       const newStaff = {
         id: authData.user.id,
         name: commissionForm.name,
-        email: commissionForm.email,
-        phone: '',
         role: commissionForm.role,
-        department: 'General',
+        dept: 'General',
         status: 'Active',
         school_id: schoolId
       };
