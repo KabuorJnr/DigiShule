@@ -5,6 +5,7 @@ import { fmtKES } from '../data/modules';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
+import MediaManager from '../components/MediaManager';
 import { Download, UserPlus, Shield, CheckCircle2 } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 
@@ -33,6 +34,7 @@ export default function AdminDashboard({ store, user }) {
   const [expenses, setExpenses] = useState([]);
   
   const [dbStaff, setDbStaff] = useState([]);
+  const [showMediaManager, setShowMediaManager] = useState(false);
   const [dbFacilities, setDbFacilities] = useState([]);
   const [dbDiscipline, setDbDiscipline] = useState([]);
 
@@ -179,10 +181,19 @@ export default function AdminDashboard({ store, user }) {
           <h2 style={{ margin: 0, fontSize: 22 }}>Deputy Admin Dashboard</h2>
           <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Administration overview — student affairs, facilities, staff welfare</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn" onClick={() => setShowMediaManager(!showMediaManager)}>
+            {showMediaManager ? 'Back to Dashboard' : 'Media Gallery Manager'}
+          </button>
+          <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
+        </div>
       </div>
 
-      <div style={{ background: '#000000', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      {showMediaManager ? (
+        <MediaManager notify={notify} user={user} />
+      ) : (
+        <>
+          <div style={{ background: '#000000', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 18 }}>Administration Office</h3>
           <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.9 }}>
@@ -305,6 +316,8 @@ export default function AdminDashboard({ store, user }) {
           )}
         </div>
       </div>
+      </>
+      )}
 
       {disciplineModal && (
         <Modal title="Discipline Case Details" onClose={() => setDisciplineModal(null)} footer={

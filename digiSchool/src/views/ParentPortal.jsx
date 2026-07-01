@@ -7,6 +7,7 @@ import { SUBJECTS } from '../data/seed';
 import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
+import GalleryViewer from '../components/GalleryViewer';
 import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');

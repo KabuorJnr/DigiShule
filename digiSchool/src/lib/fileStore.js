@@ -23,7 +23,7 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
   // 1. Upload the actual file
   const { error: upErr } = await supabase.storage
     .from(BUCKET)
-    .upload(storagePath, file, { contentType: 'application/pdf', upsert: true });
+    .upload(storagePath, file, { contentType: file.type || 'application/pdf', upsert: true });
   if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
   // 2. Persist metadata with school_id
@@ -62,6 +62,15 @@ export async function getSignedUrl(storagePath) {
     .createSignedUrl(storagePath, 3600);
   if (error) throw new Error(error.message);
   return data.signedUrl;
+}
+
+/** Get a public URL for a file (useful for images that don't need strict access control for rendering, though signedUrl is better for private files).
+ * However, since our bucket might be private, we will use createSignedUrl with a long expiry for rendering, OR just return a public URL if the bucket is public.
+ * For gallery images, we will use getSignedUrl or standard publicUrl if configured. Let's use getSignedUrl for now with long expiry, or publicUrl if it works.
+ */
+export async function getPublicUrl(storagePath) {
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
+  return data.publicUrl;
 }
 
 /** Delete a file from Storage and its metadata row. */

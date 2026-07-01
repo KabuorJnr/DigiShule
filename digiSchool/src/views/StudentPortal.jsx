@@ -11,8 +11,9 @@ import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Cart
 import {
   BarChart3, Trophy, FileText, Wallet, CreditCard, Mail, ClipboardList,
   Calendar, CheckCircle2, Clock, XCircle, DollarSign, AlertTriangle,
-  BookOpen, Download, Eye, Send, Loader, Award
+  BookOpen, Download, Eye, Send, Loader, Award, Image as ImageIcon
 } from 'lucide-react';
+import GalleryViewer from '../components/GalleryViewer';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -27,6 +28,7 @@ const TABS = [
   { id: 'finance', label: 'Finance' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'notices', label: 'Notices' },
+  { id: 'gallery', label: 'Media Gallery' },
   { id: 'settings', label: 'Profile & Settings' },
 ];
 
@@ -877,6 +879,10 @@ export default function StudentPortal({ store, user, params }) {
       )}
 
       {/* ===== SETTINGS ===== */}
+      {tab === 'gallery' && (
+        <GalleryViewer />
+      )}
+
       {tab === 'settings' && (
         <div className="card card-pad" style={{ maxWidth: 500, margin: '0 auto' }}>
           <h3 className="section-title">Change Password</h3>
