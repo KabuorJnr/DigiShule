@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+.bespoke-theme {
+  font-family: 'Outfit', sans-serif;
+  background: #ffffff;
+  color: #0f172a;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Navbar */
+.bespoke-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 60px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.bespoke-brand {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+}
+
+.bespoke-btn {
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bespoke-btn.primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+.bespoke-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+.bespoke-btn.secondary {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.bespoke-btn.secondary:hover {
+  background: #e2e8f0;
+}
+.bespoke-btn.ghost {
+  background: transparent;
+  color: #475569;
+}
+.bespoke-btn.ghost:hover {
+  color: #0f172a;
+}
+
+/* Hero Section */
+.bespoke-hero {
+  padding: 180px 20px 80px;
+  text-align: center;
+  background: radial-gradient(circle at top center, #eff6ff 0%, #ffffff 100%);
+  position: relative;
+}
+
+.b-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  border: 1px solid #bfdbfe;
+}
+
+.b-hero-title {
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin: 0 auto 24px;
+  max-width: 900px;
+  color: #0f172a;
+}
+.b-hero-title span {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.b-hero-subtitle {
+  font-size: 20px;
+  color: #64748b;
+  max-width: 650px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+.b-hero-visual {
+  max-width: 1100px;
+  margin: 80px auto 0;
+  position: relative;
+}
+.b-hero-visual img {
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+}
+
+/* Bento Grid */
+.bespoke-bento {
+  padding: 100px 60px;
+  background: #f8fafc;
+}
+
+.b-section-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.b-section-header h2 {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  color: #0f172a;
+}
+.b-section-header p {
+  font-size: 18px;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(300px, auto);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bento-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.05);
+}
+.bento-large {
+  grid-column: span 2;
+  grid-row: span 2;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+}
+.bento-medium {
+  grid-column: span 1;
+}
+
+.bento-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+.bento-card p {
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.bento-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.bento-icon.blue { background: #dbeafe; color: #2563eb; }
+.bento-icon.green { background: #d1fae5; color: #10b981; }
+.bento-icon.purple { background: #f3e8ff; color: #9333ea; }
+.bento-icon.orange { background: #ffedd5; color: #f97316; }
+
+/* Interactive Role Switcher */
+.role-switcher-section {
+  padding: 100px 60px;
+  background: #ffffff;
+}
+
+.role-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.role-tab {
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.role-tab.active {
+  background: #1e3a8a;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
+}
+
+.role-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+.role-content-icon {
+  margin-bottom: 24px;
+  color: #2563eb;
+}
+.role-content h3 {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #0f172a;
+}
+.role-content p {
+  font-size: 20px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* CTA Section */
+.bespoke-cta {
+  background: #0f172a;
+  color: white;
+  padding: 100px 20px;
+  text-align: center;
+}
+.bespoke-cta h2 {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: white;
+}
+.bespoke-cta p {
+  font-size: 20px;
+  color: #94a3b8;
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .bento-large, .bento-medium {
+    grid-column: span 1;
+  }
+}
+@media (max-width: 768px) {
+  .bespoke-nav { padding: 16px 20px; }
+  .b-hero-title { font-size: 48px; }
+  .role-tabs { flex-wrap: wrap; }
+}

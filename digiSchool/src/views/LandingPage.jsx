@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { BookOpen, Layout, GraduationCap, Users, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
-const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
+import { BookOpen, Layout, GraduationCap, Users, ArrowRight, Zap, WifiOff, FileText, Camera, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import './LandingPage.css';
+
+export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
   const [activeTab, setActiveTab] = useState('principal');
 
   const roleDetails = {
     principal: { 
       title: 'Principal Portal', 
-      desc: 'Get a bird\'s eye view of your entire school. Monitor daily attendance, track real-time fee collections, and oversee academic performance across all departments from one powerful glassmorphic dashboard.', 
+      desc: 'Get a bird\'s eye view of your entire school. Monitor daily attendance, track real-time fee collections, and oversee academic performance across all departments from one powerful, glassmorphic dashboard.', 
       icon: <Layout size={48} /> 
     },
     teacher: { 
       title: 'Teacher Portal', 
-      desc: 'Put the joy back into teaching. Streamline your grading process, upload assignments with ease, and communicate directly with students and parents without leaving the platform.', 
+      desc: 'Put the joy back into teaching. Streamline your grading process, upload assignments with ease, and record attendance even when the internet goes down thanks to our Offline-First engine.', 
       icon: <BookOpen size={48} /> 
     },
     student: { 
@@ -21,7 +23,7 @@ const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
     },
     parent: { 
       title: 'Parent Portal', 
-      desc: 'Stay connected to your child\'s education. Receive instant notifications about behavior or clinic visits, view report cards securely, and pay fees online without the hassle.', 
+      desc: 'Stay connected to your child\'s education. Receive instant SMS notifications, view report cards securely, and scroll through the school\'s photo gallery without eating up your mobile data.', 
       icon: <Users size={48} /> 
     }
   };
@@ -29,14 +31,14 @@ const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
   return (
     <div className="bespoke-theme">
       {/* Navbar */}
-      <nav className="bespoke-nav">
+      <nav className="bespoke-nav animate-fade-in-up">
         <div className="bespoke-brand">
-          <img src="/logo.png" alt="EduOne Logo" style={{ height: '36px' }} />
+          <ShieldCheck size={28} style={{ color: '#2563eb' }} />
           EduOne
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign in</button>
-          <button className="bespoke-btn ghost" onClick={onSignUp}>Sign Up</button>
+          <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign In</button>
+          <button className="bespoke-btn secondary" onClick={onSignUp}>Sign Up</button>
           <button className="bespoke-btn primary" onClick={onApply}>
             Apply Now
           </button>
@@ -45,27 +47,27 @@ const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
 
       {/* 1. Hero Section */}
       <header className="bespoke-hero">
-        <div className="b-hero-badge">
-          <Zap size={14} /> The Next-Generation SaaS for Education
+        <div className="b-hero-badge animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <Zap size={14} /> The Next-Generation SaaS for African Schools
         </div>
-        <h1 className="b-hero-title">
-          The unified operating system <br/>for <span>modern schools.</span>
+        <h1 className="b-hero-title animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          The operating system <br/>for <span>modern schools.</span>
         </h1>
-        <p className="b-hero-subtitle">
-          Say goodbye to fragmented tools. EduOne brings academics, finance, operations, and communication into one beautifully designed, lightning-fast platform.
+        <p className="b-hero-subtitle animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          Say goodbye to fragmented tools and internet outages. EduOne brings academics, finance, and parent communication into one beautifully designed, lightning-fast platform that works offline.
         </p>
-        <div style={{ marginTop: '30px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <div className="animate-fade-in-up" style={{ marginTop: '30px', display: 'flex', gap: '16px', justifyContent: 'center', animationDelay: '0.4s' }}>
           <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 32px', fontSize: '18px' }}>
             Start Online Application
           </button>
           <button className="bespoke-btn secondary" onClick={() => document.getElementById('bento').scrollIntoView({ behavior: 'smooth' })} style={{ padding: '16px 32px', fontSize: '18px' }}>
-            Explore Platform <ArrowRight size={18} />
+            Explore Features <ArrowRight size={18} />
           </button>
         </div>
 
         {/* Floating Glass Dashboard Visual */}
-        <div className="b-hero-visual" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }}>
-          <img src="/dashboard_mockup.png" alt="EduOne System Dashboard" style={{ width: '100%', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', display: 'block' }} />
+        <div className="b-hero-visual animate-fade-in-up animate-float" style={{ animationDelay: '0.6s' }}>
+          <img src="/dashboard_mockup.png" alt="EduOne System Dashboard" />
         </div>
       </header>
 
@@ -73,131 +75,91 @@ const LandingPage = ({ onGetStarted, onApply, onSignUp }) => {
       <section id="bento" className="bespoke-bento">
         <div className="b-section-header">
           <h2>Everything you need, in one place.</h2>
-          <p>We replaced clunky legacy software with a suite of beautiful, interconnected modules.</p>
+          <p>We replaced clunky legacy software with a suite of beautiful, interconnected modules designed for reliability.</p>
         </div>
         
         <div className="bento-grid">
-          {/* Large Card */}
+          {/* Large Card: Offline Sync */}
           <div className="bento-card bento-large">
-            <div className="bento-icon blue"><BookOpen size={24} /></div>
-            <h3>Smart Academics</h3>
-            <p>A buttery-smooth gradebook that calculates averages instantly. Manage complex timetables, assignments, and curriculum tracking without ever opening a spreadsheet.</p>
-            <div className="bento-visual">
-               <div style={{ position: 'absolute', bottom: '20px', right: '20px', left: '20px', height: '120px', background: '#fff', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', padding: '16px' }}>
-                 <div className="b-dash-skeleton" style={{ width: '40%', marginBottom: '16px' }} />
-                 <div className="b-dash-skeleton" style={{ width: '100%', marginBottom: '8px' }} />
-                 <div className="b-dash-skeleton" style={{ width: '80%' }} />
+            <div className="bento-icon blue"><WifiOff size={24} /></div>
+            <h3>True Offline-First Resilience</h3>
+            <p>Don't let rural internet outages disrupt your school. Our cutting-edge IndexedDB engine allows teachers to input hundreds of grades and take attendance completely offline. The moment your WiFi returns, EduOne automatically syncs everything securely to the cloud.</p>
+            <div style={{ marginTop: 40, padding: 20, background: 'rgba(255,255,255,0.8)', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(37,99,235,0.1)' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                 <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ef4444' }}></div>
+                 <span style={{ fontWeight: 600, color: '#0f172a' }}>Connection Lost</span>
+               </div>
+               <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: 8, fontSize: 14, color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                 <span>Saving 45 marks to local cache...</span>
+                 <CheckCircle2 size={18} color="#10b981" />
                </div>
             </div>
           </div>
 
-          {/* Medium Card 1 */}
+          {/* Medium Card 1: CBC/KNEC */}
           <div className="bento-card bento-medium">
-            <div className="bento-icon orange"><Layout size={24} /></div>
-            <h3>Automated Operations</h3>
-            <p>From admissions to staff attendance, we put your daily operations on autopilot.</p>
+            <div className="bento-icon orange"><FileText size={24} /></div>
+            <h3>1-Click KNEC & CBC Reports</h3>
+            <p>Generate beautiful, compliant PDF report cards with value-addition graphs and automated grading rubrics. Instantly export CSV files formatted perfectly for the government NEMIS portal.</p>
           </div>
 
-          {/* Medium Card 2 */}
+          {/* Medium Card 2: Media Gallery */}
           <div className="bento-card bento-medium">
-            <div className="bento-icon teal"><Activity size={24} /></div>
-            <h3>Student Wellbeing</h3>
-            <p>Securely log clinic visits and track behavioral notes with complete privacy.</p>
+            <div className="bento-icon green"><Camera size={24} /></div>
+            <h3>Zero-Bloat Media Gallery</h3>
+            <p>Share school memories securely with parents. Our cPanel-style CDN architecture ensures you can upload thousands of photos without ever crashing the database or slowing down the browser.</p>
           </div>
-
-          {/* Horizontal Card */}
-          <div className="bento-card bento-horizontal">
-            <h3>Seamless Communication</h3>
-            <p>Send instant, secure notices directly to teachers, specific students, or parents without relying on scattered email threads or external messaging apps.</p>
+          
+          {/* Medium Card 3: Finance */}
+          <div className="bento-card bento-medium">
+            <div className="bento-icon purple"><Layout size={24} /></div>
+            <h3>Automated Finance</h3>
+            <p>Issue invoices, track payments, and send automatic SMS fee reminders to parents via our embedded Africa's Talking gateway.</p>
           </div>
         </div>
       </section>
 
-      {/* 4. Interactive Role Showcase */}
-      <section className="bespoke-roles">
+      {/* 4. Interactive Role Switcher */}
+      <section className="role-switcher-section">
         <div className="b-section-header">
-          <h2>Experience EduOne by Role</h2>
-          <p>A unified platform that adapts to who you are. Select a role below to explore.</p>
+          <h2>Built for your entire ecosystem.</h2>
+          <p>Click below to see how EduOne transforms the experience for every stakeholder.</p>
+        </div>
+        
+        <div className="role-tabs">
+          {Object.keys(roleDetails).map(role => (
+            <button 
+              key={role}
+              className={`role-tab ${activeTab === role ? 'active' : ''}`}
+              onClick={() => setActiveTab(role)}
+            >
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </button>
+          ))}
         </div>
 
-        <div className="b-roles-container">
-          <div className="b-role-tabs">
-            {['principal', 'teacher', 'student', 'parent'].map(role => (
-              <button 
-                key={role} 
-                className={`b-role-tab ${activeTab === role ? 'active' : ''}`}
-                onClick={() => setActiveTab(role)}
-              >
-                {role.charAt(0).toUpperCase() + role.slice(1)}
-              </button>
-            ))}
+        <div className="role-content glass-panel" style={{ padding: '60px 40px', background: '#f8fafc' }}>
+          <div className="role-content-icon animate-fade-in-up" key={`${activeTab}-icon`}>
+            {roleDetails[activeTab].icon}
           </div>
-
-          <div className="b-role-content">
-            <div className="b-role-text">
-              <h3>{roleDetails[activeTab].title}</h3>
-              <p>{roleDetails[activeTab].desc}</p>
-              <button 
-                className="bespoke-btn primary"
-                onClick={onGetStarted}
-              >
-                Sign in to {roleDetails[activeTab].title.split(' ')[0]} Portal <ArrowRight size={16} />
-              </button>
-            </div>
-            <div className="b-role-visual">
-              {roleDetails[activeTab].icon}
-            </div>
-          </div>
+          <h3 className="animate-fade-in-up" key={`${activeTab}-title`}>{roleDetails[activeTab].title}</h3>
+          <p className="animate-fade-in-up" key={`${activeTab}-desc`}>{roleDetails[activeTab].desc}</p>
         </div>
       </section>
 
-      {/* 5. School Gallery */}
-      <section className="bespoke-gallery" style={{ padding: '80px 5%', background: '#fff' }}>
-        <div className="b-section-header" style={{ marginBottom: 40 }}>
-          <h2>Life at Our School</h2>
-          <p>A glimpse into our vibrant community, modern facilities, and dynamic events.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-            <img src="/gallery_1.png" alt="School Campus" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
-            <div style={{ padding: '16px', background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Modern Campus</h4>
-              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>State-of-the-art facilities surrounded by nature.</p>
-            </div>
-          </div>
-          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-            <img src="/gallery_2.png" alt="Science Laboratory" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
-            <div style={{ padding: '16px', background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Science & Innovation</h4>
-              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>Hands-on learning in our fully equipped laboratories.</p>
-            </div>
-          </div>
-          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-            <img src="/gallery_3.png" alt="Sports Day" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
-            <div style={{ padding: '16px', background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 4px', fontSize: '16px' }}>Annual Sports Day</h4>
-              <p className="muted" style={{ margin: 0, fontSize: '14px' }}>Fostering teamwork and physical excellence.</p>
-            </div>
-          </div>
+      {/* 5. Final CTA */}
+      <section className="bespoke-cta">
+        <h2>Ready to digitize your school?</h2>
+        <p>Join the next generation of modern schools. Set up your institution in minutes and experience the fastest, most reliable school management system built for Africa.</p>
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 40px', fontSize: '18px', background: '#fff', color: '#1e3a8a' }}>
+            Get Started Now
+          </button>
+          <button className="bespoke-btn ghost" style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }} onClick={onGetStarted}>
+            Sign in to Portal
+          </button>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bespoke-footer">
-        <div className="b-footer-content">
-          <div className="bespoke-brand" style={{ fontSize: '20px' }}>
-            <img src="/logo.png" alt="EduOne Logo" style={{ height: '24px' }} />
-            EduOne
-          </div>
-          <div>
-            Crafted with precision by <strong>GovTech Builders KE</strong>
-            <br />
-            &copy; 2026 EduOne Technologies. All rights reserved.
-          </div>
-        </div>
-      </footer>
     </div>
   );
-};
-
-export default LandingPage;
+}
