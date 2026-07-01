@@ -54,13 +54,16 @@ export default {
       }
 
       const API_KEY = Deno.env.get('AFRICAS_TALKING_API_KEY');
-      const USERNAME = 'sandbox'; // Hardcoded for sandbox
+      const USERNAME = Deno.env.get('AFRICAS_TALKING_USERNAME') || 'sandbox';
 
       if (!API_KEY) {
         throw new Error('AFRICAS_TALKING_API_KEY is not set in environment variables.');
       }
 
-      const url = 'https://api.sandbox.africastalking.com/version1/messaging';
+      const url = USERNAME === 'sandbox' 
+        ? 'https://api.sandbox.africastalking.com/version1/messaging'
+        : 'https://api.africastalking.com/version1/messaging';
+        
       const body = new URLSearchParams({
         username: USERNAME,
         to: formattedRecipients,
