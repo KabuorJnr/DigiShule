@@ -72,14 +72,7 @@ export async function fetchProfile(userId) {
 
 // ---- App config (school-scoped) -------------------------------------------
 export async function fetchConfig() {
-  // Fetch the config row for the current user's school (RLS ensures isolation)
-  const { data, error } = await supabase
-    .from('app_config')
-    .select('*')
-    .limit(1)
-    .single();
-  if (error && error.code === 'PGRST116') {
-    // No config row yet — return defaults
+  if (!_schoolId) {
     return {
       settings: {},
       gradeBoundaries: [
@@ -91,7 +84,26 @@ export async function fetchConfig() {
       venues: [],
     };
   }
-  if (error) throw error;
+
+  const { data, error } = await supabase
+    .from('schools')
+    .select('*')
+    .eq('id', _schoolId)
+    .single();
+
+  if (error) {
+    return {
+      settings: {},
+      gradeBoundaries: [
+        { grade: 'A', min: 75 }, { grade: 'B', min: 60 }, { grade: 'C', min: 50 },
+        { grade: 'D', min: 40 }, { grade: 'E', min: 0 },
+      ],
+      feeStructure: [],
+      notifToggles: { email: true, sms: false, attendance: true, fees: true, exams: true },
+      venues: [],
+    };
+  }
+
   return {
     settings: data.settings || {},
     gradeBoundaries: data.grade_boundaries || [],
