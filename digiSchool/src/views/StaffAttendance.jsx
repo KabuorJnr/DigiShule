@@ -183,6 +183,7 @@ export default function StaffAttendance({ store, user }) {
 
       const staffPayload = { ...newStaff };
       delete staffPayload.email;
+      delete staffPayload.subject;
 
       setProvisionStep('password');
       const tempPassword = generateSecurePassword(10);

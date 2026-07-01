@@ -45,6 +45,35 @@ export default function Registrar({ store, user }) {
   const [transferModal, setTransferModal] = useState(false);
   const [transferForm, setTransferForm] = useState({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [pendingAdmissions, setPendingAdmissions] = useState([]);
+  
+  useEffect(() => {
+    let active = true;
+    if (tab === 'enroll') {
+      fetchTable('admissions')
+        .then(rows => {
+          if (active) setPendingAdmissions(rows.filter(r => r.status === 'Pending' || r.status === 'Admitted'));
+        })
+        .catch(e => console.warn('Failed to load pending admissions', e));
+    }
+    return () => { active = false; };
+  }, [tab]);
+  
+  const loadAdmission = (id) => {
+    const adm = pendingAdmissions.find(a => a.id === id);
+    if (!adm) return;
+    setForm(f => ({
+      ...f,
+      name: adm.name || '',
+      gender: adm.gender === 'M' ? 'Male' : adm.gender === 'F' ? 'Female' : (adm.gender || 'Other'),
+      class: adm.form || adm.Grade || adm.grade || '7A',
+      dob: adm.dob || '',
+      guardianName: adm.parentName || adm.guardianName || '',
+      guardianPhone: adm.parentPhone || adm.guardianPhone || '',
+      guardianEmail: adm.parentEmail || adm.guardianEmail || '',
+    }));
+  };
+
   useEffect(() => {
     let active = true;
     const fetchPage = async () => {
@@ -459,7 +488,17 @@ export default function Registrar({ store, user }) {
       {/* ── NEW ENROLMENT ── */}
       {tab === 'enroll' && (
         <div className="card card-pad" style={{ maxWidth: 680 }}>
-          <h3 className="section-title">Enrol New Student</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Enrol New Student</h3>
+            {pendingAdmissions.length > 0 && (
+              <select className="select" style={{ maxWidth: 200 }} onChange={e => loadAdmission(e.target.value)} defaultValue="">
+                <option value="" disabled>Auto-fill from Admission...</option>
+                {pendingAdmissions.map(a => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.form || a.Grade || a.grade || '7A'})</option>
+                ))}
+              </select>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="grid grid-2">
               <div>
