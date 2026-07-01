@@ -263,6 +263,12 @@ export async function upsertStudent(student) {
   if (error) throw error;
 }
 
+export async function deleteStudent(studentId) {
+  if (!_schoolId) throw new Error("School ID not set");
+  const { error } = await supabase.from('students').delete().eq('id', studentId).eq('school_id', _schoolId);
+  if (error) throw error;
+}
+
 // ---- Exam schedules + sessions --------------------------------------------
 export async function fetchExamSchedules() {
   let q1 = supabase.from('exam_schedules').select('*').order('start_date');
