@@ -181,6 +181,9 @@ export default function StaffAttendance({ store, user }) {
         check_in: '07:00 AM'
       };
 
+      const staffPayload = { ...newStaff };
+      delete staffPayload.email;
+
       setProvisionStep('password');
       const tempPassword = generateSecurePassword(10);
       const username = await generateSequentialUsername('TCH');
@@ -208,7 +211,7 @@ export default function StaffAttendance({ store, user }) {
         if (profileErr) throw new Error(`Teacher Profile Error: ${profileErr.message}`);
       }
 
-      await upsertRow('staff', newStaff);
+      await upsertRow('staff', staffPayload);
       setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
       
       if (addForm.role === 'teacher') {
