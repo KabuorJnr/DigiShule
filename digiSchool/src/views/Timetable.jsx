@@ -91,6 +91,12 @@ export default function Timetable({ store }) {
     }
   }, [teachers]);
 
+  useEffect(() => {
+    if (!dynamicClasses.includes(cls)) {
+      setCls(dynamicClasses[0] || '7A');
+    }
+  }, [dynamicClasses, cls]);
+
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [editCell, setEditCell] = useState(null);
@@ -382,7 +388,7 @@ export default function Timetable({ store }) {
                       }
                       if (cell.type === 'empty') {
                         return (
-                          <td key={d} className="tt-empty" onClick={() => setEditCell({ p, d, subject: SUBJECTS[0], teacher: TEACHERS[0].name, notes: '' })}>+</td>
+                          <td key={d} className="tt-empty" onClick={() => setEditCell({ p, d, subject: SUBJECTS[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>+</td>
                         );
                       }
                       const conflict = hasConflict(cell, p, d);
