@@ -3,23 +3,32 @@ import { openDB } from 'idb';
 const DB_NAME = 'digishule-offline-db';
 const DB_VERSION = 1;
 
-export const dbPromise = openDB(DB_NAME, DB_VERSION, {
-  upgrade(db) {
-    if (!db.objectStoreNames.contains('cache')) {
-      db.createObjectStore('cache');
-    }
-    if (!db.objectStoreNames.contains('mutationQueue')) {
-      const queueStore = db.createObjectStore('mutationQueue', { keyPath: 'id', autoIncrement: true });
-      queueStore.createIndex('status', 'status');
-    }
-  },
-});
+let dbPromise = null;
+
+try {
+  if (typeof window !== 'undefined' && 'indexedDB' in window) {
+    dbPromise = openDB(DB_NAME, DB_VERSION, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('cache')) {
+          db.createObjectStore('cache');
+        }
+        if (!db.objectStoreNames.contains('mutationQueue')) {
+          const queueStore = db.createObjectStore('mutationQueue', { keyPath: 'id', autoIncrement: true });
+          queueStore.createIndex('status', 'status');
+        }
+      },
+    });
+  }
+} catch (e) {
+  console.warn('[OfflineSync] IndexedDB not available, offline sync disabled.');
+}
 
 /**
  * Cache GET responses for offline use
  */
 export async function saveToCache(key, data) {
   try {
+    if (!dbPromise) return;
     const db = await dbPromise;
     await db.put('cache', data, key);
   } catch (e) {
@@ -29,6 +38,7 @@ export async function saveToCache(key, data) {
 
 export async function getFromCache(key) {
   try {
+    if (!dbPromise) return null;
     const db = await dbPromise;
     return await db.get('cache', key);
   } catch (e) {
@@ -42,6 +52,7 @@ export async function getFromCache(key) {
  */
 export async function queueMutation(action, payload) {
   try {
+    if (!dbPromise) return;
     const db = await dbPromise;
     await db.add('mutationQueue', {
       action,
@@ -59,7 +70,7 @@ export async function queueMutation(action, payload) {
  * Sync queued mutations when back online
  */
 export async function flushSyncQueue(apiSyncCallback) {
-  if (!navigator.onLine) return;
+  if (!navigator.onLine || !dbPromise) return;
   
   try {
     const db = await dbPromise;
