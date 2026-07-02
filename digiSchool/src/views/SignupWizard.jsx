@@ -50,7 +50,25 @@ export default function SignupWizard({ onComplete, onCancel }) {
     setError('');
     
     try {
-      // 1. Create School Record
+      // 1. Create Principal Auth Account First (so we have auth.uid() for the RPC)
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: principal.email,
+        password: principal.password,
+        options: {
+          data: { role: 'principal' }
+        }
+      });
+      
+      if (authErr) {
+        if (authErr.message.includes('already registered')) {
+          throw new Error('An account with this email is already registered.');
+        }
+        throw new Error(`Auth Error: ${authErr.message}`);
+      }
+      
+      if (!authData?.user) throw new Error('Failed to create authentication credentials.');
+
+      // 2. Register the School Record (calls RPC with the new auth.uid)
       const parsedLevels = school.levels.split(',').map(s => s.trim()).filter(Boolean);
       
       const schoolId = await registerSchool({
@@ -77,25 +95,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
       localStorage.setItem('eduone_school_config', JSON.stringify(config));
       localStorage.setItem('eduone_school_id', schoolId);
 
-      // 2. Create Principal Auth Account
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: principal.email,
-        password: principal.password,
-        options: {
-          data: { role: 'principal' }
-        }
-      });
-      
-      if (authErr) {
-        if (authErr.message.includes('already registered')) {
-          throw new Error('An account with this email is already registered.');
-        }
-        throw new Error(`Auth Error: ${authErr.message}`);
-      }
-      
-      if (!authData?.user) throw new Error('Failed to create authentication credentials.');
-
-      // 3. Create Principal Profile
+      // 3. Create/Update Principal Profile
       const { error: profileErr } = await supabase.from('profiles').upsert({
         id: authData.user.id,
         username: principal.email, // using email as username for principal
