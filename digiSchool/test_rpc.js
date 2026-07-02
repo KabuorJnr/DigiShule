@@ -5,13 +5,11 @@ const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const supabase = createClient(url, anonKey);
 
-async function testRpc() {
-  console.log("Testing email_for_username RPC...");
-  const { data, error } = await supabase.rpc('email_for_username', {
-    p_username: 'TCH_TEST999',
-  });
-  console.log("RPC Data:", data);
-  console.log("RPC Error:", error);
+async function checkAdmissions() {
+  console.log("Fetching admissions columns by ordering created_at...");
+  const { data, error } = await supabase.from('admissions').select('*').order('created_at').limit(1);
+  console.log("Data:", data);
+  console.log("Error:", error);
 }
 
-testRpc();
+checkAdmissions();

@@ -53,7 +53,7 @@ export async function fetchTable(key) {
     const dateColMap = {
       notifications: 'created_at', messages: 'created_at', leave_requests: 'created_at',
       clinic_visits: 'date', disciplinary_records: 'date', school_events: 'date', student_attendance: 'date',
-      admissions: 'date_applied', job_applications: 'date_applied',
+      admissions: 'date', job_applications: 'applied_date',
       assignment_submissions: 'submitted_at', library_loans: 'loan_date'
     };
     
