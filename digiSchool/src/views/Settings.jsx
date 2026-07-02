@@ -10,11 +10,11 @@ export default function Settings({ store, user }) {
   
   const TABS = user?.role === 'finance' ? ['Fee Structure'] : ALL_TABS;
   const [tab, setTab] = useState(TABS[0]);
-  const levels = settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
-
   // local copies for editing
   const [form, setForm] = useState(settings);
   const [classList, setClassList] = useState(settings.classes || []);
+  const levels = classList.length > 0 ? classList.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  
   const [newClass, setNewClass] = useState('');
   const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
   const [newSubj, setNewSubj] = useState('');
