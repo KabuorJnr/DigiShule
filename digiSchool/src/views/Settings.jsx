@@ -188,6 +188,19 @@ export default function Settings({ store, user }) {
             <button className="btn btn-sm" onClick={() => setFees(fs => [...fs, { type: 'New Component' }])}>+ Add Fee Component</button>
             <button className="btn btn-primary" onClick={saveFees}>Save Fee Structure</button>
           </div>
+          
+          <div style={{ marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+            <h3 className="section-title" style={{ marginTop: 0 }}>Payment Instructions</h3>
+            <p className="muted" style={{ fontSize: 13, marginTop: -8 }}>These instructions will appear on all fee structures and parent statements.</p>
+            <textarea 
+              className="input" 
+              style={{ width: '100%', minHeight: 100, padding: 12, fontFamily: 'inherit', lineHeight: 1.5 }}
+              value={form.paymentDetails || ''} 
+              placeholder="e.g. Bank Deposit: KCB Bank, Account: 1122334455&#10;M-Pesa Paybill: 123456"
+              onChange={(e) => upForm({ paymentDetails: e.target.value })}
+            />
+            <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={saveGeneral}>Save Payment Instructions</button>
+          </div>
         </div>
       )}
 

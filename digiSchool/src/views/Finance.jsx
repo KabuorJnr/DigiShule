@@ -874,10 +874,15 @@ function FeeStructureTab({ store, user }) {
 
         <div style={{ marginTop: 40 }}>
           <h4 style={{ margin: '0 0 8px 0', fontSize: 14 }}>Payment Methods:</h4>
-          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.6 }}>
-            <li><strong>Bank Deposit:</strong> KCB Bank, Account: 1122334455, Branch: Nairobi</li>
-            <li><strong>M-Pesa Paybill:</strong> Business No: 123456, Account No: Student Admission Number</li>
-          </ul>
+          {store.settings?.paymentDetails ? (
+            <div style={{ margin: 0, fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {store.settings.paymentDetails}
+            </div>
+          ) : (
+            <p className="muted" style={{ margin: 0, fontSize: 13, fontStyle: 'italic' }}>
+              No payment instructions configured. Please set them in School Settings.
+            </p>
+          )}
         </div>
       </div>
 
