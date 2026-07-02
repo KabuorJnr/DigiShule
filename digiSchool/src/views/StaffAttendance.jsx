@@ -512,11 +512,13 @@ export default function StaffAttendance({ store, user }) {
                 <label className="field-label">Role *</label>
                 <select className="select" value={addForm.role} onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
                   <option value="teacher">Teacher</option>
-                  <option value="principal">Principal</option>
-                  <option value="deputy_academic">Deputy Academic</option>
-                  <option value="deputy_admin">Deputy Admin</option>
+                  <option value="principal">Principal / Admin</option>
+                  <option value="deputy_academic">Deputy Principal (Academics)</option>
+                  <option value="deputy_admin">Deputy Principal (Admin)</option>
+                  <option value="clinic">Clinic / Nurse</option>
+                  <option value="librarian">Librarian</option>
                   <option value="registrar">Registrar</option>
-                  <option value="finance">Finance</option>
+                  <option value="finance">Bursar / Finance</option>
                 </select>
               </div>
               <div>
