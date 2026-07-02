@@ -143,6 +143,7 @@ export default function Gradebook({ store }) {
     });
     exportReportCardsPDF({
       school: settings,
+      gradeBoundaries: gradeBoundaries,
       students: enriched,
       subjects: SUBJECTS,
       computeStudent: (stu, sub) => {

@@ -362,6 +362,7 @@ export default function Registrar({ store, user }) {
 
     exportReportCardsPDF({
       school: store.settings,
+      gradeBoundaries: store.gradeBoundaries,
       students: enriched,
       subjects: SUBJECTS,
       computeStudent: (stu, sub) => {
@@ -800,6 +801,7 @@ export default function Registrar({ store, user }) {
               <button className="btn btn-primary" onClick={() => {
                 exportReportCardsPDF({
                   school: store.settings,
+                  gradeBoundaries: store.gradeBoundaries,
                   students: [{ ...selectedStudent, position: '-', classSize: '-', average: avgScore, grade: avgScore >= 80 ? 'A' : avgScore >= 60 ? 'C' : 'D', attendance: 94 }],
                   subjects: Object.keys(selectedStudent.scores || {}).length > 0 ? Object.keys(selectedStudent.scores) : SUBJECTS,
                   computeStudent: (stu, sub) => {

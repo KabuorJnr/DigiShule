@@ -102,7 +102,7 @@ export function exportTablePDF({ school, title, subtitle, head, body, filename }
   doc.save(filename);
 }
 
-export function exportReportCardsPDF({ school, students, subjects, computeStudent, filename }) {
+export function exportReportCardsPDF({ school, gradeBoundaries, students, subjects, computeStudent, filename }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   
   students.forEach((stu, idx) => {
@@ -137,7 +137,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.setFont('helvetica', 'bold');
     doc.text("Name:", 30, y);
     doc.text("Class:", 280, y);
-    doc.text("Term/Year:", 420, y);
+    doc.text("Term:", 420, y);
     
     y += 10;
     doc.setDrawColor(200);
@@ -149,7 +149,8 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.setFont('helvetica', 'normal');
     doc.text(stu.name, 35, y + 15);
     doc.text(`Grade ${stu.class}`, 285, y + 15);
-    doc.text(`${school.currentTerm || 'Term 2'} • ${new Date().getFullYear()}`, 425, y + 15);
+    const termText = school.termStart && school.termEnd ? `${school.termStart} to ${school.termEnd}` : `${new Date().getFullYear()}`;
+    doc.text(termText, 425, y + 15);
     
     y += 40;
     
@@ -185,18 +186,26 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
     
-    doc.text("\u2022 A: 90-100%", 35, y);
+    let scaleY = y;
+    if (gradeBoundaries && gradeBoundaries.length > 0) {
+      gradeBoundaries.forEach((b, i) => {
+        let max = i === 0 ? 100 : (gradeBoundaries[i-1].min - 1);
+        doc.text(`\u2022 ${b.grade}: ${b.min}-${max}%`, 35, scaleY);
+        scaleY += 15;
+      });
+    } else {
+      doc.text("\u2022 A: 90-100%", 35, scaleY); scaleY += 15;
+      doc.text("\u2022 B: 80-89%", 35, scaleY); scaleY += 15;
+      doc.text("\u2022 C: 70-79%", 35, scaleY); scaleY += 15;
+      doc.text("\u2022 D: 60-69%", 35, scaleY); scaleY += 15;
+      doc.text("\u2022 F: Below 60%", 35, scaleY); scaleY += 15;
+    }
+
     doc.text("\u2022 Days Present: " + (stu.attendance || 170), 185, y);
-    y += 15;
-    doc.text("\u2022 B: 80-89%", 35, y);
-    doc.text("\u2022 Days Absent: " + (180 - (stu.attendance || 170)), 185, y);
-    y += 15;
-    doc.text("\u2022 C: 70-79%", 35, y);
-    doc.text("\u2022 Tardies: 3", 185, y);
-    y += 15;
-    doc.text("\u2022 D: 60-69%", 35, y);
-    y += 15;
-    doc.text("\u2022 F: Below 60%", 35, y);
+    doc.text("\u2022 Days Absent: " + (180 - (stu.attendance || 170)), 185, y + 15);
+    doc.text("\u2022 Tardies: 3", 185, y + 30);
+    
+    y = Math.max(scaleY, y + 45);
 
     // Comments
     y += 30;
