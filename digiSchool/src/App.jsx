@@ -6,7 +6,7 @@ import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
 
 import { Icon, NAV_ICON_MAP } from './components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key } from 'lucide-react';
 
 import LandingPage from './views/LandingPage';
 import Login from './views/Login';
@@ -522,12 +522,18 @@ export default function App() {
               <Bell size={18} />{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
             </button>
             <div className="avatar" title={currentUser.name}>{initials}</div>
-            <div className="user-meta">
+            <div className="user-meta" style={{ marginRight: '16px' }}>
               <span className="principal-name">{currentUser.name}</span>
               <span className="user-role">{role.label}</span>
             </div>
-            <button className="btn btn-sm" onClick={() => setChangePasswordOpen(true)} style={{ marginRight: 8 }}>Change Password</button>
-            <button className="btn btn-sm" onClick={handleLogout}>Logout</button>
+            <div style={{ display: 'flex', gap: '8px', borderLeft: '1px solid var(--border)', paddingLeft: '16px' }}>
+              <button className="btn btn-sm btn-ghost" onClick={() => setChangePasswordOpen(true)} title="Change Password">
+                <Key size={14} /> <span className="hide-mobile">Password</span>
+              </button>
+              <button className="btn btn-sm btn-ghost" onClick={handleLogout} title="Logout" style={{ color: 'var(--danger)' }}>
+                <LogOut size={14} /> <span className="hide-mobile">Logout</span>
+              </button>
+            </div>
           </div>
         </header>
 

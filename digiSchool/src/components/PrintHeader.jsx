@@ -6,7 +6,7 @@ export default function PrintHeader({ settings = {} }) {
   return (
     <div style={{ position: 'relative', width: '100%', marginBottom: 30 }}>
       {/* Watermark spanning the page */}
-      <div style={{
+      <div className="no-print-watermark" style={{
         position: 'absolute',
         top: '50%', left: '50%',
         transform: 'translate(-50%, 0)', // Vertical alignment depends on container
@@ -16,10 +16,10 @@ export default function PrintHeader({ settings = {} }) {
         justifyContent: 'center',
         zIndex: 0,
         width: '100%',
-        height: '800px', // Large enough to cover the page
-        overflow: 'visible'
+        height: '100%',
+        overflow: 'hidden'
       }}>
-        <svg viewBox="0 0 800 800" width="100%" height="100%" style={{ opacity: 0.04, transform: 'rotate(-30deg)' }}>
+        <svg viewBox="0 0 800 800" width="100%" height="100%" style={{ opacity: 0.02, transform: 'rotate(-30deg)' }}>
           <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="140" fontWeight="bold" fill="#000" fontFamily="sans-serif">
             EduOne
           </text>
