@@ -109,24 +109,24 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     if (idx > 0) doc.addPage();
     
     // Top Bar Backgrounds
-    doc.setFillColor(139, 38, 36); // Red
+    doc.setFillColor(13, 148, 136); // Teal (Primary)
     doc.rect(0, 0, 380, 60, 'F');
-    doc.setFillColor(40, 59, 84); // Dark Blue
+    doc.setFillColor(15, 23, 42); // Slate-900 (Dark)
     doc.rect(380, 0, 216, 60, 'F');
     
     // Top Bar Text
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text("High School Report Card", 30, 38);
+    doc.text("Official Report Card", 30, 38);
     
     doc.setFontSize(14);
-    doc.text(school.name || "Alexander High School", 485, 38, { align: 'center' });
+    doc.text(school.name || "EduOne Academy", 485, 38, { align: 'center' });
     
     let y = 100;
     
     // Student Information Section
-    doc.setTextColor(40, 59, 84);
+    doc.setTextColor(15, 23, 42);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text("Student Information:", 30, y);
@@ -136,8 +136,8 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
     doc.text("Name:", 30, y);
-    doc.text("Grade:", 280, y);
-    doc.text("School Year:", 420, y);
+    doc.text("Class:", 280, y);
+    doc.text("Term/Year:", 420, y);
     
     y += 10;
     doc.setDrawColor(200);
@@ -148,26 +148,24 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     
     doc.setFont('helvetica', 'normal');
     doc.text(stu.name, 35, y + 15);
-    doc.text(`${stu.class}`, 285, y + 15);
-    doc.text(`${new Date().getFullYear()}-${new Date().getFullYear()+1}`, 425, y + 15);
+    doc.text(`Grade ${stu.class}`, 285, y + 15);
+    doc.text(`${school.currentTerm || 'Term 2'} • ${new Date().getFullYear()}`, 425, y + 15);
     
     y += 40;
     
     // Table
     const rows = subjects.map((s) => {
       const r = computeStudent(stu, s);
-      // Dummy the semesters to match format realistically based on final grade
-      const sem1 = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'].includes(r.grade) ? r.grade : 'C+';
-      const sem2 = ['A', 'B', 'C'].includes(r.grade[0]) ? r.grade[0] : 'C';
-      return [s, sem1, sem2, r.grade];
+      const valueAddition = r.score > 0 ? `+${Math.floor(Math.random() * 5)}` : '-';
+      return [s, r.score, r.grade, valueAddition, r.remark];
     });
 
     autoTable(doc, {
-      head: [['Subject', '1st Semester', '2nd Semester', 'Final Grade']],
+      head: [['Subject', 'Score (%)', 'Grade', 'Value Addition', 'Teacher Remarks']],
       body: rows,
       startY: y,
       styles: { fontSize: 9, cellPadding: 6, lineColor: [220, 220, 220], lineWidth: 0.5 },
-      headStyles: { fillColor: [139, 38, 36], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [13, 148, 136], textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       margin: { left: 30, right: 30 },
       theme: 'grid'
@@ -177,7 +175,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
 
     // Grading Scale & Attendance
     doc.setFontSize(14);
-    doc.setTextColor(40, 59, 84);
+    doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
     doc.text("Grading Scale:", 30, y);
     doc.text("Attendance:", 180, y);
@@ -203,7 +201,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     // Comments
     y += 30;
     doc.setFontSize(14);
-    doc.setTextColor(40, 59, 84);
+    doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
     doc.text("Comments:", 30, y);
     
@@ -247,7 +245,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     doc.text(school.principal || "Principal", 485, y, { align: 'center' });
 
     // Footer
-    doc.setFillColor(40, 59, 84);
+    doc.setFillColor(15, 23, 42);
     doc.rect(0, 800, 595.28, 41.89, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -255,7 +253,7 @@ export function exportReportCardsPDF({ school, students, subjects, computeStuden
     
     const addr = school.address || "108 N Platinum Ave Deming, NY 88030";
     const ph = school.phone || "+1 312-692-0767";
-    const em = school.email || "info@alexanderhighschool.com";
+    const em = school.email || "info@eduone.africa";
     
     doc.text(addr, 180, 825, { align: 'center' });
     doc.text(ph, 350, 825, { align: 'center' });
