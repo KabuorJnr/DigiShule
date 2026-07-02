@@ -56,7 +56,7 @@ export default function Gradebook({ store }) {
 
   const rows = useMemo(() =>
     classStudents.map((s) => {
-      const r = computeRow(s.scores[subject]);
+      const r = computeRow(s.scores?.[subject]);
       const grade = gradeFor(r.average, gradeBoundaries);
       return { ...s, ...r, grade, remarks: r.remarks || remarkFor(grade) };
     }), [classStudents, subject, gradeBoundaries]);
@@ -80,7 +80,7 @@ export default function Gradebook({ store }) {
   const atRisk = useMemo(() => rows.filter((r) => r.average > 0 && r.average < 2.0), [rows]);
   const subjectCompare = useMemo(() =>
     SUBJECTS.map((sub) => {
-      const avg = classStudents.reduce((a, s) => a + subjectAverage(s.scores[sub]), 0) / (classStudents.length || 1);
+      const avg = classStudents.reduce((a, s) => a + subjectAverage(s.scores?.[sub]), 0) / (classStudents.length || 1);
       return { subject: sub.slice(0, 4), avg: Math.round(avg * 10) / 10 };
     }), [classStudents]);
 
@@ -124,13 +124,13 @@ export default function Gradebook({ store }) {
     const chosen = rows.filter((r) => selected.includes(r.id));
     if (chosen.length === 0) return notify('Select at least one student', 'warning');
     const ranked = [...classStudents].map((s) => {
-      const avg = SUBJECTS.reduce((a, sub) => a + subjectAverage(s.scores[sub]), 0) / SUBJECTS.length;
+      const avg = SUBJECTS.reduce((a, sub) => a + subjectAverage(s.scores?.[sub]), 0) / SUBJECTS.length;
       return { id: s.id, avg };
     }).sort((a, b) => b.avg - a.avg);
     const posOf = (id) => ranked.findIndex((x) => x.id === id) + 1;
 
     const enriched = chosen.map((r) => {
-      const overall = Math.round((SUBJECTS.reduce((a, sub) => a + subjectAverage(r.scores[sub]), 0) / SUBJECTS.length) * 10) / 10;
+      const overall = Math.round((SUBJECTS.reduce((a, sub) => a + subjectAverage(r.scores?.[sub]), 0) / SUBJECTS.length) * 10) / 10;
       return {
         name: r.name, adm: r.adm, class: r.class,
         scores: r.scores,
@@ -147,7 +147,7 @@ export default function Gradebook({ store }) {
       students: enriched,
       subjects: SUBJECTS,
       computeStudent: (stu, sub) => {
-        const rr = computeRow(stu.scores[sub]);
+        const rr = computeRow(stu.scores?.[sub]);
         const g = gradeFor(rr.average, gradeBoundaries);
         return { score: rr.average, grade: g, remark: rr.remarks || remarkFor(g) };
       },

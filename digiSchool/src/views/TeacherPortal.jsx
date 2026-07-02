@@ -208,9 +208,8 @@ export default function TeacherPortal({ store, user }) {
 
   const rows = useMemo(() => {
     return loadedStudents
-      .filter((s) => s.scores?.[subject])
       .map((s) => {
-        const scores = s.scores[subject];
+        const scores = s.scores?.[subject];
         const row = computeRow(scores);
         const grade = gradeFor(row.average, gradeBoundaries);
         return { ...s, ...row, grade };
@@ -346,7 +345,7 @@ export default function TeacherPortal({ store, user }) {
         {rows.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
             <BarChart3 size={32} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
-            <div className="muted">No student scores found for {subject}</div>
+            <div className="muted">No students found to grade. Please check your assigned class.</div>
           </div>
         ) : (
           <div className="scroll-x">
