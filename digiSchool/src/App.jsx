@@ -38,6 +38,7 @@ import SchoolCalendar from './views/SchoolCalendar';
 import Registrar from './views/Registrar';
 import DeveloperPortal from './views/DeveloperPortal';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import SelectProfile from './views/SelectProfile';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -64,6 +65,7 @@ const VIEW_MAP = {
   school_calendar: SchoolCalendar,
   teacher_resources: TeacherResources,
   registrar: Registrar,
+  select_profile: SelectProfile,
 };
 
 let toastId = 0;
@@ -75,6 +77,7 @@ export default function App() {
   const [showParentSignup, setShowParentSignup] = useState(false);
   const [showApplication, setShowApplication] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [availableProfiles, setAvailableProfiles] = useState([]);
   const [view, setView] = useState(null); // set on login
   const [viewParams, setViewParams] = useState({}); // Stores tab, action, filters from sidebar
   const [dataLoading, setDataLoading] = useState(false);
@@ -235,28 +238,37 @@ export default function App() {
     }
   }, [notify]);
 
+  const handleSelectProfile = useCallback(async (profile, greet = true) => {
+    const sid = profile.school_id || profile.schoolId || localStorage.getItem('eduone_school_id');
+    if (sid) {
+      setActiveSchoolId(sid);
+      setSchoolId(sid);
+      localStorage.setItem('eduone_school_id', sid);
+    }
+    setCurrentUser(profile);
+    setView(ROLES[profile.role]?.home || 'overview');
+    if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
+    await loadAllData();
+  }, [loadAllData, notify]);
+
   const loadUser = useCallback(async (userId, greet) => {
     try {
-      const profile = await api.fetchProfile(userId);
-      const sid = profile.school_id || profile.schoolId || localStorage.getItem('eduone_school_id');
-      if (sid) {
-        setActiveSchoolId(sid);
-        setSchoolId(sid);
-        localStorage.setItem('eduone_school_id', sid);
+      const profiles = await api.fetchProfiles(userId);
+      if (!profiles || profiles.length === 0) throw new Error("No profile");
+      
+      if (profiles.length === 1) {
+        await handleSelectProfile(profiles[0], greet);
+      } else {
+        setAvailableProfiles(profiles);
+        setView('select_profile');
       }
-      setCurrentUser(profile);
-      setView(ROLES[profile.role]?.home || 'overview');
-      if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
-      await loadAllData();
     } catch {
       // No profile row — silently sign out and show login.
-      // No toast here: this fires automatically for stale sessions and
-      // would confuse users who haven't tried to log in yet.
       await supabase.auth.signOut();
     } finally {
       setAuthChecked(true);
     }
-  }, [loadAllData, notify]);
+  }, [handleSelectProfile]);
 
   // ---- Auth bootstrap ----
   useEffect(() => {
@@ -522,6 +534,8 @@ export default function App() {
         <main className="content">
           {dataLoading ? (
             <p className="muted">Loading…</p>
+          ) : view === 'select_profile' ? (
+            <SelectProfile profiles={availableProfiles} onSelect={(p) => handleSelectProfile(p, true)} onLogout={handleLogout} />
           ) : ViewComponent ? (
             <ViewComponent store={store} user={currentUser} params={viewParams} />
           ) : (

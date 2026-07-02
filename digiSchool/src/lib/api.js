@@ -99,24 +99,26 @@ export async function updateSchool(schoolId, patch) {
 }
 
 // ---- Profile / current user -----------------------------------------------
-export async function fetchProfile(userId) {
+export async function fetchProfiles(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+    .select('*, schools(name)')
+    .eq('id', userId);
   
   if (error) throw error;
   
-  return {
-    username: data.username,
-    name: data.full_name || data.name,
-    role: data.role,
-    dept: data.dept,
-    teacherId: data.teacher_id || null,
-    studentId: data.student_id || null,
-    schoolId: data.school_id || null,
-  };
+  return data.map(p => ({
+    profileId: p.profile_id,
+    id: p.id,
+    username: p.username,
+    name: p.full_name || p.name,
+    role: p.role,
+    dept: p.dept,
+    teacherId: p.teacher_id || null,
+    studentId: p.student_id || null,
+    schoolId: p.school_id || null,
+    schoolName: p.schools?.name || 'DigiShule System',
+  }));
 }
 
 // ---- App config (school-scoped) -------------------------------------------

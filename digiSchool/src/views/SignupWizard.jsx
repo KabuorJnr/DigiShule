@@ -96,7 +96,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
       localStorage.setItem('eduone_school_id', schoolId);
 
       // 3. Create/Update Principal Profile
-      const { error: profileErr } = await supabase.from('profiles').upsert({
+      const { error: profileErr } = await supabase.from('profiles').insert({
         id: authData.user.id,
         username: principal.email, // using email as username for principal
         full_name: principal.name,

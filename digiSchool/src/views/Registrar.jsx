@@ -222,29 +222,42 @@ export default function Registrar({ store, user }) {
         const tempPassword = generateSecurePassword(10);
         const username = await generateSequentialUsername('PRN');
         
+        let parentUserId = null;
+        
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
-          email: captured.guardianEmail, // Using real email so parent gets it natively
+          email: captured.guardianEmail,
           password: tempPassword,
           options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian' } }
         });
         
         const isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
-        if (signUpError && !isExisting) {
+        if (isExisting) {
+          // Parent already has an account! Fetch their ID to link them to this school.
+          const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: captured.guardianEmail });
+          if (fetchErr) throw new Error(`Could not fetch existing parent: ${fetchErr.message}`);
+          parentUserId = existingId;
+        } else if (signUpError) {
           throw new Error(`Parent Auth Error: ${signUpError.message}`);
+        } else {
+          parentUserId = authData?.user?.id;
         }
 
-        if (authData?.user) {
-          const { error: profileErr } = await supabase.from('profiles').upsert({
-            id: authData.user.id,
+        if (parentUserId) {
+          const { error: profileErr } = await supabase.from('profiles').insert({
+            id: parentUserId,
             username,
             full_name: captured.guardianName || 'Parent / Guardian',
             role: 'parent',
             student_id: newStudent.id,
             school_id: store.schoolId || null
           });
-          if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
+          // Note: Ignoring unique constraint violations if the parent is already registered in this school
+          if (profileErr && profileErr.code !== '23505') throw new Error(`Parent Profile Error: ${profileErr.message}`);
 
-          parentCredsRef.current = { username, password: tempPassword };
+          if (!isExisting) {
+            parentCredsRef.current = { username, password: tempPassword };
+          }
+
 
           setProvisionStep('email');
           await provisionAccount({

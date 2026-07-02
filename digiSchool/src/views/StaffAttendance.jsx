@@ -191,19 +191,29 @@ export default function StaffAttendance({ store, user }) {
         ? addForm.username.trim() 
         : await generateSequentialUsername('TCH');
       
+      let staffUserId = null;
+      let isExisting = false;
+      
       const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
         email: addForm.email,
         password: tempPassword,
         options: { data: { role: addForm.role, full_name: addForm.name } }
       });
       
-      if (signUpError) {
-        throw new Error(`User already registered or Auth Error: ${signUpError.message}`);
+      isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
+      if (isExisting) {
+        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: addForm.email });
+        if (fetchErr) throw new Error(`Could not fetch existing staff: ${fetchErr.message}`);
+        staffUserId = existingId;
+      } else if (signUpError) {
+        throw new Error(`Auth Error: ${signUpError.message}`);
+      } else {
+        staffUserId = authData?.user?.id;
       }
 
-      if (authData?.user) {
-        const { error: profileErr } = await supabase.from('profiles').upsert({
-          id: authData.user.id,
+      if (staffUserId) {
+        const { error: profileErr } = await supabase.from('profiles').insert({
+          id: staffUserId,
           username,
           full_name: addForm.name,
           role: addForm.role,
@@ -211,7 +221,7 @@ export default function StaffAttendance({ store, user }) {
           teacher_id: newStaff.id,
           school_id: store.schoolId || null
         });
-        if (profileErr) throw new Error(`Teacher Profile Error: ${profileErr.message}`);
+        if (profileErr && profileErr.code !== '23505') throw new Error(`Teacher Profile Error: ${profileErr.message}`);
       }
 
       await upsertRow('staff', staffPayload);
