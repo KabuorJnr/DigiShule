@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
-import { upsertStudent, fetchStudents, fetchStudentStats, deleteStudent } from '../lib/api';
+import { upsertStudent, fetchStudents, fetchStudentStats, deleteStudent, fetchTable } from '../lib/api';
 import {
   UserPlus, Search, Edit2, FileText, Users,
   CheckCircle2, AlertTriangle, Download, Filter, Upload, Loader
