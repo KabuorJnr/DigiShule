@@ -551,10 +551,26 @@ export default function StaffAttendance({ store, user }) {
         const subject = fullProfile.subject || selectedStaff.dept;
         const assignedClass = fullProfile.assignedClass || 'None';
         
-        // Calculate average performance for their subject
-        // Subject averages should be fetched via a dedicated RPC when students scale to 20k+.
-        let subjectAvg = '-';
-        let totalStudents = '-';
+        let totalStudents = 0;
+        let gradedStudents = 0;
+        let sumScores = 0;
+
+        if (subject && store.students) {
+          store.students.forEach(s => {
+            if (s.scores?.[subject]) {
+              totalStudents++;
+              const sc = s.scores[subject];
+              const valid = [sc.a1, sc.a2, sc.a3, sc.a4].filter(v => Number(v) > 0);
+              if (valid.length > 0) {
+                gradedStudents++;
+                sumScores += (valid.reduce((a, b) => a + Number(b), 0) / valid.length) * 25;
+              }
+            }
+          });
+        }
+
+        let subjectAvg = gradedStudents > 0 ? (sumScores / gradedStudents).toFixed(1) : '-';
+        totalStudents = totalStudents || '-';
 
         return (
           <Modal title={`${selectedStaff.name}'s Profile`} onClose={() => setSelectedStaff(null)} footer={
@@ -597,9 +613,15 @@ export default function StaffAttendance({ store, user }) {
               <div className="card" style={{ padding: 16, background: '#f8fafc', border: 'none' }}>
                 <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Recent Activity</div>
                 <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#334155' }}>
-                  <li style={{ marginBottom: 6 }}>Checked in today at {selectedStaff.checkIn || '07:30 AM'}</li>
-                  <li style={{ marginBottom: 6 }}>Submitted 2 assignments for {assignedClass !== 'None' ? assignedClass : 'Grade 8'}</li>
-                  <li>Logged 3 behavior incidents this week</li>
+                  <li style={{ marginBottom: 6 }}>
+                    {selectedStaff.checkIn ? `Checked in today at ${selectedStaff.checkIn}` : 'Not checked in today yet'}
+                  </li>
+                  <li style={{ marginBottom: 6 }}>
+                    {gradedStudents > 0 ? `Recorded ${gradedStudents} scores in ${subject} gradebook` : `Assigned as teacher for ${subject}`}
+                  </li>
+                  <li>
+                    {assignedClass !== 'None' ? `Responsible for ${assignedClass} as Class Teacher` : 'No Class Teacher assignment'}
+                  </li>
                 </ul>
               </div>
 
