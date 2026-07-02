@@ -58,7 +58,7 @@ export default function Gradebook({ store }) {
     classStudents.map((s) => {
       const r = computeRow(s.scores[subject]);
       const grade = gradeFor(r.average, gradeBoundaries);
-      return { ...s, ...r, grade, remarks: remarkFor(grade) };
+      return { ...s, ...r, grade, remarks: r.remarks || remarkFor(grade) };
     }), [classStudents, subject, gradeBoundaries]);
 
   const colAvg = useMemo(() => {
@@ -85,7 +85,7 @@ export default function Gradebook({ store }) {
     }), [classStudents]);
 
   function saveScore(id, field, value) {
-    const v = Math.max(0, Math.min(4, Number(value) || 0));
+    const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
     if (target) {
       const currentScores = target.scores || {};
@@ -149,7 +149,7 @@ export default function Gradebook({ store }) {
       computeStudent: (stu, sub) => {
         const rr = computeRow(stu.scores[sub]);
         const g = gradeFor(rr.average, gradeBoundaries);
-        return { score: rr.average, grade: g, remark: remarkFor(g) };
+        return { score: rr.average, grade: g, remark: rr.remarks || remarkFor(g) };
       },
       filename: `report-cards-${cls}.pdf`,
     });
@@ -163,7 +163,8 @@ export default function Gradebook({ store }) {
         <td>
           <input
             className="score-input"
-            type="number"
+            style={{ width: field === 'remarks' ? '120px' : '40px', padding: '0 4px' }}
+            type={field === 'remarks' ? "text" : "number"}
             autoFocus
             defaultValue={r[field]}
             onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
@@ -172,7 +173,15 @@ export default function Gradebook({ store }) {
         </td>
       );
     }
-    return <td className="editable-cell" onClick={() => setEditing({ id: r.id, field })} title="Click to edit (1-4)">{r[field] || '-'}</td>;
+    return (
+      <td 
+        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '40px', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
+        onClick={() => setEditing({ id: r.id, field })}
+        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}`}
+      >
+        {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
+      </td>
+    );
   };
 
   return (
@@ -224,7 +233,7 @@ export default function Gradebook({ store }) {
                 </th>
                 <th>#</th><th>Student Name</th><th>Adm. No.</th>
                 <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
-                <th>Avg Rubric</th><th>Competency</th><th>Remarks</th>
+                <th>Avg Rubric</th><th>Grade</th><th>Remarks</th>
               </tr>
             </thead>
             <tbody>
@@ -242,8 +251,12 @@ export default function Gradebook({ store }) {
                   <ScoreCell r={r} field="a3" />
                   <ScoreCell r={r} field="a4" />
                   <td><strong>{r.average || '-'}</strong></td>
-                  <td><Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>{r.grade}</Badge></td>
-                  <td>{r.remarks}</td>
+                  <td>
+                    <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
+                      {r.grade}
+                    </Badge>
+                  </td>
+                  <ScoreCell r={r} field="remarks" />
                 </tr>
               ))}
               {colAvg && (

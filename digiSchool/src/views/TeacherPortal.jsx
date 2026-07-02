@@ -164,7 +164,7 @@ export default function TeacherPortal({ store, user }) {
   };
 
   function saveScore(id, field, value) {
-    const v = Math.max(0, Math.min(4, Number(value) || 0));
+    const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
     if (target) {
       const currentScores = target.scores || {};
@@ -182,8 +182,11 @@ export default function TeacherPortal({ store, user }) {
       return (
         <td>
           <input
-            style={{ width: '48px', height: '28px', padding: '0 4px', border: '1px solid #2563eb', borderRadius: '4px', outline: 'none' }}
-            type="number"
+            style={{ 
+              width: field === 'remarks' ? '120px' : '48px', 
+              height: '28px', padding: '0 4px', border: '1px solid #2563eb', borderRadius: '4px', outline: 'none' 
+            }}
+            type={field === 'remarks' ? "text" : "number"}
             autoFocus
             defaultValue={r[field]}
             onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
@@ -192,7 +195,15 @@ export default function TeacherPortal({ store, user }) {
         </td>
       );
     }
-    return <td style={{ cursor: 'pointer', minWidth: '40px', fontWeight: 600, color: '#0369A1' }} onClick={() => setEditing({ id: r.id, field })} title="Click to edit (1-4)">{r[field] || '-'}</td>;
+    return (
+      <td 
+        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '40px', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
+        onClick={() => setEditing({ id: r.id, field })} 
+        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}`}
+      >
+        {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
+      </td>
+    );
   };
 
   const rows = useMemo(() => {
@@ -344,7 +355,7 @@ export default function TeacherPortal({ store, user }) {
                 <tr>
                   <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
                   <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
-                  <th>Avg Rubric</th><th>Grade</th>
+                  <th>Avg Rubric</th><th>Grade</th><th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,6 +377,7 @@ export default function TeacherPortal({ store, user }) {
                           {r.grade}
                         </Badge>
                       </td>
+                      <ScoreCell r={r} field="remarks" />
                     </tr>
                   ))}
               </tbody>

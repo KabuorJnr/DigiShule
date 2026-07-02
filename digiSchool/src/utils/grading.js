@@ -13,7 +13,7 @@ export function computeRow(scores = {}) {
   const validScores = [a1, a2, a3, a4].filter(v => v > 0);
   const average = validScores.length > 0 ? validScores.reduce((sum, v) => sum + v, 0) / validScores.length : 0;
   
-  return { a1, a2, a3, a4, average: Math.round(average * 10) / 10 };
+  return { a1, a2, a3, a4, average: Math.round(average * 10) / 10, remarks: safeScores.remarks || '' };
 }
 
 // Map the numerical average (1-4) to a CBC competency grade.
