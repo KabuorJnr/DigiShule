@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Building, Settings, CheckCircle2 } from 'lucide-react';
 
+import * as api from '../lib/api';
+
 export default function SetupWizard({ onComplete }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -12,29 +14,49 @@ export default function SetupWizard({ onComplete }) {
     levels: 'JSS, Senior Secondary'
   });
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setErrorMsg(null);
     
     // Parse levels from comma separated string
     const parsedLevels = form.levels.split(',').map(s => s.trim()).filter(Boolean);
     
-    const config = {
-      school: {
+    try {
+      // 1. Register the school via API (calls Supabase RPC)
+      const schoolId = await api.registerSchool({
         name: form.name,
         motto: form.motto,
-        logo: form.logo,
         phone: form.phone,
         email: form.email,
-        levels: parsedLevels.length > 0 ? parsedLevels : ['Grade 7', 'Grade 8']
-      }
-    };
+        logoUrl: form.logo
+      });
 
-    setTimeout(() => {
+      // 2. Set active school ID so subsequent queries are scoped correctly
+      api.setActiveSchoolId(schoolId);
+
+      // 3. Keep local config for settings that might not be DB-backed yet
+      const config = {
+        school: {
+          name: form.name,
+          motto: form.motto,
+          logo: form.logo,
+          phone: form.phone,
+          email: form.email,
+          levels: parsedLevels.length > 0 ? parsedLevels : ['Grade 7', 'Grade 8']
+        }
+      };
       localStorage.setItem('eduone_school_config', JSON.stringify(config));
+      localStorage.setItem('eduone_school_id', schoolId);
+      
       onComplete();
-    }, 800);
+    } catch (err) {
+      console.error("School registration failed", err);
+      setErrorMsg(err.message || 'Failed to initialize school.');
+      setSaving(false);
+    }
   };
 
   return (
@@ -56,6 +78,12 @@ export default function SetupWizard({ onComplete }) {
                 <Settings size={20} /> Step 1: Institutional Profile
               </div>
               
+              {errorMsg && (
+                <div style={{ padding: '12px', background: '#fee2e2', color: '#991b1b', borderRadius: '6px', fontSize: '14px' }}>
+                  {errorMsg}
+                </div>
+              )}
+
               <div>
                 <label className="field-label">Institution Name *</label>
                 <input required className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. EduOne Academy" />

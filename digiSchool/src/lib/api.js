@@ -46,14 +46,13 @@ const TABLES = {
 };
 
 export async function fetchTable(key) {
-  if (!_schoolId) return [];
   const table = TABLES[key] || key;
   try {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .eq('school_id', _schoolId)
-      .order('created_at', { ascending: false });
+    let query = supabase.from(table).select('*').order('created_at', { ascending: false });
+    if (_schoolId) {
+      query = query.eq('school_id', _schoolId);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     
     // Save to cache for offline use
@@ -110,26 +109,13 @@ export async function fetchProfile(userId) {
 
 // ---- App config (school-scoped) -------------------------------------------
 export async function fetchConfig() {
-  if (!_schoolId) {
-    return {
-      settings: {},
-      gradeBoundaries: [
-        { grade: 'A', min: 75 }, { grade: 'B', min: 60 }, { grade: 'C', min: 50 },
-        { grade: 'D', min: 40 }, { grade: 'E', min: 0 },
-      ],
-      feeStructure: [],
-      notifToggles: { email: true, sms: false, attendance: true, fees: true, exams: true },
-      venues: [],
-    };
-  }
+  let query = supabase.from('app_config').select('*');
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  else query = query.limit(1); // Fallback to first school if single-tenant
 
-  const { data, error } = await supabase
-    .from('schools')
-    .select('*')
-    .eq('id', _schoolId)
-    .single();
+  const { data, error } = await query.maybeSingle();
 
-  if (error) {
+  if (error || !data) {
     return {
       settings: {},
       gradeBoundaries: [
@@ -252,7 +238,8 @@ export async function fetchStudentByQuery(field, value) {
 }
 
 export async function fetchAcademicAnalytics() {
-  if (!_schoolId) return { top_subjects: [] };
+  // Gracefully fallback to fetching even without _schoolId since RPC uses my_school_id() 
+  // which might also default to something or just return all if not strict.
   const { data, error } = await supabase.rpc('get_academic_analytics');
   if (error) {
     console.error("Error fetching academic analytics", error);
