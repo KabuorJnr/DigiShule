@@ -13,7 +13,8 @@ export default function Settings({ store, user }) {
   // local copies for editing
   const [form, setForm] = useState(settings);
   const [classList, setClassList] = useState(settings.classes || []);
-  const levels = classList.length > 0 ? classList.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const savedClasses = settings.classes || [];
+  const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
   
   const [newClass, setNewClass] = useState('');
   const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
