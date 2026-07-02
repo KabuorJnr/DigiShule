@@ -45,6 +45,8 @@ export default function Registrar({ store, user }) {
   const [transferModal, setTransferModal] = useState(false);
   const [transferForm, setTransferForm] = useState({ studentId: '', type: 'Transfer Out', reason: '', date: '' });
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
   const [pendingAdmissions, setPendingAdmissions] = useState([]);
   
   useEffect(() => {
@@ -301,6 +303,34 @@ export default function Registrar({ store, user }) {
       notify(`Transfer record saved and ${student.name} marked as ${newStatus}`, 'success', 'Registrar');
     } catch (e) {
       notify(`Transfer failed: ${e.message}`, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeregister = async () => {
+    if (!deleteReason.trim()) return notify('Please state the issue/reason for deletion', 'error');
+    setSaving(true);
+    try {
+      await deleteStudent(selectedStudent.id);
+      
+      const record = { 
+        id: `tr${Date.now()}`, 
+        studentId: selectedStudent.id,
+        type: 'Permanently Deleted', 
+        reason: deleteReason, 
+        date: new Date().toISOString().slice(0, 10),
+        studentName: selectedStudent.name
+      };
+      setTransfers(prev => [record, ...prev]);
+      setLocalStudents(prev => prev.filter(s => s.id !== selectedStudent.id));
+      
+      notify(`${selectedStudent.name} permanently deleted from system`, 'success');
+      setDeleteConfirmModal(false);
+      setSelectedStudent(null);
+      setDeleteReason('');
+    } catch (e) {
+      notify(`Deletion failed: ${e.message}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -797,6 +827,7 @@ export default function Registrar({ store, user }) {
         return (
           <Modal title="Student Profile" onClose={() => setSelectedStudent(null)} footer={
             <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-danger" onClick={() => setDeleteConfirmModal(true)}>Deregister & Delete</button>
               <button className="btn" onClick={() => setSelectedStudent(null)}>Close</button>
               <button className="btn btn-primary" onClick={() => {
                 exportReportCardsPDF({
@@ -883,6 +914,31 @@ export default function Registrar({ store, user }) {
           </Modal>
         );
       })()}
+
+      {deleteConfirmModal && selectedStudent && (
+        <Modal title={`Permanently Delete ${selectedStudent.name}?`} onClose={() => setDeleteConfirmModal(false)} footer={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn" onClick={() => setDeleteConfirmModal(false)}>Cancel</button>
+            <button className="btn btn-danger" disabled={saving} onClick={handleDeregister}>
+              {saving ? 'Deleting...' : 'Confirm Deletion'}
+            </button>
+          </div>
+        }>
+          <div style={{ padding: '10px 0' }}>
+            <p style={{ color: '#b91c1c', marginBottom: 15, fontSize: 14 }}>
+              <strong>Warning:</strong> This will permanently delete <b>{selectedStudent.name}</b>'s profile, grades, and records from the database. This action cannot be undone!
+            </p>
+            <label className="field-label">Issue / Reason for Deletion (Required)</label>
+            <textarea 
+              className="input" 
+              rows={3} 
+              placeholder="State the issue or reason for permanent deletion..." 
+              value={deleteReason} 
+              onChange={e => setDeleteReason(e.target.value)} 
+            />
+          </div>
+        </Modal>
+      )}
 
       {provisionStep && <RegistrationLoadingModal step={provisionStep} />}
     </div>
