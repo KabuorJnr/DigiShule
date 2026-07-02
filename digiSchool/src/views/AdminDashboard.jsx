@@ -131,7 +131,7 @@ export default function AdminDashboard({ store, user }) {
       const { data: authData, error: authErr } = await secondaryAuthClient.auth.signUp({
         email: commissionForm.email,
         password: tempPass,
-        options: { data: { role: commissionForm.role } }
+        options: { data: { role: commissionForm.role, full_name: commissionForm.name } }
       });
       
       if (authErr) throw new Error(`Auth Error: ${authErr.message}`);

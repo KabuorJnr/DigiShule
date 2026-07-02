@@ -198,7 +198,7 @@ export default function Registrar({ store, user }) {
       const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
         email: studentAuthEmail,
         password: studentPassword,
-        options: { data: { role: 'student' } }
+        options: { data: { role: 'student', full_name: captured.name } }
       });
       
       if (studentSignUpError && !studentSignUpError.message.includes('already')) {
@@ -223,7 +223,7 @@ export default function Registrar({ store, user }) {
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
           email: captured.guardianEmail, // Using real email so parent gets it natively
           password: tempPassword,
-          options: { data: { role: 'parent' } }
+          options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian' } }
         });
         
         if (signUpError && !signUpError.message.includes('already')) {

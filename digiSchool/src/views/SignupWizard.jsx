@@ -55,7 +55,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
         email: principal.email,
         password: principal.password,
         options: {
-          data: { role: 'principal' }
+          data: { role: 'principal', full_name: principal.name }
         }
       });
       

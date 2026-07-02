@@ -74,7 +74,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
         email: parent.email,
         password: parent.password,
         options: {
-          data: { role: 'parent' }
+          data: { role: 'parent', full_name: parent.name }
         }
       });
       
