@@ -50,7 +50,7 @@ RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, auth
-AS $body
+AS $$
 DECLARE
   v_id uuid;
 BEGIN
@@ -61,6 +61,6 @@ BEGIN
   
   RETURN v_id;
 END;
-$body;
+$$;
 
 GRANT EXECUTE ON FUNCTION public.get_user_id_by_email(text) TO authenticated;
