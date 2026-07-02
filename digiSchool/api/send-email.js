@@ -36,8 +36,8 @@ export default async function handler(req, res) {
       },
     });
 
-    const isTeacher = role === 'teacher' || role === 'staff';
-    const roleDisplay = isTeacher ? 'Staff/Teacher' : 'Parent Portal';
+    const isParent = role === 'parent';
+    const roleDisplay = isParent ? 'Parent Portal' : 'Staff/Teacher';
 
     const textContent = `Dear ${name},
 

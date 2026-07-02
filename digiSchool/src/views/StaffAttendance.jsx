@@ -195,8 +195,8 @@ export default function StaffAttendance({ store, user }) {
         options: { data: { role: addForm.role, full_name: addForm.name } }
       });
       
-      if (signUpError && !signUpError.message.includes('already')) {
-        throw new Error(`Teacher Auth Error: ${signUpError.message}`);
+      if (signUpError) {
+        throw new Error(`User already registered or Auth Error: ${signUpError.message}`);
       }
 
       if (authData?.user) {
