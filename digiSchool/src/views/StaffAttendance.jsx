@@ -27,7 +27,7 @@ export default function StaffAttendance({ store, user }) {
 
   // Add Staff Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
   const [provisionStep, setProvisionStep] = useState(null);
 
   // Recruitment State
@@ -187,7 +187,9 @@ export default function StaffAttendance({ store, user }) {
 
       setProvisionStep('password');
       const tempPassword = generateSecurePassword(10);
-      const username = await generateSequentialUsername('TCH');
+      const username = addForm.username && addForm.username.trim() !== '' 
+        ? addForm.username.trim() 
+        : await generateSequentialUsername('TCH');
       
       const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
         email: addForm.email,
@@ -540,6 +542,10 @@ export default function StaffAttendance({ store, user }) {
               <div>
                 <label className="field-label">Phone (Optional)</label>
                 <input className="input" placeholder="07XX XXX XXX" value={addForm.phone} onChange={e => setAddForm(p => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Username (Optional)</label>
+                <input className="input" placeholder="e.g. jdoe24" value={addForm.username || ''} onChange={e => setAddForm(p => ({ ...p, username: e.target.value }))} />
               </div>
             </div>
           </div>
