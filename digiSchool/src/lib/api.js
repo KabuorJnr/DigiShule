@@ -268,6 +268,26 @@ export async function fetchStudentByQuery(field, value) {
     subCounty: data.sub_county,
   };
 }
+export async function fetchStudentsByQuery(field, value) {
+  let query = supabase.from('students').select('*').eq(field, value);
+  if (_schoolId) query = query.eq('school_id', _schoolId);
+  const { data, error } = await query;
+  if (error) throw error;
+  if (!data) return [];
+  return data.map(d => ({
+    ...d,
+    birthCertNo: d.birth_cert_no,
+    guardianName: d.guardian_name,
+    guardianPhone: d.guardian_phone,
+    guardianEmail: d.guardian_email,
+    parentAddress: d.parent_address,
+    admissionLetterUrl: d.admission_letter_url,
+    nemisUpi: d.nemis_upi,
+    nationality: d.nationality,
+    county: d.county,
+    subCounty: d.sub_county,
+  }));
+}
 
 export async function fetchAcademicAnalytics() {
   // Gracefully fallback to fetching even without _schoolId since RPC uses my_school_id() 

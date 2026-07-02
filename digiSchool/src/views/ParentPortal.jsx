@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
-import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
+import { fetchTable, upsertRow, fetchStudentsByQuery } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
 import GalleryViewer from '../components/GalleryViewer';
@@ -16,7 +16,8 @@ const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
 export default function ParentPortal({ store, user }) {
   const { students, gradeBoundaries, examSchedules, feeStructure } = store;
 
-  const [child, setChild] = useState(null);
+  const [children, setChildren] = useState([]);
+  const [activeChildId, setActiveChildId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -25,17 +26,29 @@ export default function ParentPortal({ store, user }) {
       const linkId = user?.link;
       const email = (user?.email || user?.username || '').toLowerCase();
       
-      let res = null;
-      if (sId) res = await fetchStudentByQuery('id', sId);
-      if (!res && linkId) res = await fetchStudentByQuery('id', linkId);
-      if (!res && linkId) res = await fetchStudentByQuery('adm', linkId);
-      if (!res && email) res = await fetchStudentByQuery('guardian_email', email);
+      let res = [];
+      // If we have an email, we fetch all students matching that guardian email
+      if (email) {
+        res = await fetchStudentsByQuery('guardian_email', email);
+      }
       
-      if (active && res) setChild(res);
+      // If no students found via email, try the legacy IDs
+      if (res.length === 0) {
+        if (sId) res = await fetchStudentsByQuery('id', sId);
+        if (res.length === 0 && linkId) res = await fetchStudentsByQuery('id', linkId);
+        if (res.length === 0 && linkId) res = await fetchStudentsByQuery('adm', linkId);
+      }
+      
+      if (active) {
+        setChildren(res);
+        if (res.length > 0) setActiveChildId(res[0].id);
+      }
     };
     loadChild();
     return () => { active = false; };
   }, [user]);
+
+  const child = children.find(c => c.id === activeChildId) || null;
 
   const [healthRecords, setHealthRecords] = useState([]);
   const [disciplinary, setDisciplinary] = useState([]);
@@ -223,7 +236,7 @@ export default function ParentPortal({ store, user }) {
         </div>
         <h2 style={{ margin: '0 0 10px' }}>No Linked Student Record Found</h2>
         <p className="muted" style={{ maxWidth: 400, margin: '0 auto' }}>
-          Your parent account is not linked to any active student record, or there are no students registered in the database yet.
+          Your parent account is not linked to any active student record.
         </p>
       </div>
     );
@@ -231,7 +244,23 @@ export default function ParentPortal({ store, user }) {
 
   return (
     <div>
-      <PageHeader title="My Child" subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
+      {children.length > 1 && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20, overflowX: 'auto', paddingBottom: 10 }}>
+          {children.map(c => (
+            <button 
+              key={c.id} 
+              className={`btn ${c.id === activeChildId ? 'btn-primary' : ''}`}
+              style={{ padding: '8px 16px', borderRadius: 20, whiteSpace: 'nowrap' }}
+              onClick={() => setActiveChildId(c.id)}
+            >
+              <Icon name="user" size={16} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'middle' }} />
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <PageHeader title={children.length > 1 ? "Student Portal" : "My Child"} subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
 
       {/* Disciplinary Notice */}
       {disciplinary.filter(c => c.status !== 'Resolved').length > 0 && (
