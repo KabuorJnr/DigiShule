@@ -207,8 +207,8 @@ export default function App() {
   );
 
   // ---- Load all domain data after a user is known ----
-  const loadAllData = useCallback(async () => {
-    setDataLoading(true);
+  const loadAllData = useCallback(async (background = false) => {
+    if (!background) setDataLoading(true);
     try {
       // ── Real mode: fetch from Supabase ──
       const [cfg, ex, tt, notifs, st, tch] = await Promise.all([
@@ -229,7 +229,7 @@ export default function App() {
     } catch (e) {
       notify(`Failed to load data: ${e.message || e}`, 'error');
     } finally {
-      setDataLoading(false);
+      if (!background) setDataLoading(false);
     }
   }, [notify]);
 
@@ -307,7 +307,7 @@ export default function App() {
     const channel = supabase.channel('global-sync')
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
         // Refetch all core data when a change occurs to keep state perfectly in sync
-        loadAllData();
+        loadAllData(true);
       })
       .subscribe();
 
