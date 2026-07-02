@@ -38,13 +38,17 @@ export async function signInWithUsername(username, password) {
   try {
     let emailToUse = null;
     
-    // If the username looks like an email, use it directly
     if (uname.includes('@')) {
       emailToUse = uname;
     } else {
       // Otherwise, look up the email via RPC
+      // If it looks like a prefix + number, force uppercase (e.g., prn12345 -> PRN12345)
+      let rpcUname = uname;
+      if (/^(prn|tch|stu|adm)\d+$/i.test(uname)) {
+        rpcUname = uname.toUpperCase();
+      }
       const { data: email, error: rpcError } = await supabase.rpc('email_for_username', {
-        p_username: uname,
+        p_username: rpcUname,
       });
       if (!rpcError && email) {
         emailToUse = email;

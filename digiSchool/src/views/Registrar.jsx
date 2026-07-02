@@ -228,7 +228,8 @@ export default function Registrar({ store, user }) {
           options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian' } }
         });
         
-        if (signUpError && !signUpError.message.includes('already')) {
+        const isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
+        if (signUpError && !isExisting) {
           throw new Error(`Parent Auth Error: ${signUpError.message}`);
         }
 
@@ -242,25 +243,29 @@ export default function Registrar({ store, user }) {
             school_id: store.schoolId || null
           });
           if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
+
+          parentCredsRef.current = { username, password: tempPassword };
+
+          setProvisionStep('email');
+          await provisionAccount({
+            email: captured.guardianEmail,
+            username,
+            password: tempPassword,
+            name: captured.guardianName || 'Parent/Guardian',
+            role: 'parent',
+            schoolName: store.settings?.name || 'EduOne'
+          });
         }
-
-        parentCredsRef.current = { username, password: tempPassword };
-
-        setProvisionStep('email');
-        await provisionAccount({
-          email: captured.guardianEmail,
-          username,
-          password: tempPassword,
-          name: captured.guardianName || 'Parent/Guardian',
-          role: 'parent',
-          schoolName: store.settings?.name || 'EduOne'
-        });
 
         setProvisionStep('done');
         setForm(EMPTY_FORM);
         setTimeout(() => {
           setProvisionStep(null);
-          notify(`${captured.name} enrolled. Parent portal account provisioned!`, 'success', 'Parent Registered');
+          if (isExisting) {
+            notify(`${captured.name} enrolled. Note: Parent email already registered, they should use existing login.`, 'warning', 'Registrar');
+          } else {
+            notify(`${captured.name} enrolled. Parent portal account provisioned!`, 'success', 'Parent Registered');
+          }
           setTab('register');
         }, 1500);
       } else {
