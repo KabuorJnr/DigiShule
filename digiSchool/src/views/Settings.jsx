@@ -11,7 +11,10 @@ export default function Settings({ store, user }) {
   const TABS = user?.role === 'finance' ? ['Fee Structure'] : ALL_TABS;
   const [tab, setTab] = useState(TABS[0]);
   // local copies for editing
-  const [form, setForm] = useState(settings);
+  const [form, setForm] = useState({
+    ...settings,
+    principal: settings.principal || user?.name || ''
+  });
   const [classList, setClassList] = useState(settings.classes || []);
   const savedClasses = settings.classes || [];
   const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);

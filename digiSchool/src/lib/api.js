@@ -140,8 +140,20 @@ export async function fetchConfig() {
     };
   }
 
+  let schoolData = {};
+  if (_schoolId) {
+    const { data: sData } = await supabase.from('schools').select('*').eq('id', _schoolId).maybeSingle();
+    if (sData) schoolData = sData;
+  }
+
+  const rawSettings = data.settings || {};
   return {
-    settings: data.settings || {},
+    settings: {
+      ...rawSettings,
+      name: rawSettings.name || schoolData.name || '',
+      motto: rawSettings.motto || schoolData.motto || '',
+      county: rawSettings.county || schoolData.county || '',
+    },
     gradeBoundaries: data.grade_boundaries || [],
     feeStructure: data.fee_structure || [],
     notifToggles: data.notif_toggles || {},
