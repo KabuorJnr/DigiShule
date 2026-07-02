@@ -527,12 +527,26 @@ export default function Registrar({ store, user }) {
             </div>
             <div className="grid grid-2">
               <div>
-                <label className="field-label">Date of Birth</label>
-                <input type="date" className="input" value={form.dob} onChange={e => upForm({ dob: e.target.value })} />
+                <label className="field-label">NEMIS UPI Number</label>
+                <input className="input" placeholder="e.g. XXX-XXXX" value={form.nemisUpi} onChange={e => upForm({ nemisUpi: e.target.value })} />
               </div>
               <div>
                 <label className="field-label">Birth Certificate No.</label>
                 <input className="input" placeholder="e.g. 1234567" value={form.birthCertNo} onChange={e => upForm({ birthCertNo: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-3">
+              <div>
+                <label className="field-label">Date of Birth</label>
+                <input type="date" className="input" value={form.dob} onChange={e => upForm({ dob: e.target.value })} />
+              </div>
+              <div>
+                <label className="field-label">Nationality</label>
+                <input className="input" placeholder="e.g. Kenyan" value={form.nationality} onChange={e => upForm({ nationality: e.target.value })} />
+              </div>
+              <div>
+                <label className="field-label">County</label>
+                <input className="input" placeholder="e.g. Nairobi" value={form.county} onChange={e => upForm({ county: e.target.value })} />
               </div>
             </div>
             <div>
@@ -664,9 +678,25 @@ export default function Registrar({ store, user }) {
                 </select>
               </div>
             </div>
-            <div>
-              <label className="field-label">Birth Certificate No.</label>
-              <input className="input" value={editStudent.birthCertNo || ''} onChange={e => setEditStudent(s => ({ ...s, birthCertNo: e.target.value }))} />
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">NEMIS UPI Number</label>
+                <input className="input" value={editStudent.nemisUpi || ''} onChange={e => setEditStudent(s => ({ ...s, nemisUpi: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Birth Certificate No.</label>
+                <input className="input" value={editStudent.birthCertNo || ''} onChange={e => setEditStudent(s => ({ ...s, birthCertNo: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-2">
+              <div>
+                <label className="field-label">Nationality</label>
+                <input className="input" value={editStudent.nationality || ''} onChange={e => setEditStudent(s => ({ ...s, nationality: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">County</label>
+                <input className="input" value={editStudent.county || ''} onChange={e => setEditStudent(s => ({ ...s, county: e.target.value }))} />
+              </div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
             <div className="grid grid-2">

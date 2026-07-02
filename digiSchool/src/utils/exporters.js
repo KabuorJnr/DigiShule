@@ -7,7 +7,7 @@ export function exportNemisCSV(students, filename = 'NEMIS_Export.csv') {
   // NEMIS Standard Format Columns
   const headers = ['UPI_Number', 'Student_Name', 'Birth_Cert_No', 'Gender', 'Grade_Form', 'Parent_Guardian', 'Phone_Contact', 'Status'];
   const rows = students.map(s => [
-    s.adm || '', // Usually UPI or ADM
+    s.nemis_upi || s.adm || '', // Use NEMIS UPI if available, fallback to local ADM
     s.name || '',
     s.birth_cert_no || '',
     s.gender || '',

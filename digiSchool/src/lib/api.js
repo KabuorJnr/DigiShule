@@ -240,6 +240,10 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
     guardianEmail: s.guardian_email,
     parentAddress: s.parent_address,
     admissionLetterUrl: s.admission_letter_url,
+    nemisUpi: s.nemis_upi,
+    nationality: s.nationality,
+    county: s.county,
+    subCounty: s.sub_county,
   }));
   return { data: mapped, count };
 }
@@ -258,6 +262,10 @@ export async function fetchStudentByQuery(field, value) {
     guardianEmail: data.guardian_email,
     parentAddress: data.parent_address,
     admissionLetterUrl: data.admission_letter_url,
+    nemisUpi: data.nemis_upi,
+    nationality: data.nationality,
+    county: data.county,
+    subCounty: data.sub_county,
   };
 }
 
@@ -317,6 +325,10 @@ export async function upsertStudent(student) {
     guardian_email: student.guardianEmail,
     parent_address: student.parentAddress,
     admission_letter_url: student.admissionLetterUrl,
+    nemis_upi: student.nemisUpi,
+    nationality: student.nationality,
+    county: student.county,
+    sub_county: student.subCounty,
     school_id: _schoolId,
   });
   if (error) throw error;
