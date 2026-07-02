@@ -48,7 +48,19 @@ const TABLES = {
 export async function fetchTable(key) {
   const table = TABLES[key] || key;
   try {
-    let query = supabase.from(table).select('*').order('created_at', { ascending: false });
+    let query = supabase.from(table).select('*');
+    
+    const dateColMap = {
+      notifications: 'created_at', messages: 'created_at', leave_requests: 'created_at',
+      clinic_visits: 'date', disciplinary_records: 'date', school_events: 'date', student_attendance: 'date',
+      admissions: 'date_applied', job_applications: 'date_applied',
+      assignment_submissions: 'submitted_at', library_loans: 'loan_date'
+    };
+    
+    if (dateColMap[table]) {
+      query = query.order(dateColMap[table], { ascending: false });
+    }
+    
     if (_schoolId) {
       query = query.eq('school_id', _schoolId);
     }
