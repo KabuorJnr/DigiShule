@@ -136,7 +136,7 @@ export default function Clinic({ store }) {
 
       {/* Print-only Header */}
       <div className="print-only" style={{ marginBottom: 24 }}>
-        <PrintHeader />
+        <PrintHeader settings={store.settings} />
         <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Clinic & Health Report</h2>
           <div style={{ fontSize: 13, marginTop: 4 }}>Generated on {new Date().toLocaleDateString()}</div>

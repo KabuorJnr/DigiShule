@@ -438,7 +438,7 @@ function StatementsTab({ students, invoices, payments, store }) {
       {/* Printable Area */}
       {student && (
         <div className="printable-statement card card-pad" style={{ background: '#fff', color: '#000' }}>
-          <PrintHeader />
+          <PrintHeader settings={store.settings} />
           <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Fee Statement</h2>
             <div style={{ fontSize: 13, marginTop: 4 }}>Date: {new Date().toLocaleDateString()}</div>
@@ -818,7 +818,7 @@ function FeeStructureTab({ store, user }) {
 
       {/* Printable Area */}
       <div className="printable-fee-structure card card-pad" style={{ background: '#fff', color: '#000' }}>
-        <PrintHeader />
+        <PrintHeader settings={store.settings} />
         <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Official Fee Structure</h2>
           <div style={{ fontSize: 13, marginTop: 4 }}>Academic Year: {new Date().getFullYear()}</div>

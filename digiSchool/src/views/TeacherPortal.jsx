@@ -385,7 +385,7 @@ export default function TeacherPortal({ store, user }) {
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
-              <PrintHeader />
+              <PrintHeader settings={store.settings} />
               <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
                 <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>

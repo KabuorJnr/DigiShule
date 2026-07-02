@@ -1,9 +1,6 @@
 import React from 'react';
-import { useStore } from '../store';
 
-export default function PrintHeader() {
-  const store = useStore();
-  const settings = store.settings || {};
+export default function PrintHeader({ settings = {} }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', marginBottom: 30 }}>
