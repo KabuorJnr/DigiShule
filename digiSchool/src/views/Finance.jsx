@@ -523,9 +523,10 @@ function StatementsTab({ students, invoices, payments, store }) {
       {/* Inject print styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
+          @page { margin: 0; }
           body * { visibility: hidden; }
           .printable-statement, .printable-statement * { visibility: visible; }
-          .printable-statement { position: absolute; left: 0; top: 0; width: 100%; margin: 0; border: none; box-shadow: none; }
+          .printable-statement { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 2cm !important; border: none; box-shadow: none; box-sizing: border-box; }
           .no-print { display: none !important; }
           .sidebar, .topbar { display: none !important; }
           .layout { display: block !important; padding: 0 !important; }
@@ -888,9 +889,10 @@ function FeeStructureTab({ store, user }) {
 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
+          @page { margin: 0; }
           body * { visibility: hidden; }
           .printable-fee-structure, .printable-fee-structure * { visibility: visible; }
-          .printable-fee-structure { position: absolute; left: 0; top: 0; width: 100%; margin: 0; border: none; box-shadow: none; }
+          .printable-fee-structure { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 2cm !important; border: none; box-shadow: none; box-sizing: border-box; }
           .no-print { display: none !important; }
           .sidebar, .topbar { display: none !important; }
           .layout { display: block !important; padding: 0 !important; }
