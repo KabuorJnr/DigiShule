@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapPin, Phone, Mail } from 'lucide-react';
 
 export default function PrintHeader({ settings = {} }) {
 
@@ -45,9 +46,9 @@ export default function PrintHeader({ settings = {} }) {
           </p>
         )}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, fontSize: 13, color: '#222' }}>
-          {settings.address && <span>📍 {settings.address}</span>}
-          {settings.phone && <span>📞 {settings.phone}</span>}
-          {settings.email && <span>✉️ {settings.email}</span>}
+          {settings.address && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><MapPin size={14} /> {settings.address}</span>}
+          {settings.phone && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Phone size={14} /> {settings.phone}</span>}
+          {settings.email && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Mail size={14} /> {settings.email}</span>}
         </div>
       </div>
     </div>
