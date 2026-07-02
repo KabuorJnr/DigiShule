@@ -40,7 +40,17 @@ export default function Settings({ store, user }) {
   }
 
   function saveGeneral() {
-    setSettings(form);
+    setSettings((s) => ({
+      ...s,
+      name: form.name,
+      motto: form.motto,
+      address: form.address,
+      phone: form.phone,
+      email: form.email,
+      principal: form.principal,
+      logo: form.logo,
+      paymentDetails: form.paymentDetails
+    }));
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
