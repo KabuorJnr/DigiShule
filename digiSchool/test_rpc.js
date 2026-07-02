@@ -5,11 +5,23 @@ const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const supabase = createClient(url, anonKey);
 
-async function checkAdmissions() {
-  console.log("Fetching admissions columns by ordering created_at...");
-  const { data, error } = await supabase.from('admissions').select('*').order('created_at').limit(1);
-  console.log("Data:", data);
-  console.log("Error:", error);
+async function testTeacherLogin() {
+  const { data: email, error: rpcError } = await supabase.rpc('email_for_username', { p_username: 'TCH31210' });
+  console.log("Email from RPC:", email);
+  
+  if (email) {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: '@YIwGa0q7J'
+    });
+    console.log("Auth User exists:", !!authData?.user);
+    if (authData?.user) {
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', authData.user.id).single();
+      console.log("Profile Data:", profile);
+    } else {
+      console.log("Auth Error:", authError);
+    }
+  }
 }
 
-checkAdmissions();
+testTeacherLogin();

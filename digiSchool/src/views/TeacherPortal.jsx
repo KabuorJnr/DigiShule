@@ -49,9 +49,11 @@ export default function TeacherPortal({ store, user }) {
         if (!active) return;
         const allMsgs = res || [];
         const myMsgs = allMsgs.filter(m => {
-          if (m.recipient_role === 'Class Teacher' && assignedClass) return true;
-          if (m.recipient_role.includes(subject)) return true;
-          if (m.recipient_role === teacherName) return true;
+          if (!m.recipient_role) return false;
+          const role = String(m.recipient_role).toLowerCase().trim();
+          if (role === 'class teacher' && assignedClass) return true;
+          if (subject && role.includes(subject.toLowerCase().trim())) return true;
+          if (teacherName && role === teacherName.toLowerCase().trim()) return true;
           return false;
         });
         setMessages(myMsgs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
