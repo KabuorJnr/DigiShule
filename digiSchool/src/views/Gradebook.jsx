@@ -7,7 +7,7 @@ import {
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
-import { CLASSES, SUBJECTS, getDynamicClasses } from '../data/seed';
+import { CLASSES, SUBJECTS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
 import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 
@@ -45,7 +45,7 @@ export default function Gradebook({ store }) {
   }, [cls]);
 
   const dynamicClasses = useMemo(() => {
-    const saved = (settings?.classes || []).map(c => c.name);
+    const saved = expandClassesWithStreams(settings?.classes || []);
     return saved.length ? saved : CLASSES;
   }, [settings]);
 

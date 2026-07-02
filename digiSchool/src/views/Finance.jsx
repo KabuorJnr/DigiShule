@@ -7,6 +7,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { fmtKES } from '../data/modules';
 import { fetchTable, upsertRow, getActiveSchoolId } from '../lib/api';
+import { expandClassesWithStreams } from '../data/seed';
 import { supabase } from '../lib/supabaseClient';
 import { Icon } from '../components/icons';
 
@@ -76,7 +77,7 @@ export default function Finance({ store, user, params = {} }) {
         ))}
       </div>
 
-      {activeTab === 'invoices' && <BillingTab invoices={invoices} setInvoices={setInvoices} notify={notify} params={params} students={students} />}
+      {activeTab === 'invoices' && <BillingTab invoices={invoices} setInvoices={setInvoices} notify={notify} params={params} students={students} store={store} />}
       {activeTab === 'payments' && <PaymentsTab payments={payments} invoices={invoices} setPayments={setPayments} notify={notify} params={params} students={students} />}
       {activeTab === 'statements' && <StatementsTab students={students} invoices={invoices} payments={payments} store={store} />}
       {activeTab === 'fee_structure' && <FeeStructureTab store={store} user={user} />}
@@ -90,16 +91,17 @@ export default function Finance({ store, user, params = {} }) {
 // -----------------------------------------------------------------------------
 // INVOICES & BILLING TAB
 // -----------------------------------------------------------------------------
-function BillingTab({ invoices, setInvoices, notify, params, students }) {
+function BillingTab({ invoices, setInvoices, notify, params, students, store }) {
   const [modalOpen, setModalOpen] = useState(params.action === 'generate_invoice');
   const [form, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
 
   const classes = useMemo(() => {
-    const cls = new Set(students.map(s => s.class));
+    const saved = expandClassesWithStreams(store?.settings?.classes || []);
+    const cls = new Set([...saved, ...students.map(s => s.class)]);
     return Array.from(cls).filter(Boolean).sort();
-  }, [students]);
+  }, [students, store?.settings]);
 
   useEffect(() => {
     if (params.action === 'generate_invoice') setModalOpen(true);
@@ -838,7 +840,8 @@ function FeeStructureTab({ store, user }) {
         </div>
 
         {(() => {
-          const levels = store.settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
+          const classList = store.settings?.classes || [];
+          const levels = classList.length > 0 ? classList.map(c => c.name) : (store.settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
           return (
             <table className="table" style={{ width: '100%', marginBottom: 32, borderCollapse: 'collapse' }}>
           <thead>

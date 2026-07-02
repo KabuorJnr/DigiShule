@@ -103,11 +103,15 @@ export default function Settings({ store, user }) {
             <h3 className="section-title">Classes</h3>
             <div className="scroll-x">
               <table className="table">
-                <thead><tr><th>Class</th><th>Capacity</th><th></th></tr></thead>
+                <thead><tr><th>Class Name</th><th>Streams (comma separated)</th><th>Capacity</th><th></th></tr></thead>
                 <tbody>
                   {classList.map((c, i) => (
                     <tr key={i}>
                       <td>{c.name}</td>
+                      <td>
+                        <input className="input" placeholder="e.g. A, B, C" value={c.streams || ''} style={{ width: 140, height: 32 }}
+                          onChange={(e) => setClassList((cl) => cl.map((x, j) => (j === i ? { ...x, streams: e.target.value } : x)))} />
+                      </td>
                       <td><input className="input" type="number" value={c.capacity} style={{ width: 90, height: 32 }}
                         onChange={(e) => setClassList((cl) => cl.map((x, j) => (j === i ? { ...x, capacity: Number(e.target.value) } : x)))} /></td>
                       <td><button className="btn btn-sm btn-danger" onClick={() => { setClassList((cl) => cl.filter((_, j) => j !== i)); notify('Class removed', 'success', 'Settings'); }}>Remove</button></td>
@@ -117,8 +121,8 @@ export default function Settings({ store, user }) {
               </table>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <input className="input" placeholder="New class name (e.g. Grade 7C)" value={newClass} style={{ maxWidth: 260 }} onChange={(e) => setNewClass(e.target.value)} />
-              <button className="btn btn-primary btn-sm" disabled={!newClass} onClick={() => { setClassList((cl) => [...cl, { name: newClass, capacity: 40 }]); setNewClass(''); notify('Class added', 'success', 'Settings'); }}>+ Add Class</button>
+              <input className="input" placeholder="New class name (e.g. Grade 7)" value={newClass} style={{ maxWidth: 260 }} onChange={(e) => setNewClass(e.target.value)} />
+              <button className="btn btn-primary btn-sm" disabled={!newClass} onClick={() => { setClassList((cl) => [...cl, { name: newClass, capacity: 40, streams: '' }]); setNewClass(''); notify('Class added', 'success', 'Settings'); }}>+ Add Class</button>
             </div>
           </div>
 

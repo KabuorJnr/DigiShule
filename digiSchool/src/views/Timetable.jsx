@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -67,7 +67,7 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
 export default function Timetable({ store }) {
   const { timetables, setTimetables, notify, settings, students, teachers } = store;
   const dynamicClasses = useMemo(() => {
-    const saved = (store.settings?.classes || []).map(c => c.name);
+    const saved = expandClassesWithStreams(store.settings?.classes || []);
     return saved.length ? saved : ['1A', '2A', '3A']; // Fallback since students array is no longer global
   }, [store.settings]);
   const [term, setTerm] = useState('Term 2');

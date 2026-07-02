@@ -5,6 +5,21 @@ export const getDynamicClasses = (students = []) => {
   return [...new Set(existing)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 };
 
+export const expandClassesWithStreams = (classes = []) => {
+  if (!classes || !classes.length) return [];
+  const expanded = [];
+  classes.forEach(c => {
+    if (!c.streams || !c.streams.trim()) {
+      expanded.push(c.name);
+    } else {
+      const streams = c.streams.split(',').map(s => s.trim()).filter(Boolean);
+      if (streams.length === 0) expanded.push(c.name);
+      else streams.forEach(s => expanded.push(`${c.name} ${s}`));
+    }
+  });
+  return expanded;
+};
+
 export const DEPARTMENTS = {
   Mathematics: 'Math',
   English: 'Languages',

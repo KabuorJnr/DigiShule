@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { exportReportCardsPDF, exportNemisCSV } from '../utils/exporters';
 import { uploadStudentDocument, openFilePDF } from '../lib/fileStore';
-import { SUBJECTS, CLASSES, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, CLASSES, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
 import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
@@ -109,7 +109,7 @@ export default function Registrar({ store, user }) {
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
 
   const dynamicClasses = useMemo(() => {
-    const saved = (store.settings?.classes || []).map(c => c.name);
+    const saved = expandClassesWithStreams(store.settings?.classes || []);
     const dynamic = getDynamicClasses(localStudents);
     return [...new Set([...saved, ...dynamic])];
   }, [localStudents, store.settings]);

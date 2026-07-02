@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { saveFile, listFiles, deleteFile, openFilePDF, downloadFilePDF } from '../lib/fileStore';
-import { SUBJECTS, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
 import { Upload, Eye, Download, Trash2, FileText, BookOpen, Loader } from 'lucide-react';
 
 const TABS = [
@@ -13,7 +13,7 @@ const TABS = [
 export default function TeacherResources({ store, user }) {
   const { notify } = store;
   const dynamicClasses = useMemo(() => {
-    const saved = (store.settings?.classes || []).map(c => c.name);
+    const saved = expandClassesWithStreams(store.settings?.classes || []);
     return saved.length ? saved : ['1A', '2A', '3A']; // Fallback
   }, [store.settings]);
   const [tab, setTab] = useState('assignments');
