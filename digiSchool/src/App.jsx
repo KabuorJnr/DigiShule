@@ -37,6 +37,7 @@ import Notices from './views/Notices';
 import SchoolCalendar from './views/SchoolCalendar';
 import Registrar from './views/Registrar';
 import DeveloperPortal from './views/DeveloperPortal';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -84,6 +85,7 @@ export default function App() {
   const [notifications, setNotifications] = useState([]);
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   // Domain state (loaded from Supabase after sign-in)
   const [settings, setSettings] = useState({});
@@ -512,6 +514,7 @@ export default function App() {
               <span className="principal-name">{currentUser.name}</span>
               <span className="user-role">{role.label}</span>
             </div>
+            <button className="btn btn-sm" onClick={() => setChangePasswordOpen(true)} style={{ marginRight: 8 }}>Change Password</button>
             <button className="btn btn-sm" onClick={handleLogout}>Logout</button>
           </div>
         </header>
@@ -640,6 +643,13 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {changePasswordOpen && (
+        <ChangePasswordModal 
+          onClose={() => setChangePasswordOpen(false)} 
+          notify={notify} 
+        />
       )}
     </div>
   );
