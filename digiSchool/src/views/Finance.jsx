@@ -10,6 +10,7 @@ import { fetchTable, upsertRow, getActiveSchoolId } from '../lib/api';
 import { expandClassesWithStreams } from '../data/seed';
 import { supabase } from '../lib/supabaseClient';
 import { Icon } from '../components/icons';
+import PrintHeader from '../components/PrintHeader';
 
 const TABS = [
   { id: 'invoices', label: 'Invoices & Billing' },
@@ -437,19 +438,10 @@ function StatementsTab({ students, invoices, payments, store }) {
       {/* Printable Area */}
       {student && (
         <div className="printable-statement card card-pad" style={{ background: '#fff', color: '#000' }}>
-          {/* Letterhead */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: 16, marginBottom: 24 }}>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              {store.settings.logo && <img src={store.settings.logo} alt="School Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />}
-              <div>
-                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>{store.settings.name || 'Your School Name'}</h1>
-                <div style={{ fontSize: 13, color: '#333' }}>{store.settings.address || 'P.O Box 123, Nairobi'} | {store.settings.phone || '0700000000'} | {store.settings.email || 'info@school.com'}</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <h2 style={{ margin: 0, fontSize: 20, color: '#000' }}>FEE STATEMENT</h2>
-              <div style={{ fontSize: 13, marginTop: 4 }}>Date: {new Date().toLocaleDateString()}</div>
-            </div>
+          <PrintHeader />
+          <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Fee Statement</h2>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Date: {new Date().toLocaleDateString()}</div>
           </div>
 
           {/* Student Info */}
@@ -826,18 +818,10 @@ function FeeStructureTab({ store, user }) {
 
       {/* Printable Area */}
       <div className="printable-fee-structure card card-pad" style={{ background: '#fff', color: '#000' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: 16, marginBottom: 24 }}>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {store.settings.logo && <img src={store.settings.logo} alt="School Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />}
-            <div>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>{store.settings.name || 'Your School Name'}</h1>
-              <div style={{ fontSize: 13, color: '#333' }}>{store.settings.address || 'P.O Box 123, Nairobi'} | {store.settings.phone || '0700000000'} | {store.settings.email || 'info@school.com'}</div>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <h2 style={{ margin: 0, fontSize: 20, color: '#000' }}>OFFICIAL FEE STRUCTURE</h2>
-            <div style={{ fontSize: 13, marginTop: 4 }}>Academic Year: {new Date().getFullYear()}</div>
-          </div>
+        <PrintHeader />
+        <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Official Fee Structure</h2>
+          <div style={{ fontSize: 13, marginTop: 4 }}>Academic Year: {new Date().getFullYear()}</div>
         </div>
 
         {(() => {

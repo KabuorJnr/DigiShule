@@ -3,6 +3,7 @@ import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudents } from '../lib/api';
 import { Icon } from '../components/icons';
+import PrintHeader from '../components/PrintHeader';
 
 const OUTCOME_COLOR = { 'Returned to class': 'green', 'Sent home': 'amber', 'Referred to hospital': 'red' };
 
@@ -95,6 +96,22 @@ export default function Clinic({ store }) {
 
   return (
     <div className="print-friendly">
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          @page { margin: 0; }
+          body * { visibility: hidden; }
+          .print-friendly, .print-friendly * { visibility: visible; }
+          .print-friendly { position: absolute; left: 0; top: 0; width: 100%; padding: 2cm !important; box-sizing: border-box; }
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          .sidebar, .topbar { display: none !important; }
+          .layout { display: block !important; padding: 0 !important; }
+          .main { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+        }
+        @media screen {
+          .print-only { display: none; }
+        }
+      `}} />
       <div className="no-print">
         <PageHeader
           title="Clinic & Health"
@@ -118,10 +135,12 @@ export default function Clinic({ store }) {
       </div>
 
       {/* Print-only Header */}
-      <div className="print-only" style={{ marginBottom: 24, textAlign: 'center' }}>
-        <h2>EduOne Clinic Report</h2>
-        <p className="muted">Generated on {new Date().toLocaleDateString()}</p>
-        <hr style={{ borderColor: 'var(--border-light)', margin: '16px 0' }} />
+      <div className="print-only" style={{ marginBottom: 24 }}>
+        <PrintHeader />
+        <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Clinic & Health Report</h2>
+          <div style={{ fontSize: 13, marginTop: 4 }}>Generated on {new Date().toLocaleDateString()}</div>
+        </div>
       </div>
 
       <div className="card card-pad">

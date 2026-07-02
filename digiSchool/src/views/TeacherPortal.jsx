@@ -4,6 +4,7 @@ import { computeRow, gradeFor } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
+import PrintHeader from '../components/PrintHeader';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
@@ -225,6 +226,16 @@ export default function TeacherPortal({ store, user }) {
 
   return (
     <div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          @page { margin: 0; }
+          body * { visibility: hidden; }
+          .modal { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none; box-shadow: none; max-width: 100% !important; border-radius: 0; }
+          .modal .print-area, .modal .print-area * { visibility: visible; }
+          .modal .print-area { padding: 2cm !important; width: 100%; box-sizing: border-box; }
+          .modal-header, .no-print { display: none !important; }
+        }
+      `}} />
       {/* Welcome Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)',
@@ -374,9 +385,9 @@ export default function TeacherPortal({ store, user }) {
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <h2 style={{ margin: '0 0 8px 0' }}>{store.settings.name || 'DigiShule'}</h2>
-                <h3 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h3>
+              <PrintHeader />
+              <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
+                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
               </div>
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
