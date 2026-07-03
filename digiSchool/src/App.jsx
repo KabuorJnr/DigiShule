@@ -28,6 +28,16 @@ import ResourcesTab from './views/student/ResourcesTab';
 import StudentFinanceTab from './views/student/StudentFinanceTab';
 import SettingsTab from './views/student/SettingsTab';
 
+import TeacherLayout from './views/teacher/TeacherLayout';
+import TeacherDashboard from './views/teacher/TeacherDashboard';
+import MyClasses from './views/teacher/MyClasses';
+import GradebookTab from './views/teacher/GradebookTab';
+
+import StaffLayout from './views/staff/StaffLayout';
+import LogAttendance from './views/staff/LogAttendance';
+import LeaveRequests from './views/staff/LeaveRequests';
+import Recruitment from './views/staff/Recruitment';
+
 export default function App() {
   return (
     <Routes>
@@ -65,6 +75,18 @@ export default function App() {
           <Route path="resources" element={<ResourcesTab />} />
           <Route path="finance" element={<StudentFinanceTab />} />
           <Route path="settings" element={<SettingsTab />} />
+        </Route>
+
+        <Route path="teacher" element={<TeacherLayout />}>
+          <Route index element={<TeacherDashboard />} />
+          <Route path="classes" element={<MyClasses />} />
+          <Route path="gradebook" element={<GradebookTab />} />
+        </Route>
+
+        <Route path="staff" element={<StaffLayout />}>
+          <Route index element={<LogAttendance />} />
+          <Route path="leave" element={<LeaveRequests />} />
+          <Route path="recruitment" element={<Recruitment />} />
         </Route>
 
         {/* Fallback for all legacy components */}

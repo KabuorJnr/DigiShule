@@ -7,9 +7,7 @@ import Settings from '../Settings';
 import Library from '../Library';
 import Admissions from '../Admissions';
 import Clinic from '../Clinic';
-import StaffAttendance from '../StaffAttendance';
 import Facilities from '../Facilities';
-import TeacherPortal from '../TeacherPortal';
 import TeacherResources from '../TeacherResources';
 import ClassTeachers from '../ClassTeachers';
 import ParentPortal from '../ParentPortal';
@@ -34,9 +32,7 @@ const VIEW_MAP = {
   library: Library,
   admissions: Admissions,
   clinic: Clinic,
-  staff: StaffAttendance,
   facilities: Facilities,
-  teacher: TeacherPortal,
   parent: ParentPortal,
   class_teachers: ClassTeachers,
   notices: Notices,

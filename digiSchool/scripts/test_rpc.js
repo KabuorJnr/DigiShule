@@ -1,7 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const url = 'https://oblzjefrmtxcvbagvnrr.supabase.co';
-const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ibHpqZWZybXR4Y3ZiYWd2bnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTI2NDYsImV4cCI6MjA5NjQ4ODY0Nn0.lgN-r94YkTCsalky3lUjt7V-0uyRQUA0HX-9Hzj7jGU';
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!anonKey) {
+  console.error("Missing VITE_SUPABASE_ANON_KEY in .env");
+  process.exit(1);
+}
 
 const supabase = createClient(url, anonKey);
 
