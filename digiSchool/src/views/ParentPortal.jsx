@@ -501,7 +501,10 @@ export default function ParentPortal({ store, user }) {
       </div>
 
       <div className="card card-pad" style={{ marginTop: 14 }}>
-        <div className="section-title">My Meeting Requests</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div className="section-title" style={{ margin: 0 }}>My Meeting Requests</div>
+          <button className="btn btn-sm btn-primary" onClick={() => setMeetingModalOpen(true)}>Request Meeting</button>
+        </div>
         <div className="scroll-x">
           <table className="table">
             <thead>

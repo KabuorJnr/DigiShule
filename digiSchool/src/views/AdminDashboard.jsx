@@ -42,7 +42,7 @@ export default function AdminDashboard({ store, user }) {
   // Meeting Schedule Modal
   const [scheduleMeetingOpen, setScheduleMeetingOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [scheduleForm, setScheduleForm] = useState({ date: '', time: '' });
+  const [scheduleForm, setScheduleForm] = useState({ date: '', time: '', teacher_name: '' });
 
   // Staff Commissioning State
   const [commissionModalOpen, setCommissionModalOpen] = useState(false);
@@ -128,13 +128,13 @@ export default function AdminDashboard({ store, user }) {
     if (!scheduleForm.date || !scheduleForm.time) return notify('Please select date and time', 'warning');
     try {
       const scheduledDt = `${scheduleForm.date}T${scheduleForm.time}:00`;
-      const updated = { ...selectedMeeting, status: 'Scheduled', scheduled_date: scheduledDt };
+      const updated = { ...selectedMeeting, status: 'Scheduled', scheduled_date: scheduledDt, teacher_name: scheduleForm.teacher_name };
       await upsertRow('parentMeetingRequests', updated);
       setMeetingRequests(prev => prev.map(m => m.id === updated.id ? updated : m));
-      notify('Meeting scheduled successfully.', 'success');
+      notify(`Meeting scheduled and ${scheduleForm.teacher_name} tagged successfully.`, 'success');
       setScheduleMeetingOpen(false);
       setSelectedMeeting(null);
-      setScheduleForm({ date: '', time: '' });
+      setScheduleForm({ date: '', time: '', teacher_name: '' });
     } catch (e) {
       notify(`Failed to schedule meeting: ${e.message}`, 'error');
     }
@@ -361,7 +361,7 @@ export default function AdminDashboard({ store, user }) {
                 <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Requested on: {new Date(m.created_at).toLocaleDateString()}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <button className="btn btn-sm btn-primary" onClick={() => { setSelectedMeeting(m); setScheduleMeetingOpen(true); }}>Schedule</button>
+                <button className="btn btn-sm btn-primary" onClick={() => { setSelectedMeeting(m); setScheduleForm({ date: '', time: '', teacher_name: m.teacher_name }); setScheduleMeetingOpen(true); }}>Schedule</button>
                 <button className="btn btn-sm" onClick={() => handleRejectMeeting(m)}>Reject</button>
               </div>
             </div>
@@ -373,31 +373,45 @@ export default function AdminDashboard({ store, user }) {
 
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Local Events & Meetings Calendar</h3>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Scheduled Appointments</h3>
             <button className="btn btn-sm" onClick={() => navigate('school_calendar')}>View Global Calendar</button>
           </div>
           <div className="scroll-x" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            <table className="table">
-              <thead style={{ position: 'sticky', top: 0, background: '#fff' }}>
-                <tr><th>Date & Time</th><th>Event</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {meetingRequests.filter(m => m.status === 'Scheduled').length === 0 ? (
-                   <tr><td colSpan={3} className="muted">No scheduled meetings.</td></tr>
-                ) : (
-                  meetingRequests.filter(m => m.status === 'Scheduled').map(m => (
-                    <tr key={m.id}>
-                      <td style={{ whiteSpace: 'nowrap' }}>{new Date(m.scheduled_date).toLocaleString()}</td>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>Meeting: {m.parent_name}</div>
-                        <div className="muted" style={{ fontSize: 12 }}>With: {m.teacher_name}</div>
-                      </td>
-                      <td><Badge color="green">Scheduled</Badge></td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {(() => {
+              const scheduled = meetingRequests.filter(m => m.status === 'Scheduled');
+              if (scheduled.length === 0) return <p className="muted" style={{ padding: 16 }}>No scheduled meetings.</p>;
+              
+              const grouped = scheduled.reduce((acc, m) => {
+                const date = new Date(m.scheduled_date);
+                const month = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                if (!acc[month]) acc[month] = [];
+                acc[month].push(m);
+                return acc;
+              }, {});
+
+              return Object.entries(grouped).map(([month, meetings]) => (
+                <div key={month} style={{ marginBottom: 16 }}>
+                  <div style={{ background: '#f8fafc', padding: '6px 12px', fontWeight: 600, color: '#334155', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                    {month}
+                  </div>
+                  <table className="table" style={{ marginTop: 0 }}>
+                    <thead style={{ display: 'none' }}><tr><th></th><th></th><th></th></tr></thead>
+                    <tbody>
+                      {meetings.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)).map(m => (
+                        <tr key={m.id}>
+                          <td style={{ whiteSpace: 'nowrap', width: '20%' }}>{new Date(m.scheduled_date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>Meeting: {m.parent_name}</div>
+                            <div className="muted" style={{ fontSize: 12 }}>With: {m.teacher_name}</div>
+                          </td>
+                          <td style={{ textAlign: 'right' }}><Badge color="green">Scheduled</Badge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -491,6 +505,15 @@ export default function AdminDashboard({ store, user }) {
               <div>
                 <label className="field-label">Time</label>
                 <input type="time" className="input" value={scheduleForm.time} onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label className="field-label">Assign / Tag Teacher (CC)</label>
+                <select className="select" value={scheduleForm.teacher_name} onChange={e => setScheduleForm(f => ({ ...f, teacher_name: e.target.value }))}>
+                  <option value={selectedMeeting.teacher_name}>{selectedMeeting.teacher_name} (Requested)</option>
+                  {dbStaff.filter(s => s.name !== selectedMeeting.teacher_name).map(s => (
+                    <option key={s.id} value={s.name}>{s.name} - {s.role}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

@@ -14,7 +14,10 @@ const schoolConfig = (() => {
 const schoolName  = schoolConfig?.school?.name  || 'EduOne School Portal';
 const schoolLogo  = schoolConfig?.school?.logo  || null;
 
-export default function Login({ onSignUp }) {
+import { useNavigate } from 'react-router-dom';
+
+export default function Login() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
