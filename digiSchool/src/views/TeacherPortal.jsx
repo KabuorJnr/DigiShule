@@ -70,8 +70,18 @@ export default function TeacherPortal({ store, user }) {
       const myLeaves = (rows || []).filter(l => l.staff_name === teacherName || l.staff_id === user?.id);
       setLeaveRequests(myLeaves.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     }).catch(() => {});
-    return () => { active = false; };
   }, [teacherName, user?.id]);
+
+  const [meetingRequests, setMeetingRequests] = useState([]);
+  useEffect(() => {
+    let active = true;
+    fetchTable('parentMeetingRequests').then(rows => {
+      if (!active) return;
+      const myMeetings = (rows || []).filter(m => m.teacher_name === teacherName && m.status === 'Scheduled');
+      setMeetingRequests(myMeetings.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [teacherName]);
 
   const handleLogBehavior = () => {
     if (!behaviorForm.student) return store.notify('Please select a student', 'warning');
@@ -329,6 +339,35 @@ export default function TeacherPortal({ store, user }) {
               </div>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Parent Meeting Requests */}
+      <div className="card card-pad" style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div className="section-title" style={{ margin: 0 }}>Upcoming Parent Meetings</div>
+        </div>
+        <div className="scroll-x">
+          <table className="table">
+            <thead>
+              <tr><th>Date & Time</th><th>Parent</th><th>Student</th><th>Reason</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {meetingRequests.length === 0 ? (
+                <tr><td colSpan={5} className="muted">No upcoming meetings.</td></tr>
+              ) : (
+                meetingRequests.map(m => (
+                  <tr key={m.id}>
+                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(m.scheduled_date).toLocaleString()}</td>
+                    <td style={{ fontWeight: 600 }}>{m.parent_name}</td>
+                    <td>{m.student_name}</td>
+                    <td>{m.reason}</td>
+                    <td><Badge color="green">Scheduled</Badge></td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

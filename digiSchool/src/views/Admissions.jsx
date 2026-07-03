@@ -53,7 +53,7 @@ export default function Admissions({ store }) {
       const newStudent = {
         id: `s_${app.id}`,
         name: app.name,
-        adm: `ADM/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`,
+        adm: `ADM/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         class: app.Grade || app.form || app.grade || '7A',
         gender: app.gender === 'M' ? 'Male' : app.gender === 'F' ? 'Female' : app.gender,
         scores: {},

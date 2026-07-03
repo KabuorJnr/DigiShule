@@ -144,7 +144,6 @@ export const NAV_ICON_MAP = {
   '✅': 'check',
   '📖': 'book',
   '💬': 'message',
-  '📝': 'pen',
 };
 
 export default Icon;

@@ -68,21 +68,25 @@ export default function ParentPortal({ store, user }) {
   const [attendanceLog, setAttendanceLog] = useState([]);
   const [cloudAssignments, setCloudAssignments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [meetingRequests, setMeetingRequests] = useState([]);
+  const [meetingModalOpen, setMeetingModalOpen] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({ teacher: '', reason: '' });
 
   useEffect(() => {
     if (!child?.adm) return;
     let active = true;
     Promise.all([
       fetchTable('clinicVisits'), fetchTable('disciplinaryRecords'), fetchTable('financePayments'),
-      fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), listFiles('assignments').catch(() => [])
+      fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('parentMeetingRequests'), listFiles('assignments').catch(() => [])
     ])
-      .then(([visits, cases, pays, att, subs, assigns]) => {
+      .then(([visits, cases, pays, att, subs, meetings, assigns]) => {
         if (!active) return;
         setHealthRecords((visits || []).filter((v) => v.adm === child.adm));
         setDisciplinary((cases || []).filter((c) => c.adm === child.adm));
         setPayments((pays || []).filter((p) => p.student_id === child.id));
         setAttendanceLog((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
         setSubmissions((subs || []).filter(s => s.student_id === child.id || s.adm === child.adm));
+        setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
         setCloudAssignments(assigns || []);
       })
       .catch(() => {});
@@ -222,6 +226,30 @@ export default function ParentPortal({ store, user }) {
     }
   };
 
+  const handleRequestMeeting = async () => {
+    if (!meetingForm.teacher.trim() || !meetingForm.reason.trim()) return store.notify('Please select a teacher and provide a reason', 'warning');
+    try {
+      const payload = {
+        id: `meet_${Date.now()}`,
+        parent_id: user.id || 'parent',
+        parent_name: user.name || 'Parent',
+        student_id: child.id,
+        student_name: child.name,
+        teacher_name: meetingForm.teacher,
+        reason: meetingForm.reason,
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('parentMeetingRequests', payload);
+      store.notify('Meeting request submitted. The administration will schedule it shortly.', 'success');
+      setMeetingRequests(prev => [payload, ...prev]);
+      setMeetingModalOpen(false);
+      setMeetingForm({ teacher: '', reason: '' });
+    } catch (e) {
+      store.notify(`Failed to request meeting: ${e.message}`, 'error');
+    }
+  };
+
   const handleUpdateProfile = () => {
     if (!profileForm.phone || !profileForm.emergencyContact) return store.notify('Please fill required fields', 'warning');
     store.notify('Profile and emergency contacts updated successfully.', 'success');
@@ -285,6 +313,9 @@ export default function ParentPortal({ store, user }) {
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModalOpen(true)}>
             <Icon name="message" size={18} /> Message Teacher
+          </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setMeetingModalOpen(true)}>
+            <ClipboardList size={18} /> Request Meeting
           </button>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setProfileModalOpen(true)}>
             <Icon name="settings" size={18} /> Update Contact Info
@@ -469,6 +500,32 @@ export default function ParentPortal({ store, user }) {
         </div>
       </div>
 
+      <div className="card card-pad" style={{ marginTop: 14 }}>
+        <div className="section-title">My Meeting Requests</div>
+        <div className="scroll-x">
+          <table className="table">
+            <thead>
+              <tr><th>Date Requested</th><th>Teacher</th><th>Reason</th><th>Status</th><th>Scheduled For</th></tr>
+            </thead>
+            <tbody>
+              {meetingRequests.length === 0 ? (
+                <tr><td colSpan={5} className="muted">No meeting requests submitted.</td></tr>
+              ) : (
+                meetingRequests.map((m) => (
+                  <tr key={m.id}>
+                    <td>{new Date(m.created_at).toLocaleDateString()}</td>
+                    <td style={{ fontWeight: 600 }}>{m.teacher_name}</td>
+                    <td>{m.reason}</td>
+                    <td><Badge color={m.status === 'Scheduled' ? 'green' : m.status === 'Rejected' ? 'red' : 'amber'}>{m.status}</Badge></td>
+                    <td>{m.scheduled_date ? new Date(m.scheduled_date).toLocaleString() : '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {payModalOpen && (
         <Modal title="Secure Fee Payment" onClose={() => setPayModalOpen(false)} footer={null}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -541,6 +598,29 @@ export default function ParentPortal({ store, user }) {
             <div>
               <label className="field-label">Message</label>
               <textarea className="input" rows={4} value={msgForm.body} onChange={e => setMsgForm(f => ({ ...f, body: e.target.value }))} placeholder="Type your message here..."></textarea>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {meetingModalOpen && (
+        <Modal title="Request Meeting" onClose={() => setMeetingModalOpen(false)} footer={
+          <>
+            <button className="btn" onClick={() => setMeetingModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleRequestMeeting}>Submit Request</button>
+          </>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="field-label">Teacher / Staff Member</label>
+              <select className="select" value={meetingForm.teacher} onChange={e => setMeetingForm(f => ({ ...f, teacher: e.target.value }))}>
+                <option value="">Select a Teacher</option>
+                {store.teachers?.map(t => <option key={t.id} value={t.name}>{t.name} - {t.dept || 'Staff'}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Reason for Meeting</label>
+              <textarea className="input" rows={4} value={meetingForm.reason} onChange={e => setMeetingForm(f => ({ ...f, reason: e.target.value }))} placeholder="E.g. I would like to discuss my child's recent drop in performance."></textarea>
             </div>
           </div>
         </Modal>

@@ -6,10 +6,6 @@ export default function GalleryViewer() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadGallery();
-  }, []);
-
   const loadGallery = async () => {
     try {
       const data = await listFiles('gallery');
@@ -28,6 +24,10 @@ export default function GalleryViewer() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadGallery();
+  }, []);
 
   if (loading) return <div className="card p-6" style={{ textAlign: 'center' }}><Loader className="spin" /></div>;
 

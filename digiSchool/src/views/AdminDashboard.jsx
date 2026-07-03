@@ -37,6 +37,12 @@ export default function AdminDashboard({ store, user }) {
   const [showMediaManager, setShowMediaManager] = useState(false);
   const [dbFacilities, setDbFacilities] = useState([]);
   const [dbDiscipline, setDbDiscipline] = useState([]);
+  const [meetingRequests, setMeetingRequests] = useState([]);
+
+  // Meeting Schedule Modal
+  const [scheduleMeetingOpen, setScheduleMeetingOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({ date: '', time: '' });
 
   // Staff Commissioning State
   const [commissionModalOpen, setCommissionModalOpen] = useState(false);
@@ -50,6 +56,7 @@ export default function AdminDashboard({ store, user }) {
     fetchTable('staff').then(setDbStaff).catch(() => {});
     fetchTable('facilities').then(setDbFacilities).catch(() => {});
     fetchTable('disciplinaryRecords').then(setDbDiscipline).catch(() => {});
+    fetchTable('parentMeetingRequests').then(setMeetingRequests).catch(() => {});
   }, []);
 
   const activeStaffList = dbStaff.filter(s => s.status !== 'Inactive');
@@ -115,6 +122,33 @@ export default function AdminDashboard({ store, user }) {
       body,
       filename: `Discipline_Records_${new Date().toISOString().slice(0, 10)}.pdf`
     });
+  };
+
+  const handleScheduleMeeting = async () => {
+    if (!scheduleForm.date || !scheduleForm.time) return notify('Please select date and time', 'warning');
+    try {
+      const scheduledDt = `${scheduleForm.date}T${scheduleForm.time}:00`;
+      const updated = { ...selectedMeeting, status: 'Scheduled', scheduled_date: scheduledDt };
+      await upsertRow('parentMeetingRequests', updated);
+      setMeetingRequests(prev => prev.map(m => m.id === updated.id ? updated : m));
+      notify('Meeting scheduled successfully.', 'success');
+      setScheduleMeetingOpen(false);
+      setSelectedMeeting(null);
+      setScheduleForm({ date: '', time: '' });
+    } catch (e) {
+      notify(`Failed to schedule meeting: ${e.message}`, 'error');
+    }
+  };
+
+  const handleRejectMeeting = async (meeting) => {
+    try {
+      const updated = { ...meeting, status: 'Rejected' };
+      await upsertRow('parentMeetingRequests', updated);
+      setMeetingRequests(prev => prev.map(m => m.id === updated.id ? updated : m));
+      notify('Meeting request rejected.', 'success');
+    } catch (e) {
+      notify(`Failed to reject meeting: ${e.message}`, 'error');
+    }
   };
 
   const handleCommissionStaff = async () => {
@@ -286,9 +320,7 @@ export default function AdminDashboard({ store, user }) {
             <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
             <button className="btn btn-sm" onClick={() => navigate('staff')}>Manage Leave</button>
           </div>
-          {true && (
-            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
-          )}
+          <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
         </div>
 
         <div className="card card-pad">
@@ -312,6 +344,61 @@ export default function AdminDashboard({ store, user }) {
           {expenses.filter(e => e.status === 'Pending').length === 0 && (
             <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending expenses</p>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
+        <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Parent Meeting Requests</h3>
+          </div>
+          {meetingRequests.filter(m => m.status === 'Pending').map(m => (
+            <div key={m.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.parent_name} <span className="muted" style={{ fontWeight: 400 }}>(Student: {m.student_name})</span></div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Requested Staff: {m.teacher_name}</div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>"{m.reason}"</div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Requested on: {new Date(m.created_at).toLocaleDateString()}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button className="btn btn-sm btn-primary" onClick={() => { setSelectedMeeting(m); setScheduleMeetingOpen(true); }}>Schedule</button>
+                <button className="btn btn-sm" onClick={() => handleRejectMeeting(m)}>Reject</button>
+              </div>
+            </div>
+          ))}
+          {meetingRequests.filter(m => m.status === 'Pending').length === 0 && (
+            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending meeting requests</p>
+          )}
+        </div>
+
+        <div className="card card-pad">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Local Events & Meetings Calendar</h3>
+            <button className="btn btn-sm" onClick={() => navigate('school_calendar')}>View Global Calendar</button>
+          </div>
+          <div className="scroll-x" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <table className="table">
+              <thead style={{ position: 'sticky', top: 0, background: '#fff' }}>
+                <tr><th>Date & Time</th><th>Event</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {meetingRequests.filter(m => m.status === 'Scheduled').length === 0 ? (
+                   <tr><td colSpan={3} className="muted">No scheduled meetings.</td></tr>
+                ) : (
+                  meetingRequests.filter(m => m.status === 'Scheduled').map(m => (
+                    <tr key={m.id}>
+                      <td style={{ whiteSpace: 'nowrap' }}>{new Date(m.scheduled_date).toLocaleString()}</td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>Meeting: {m.parent_name}</div>
+                        <div className="muted" style={{ fontSize: 12 }}>With: {m.teacher_name}</div>
+                      </td>
+                      <td><Badge color="green">Scheduled</Badge></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       </>
@@ -380,6 +467,36 @@ export default function AdminDashboard({ store, user }) {
           </div>
         </Modal>
       )}
+
+      {scheduleMeetingOpen && selectedMeeting && (
+        <Modal title="Schedule Parent Meeting" onClose={() => { setScheduleMeetingOpen(false); setSelectedMeeting(null); }} footer={
+          <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
+            <button className="btn" style={{ flex: 1 }} onClick={() => { setScheduleMeetingOpen(false); setSelectedMeeting(null); }}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleScheduleMeeting}>Schedule Meeting</button>
+          </div>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px' }}>
+              <div><strong>Parent:</strong> {selectedMeeting.parent_name}</div>
+              <div><strong>Student:</strong> {selectedMeeting.student_name}</div>
+              <div><strong>Requested Staff:</strong> {selectedMeeting.teacher_name}</div>
+              <div style={{ marginTop: 8 }}><strong>Reason:</strong> {selectedMeeting.reason}</div>
+            </div>
+            
+            <div className="grid grid-2" style={{ gap: 16 }}>
+              <div>
+                <label className="field-label">Date</label>
+                <input type="date" className="input" value={scheduleForm.date} onChange={e => setScheduleForm(f => ({ ...f, date: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Time</label>
+                <input type="time" className="input" value={scheduleForm.time} onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {commissionModalOpen && (
         <Modal title="Commission Staff Account" onClose={() => setCommissionModalOpen(false)} footer={null}>
           {commissionSuccess ? (

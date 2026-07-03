@@ -10,9 +10,7 @@ export default function MediaManager({ notify, user }) {
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState('');
 
-  useEffect(() => {
-    loadGallery();
-  }, []);
+
 
   const loadGallery = async () => {
     try {
@@ -35,6 +33,10 @@ export default function MediaManager({ notify, user }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadGallery();
+  }, []);
 
   const handleUpload = async (e) => {
     const fileList = Array.from(e.target.files);

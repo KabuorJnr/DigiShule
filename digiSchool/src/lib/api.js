@@ -42,7 +42,8 @@ const TABLES = {
   facilities: 'facilities', notifications: 'notifications',
   schoolEvents: 'school_events', job_applications: 'job_applications',
   messages: 'messages', studentAttendance: 'student_attendance',
-  assignmentSubmissions: 'assignment_submissions'
+  assignmentSubmissions: 'assignment_submissions',
+  parentMeetingRequests: 'parent_meeting_requests'
 };
 
 export async function fetchTable(key) {
@@ -54,7 +55,8 @@ export async function fetchTable(key) {
       notifications: 'created_at', messages: 'created_at', leave_requests: 'created_at',
       clinic_visits: 'date', disciplinary_records: 'date', school_events: 'date', student_attendance: 'date',
       admissions: 'date', job_applications: 'applied_date',
-      assignment_submissions: 'submitted_at', library_loans: 'loan_date'
+      assignment_submissions: 'submitted_at', library_loans: 'loan_date',
+      parent_meeting_requests: 'created_at'
     };
     
     if (dateColMap[table]) {

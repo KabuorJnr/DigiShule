@@ -12,9 +12,7 @@ export default function DeveloperPortal({ store }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadPlatformData();
-  }, []);
+
 
   const loadPlatformData = async () => {
     setLoading(true);
@@ -40,6 +38,10 @@ export default function DeveloperPortal({ store }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadPlatformData();
+  }, []);
 
   const totalRevenue = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
