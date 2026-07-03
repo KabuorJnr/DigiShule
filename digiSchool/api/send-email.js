@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       secure: true,
       auth: {
         user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
-        pass: process.env.SMTP_PASS || 'vfyf bcqg ylei mklf',
+        pass: process.env.SMTP_PASS,
       },
     });
 
