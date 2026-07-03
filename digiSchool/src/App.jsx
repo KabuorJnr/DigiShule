@@ -427,15 +427,6 @@ export default function App() {
           )}
         </div>
         <nav className="sidebar-nav">
-          {!collapsed && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
-              <div className="avatar" style={{ width: 48, height: 48, fontSize: 18, background: '#000000' }}>{initials}</div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 11, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 0.5 }}>Logged in as</span>
-                <strong style={{ fontSize: 14 }}>{role.label}</strong>
-              </div>
-            </div>
-          )}
           {nav.map((section, sIdx) => (
             <div key={sIdx} style={{ marginBottom: section.section === 'CORE' ? 8 : 16 }}>
               {!collapsed && section.section !== 'CORE' && (
@@ -494,6 +485,37 @@ export default function App() {
             </div>
           ))}
         </nav>
+
+        <div className="sidebar-profile-setting" style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {!collapsed ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '0 4px' }}>
+                <div className="avatar" title={currentUser.name} style={{ width: 36, height: 36, fontSize: 14 }}>{initials}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{currentUser.name}</strong>
+                  <span style={{ fontSize: 11, opacity: 0.7 }}>{role.label}</span>
+                </div>
+              </div>
+              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '8px 12px', fontSize: 13, minHeight: 'auto' }}>
+                <Key size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
+              </button>
+              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '8px 12px', fontSize: 13, color: '#f87171', minHeight: 'auto' }}>
+                <LogOut size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="avatar" title={currentUser.name} style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 12px auto' }}>{initials}</div>
+              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ justifyContent: 'center', padding: '8px', minHeight: 'auto' }}>
+                <Key size={14} style={{ margin: 0, opacity: 0.7 }} />
+              </button>
+              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#f87171', minHeight: 'auto' }}>
+                <LogOut size={14} style={{ margin: 0, opacity: 0.7 }} />
+              </button>
+            </>
+          )}
+        </div>
+
         <button className="collapse-btn" onClick={() => setCollapsed((c) => !c)}>
           {collapsed ? <PanelLeft size={16} /> : <><PanelLeftClose size={16} /> Collapse</>}
         </button>
@@ -521,19 +543,6 @@ export default function App() {
             <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
               <Bell size={18} />{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
             </button>
-            <div className="avatar" title={currentUser.name}>{initials}</div>
-            <div className="user-meta" style={{ marginRight: '16px' }}>
-              <span className="principal-name">{currentUser.name}</span>
-              <span className="user-role">{role.label}</span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', borderLeft: '1px solid var(--border)', paddingLeft: '16px' }}>
-              <button className="btn btn-sm btn-ghost" onClick={() => setChangePasswordOpen(true)} title="Change Password">
-                <Key size={14} /> <span className="hide-mobile">Password</span>
-              </button>
-              <button className="btn btn-sm btn-ghost" onClick={handleLogout} title="Logout" style={{ color: 'var(--danger)' }}>
-                <LogOut size={14} /> <span className="hide-mobile">Logout</span>
-              </button>
-            </div>
           </div>
         </header>
 
