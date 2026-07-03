@@ -550,7 +550,7 @@ export default function App() {
         <header className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flex: 1 }}>
             <div className="topbar-title">{settings.name}</div>
-            <div className="topbar-search" style={{ position: 'relative', maxWidth: '280px', width: '100%' }} ref={searchInputRef}>
+            <div className="topbar-search" style={{ position: 'relative', maxWidth: '400px', width: '100%' }} ref={searchInputRef}>
               <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666666' }} />
               <input 
                 type="text" 
