@@ -831,32 +831,39 @@ export default function StudentPortal({ store, user, params }) {
 
       {/* ===== CALENDAR ===== */}
       {tab === 'calendar' && (
-        <div className="card card-pad">
+        <div className="card card-pad" style={{ height: '75vh', display: 'flex', flexDirection: 'column' }}>
           <h3 className="section-title">School Calendar & Events</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {schoolEvents.map(e => (
-              <div key={e.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: '#e8f0fe', color: '#0078D4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
-                  <div style={{ fontSize: 16 }}>{e.date?.split(' ')?.[1] || '—'}</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{e.date?.split(' ')?.[0] || '—'}</div>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{e.title}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{e.desc}</div>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+            {store?.settings?.googleCalendarUrl ? (
+              <iframe 
+                src={store.settings.googleCalendarUrl} 
+                style={{ border: 0, width: '100%', flex: 1, minHeight: '500px', borderRadius: 8 }} 
+                frameBorder="0" 
+                scrolling="no"
+                title="School Calendar"
+              ></iframe>
+            ) : (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+                The school has not integrated a public calendar yet.
               </div>
-            ))}
-            {upcomingExams.map(ex => (
-              <div key={ex.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: '#fff3cd', color: '#92400e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
-                  <div style={{ fontSize: 14 }}>EXAM</div>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{ex.name}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{ex.type} — Starts {ex.startDate}</div>
-                </div>
+            )}
+            
+            {upcomingExams.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <h4 style={{ marginBottom: 12 }}>Upcoming Exams</h4>
+                {upcomingExams.map(ex => (
+                  <div key={ex.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 8, background: '#fff3cd', color: '#92400e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                      <div style={{ fontSize: 14 }}>EXAM</div>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{ex.name}</div>
+                      <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{ex.type} — Starts {ex.startDate}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}

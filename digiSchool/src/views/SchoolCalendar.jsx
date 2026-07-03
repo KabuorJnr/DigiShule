@@ -1,193 +1,45 @@
-import { useState, useEffect } from 'react';
-import { fetchTable, upsertRow, deleteRow } from '../lib/api';
-import { Badge } from '../components/widgets';
-import { Calendar, ExternalLink, Plus, Edit2, Trash2 } from 'lucide-react';
-import Modal from '../components/Modal';
-
-const TYPE_COLOR = { academic: 'blue', exam: 'red', event: 'green', holiday: 'amber', meeting: 'purple' };
-const TYPE_BG   = { academic: '#e8f0fe', exam: '#fee2e2', event: '#dcfce7', holiday: '#fef3c7', meeting: '#f3e8ff' };
-const TYPE_TEXT = { academic: '#0078D4', exam: '#D13438', event: '#107C10', holiday: '#92400e', meeting: '#7C3AED' };
-
-function makeGoogleCalLink({ title, desc, date, location }) {
-  const base = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
-  return `${base}&text=${encodeURIComponent(title)}&details=${encodeURIComponent(desc || '')}&location=${encodeURIComponent(location || '')}`;
-}
+import { Calendar, ExternalLink } from 'lucide-react';
 
 export default function SchoolCalendar({ store, user }) {
-  const { settings, notify } = store;
+  const { settings } = store;
   const calendarUrl = settings?.googleCalendarUrl || '';
-  const location = settings?.name || 'School';
-
-  const [localEvents, setLocalEvents] = useState([]);
-  const [addModal, setAddModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [newEvent, setNewEvent] = useState({ id: '', title: '', desc: '', date: '', type: 'academic' });
-
-  const canAdd = user && ['principal', 'deputy_academic', 'deputy_admin'].includes(user.role);
-
-  useEffect(() => {
-    fetchTable('schoolEvents')
-      .then(data => {
-        if (data && data.length > 0) {
-          setLocalEvents(data.sort((a, b) => a.date.localeCompare(b.date)));
-        } else {
-          setLocalEvents([]);
-        }
-      })
-      .catch(() => setLocalEvents([]));
-  }, []);
-
-  const openAdd = () => {
-    setIsEditing(false);
-    setNewEvent({ id: '', title: '', desc: '', date: '', type: 'academic' });
-    setAddModal(true);
-  };
-
-  const openEdit = (ev) => {
-    setIsEditing(true);
-    setNewEvent({ ...ev });
-    setAddModal(true);
-  };
-
-  const handleSave = async () => {
-    if (!newEvent.title.trim() || !newEvent.date.trim()) { notify('Title and date are required', 'warning'); return; }
-    const ev = { ...newEvent, id: newEvent.id || `ev${Date.now()}` };
-    try {
-      await upsertRow('schoolEvents', ev);
-      setLocalEvents(prev => {
-        const filtered = prev.filter(e => e.id !== ev.id);
-        return [...filtered, ev].sort((a, b) => a.date.localeCompare(b.date));
-      });
-      setAddModal(false);
-      notify(`Event ${isEditing ? 'updated' : 'added'}`, 'success');
-    } catch (e) {
-      notify(`Error saving event: ${e.message}`, 'error');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this event?')) return;
-    try {
-      await deleteRow('schoolEvents', id);
-      setLocalEvents(prev => prev.filter(e => e.id !== id));
-      notify('Event deleted', 'info');
-    } catch (e) {
-      notify(`Error deleting event: ${e.message}`, 'error');
-    }
-  };
+  
+  // No longer fetching broken localEvents table. Only relying on Google Calendar as requested.
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22, display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={22} /> School Calendar</h2>
-          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Academic events, exams, and term dates</p>
-        </div>
-        {canAdd && <button className="btn btn-primary" style={{ gap: 6 }} onClick={openAdd}><Plus size={16} /> Add Event</button>}
+    <div className="card card-pad" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 className="section-title" style={{ marginBottom: 0 }}>School Calendar</h2>
+        {calendarUrl && (
+          <a href={calendarUrl} target="_blank" rel="noreferrer" className="btn btn-sm" style={{ gap: 4 }}>
+            <ExternalLink size={14} /> Open in Google Calendar
+          </a>
+        )}
       </div>
 
-      {/* Google Calendar Embed */}
       {calendarUrl ? (
-        <div className="card card-pad" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Live Google Calendar</h3>
-            <a href={calendarUrl} target="_blank" rel="noreferrer" className="btn btn-sm" style={{ gap: 4 }}>
-              <ExternalLink size={14} /> Open in Google
-            </a>
-          </div>
-          <iframe
-            src={calendarUrl}
-            style={{ border: 'none', width: '100%', height: 500, borderRadius: 8 }}
-            title="School Google Calendar"
-          />
+        <div style={{ flex: 1, background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+          <iframe 
+            src={calendarUrl} 
+            style={{ border: 0, width: '100%', height: '100%' }} 
+            frameBorder="0" 
+            scrolling="no"
+            title="School Calendar"
+          ></iframe>
         </div>
       ) : (
-        <div className="card card-pad" style={{ marginBottom: 20, border: '2px dashed var(--border)', textAlign: 'center', padding: 32 }}>
-          <Calendar size={40} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
-          <p style={{ margin: 0, fontWeight: 600 }}>No Google Calendar connected</p>
-          <p className="muted" style={{ margin: '4px 0 12px', fontSize: 13 }}>
-            Admins can connect the school's public Google Calendar in Settings → Calendar.
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa', borderRadius: 8 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📅</div>
+          <h3 style={{ marginBottom: 8 }}>No Calendar Configured</h3>
+          <p className="muted" style={{ maxWidth: 400, textAlign: 'center', marginBottom: 24 }}>
+            The school administrator needs to integrate a Google Calendar in the Settings panel for it to appear here.
           </p>
-          {canAdd && (
-            <button className="btn btn-sm" onClick={() => store.navigate('settings')}>Go to Settings →</button>
+          {user && ['principal', 'deputy_admin'].includes(user.role) && (
+            <button className="btn btn-primary" onClick={() => store.navigate('settings')}>
+              Go to Settings
+            </button>
           )}
         </div>
-      )}
-
-      {/* Local Events List */}
-      <div className="card card-pad">
-        <h3 className="section-title">Upcoming School Events</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {localEvents.map(e => (
-            <div key={e.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-              <div style={{ width: 56, height: 56, borderRadius: 10, background: TYPE_BG[e.type] || '#f0f9ff', color: TYPE_TEXT[e.type] || '#0078D4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0, fontSize: 12 }}>
-                <div style={{ fontSize: 15 }}>{e.date?.split(' ')?.[1] || '—'}</div>
-                <div style={{ fontSize: 10, textTransform: 'uppercase', opacity: 0.8 }}>{e.date?.split(' ')?.[0] || ''}</div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{e.title}</div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{e.desc}</div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Badge color={TYPE_COLOR[e.type] || 'gray'}>{e.type}</Badge>
-                {canAdd ? (
-                  <>
-                    <button className="btn btn-sm" onClick={() => openEdit(e)} title="Edit"><Edit2 size={14} /></button>
-                    <button className="btn btn-sm" style={{ color: '#D13438' }} onClick={() => handleDelete(e.id)} title="Delete"><Trash2 size={14} /></button>
-                  </>
-                ) : (
-                  <a
-                    href={makeGoogleCalLink({ title: e.title, desc: e.desc, date: e.date, location })}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-sm"
-                    style={{ gap: 4, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
-                    title="Add to Google Calendar"
-                  >
-                    <ExternalLink size={13} /> Add to Calendar
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Add Event Modal */}
-      {addModal && (
-        <Modal title={isEditing ? "Edit School Event" : "Add School Event"} onClose={() => setAddModal(false)} footer={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={() => setAddModal(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleSave}>{isEditing ? 'Save Changes' : 'Add Event'}</button>
-          </div>
-        }>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label className="field-label">Event Title *</label>
-              <input className="input" placeholder="e.g. Sports Day" value={newEvent.title} onChange={e => setNewEvent(p => ({ ...p, title: e.target.value }))} />
-            </div>
-            <div>
-              <label className="field-label">Description</label>
-              <textarea className="input" rows={3} value={newEvent.desc} onChange={e => setNewEvent(p => ({ ...p, desc: e.target.value }))} />
-            </div>
-            <div className="grid grid-2">
-              <div>
-                <label className="field-label">Date *</label>
-                <input type="date" className="input" value={newEvent.date} onChange={e => setNewEvent(p => ({ ...p, date: e.target.value }))} />
-              </div>
-              <div>
-                <label className="field-label">Type</label>
-                <select className="select" value={newEvent.type} onChange={e => setNewEvent(p => ({ ...p, type: e.target.value }))}>
-                  <option value="academic">Academic</option>
-                  <option value="exam">Exam</option>
-                  <option value="event">Event</option>
-                  <option value="holiday">Holiday</option>
-                  <option value="meeting">Meeting</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </Modal>
       )}
     </div>
   );
