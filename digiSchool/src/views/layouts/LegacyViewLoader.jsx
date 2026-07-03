@@ -5,7 +5,6 @@ import ExamSchedules from '../ExamSchedules';
 import Gradebook from '../Gradebook';
 import Settings from '../Settings';
 import Library from '../Library';
-import Finance from '../Finance';
 import Admissions from '../Admissions';
 import Clinic from '../Clinic';
 import StaffAttendance from '../StaffAttendance';
@@ -13,7 +12,6 @@ import Facilities from '../Facilities';
 import TeacherPortal from '../TeacherPortal';
 import TeacherResources from '../TeacherResources';
 import ClassTeachers from '../ClassTeachers';
-import StudentPortal from '../StudentPortal';
 import ParentPortal from '../ParentPortal';
 import CreateExam from '../CreateExam';
 import AcademicsDashboard from '../AcademicsDashboard';
@@ -34,14 +32,11 @@ const VIEW_MAP = {
   gradebook: Gradebook,
   settings: Settings,
   library: Library,
-  finance: Finance,
-  finance_dashboard: Finance,
   admissions: Admissions,
   clinic: Clinic,
   staff: StaffAttendance,
   facilities: Facilities,
   teacher: TeacherPortal,
-  student: StudentPortal,
   parent: ParentPortal,
   class_teachers: ClassTeachers,
   notices: Notices,

@@ -12,6 +12,22 @@ import StudentList from './views/registrar/StudentList';
 import EnrollStudent from './views/registrar/EnrollStudent';
 import Transfers from './views/registrar/Transfers';
 
+import FinanceLayout from './views/finance/FinanceLayout';
+import BillingTab from './views/finance/BillingTab';
+import PaymentsTab from './views/finance/PaymentsTab';
+import StatementsTab from './views/finance/StatementsTab';
+import FeeStructureTab from './views/finance/FeeStructureTab';
+import ExpensesTab from './views/finance/ExpensesTab';
+import ReportsTab from './views/finance/ReportsTab';
+
+import StudentLayout from './views/student/StudentLayout';
+import StudentDashboard from './views/student/StudentDashboard';
+import AcademicsTab from './views/student/AcademicsTab';
+import RecordsTab from './views/student/RecordsTab';
+import ResourcesTab from './views/student/ResourcesTab';
+import StudentFinanceTab from './views/student/StudentFinanceTab';
+import SettingsTab from './views/student/SettingsTab';
+
 export default function App() {
   return (
     <Routes>
@@ -31,6 +47,24 @@ export default function App() {
           <Route index element={<StudentList />} />
           <Route path="enroll" element={<EnrollStudent />} />
           <Route path="transfers" element={<Transfers />} />
+        </Route>
+
+        <Route path="finance" element={<FinanceLayout />}>
+          <Route index element={<BillingTab />} />
+          <Route path="payments" element={<PaymentsTab />} />
+          <Route path="statements" element={<StatementsTab />} />
+          <Route path="fee_structure" element={<FeeStructureTab />} />
+          <Route path="expenses" element={<ExpensesTab />} />
+          <Route path="reports" element={<ReportsTab />} />
+        </Route>
+
+        <Route path="student" element={<StudentLayout />}>
+          <Route index element={<StudentDashboard />} />
+          <Route path="academics" element={<AcademicsTab />} />
+          <Route path="records" element={<RecordsTab />} />
+          <Route path="resources" element={<ResourcesTab />} />
+          <Route path="finance" element={<StudentFinanceTab />} />
+          <Route path="settings" element={<SettingsTab />} />
         </Route>
 
         {/* Fallback for all legacy components */}
