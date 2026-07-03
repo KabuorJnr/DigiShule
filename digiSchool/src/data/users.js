@@ -374,38 +374,3 @@ export const ROLES = {
   },
 };
 
-// The seeded accounts. `username` is case-insensitive on login.
-export const USERS = [
-  { username: 'Principal', password: 'Zulu@254', role: 'principal', name: 'Dr. Jane Kamau', dept: 'Principal' },
-  { username: 'Deputyacademic', password: '7777', role: 'deputy_academic', name: 'Mr. Peter Mwangi', dept: 'Deputy Academics' },
-  { username: 'Deputyadmin', password: '7777', role: 'deputy_admin', name: 'Mrs. Lucy Wambui', dept: 'Deputy Admin' },
-  { username: 'FINANCE', password: '7777', role: 'finance', name: 'Mr. Daniel Kerubo', dept: 'Finance' },
-  { username: 'Registrar', password: '7777', role: 'registrar', name: 'Ms. Agnes Chebet', dept: 'Admissions Office' },
-  { username: 'Librarian', password: '7777', role: 'librarian', name: 'Mr. Joseph Njoroge', dept: 'Library' },
-  { username: 'NURSE001', password: '7777', role: 'nurse', name: 'Sr. Mary Wairimu', dept: 'Nursing' },
-  { username: 'STF5169', password: '7777', role: 'teacher', name: 'Mr. Omondi', dept: 'Mathematics', link: 't1' },
-  { username: 'STU2640494', password: '7777', role: 'student', name: 'Student', dept: 'Grade 7A', link: 'Grade 7A-1' },
-  { username: 'PAR90215', password: '7777', role: 'parent', name: 'Parent / Guardian', dept: 'Parent', link: 'Grade 7A-1' },
-];
-
-export function authenticate(username, password) {
-  if (!username || !password) return null;
-  const u = USERS.find(
-    (x) => x.username.toLowerCase() === username.trim().toLowerCase() && x.password === password
-  );
-  if (u) return u;
-  
-  if (password === '7777') {
-    const un = username.trim().toUpperCase();
-    if (un.startsWith('STU')) {
-      const adm = un.substring(3);
-      return { username, password, role: 'student', name: 'Student ' + adm, dept: 'Student', link: adm };
-    }
-    if (un.startsWith('PAR')) {
-      const adm = un.substring(3);
-      return { username, password, role: 'parent', name: 'Parent of ' + adm, dept: 'Parent', link: adm };
-    }
-  }
-  
-  return null;
-}

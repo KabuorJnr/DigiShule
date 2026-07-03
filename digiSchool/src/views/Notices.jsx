@@ -7,8 +7,6 @@ import { getActiveSchoolId } from '../lib/api';
 import { Bell, Plus, ChevronDown, ChevronUp, Loader } from 'lucide-react';
 import { Icon } from '../components/icons';
 import { exportTablePDF } from '../utils/exporters';
-import { USERS } from '../data/users';
-
 const ROLE_COLOR = {
   'Deputy Academics': 'blue', 'Deputy Admin': 'green',
   'Finance': 'amber', 'Principal': 'red', 'Staff': 'gray',
@@ -69,6 +67,7 @@ export default function Notices({ store, user }) {
   const [form, setForm] = useState({ title: '', body: '', audience: 'all', specificUser: '', sendSms: false });
   const [expanded, setExpanded] = useState(null);
   const [audienceFilter, setAudienceFilter] = useState('all');
+  const [recipientUsers, setRecipientUsers] = useState([]);
 
   const canPost = user && CAN_POST.includes(user.role);
   const myAudience = audienceMap[user?.role] || 'all';
@@ -90,7 +89,14 @@ export default function Notices({ store, user }) {
     }
   }, []);
 
-  useEffect(() => { loadNotices(); }, [loadNotices]);
+  const loadRecipientUsers = useCallback(async () => {
+    try {
+      const { data } = await supabase.from('profiles').select('id, name, role, email');
+      if (data) setRecipientUsers(data);
+    } catch {}
+  }, []);
+
+  useEffect(() => { loadNotices(); loadRecipientUsers(); }, [loadNotices, loadRecipientUsers]);
 
   // Merge seed + db; filter by audience
   const seedNotices = [];
@@ -109,7 +115,7 @@ export default function Notices({ store, user }) {
     const aud = n.audience;
     const isGlobalViewer = ['principal', 'deputy_admin', 'deputy_academic'].includes(user?.role);
     const isSender = n.postedBy === user?.name;
-    const matchUser = isGlobalViewer || isSender || aud.includes('all') || aud.includes(myAudience) || aud.includes(user?.username);
+    const matchUser = isGlobalViewer || isSender || aud.includes('all') || aud.includes(myAudience) || aud.includes(user?.username) || aud.includes(user?.email) || aud.includes(user?.id);
     
     // For the filter tabs
     const matchFilter = audienceFilter === 'all' || aud.includes(audienceFilter) || aud.includes('all');
@@ -301,8 +307,8 @@ export default function Notices({ store, user }) {
                 <label className="field-label">Select Recipient</label>
                 <select className="select" value={form.specificUser || ''} onChange={e => setForm(p => ({ ...p, specificUser: e.target.value }))}>
                   <option value="">-- Choose User --</option>
-                  {USERS.filter(u => u.username !== user?.username).map(u => (
-                    <option key={u.username} value={u.username}>{u.name} ({u.role})</option>
+                  {recipientUsers.filter(u => u.id !== user?.id && u.email !== user?.email).map(u => (
+                    <option key={u.id} value={u.id || u.email}>{u.name || u.email} ({u.role})</option>
                   ))}
                 </select>
               </div>
