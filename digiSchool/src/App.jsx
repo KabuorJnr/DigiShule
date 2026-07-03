@@ -6,7 +6,7 @@ import { setActiveSchoolId } from './lib/api';
 import { ROLES } from './data/users';
 
 import { Icon, NAV_ICON_MAP } from './components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search } from 'lucide-react';
 
 import LandingPage from './views/LandingPage';
 import Login from './views/Login';
@@ -89,6 +89,11 @@ export default function App() {
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchInputRef = useRef(null);
 
   // Domain state (loaded from Supabase after sign-in)
   const [settings, setSettings] = useState({});
@@ -122,6 +127,25 @@ export default function App() {
   useEffect(() => { studentsRef.current = students; }, [students]);
   useEffect(() => { examsRef.current = examSchedules; }, [examSchedules]);
   useEffect(() => { timetablesRef.current = timetables; }, [timetables]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return { students: [], staff: [] };
+    const q = searchQuery.toLowerCase();
+    return {
+      students: students.filter(s => s?.name?.toLowerCase().includes(q) || s?.admission_number?.toLowerCase().includes(q)).slice(0, 5),
+      staff: teachers.filter(t => t?.name?.toLowerCase().includes(q) || t?.staff_id?.toLowerCase().includes(q)).slice(0, 5)
+    };
+  }, [searchQuery, students, teachers]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(e.target)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const notify = useCallback((message, type = 'success', title) => {
     const id = ++toastId;
@@ -524,7 +548,62 @@ export default function App() {
       {/* Main */}
       <div className="main">
         <header className="topbar">
-          <div className="topbar-title">{settings.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flex: 1 }}>
+            <div className="topbar-title">{settings.name}</div>
+            <div className="topbar-search" style={{ position: 'relative', maxWidth: '280px', width: '100%' }} ref={searchInputRef}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666666' }} />
+              <input 
+                type="text" 
+                placeholder="Search" 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
+                onFocus={() => setShowSearchResults(true)}
+                style={{ 
+                  width: '100%', 
+                  padding: '6px 8px 6px 32px', 
+                  background: '#eef3f8', 
+                  border: 'none', 
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  color: '#000'
+                }} 
+              />
+              {showSearchResults && searchQuery.trim() && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden' }}>
+                  {searchResults.students.length > 0 && (
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Students</div>
+                      {searchResults.students.map(s => (
+                        <div key={s.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }} 
+                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('registrar', { search: s.name }); }}
+                             onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.admission_number || ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.staff.length > 0 && (
+                    <div style={{ padding: '8px 12px', borderBottom: searchResults.students.length === 0 ? 'none' : '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Staff</div>
+                      {searchResults.staff.map(t => (
+                        <div key={t.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }} 
+                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('staff', { search: t.name }); }}
+                             onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                          <strong>{t.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{t.department || ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.students.length === 0 && searchResults.staff.length === 0 && (
+                    <div style={{ padding: '16px', fontSize: '13px', color: 'var(--muted)', textAlign: 'center' }}>No results found for "{searchQuery}"</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="topbar-actions">
             {activeRoleOverride && (
               <button 
