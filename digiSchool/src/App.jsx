@@ -372,17 +372,6 @@ export default function App() {
   }
 
   if (!currentUser) {
-    if (needsSetup) {
-      return <SetupWizard onComplete={(config) => {
-        setNeedsSetup(false);
-        setSettings(config.settings);
-        setFeeStructure(config.feeStructure);
-        setGradeBoundaries(config.gradeBoundaries);
-        setNotifToggles(config.notifToggles);
-        setVenues(config.venues);
-        localStorage.setItem('eduone_school_config', JSON.stringify(config));
-      }} />;
-    }
     if (showApplication) {
       return <PublicApplication onBack={() => setShowApplication(false)} />;
     }
