@@ -160,6 +160,48 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
           </button>
         </div>
       </section>
+
+      {/* 6. Footer */}
+      <footer style={{ background: '#0f172a', color: '#94a3b8', padding: '60px 40px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>
+            <ShieldCheck size={24} color="#3b82f6" />
+            EduOne
+          </div>
+          
+          <p style={{ maxWidth: '400px', margin: '0', lineHeight: '1.6' }}>
+            The operating system for modern schools in Africa. Reliable, offline-first, and beautifully designed.
+          </p>
+          
+          <div style={{ width: '60px', height: '2px', background: '#3b82f6', margin: '16px 0' }}></div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '32px', fontSize: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ color: '#fff', fontWeight: 600, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Developer</span>
+              <span>GovTech Builders KE</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ color: '#fff', fontWeight: 600, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Contact</span>
+              <a href="mailto:veribidapp@gmail.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>veribidapp@gmail.com</a>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ color: '#fff', fontWeight: 600, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Phone</span>
+              <a href="tel:+254705607954" style={{ color: '#94a3b8', textDecoration: 'none' }}>+254 705 607 954</a>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ color: '#fff', fontWeight: 600, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Location</span>
+              <span>Mombasa, Kenya</span>
+            </div>
+          </div>
+
+          <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)', margin: '24px 0' }}></div>
+          
+          <div style={{ fontSize: '12px', opacity: 0.6 }}>
+            &copy; {new Date().getFullYear()} GovTech Builders KE. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
