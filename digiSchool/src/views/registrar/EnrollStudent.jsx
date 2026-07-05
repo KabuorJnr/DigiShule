@@ -227,10 +227,9 @@ export default function EnrollStudent() {
           <div className="grid grid-2">
             <div>
               <label className="field-label">Class</label>
-              <input className="input" list="classes-list" placeholder="e.g. 7A" value={form.class} onChange={e => upForm({ class: e.target.value })} />
-              <datalist id="classes-list">
-                {dynamicClasses.map(c => <option key={c} value={c} />)}
-              </datalist>
+              <select className="select" value={form.class} onChange={e => upForm({ class: e.target.value })}>
+                {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             <div>
               <label className="field-label">Gender</label>

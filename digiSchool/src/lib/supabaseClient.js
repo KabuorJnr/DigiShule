@@ -91,6 +91,7 @@ export async function signInWithUsername(username, password) {
 
         // Fallback if insertion still fails
         await supabase.auth.signOut();
+        return { error: { message: `Profile Auto-heal Error: ${insertErr.message}` } };
       }
     }
   } catch (err) {
