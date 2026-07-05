@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useOutletContext } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { Users, UserPlus, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ const TABS = [
 export default function RegistrarLayout() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
+  const context = useOutletContext();
 
   useEffect(() => {
     let active = true;
@@ -67,7 +68,7 @@ export default function RegistrarLayout() {
       </div>
 
       {/* Tab Content Area */}
-      <Outlet />
+      <Outlet context={context} />
     </div>
   );
 }
