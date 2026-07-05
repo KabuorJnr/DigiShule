@@ -32,3 +32,8 @@ data-import/*.csv
 *.njsproj
 *.sln
 *.sw?
+
+# Auto-generated test/render artifacts
+test_render.jsx
+test_render.css
+scripts/test_render.cjs

@@ -41,7 +41,7 @@ code = code.replace(
 
 // Wrap Analysis end and start Overview tab
 code = code.replace(
-  /<div className="grid grid-2">\n        <div className="card card-pad">\n          <h3 className="section-title">Top 5 Students<\/h3>/,
+  /<div className="grid grid-2">\n {8}<div className="card card-pad">\n {10}<h3 className="section-title">Top 5 Students<\/h3>/,
   `      )}
 
       {/* Overview View */}
@@ -60,7 +60,7 @@ code = code.replace(
 
 // Close Overview tab
 code = code.replace(
-  /    <\/div>\n  \);\n\}/,
+  / {4}<\/div>\n {2}\);\n\}/,
   "        </>\n      )}\n    </div>\n  );\n}"
 );
 
