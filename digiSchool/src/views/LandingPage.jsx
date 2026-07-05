@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, Layout, GraduationCap, Users, ArrowRight, Zap, WifiOff, FileText, Camera, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import './LandingPage.css';
 
 export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
   const [activeTab, setActiveTab] = useState('principal');
+  const navigate = useNavigate();
+  
+  const handleGetStarted = onGetStarted || (() => navigate('/login'));
+  const handleApply = onApply || (() => navigate('/apply'));
+  const handleSignUp = onSignUp || (() => navigate('/signup'));
 
   const roleDetails = {
     principal: { 
@@ -37,9 +43,9 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
           EduOne
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button className="bespoke-btn ghost" onClick={onGetStarted}>Sign In</button>
-          <button className="bespoke-btn secondary" onClick={onSignUp}>Sign Up</button>
-          <button className="bespoke-btn primary" onClick={onApply}>
+          <button className="bespoke-btn ghost" onClick={handleGetStarted}>Sign In</button>
+          <button className="bespoke-btn secondary" onClick={handleSignUp}>Sign Up</button>
+          <button className="bespoke-btn primary" onClick={handleApply}>
             Apply Now
           </button>
         </div>
@@ -57,7 +63,7 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
           Say goodbye to fragmented tools and internet outages. EduOne brings academics, finance, and parent communication into one beautifully designed, lightning-fast platform that works offline.
         </p>
         <div className="animate-fade-in-up" style={{ marginTop: '30px', display: 'flex', gap: '16px', justifyContent: 'center', animationDelay: '0.4s' }}>
-          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 32px', fontSize: '18px' }}>
+          <button className="bespoke-btn primary" onClick={handleApply} style={{ padding: '16px 32px', fontSize: '18px' }}>
             Start Online Application
           </button>
           <button className="bespoke-btn secondary" onClick={() => document.getElementById('bento').scrollIntoView({ behavior: 'smooth' })} style={{ padding: '16px 32px', fontSize: '18px' }}>
@@ -152,10 +158,10 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
         <h2>Ready to digitize your school?</h2>
         <p>Join the next generation of modern schools. Set up your institution in minutes and experience the fastest, most reliable school management system built for Africa.</p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button className="bespoke-btn primary" onClick={onApply} style={{ padding: '16px 40px', fontSize: '18px', background: '#fff', color: '#1e3a8a' }}>
+          <button className="bespoke-btn primary" onClick={handleApply} style={{ padding: '16px 40px', fontSize: '18px', background: '#fff', color: '#1e3a8a' }}>
             Get Started Now
           </button>
-          <button className="bespoke-btn ghost" style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }} onClick={onGetStarted}>
+          <button className="bespoke-btn ghost" style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }} onClick={handleGetStarted}>
             Sign in to Portal
           </button>
         </div>
