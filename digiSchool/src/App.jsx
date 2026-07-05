@@ -4,6 +4,7 @@ import Login from './views/Login';
 import PublicApplication from './views/PublicApplication';
 import SignupWizard from './views/SignupWizard';
 import ParentSignupWizard from './views/ParentSignupWizard';
+import ResetPassword from './views/ResetPassword';
 import PortalLayout, { PortalIndex } from './views/layouts/PortalLayout';
 import LegacyViewLoader from './views/layouts/LegacyViewLoader';
 
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
 
       {/* Portal Routes with Layout, Sidebar, and Auth Guard */}
