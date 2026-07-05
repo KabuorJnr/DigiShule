@@ -110,7 +110,11 @@ export default function SignupWizard({ onComplete, onCancel }) {
 
       // Success! Complete wizard and log them in
       setTimeout(() => {
-        onComplete();
+        if (onComplete) {
+          onComplete();
+        } else {
+          window.location.href = '/portal';
+        }
       }, 1500);
 
     } catch (err) {

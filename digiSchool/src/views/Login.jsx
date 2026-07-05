@@ -67,7 +67,8 @@ export default function Login() {
       return;
     }
     
-    console.log('[Login] Real Supabase user detected, waiting for onAuthStateChange to fire.');
+    console.log('[Login] Real Supabase user detected. Redirecting to portal...');
+    navigate('/portal');
   };
 
   return (
