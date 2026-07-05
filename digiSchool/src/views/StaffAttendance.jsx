@@ -242,21 +242,31 @@ export default function StaffAttendance({ store, user }) {
       }
       
       setProvisionStep('email');
-      await provisionAccount({
-        email: addForm.email,
-        username,
-        password: tempPassword,
-        name: addForm.name,
-        role: addForm.role,
-        schoolName: store.settings?.name || 'EduOne'
-      });
+      let emailSent = true;
+      try {
+        await provisionAccount({
+          email: addForm.email,
+          username,
+          password: tempPassword,
+          name: addForm.name,
+          role: addForm.role,
+          schoolName: store.settings?.name || 'EduOne'
+        });
+      } catch (emailErr) {
+        console.error('Email sending failed:', emailErr);
+        emailSent = false;
+      }
       
       setProvisionStep('done');
       setTimeout(() => {
         setProvisionStep(null);
         setShowAddModal(false);
         setAddForm({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
-        notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
+        if (emailSent) {
+          notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
+        } else {
+          notify(`${newStaff.name} was added, but the welcome email could not be sent.`, 'warning', 'Staff Management');
+        }
       }, 1500);
 
     } catch (e) {

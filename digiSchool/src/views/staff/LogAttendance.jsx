@@ -110,11 +110,21 @@ export default function LogAttendance() {
         if (store.addTeacher) store.addTeacher(teacherObj);
       }
       setProvisionStep('email');
-      await provisionAccount({ email: addForm.email, username, password: tempPassword, name: addForm.name, role: addForm.role, schoolName: store.settings?.name || 'EduOne' });
+      let emailSent = true;
+      try {
+        await provisionAccount({ email: addForm.email, username, password: tempPassword, name: addForm.name, role: addForm.role, schoolName: store.settings?.name || 'EduOne' });
+      } catch (emailErr) {
+        console.error('Email sending failed:', emailErr);
+        emailSent = false;
+      }
       setProvisionStep('done');
       setTimeout(() => {
         setProvisionStep(null); setShowAddModal(false); setAddForm({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
-        notify(`${newStaff.name} added & email sent!`, 'success');
+        if (emailSent) {
+          notify(`${newStaff.name} added & email sent!`, 'success');
+        } else {
+          notify(`${newStaff.name} was added, but the welcome email could not be sent.`, 'warning');
+        }
       }, 1500);
     } catch (e) {
       setProvisionStep(null); notify(`Failed to add staff: ${e.message}`, 'error');
