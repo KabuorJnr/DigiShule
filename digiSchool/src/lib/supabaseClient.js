@@ -76,7 +76,20 @@ export async function signInWithUsername(username, password) {
           return { data };
         }
 
-        // No profile row yet — sign out of Supabase and fall through to seed.
+        // Auto-heal missing profile (happens if staff creation failed mid-way due to email rate limits)
+        const userMeta = data.user.user_metadata || {};
+        const { error: insertErr } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          username: data.user.email,
+          full_name: userMeta.full_name || 'Staff Member',
+          role: userMeta.role || 'staff'
+        });
+
+        if (!insertErr) {
+          return { data };
+        }
+
+        // Fallback if insertion still fails
         await supabase.auth.signOut();
       }
     }
