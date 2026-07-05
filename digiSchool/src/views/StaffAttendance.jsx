@@ -268,8 +268,9 @@ export default function StaffAttendance({ store, user }) {
           name: newStaff.name,
           email: addForm.email,
           username: username,
-          password: tempPassword,
-          emailSent: emailSent
+          password: isExisting ? '(Already exists. Use original password)' : tempPassword,
+          emailSent: emailSent,
+          isExisting: isExisting
         });
 
         if (emailSent) {
@@ -832,7 +833,12 @@ export default function StaffAttendance({ store, user }) {
             <h3 style={{ margin: '0 0 8px', color: '#0f172a' }}>{createdCredentials.name} Added</h3>
             <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
               The staff member has been added to the system.
-              {!createdCredentials.emailSent && (
+              {createdCredentials.isExisting && (
+                <span style={{ color: '#ef4444', display: 'block', marginTop: 4, fontWeight: 500 }}>
+                  Note: This email was already registered. They must log in with their existing password.
+                </span>
+              )}
+              {!createdCredentials.emailSent && !createdCredentials.isExisting && (
                 <span style={{ color: '#ef4444', display: 'block', marginTop: 4, fontWeight: 500 }}>
                   Note: The welcome email failed to send. Please share the credentials below manually.
                 </span>
@@ -854,7 +860,7 @@ export default function StaffAttendance({ store, user }) {
               <div style={{ fontWeight: 500, userSelect: 'all' }}>{createdCredentials.username}</div>
               
               <div style={{ color: '#64748b' }}>Password:</div>
-              <div style={{ fontWeight: 700, userSelect: 'all', fontFamily: 'monospace', letterSpacing: 1, color: '#0078D4' }}>{createdCredentials.password}</div>
+              <div style={{ fontWeight: 700, userSelect: 'all', fontFamily: 'monospace', letterSpacing: 1, color: createdCredentials.isExisting ? '#ef4444' : '#0078D4' }}>{createdCredentials.password}</div>
             </div>
           </div>
           
