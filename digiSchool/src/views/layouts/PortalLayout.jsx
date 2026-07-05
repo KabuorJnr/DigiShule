@@ -10,7 +10,7 @@ import { ROLES } from '../../data/users';
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search } from 'lucide-react';
 
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
 
 let toastId = 0;
 
@@ -682,4 +682,11 @@ export default function PortalLayout() {
       )}
     </div>
   );
+}
+
+export function PortalIndex() {
+  const { user } = useOutletContext();
+  if (!user) return null;
+  const role = ROLES[user.role] || ROLES.principal;
+  return <Navigate to={`/portal/${role.home || 'overview'}`} replace />;
 }
