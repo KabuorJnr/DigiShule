@@ -69,6 +69,7 @@ export async function signInWithUsername(username, password) {
           .from('profiles')
           .select('id')
           .eq('id', data.user.id)
+          .limit(1)
           .maybeSingle();
 
         if (profileRow) {
