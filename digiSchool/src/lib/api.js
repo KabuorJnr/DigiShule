@@ -345,6 +345,7 @@ export async function upsertStudent(student) {
     birth_cert_no: student.birthCertNo,
     scores: student.scores,
     flagged: student.flagged,
+    status: student.status || 'Active',
     guardian_name: student.guardianName,
     guardian_phone: student.guardianPhone,
     guardian_email: student.guardianEmail,
