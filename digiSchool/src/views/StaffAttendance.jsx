@@ -29,6 +29,7 @@ export default function StaffAttendance({ store, user }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
   const [provisionStep, setProvisionStep] = useState(null);
+  const [createdCredentials, setCreatedCredentials] = useState(null);
 
   // Recruitment State
   const [jobApps, setJobApps] = useState([]);
@@ -262,6 +263,15 @@ export default function StaffAttendance({ store, user }) {
         setProvisionStep(null);
         setShowAddModal(false);
         setAddForm({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
+        
+        setCreatedCredentials({
+          name: newStaff.name,
+          email: addForm.email,
+          username: username,
+          password: tempPassword,
+          emailSent: emailSent
+        });
+
         if (emailSent) {
           notify(`${newStaff.name} added & email sent!`, 'success', 'Staff Management');
         } else {
@@ -808,6 +818,51 @@ export default function StaffAttendance({ store, user }) {
       )}
 
       {provisionStep && <RegistrationLoadingModal step={provisionStep} />}
+      
+      {createdCredentials && (
+        <Modal 
+          title="Staff Account Created" 
+          onClose={() => setCreatedCredentials(null)}
+          footer={<button className="btn btn-primary" onClick={() => setCreatedCredentials(null)}>Done</button>}
+        >
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', color: '#16a34a', marginBottom: 16 }}>
+              <Icon name="check" size={32} />
+            </div>
+            <h3 style={{ margin: '0 0 8px', color: '#0f172a' }}>{createdCredentials.name} Added</h3>
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+              The staff member has been added to the system.
+              {!createdCredentials.emailSent && (
+                <span style={{ color: '#ef4444', display: 'block', marginTop: 4, fontWeight: 500 }}>
+                  Note: The welcome email failed to send. Please share the credentials below manually.
+                </span>
+              )}
+            </p>
+          </div>
+          
+          <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', marginBottom: 12 }}>Temporary Login Credentials</div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px 12px', fontSize: 14 }}>
+              <div style={{ color: '#64748b' }}>Portal URL:</div>
+              <div style={{ fontWeight: 500 }}>https://www.edu1app.tech</div>
+              
+              <div style={{ color: '#64748b' }}>Email:</div>
+              <div style={{ fontWeight: 500, userSelect: 'all' }}>{createdCredentials.email}</div>
+              
+              <div style={{ color: '#64748b' }}>Username:</div>
+              <div style={{ fontWeight: 500, userSelect: 'all' }}>{createdCredentials.username}</div>
+              
+              <div style={{ color: '#64748b' }}>Password:</div>
+              <div style={{ fontWeight: 700, userSelect: 'all', fontFamily: 'monospace', letterSpacing: 1, color: '#0078D4' }}>{createdCredentials.password}</div>
+            </div>
+          </div>
+          
+          <div style={{ fontSize: 13, color: '#64748b', textAlign: 'center' }}>
+            Instruct the staff member to log in using the email/username and password above. They can change this password after logging in.
+          </div>
+        </Modal>
+      )}
 
     </div>
   );
