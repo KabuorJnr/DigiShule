@@ -397,8 +397,7 @@ export default function PortalLayout() {
                         else if (item.action === 'visit_academics') setOfficeVisitWarning('academics');
                         else if (item.action === 'visit_admin') setOfficeVisitWarning('admin');
                         else if (item.view) {
-                          setView(item.view);
-                          setViewParams({ tab: item.tab, action: item.action, filter: item.filter });
+                          store.navigate(item.view, { tab: item.tab, action: item.action, filter: item.filter });
                         }
                       }}
                       title={item.label}
@@ -418,8 +417,7 @@ export default function PortalLayout() {
                               if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
                               else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
                               else if (subItem.view) {
-                                setView(subItem.view);
-                                setViewParams({ tab: subItem.tab, action: subItem.action, filter: subItem.filter });
+                                store.navigate(subItem.view, { tab: subItem.tab, action: subItem.action, filter: subItem.filter });
                               }
                             }}
                           >
