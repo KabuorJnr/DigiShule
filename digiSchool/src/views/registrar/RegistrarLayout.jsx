@@ -18,8 +18,10 @@ export default function RegistrarLayout() {
   useEffect(() => {
     let active = true;
     fetchStudentStats().then(s => {
-      if (active) setStats(s);
-    }).catch(() => {});
+      if (active) setStats(s || { total_active: 0, male: 0, female: 0, flagged: 0 });
+    }).catch((err) => {
+      if (active) notify('Stats Error: ' + err.message, 'error');
+    });
     return () => { active = false; };
   }, []);
 
