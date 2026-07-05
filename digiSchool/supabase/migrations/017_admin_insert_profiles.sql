@@ -10,6 +10,6 @@ WITH CHECK (
   EXISTS (
     SELECT 1 FROM public.profiles p 
     WHERE p.id = auth.uid() 
-    AND p.role IN ('principal', 'admin', 'registrar', 'superadmin', 'bursar', 'finance')
+    AND LOWER(p.role::text) IN ('principal', 'admin', 'registrar', 'superadmin', 'bursar', 'finance')
   )
 );
