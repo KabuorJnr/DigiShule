@@ -46,7 +46,11 @@ export default function Login() {
     setForgotBusy(false);
     
     if (error) {
-      setForgotError(error.message);
+      if (error.message.includes('Error sending recovery email') || error.message.includes('rate limit')) {
+        setForgotError('Email service is currently unavailable or rate-limited. Please contact your system administrator to reset your password manually, or configure a custom SMTP server in Supabase settings.');
+      } else {
+        setForgotError(error.message);
+      }
     } else {
       setForgotSuccess(true);
     }
