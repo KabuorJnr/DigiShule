@@ -23,7 +23,7 @@ export default function Admissions({ store }) {
     return [...new Set([...saved, ...dynamic])];
   }, [students, store.settings]);
   const [form, setForm] = useState({
-    name: '', kcpe: '', gender: 'M', Grade: '7A',
+    name: '', kcpe: '', gender: 'M', Grade: '',
     dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day',
   });
 
@@ -265,10 +265,10 @@ export default function Admissions({ store }) {
               </div>
               <div>
                 <label className="field-label">Grade</label>
-                <input className="input" list="admissions-classes" placeholder="e.g. 7A" value={form.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))} />
-                <datalist id="admissions-classes">
-                  {dynamicClasses.map(c => <option key={c} value={c} />)}
-                </datalist>
+                <select className="select" value={form.Grade} onChange={e => setForm(f => ({ ...f, Grade: e.target.value }))}>
+                  <option value="" disabled>Select Grade...</option>
+                  {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div>
                 <label className="field-label">Boarding Status</label>
