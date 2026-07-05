@@ -307,8 +307,28 @@ export async function fetchAcademicAnalytics() {
 
 export async function fetchStudentStats() {
   const { data, error } = await supabase.rpc('get_student_stats');
-  if (error) throw error;
-  return data;
+  if (!error && data) return data;
+
+  // Fallback: Client-side aggregations if the RPC is missing or fails
+  if (!_schoolId) return { total_active: 0, male: 0, female: 0, flagged: 0 };
+  
+  const baseQuery = supabase.from('students').select('*', { count: 'exact', head: true })
+    .eq('school_id', _schoolId)
+    .or('status.is.null,and(status.neq.Inactive,status.neq.Graduated)');
+
+  const [tRes, mRes, fRes, flRes] = await Promise.all([
+    baseQuery,
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', _schoolId).eq('gender', 'Male').or('status.is.null,and(status.neq.Inactive,status.neq.Graduated)'),
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', _schoolId).eq('gender', 'Female').or('status.is.null,and(status.neq.Inactive,status.neq.Graduated)'),
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', _schoolId).eq('flagged', true).or('status.is.null,and(status.neq.Inactive,status.neq.Graduated)')
+  ]);
+
+  return {
+    total_active: tRes.count || 0,
+    male: mRes.count || 0,
+    female: fRes.count || 0,
+    flagged: flRes.count || 0
+  };
 }
 
 export async function fetchAllStudentsUnpaginated() {
