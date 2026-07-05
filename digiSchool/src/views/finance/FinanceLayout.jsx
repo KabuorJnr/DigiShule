@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useOutletContext, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
 
@@ -15,11 +15,21 @@ const TABS = [
 export default function FinanceLayout() {
   const { store, user, params } = useOutletContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [invoices, setInvoices] = useState([]);
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'invoices' ? '/portal/finance' : `/portal/finance/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
 
   useEffect(() => {
     Promise.all([
