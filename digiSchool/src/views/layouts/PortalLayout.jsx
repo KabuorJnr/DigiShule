@@ -320,6 +320,10 @@ export default function PortalLayout() {
     );
   }
 
+  if (view === 'select_profile') {
+    return <SelectProfile profiles={availableProfiles} onSelect={(p) => handleSelectProfile(p, true)} onLogout={handleLogout} />;
+  }
+
   if (!currentUser) {
     navigateRouter('/login', { replace: true });
     return null;
@@ -551,8 +555,6 @@ export default function PortalLayout() {
         <main className="content">
           {dataLoading ? (
             <p className="muted">Loading…</p>
-          ) : view === 'select_profile' ? (
-            <SelectProfile profiles={availableProfiles} onSelect={(p) => handleSelectProfile(p, true)} onLogout={handleLogout} />
           ) : (
             <Outlet context={{ store, user: currentUser, params: viewParams }} />
           )}
