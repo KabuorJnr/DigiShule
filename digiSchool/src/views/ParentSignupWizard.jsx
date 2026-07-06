@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Search, CheckCircle2, User, CreditCard, Loader, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -8,8 +8,16 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
   const [error, setError] = useState('');
   
   // Step 1: Student Lookup
+  const [schools, setSchools] = useState([]);
+  const [selectedSchool, setSelectedSchool] = useState('');
   const [admNumber, setAdmNumber] = useState('');
   const [foundStudent, setFoundStudent] = useState(null);
+
+  useEffect(() => {
+    supabase.rpc('get_public_schools').then(({ data, error }) => {
+      if (!error && data) setSchools(data);
+    });
+  }, []);
   
   // Step 2: Parent Profile
   const [parent, setParent] = useState({
@@ -23,20 +31,22 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
 
   const handleLookupStudent = async () => {
     setError('');
+    if (!selectedSchool) return setError('Please select your school.');
     if (!admNumber.trim()) return setError('Please enter your child\'s admission number.');
     
     setSaving(true);
     try {
       const { data, error: fetchErr } = await supabase
-        .from('students')
-        .select('id, name, adm, school_id')
-        .eq('adm', admNumber.trim().toUpperCase())
-        .maybeSingle();
+        .rpc('lookup_student_for_signup', { 
+          p_school_id: selectedSchool, 
+          p_adm: admNumber.trim().toUpperCase() 
+        });
 
       if (fetchErr) throw fetchErr;
-      if (!data) throw new Error('Student not found. Please check the admission number and try again.');
+      const student = Array.isArray(data) ? data[0] : data;
+      if (!student) throw new Error('Student not found. Please check the admission number and try again.');
 
-      setFoundStudent(data);
+      setFoundStudent(student);
       setStep(2);
     } catch (err) {
       setError(err.message || 'Failed to locate student.');
@@ -176,6 +186,16 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
               </h3>
               <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>Enter your child's official Admission Number as provided by the school.</p>
               
+              <div>
+                <label className="field-label">Select School *</label>
+                <select className="select" value={selectedSchool} onChange={e => setSelectedSchool(e.target.value)}>
+                  <option value="" disabled>-- Select Your School --</option>
+                  {schools.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="field-label">Admission Number *</label>
                 <input className="input" value={admNumber} onChange={e => setAdmNumber(e.target.value)} placeholder="e.g. ADM/2026/9027" style={{ textTransform: 'uppercase' }} />

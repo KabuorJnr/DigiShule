@@ -101,7 +101,7 @@ export default function EnrollStudent() {
       
       setProvisionStep('password');
       const studentPassword = captured.adm;
-      const studentAuthEmail = `${captured.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
+      const studentAuthEmail = `${captured.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}.${(store.schoolId || 'demo').split('-')[0]}@edu1app.tech`;
       
       const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
         email: studentAuthEmail,

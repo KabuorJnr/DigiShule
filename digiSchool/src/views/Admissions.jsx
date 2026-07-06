@@ -68,7 +68,7 @@ export default function Admissions({ store }) {
         
         // ── 1. Create Student Portal Account ──
         const studentPassword = newStudent.adm;
-        const studentAuthEmail = `${newStudent.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}@edu1app.tech`;
+        const studentAuthEmail = `${newStudent.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}.${(store.schoolId || 'demo').split('-')[0]}@edu1app.tech`;
         
         const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
           email: studentAuthEmail,
