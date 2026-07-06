@@ -87,10 +87,11 @@ export default function StaffAttendance({ store, user }) {
     try {
       await upsertRow('staff', {
         id: updated.id, name: updated.name, role: updated.role,
-        dept: updated.dept, status: updated.status, check_in: updated.checkIn,
+        dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
       });
     } catch (e) {
-      console.warn('API error ignored for mock:', e.message);
+      alert('Failed to update status: ' + e.message);
+      console.error(e);
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
     notify('Staff status updated.', 'info', 'Attendance');
@@ -104,10 +105,11 @@ export default function StaffAttendance({ store, user }) {
     try {
       await upsertRow('staff', {
         id: updated.id, name: updated.name, role: updated.role,
-        dept: updated.dept, status: updated.status, check_in: updated.checkIn,
+        dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
       });
     } catch (e) {
-      console.warn('API error ignored for mock:', e.message);
+      alert('Failed to offboard: ' + e.message);
+      console.error(e);
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
     notify(`${member.name} has been offboarded.`, 'success', 'Staff Management');
