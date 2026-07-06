@@ -163,7 +163,7 @@ export default function AdminDashboard({ store, user }) {
       
       // 2. Create Auth User using secondary client to preserve Principal session
       const { data: authData, error: authErr } = await secondaryAuthClient.auth.signUp({
-        email: commissionForm.email,
+        email: commissionForm.email.trim(),
         password: tempPass,
         options: { data: { role: commissionForm.role, full_name: commissionForm.name } }
       });
@@ -176,7 +176,7 @@ export default function AdminDashboard({ store, user }) {
       // 3. Create Profile
       const { error: profileErr } = await supabase.from('profiles').upsert({
         id: authData.user.id,
-        username: commissionForm.email,
+        username: commissionForm.email.trim(),
         full_name: commissionForm.name,
         role: commissionForm.role,
         school_id: schoolId

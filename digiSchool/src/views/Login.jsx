@@ -61,7 +61,7 @@ export default function Login() {
     if (!username.trim() || !password) { setError('Please enter your username and password.'); return; }
     setError('');
     setBusy(true);
-    const { data, error: signInError } = await signInWithUsername(username, password);
+    const { data, error: signInError } = await signInWithUsername(username.trim(), password.trim());
     setBusy(false);
     
     console.log('[Login] signInWithUsername returned:', { data, signInError });
