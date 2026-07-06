@@ -50,6 +50,12 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     if (step === 2) {
       if (!parent.name || !parent.email || !parent.password) return setError('Please fill in all required fields.');
       if (parent.password.length < 6) return setError('Password must be at least 6 characters.');
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(parent.email.trim())) {
+        return setError('Please enter a valid email address.');
+      }
+
       setStep(3);
     }
   };
@@ -71,10 +77,13 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     try {
       // 1. Create Parent Auth Account
       const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: parent.email,
+        email: parent.email.trim(),
         password: parent.password,
         options: {
-          data: { role: 'parent', full_name: parent.name }
+          data: {
+            full_name: parent.name,
+            role: 'parent'
+          }
         }
       });
       
