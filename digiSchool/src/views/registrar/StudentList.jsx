@@ -283,7 +283,18 @@ export default function StudentList() {
       {/* Selected Student Modal */}
       {selectedStudent && !deleteConfirmModal && (
         <Modal title="Student Profile" onClose={() => setSelectedStudent(null)} footer={
-          <button className="btn" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} onClick={() => setDeleteConfirmModal(true)}>Delete Permanently...</button>
+          <div style={{ display: 'flex', gap: 10, width: '100%', justifyContent: 'space-between' }}>
+            <button 
+              className="btn" 
+              style={{ background: '#eef2ff', color: '#4f46e5', borderColor: '#c7d2fe', fontWeight: 600, display: 'flex', gap: 6, alignItems: 'center' }} 
+              onClick={() => {
+                store.navigate('student', { childId: selectedStudent.id });
+              }}
+            >
+              Access Student Portal
+            </button>
+            <button className="btn" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} onClick={() => setDeleteConfirmModal(true)}>Delete Permanently...</button>
+          </div>
         }>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>

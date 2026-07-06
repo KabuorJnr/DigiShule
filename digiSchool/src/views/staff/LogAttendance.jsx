@@ -235,7 +235,18 @@ export default function LogAttendance() {
           <div style={{ display: 'flex', gap: 10 }}><button className="btn" onClick={() => setComposeModal(null)}>Cancel</button><button className="btn btn-primary" onClick={async () => {
             if (!messageForm.subject || !messageForm.body) return notify('Subject and Body required', 'warning');
             try {
-              await upsertRow('messages', { id: `msg_${Date.now()}`, sender_id: user?.id || 'admin', sender_name: user?.name || user?.role || 'Admin', recipient_role: composeModal.name, student_name: 'Administration', subject: messageForm.subject, body: messageForm.body, status: 'Unread', created_at: new Date().toISOString() });
+              await upsertRow('notifications', { 
+                id: `notif_${Date.now()}`, 
+                title: messageForm.subject,
+                message: messageForm.body,
+                body: messageForm.body,
+                posted_by: user?.name || 'Administration', 
+                role: 'Admin', 
+                audience: [composeModal.email || composeModal.id],
+                school_id: user?.school_id || store?.schoolId || 'demo',
+                read: false, 
+                created_at: new Date().toISOString() 
+              });
               notify(`Message sent to ${composeModal.name}`, 'success'); setComposeModal(null);
             } catch (err) { notify(`Failed to send message: ${err.message}`, 'error'); }
           }}>Send Message</button></div>

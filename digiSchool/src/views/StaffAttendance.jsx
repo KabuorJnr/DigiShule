@@ -676,15 +676,17 @@ export default function StaffAttendance({ store, user }) {
             <button className="btn btn-primary" onClick={async () => {
               if (!messageForm.subject || !messageForm.body) return notify('Subject and Body required', 'warning');
               try {
-                await upsertRow('messages', {
-                  id: `msg_${Date.now()}`,
-                  sender_id: user?.id || 'admin',
-                  sender_name: user?.name || user?.role || 'Admin',
-                  recipient_role: composeModal.name, // specifically address by name
-                  student_name: 'Administration', // context for teacher inbox
-                  subject: messageForm.subject,
+                const schoolId = store?.schoolId || 'demo';
+                await upsertRow('notifications', {
+                  id: `notif_${Date.now()}`,
+                  title: messageForm.subject,
+                  message: messageForm.body,
                   body: messageForm.body,
-                  status: 'Unread',
+                  posted_by: user?.name || 'Administration',
+                  role: 'Admin',
+                  audience: [composeModal.email || composeModal.id],
+                  school_id: schoolId,
+                  read: false,
                   created_at: new Date().toISOString()
                 });
 
