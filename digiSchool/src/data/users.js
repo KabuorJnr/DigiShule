@@ -130,7 +130,7 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'acad_dash', icon: 'home', label: 'Dashboard', view: 'academics_dashboard' },
+          { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', view: 'academics_dashboard' },
           { id: 'timetable', icon: 'calendar', label: 'Timetable', view: 'timetable' },
           { id: 'exams', icon: 'exam', label: 'Exam Schedules', view: 'exams' },
           { id: 'create_exam', icon: 'plus', label: 'Create Exam', view: 'create_exam' },
@@ -196,6 +196,13 @@ export const ROLES = {
     accent: '#000000',
     home: 'finance',
     nav: [
+      {
+        section: 'CORE',
+        items: [
+          { id: 'finance', icon: 'finance', label: 'Finance & Fees', view: 'finance' },
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
+        ]
+      },
       {
         section: 'INVOICES & BILLING',
         items: [
@@ -382,7 +389,7 @@ export const ROLES = {
     ],
   },
 
-  nurse: {
+  clinic: {
     label: 'Nurse',
     portal: 'Health & Nursing',
     accent: '#000000',
