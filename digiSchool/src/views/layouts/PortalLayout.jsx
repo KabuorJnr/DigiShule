@@ -552,7 +552,7 @@ export default function PortalLayout() {
           {dataLoading ? (
             <p className="muted">Loading…</p>
           ) : view === 'select_profile' ? (
-            <SelectProfile onSelect={(p) => handleSelectProfile(p, true)} onLogout={handleLogout} />
+            <SelectProfile profiles={availableProfiles} onSelect={(p) => handleSelectProfile(p, true)} onLogout={handleLogout} />
           ) : (
             <Outlet context={{ store, user: currentUser, params: viewParams }} />
           )}
