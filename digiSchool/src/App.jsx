@@ -39,6 +39,9 @@ import LogAttendance from './views/staff/LogAttendance';
 import LeaveRequests from './views/staff/LeaveRequests';
 import Recruitment from './views/staff/Recruitment';
 
+import ParentLayout from './views/parent/ParentLayout';
+import ParentDashboard from './views/parent/ParentDashboard';
+
 export default function App() {
   return (
     <Routes>
@@ -90,6 +93,10 @@ export default function App() {
           <Route index element={<LogAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />
           <Route path="recruitment" element={<Recruitment />} />
+        </Route>
+
+        <Route path="parent" element={<ParentLayout />}>
+          <Route index element={<ParentDashboard />} />
         </Route>
 
         {/* Fallback for all legacy components */}

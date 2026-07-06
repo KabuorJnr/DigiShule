@@ -4,6 +4,37 @@
 // real database — use Supabase auth (auth.users) + RLS instead.
 
 export const ROLES = {
+  parent: {
+    label: 'Parent',
+    portal: 'Parent Portal',
+    accent: '#0284c7',
+    home: 'parent',
+    nav: [
+      {
+        section: 'CHILD MANAGEMENT',
+        items: [
+          { id: 'dashboard', icon: 'home', label: 'Dashboard', view: 'parent' },
+          { id: 'academics', icon: 'library', label: 'Academics & Reports', view: 'parent', tab: 'academics' },
+          { id: 'finance', icon: 'finance', label: 'Fees & Payments', view: 'parent', tab: 'finance' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: 'bell', label: 'Notices & Alerts', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'settings', icon: 'settings', label: 'Profile Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ]
+  },
+
   principal: {
     label: 'Principal',
     portal: 'Principal Portal',
