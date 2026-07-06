@@ -61,45 +61,26 @@ export default function ParentDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ background: '#ecfdf5', padding: '8px', borderRadius: '8px', color: '#10b981' }}>
-              <BookOpen size={20} />
-            </div>
-            <h3 style={{ margin: 0, fontSize: '15px', color: '#334155' }}>Academic Status</h3>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
-            Good Standing
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>Latest term reports are available</div>
-        </div>
-
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ background: '#fef3c7', padding: '8px', borderRadius: '8px', color: '#d97706' }}>
-              <Clock size={20} />
-            </div>
-            <h3 style={{ margin: 0, fontSize: '15px', color: '#334155' }}>Attendance</h3>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
-            98% Present
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>This academic term</div>
-        </div>
-
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#3b82f6' }}>
-              <FileText size={20} />
-            </div>
-            <h3 style={{ margin: 0, fontSize: '15px', color: '#334155' }}>Financial Status</h3>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
-            Cleared
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>No pending fee balances</div>
-        </div>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
+        <button 
+          onClick={() => window.location.href = '/portal/student'}
+          style={{
+            background: '#0f172a',
+            color: '#fff',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '15px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <BookOpen size={18} />
+          Access Student Portal
+        </button>
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
