@@ -16,7 +16,7 @@ export default function Library({ store }) {
   const [form, setForm] = useState({ book: '', student_adm: '', due: '' });
 
   const [addAssetOpen, setAddAssetOpen] = useState(false);
-  const [assetForm, setAssetForm] = useState({ title: '', author: '', isbn: '', category: 'Book', copies: 1 });
+  const [assetForm, setAssetForm] = useState({ title: '', author: '', isbn: '', category: 'Book', copies: 1, file_url: '' });
 
   useEffect(() => {
     Promise.all([fetchTable('libraryBooks'), fetchTable('libraryLoans')])
@@ -34,13 +34,20 @@ export default function Library({ store }) {
     return { titles: books.length, copies, onLoan: copies - available, overdue };
   }, [books, loans]);
 
-  const filtered = books.filter((b) => {
+  const regularBooks = books.filter(b => !b.is_digital && b.category !== 'Past Paper');
+  const pastPapers = books.filter(b => b.is_digital || b.category === 'Past Paper');
+
+  const filtered = regularBooks.filter((b) => {
     const matchesSearch = b.title.toLowerCase().includes(search.toLowerCase()) || (b.author && b.author.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = categoryFilter === 'All' || b.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['All', ...new Set(books.map(b => b.category))];
+  const filteredPapers = pastPapers.filter((b) => {
+    return b.title.toLowerCase().includes(search.toLowerCase());
+  });
+
+  const categories = ['All', ...new Set(regularBooks.map(b => b.category))];
 
   const issueBook = async () => {
     if (!form.book || !form.student_adm) {
@@ -92,8 +99,10 @@ export default function Library({ store }) {
       author: assetForm.author || 'N/A',
       isbn: assetForm.isbn || 'N/A',
       category: assetForm.category,
-      copies: Number(assetForm.copies),
-      available: Number(assetForm.copies)
+      copies: assetForm.category === 'Past Paper' ? 0 : Number(assetForm.copies),
+      available: assetForm.category === 'Past Paper' ? 0 : Number(assetForm.copies),
+      is_digital: assetForm.category === 'Past Paper',
+      file_url: assetForm.category === 'Past Paper' ? assetForm.file_url : null
     };
     try {
       await upsertRow('libraryBooks', newAsset);
@@ -143,7 +152,10 @@ export default function Library({ store }) {
 
       <div className="tabs" style={{ marginBottom: 16 }}>
         <button className={`tab${tab === 'catalog' ? ' active' : ''}`} onClick={() => setTab('catalog')}>Catalog</button>
-        <button className={`tab${tab === 'loans' ? ' active' : ''}`} onClick={() => setTab('loans')}>Loans &amp; Overdue</button>
+        <button className={`tab${tab === 'past_papers' ? ' active' : ''}`} onClick={() => setTab('past_papers')}>Past Papers</button>
+        {user?.role !== 'student' && user?.role !== 'parent' && (
+          <button className={`tab${tab === 'loans' ? ' active' : ''}`} onClick={() => setTab('loans')}>Loans &amp; Overdue</button>
+        )}
       </div>
 
       {tab === 'catalog' && (
@@ -189,6 +201,42 @@ export default function Library({ store }) {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'past_papers' && (
+        <div className="card card-pad">
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <input
+              className="input"
+              style={{ maxWidth: 320 }}
+              placeholder="Search past papers…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-3">
+            {filteredPapers.map((p) => (
+              <div key={p.id} className="card card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <h4 style={{ margin: 0, fontWeight: 600 }}>{p.title}</h4>
+                  {p.author && p.author !== 'N/A' && <p className="muted" style={{ margin: '4px 0 0 0', fontSize: 13 }}>{p.author}</p>}
+                </div>
+                <div style={{ marginTop: 'auto' }}>
+                  {p.file_url ? (
+                    <a href={p.file_url} target="_blank" rel="noreferrer" className="btn btn-sm btn-primary" style={{ display: 'inline-block', width: '100%', textAlign: 'center' }}>
+                      View / Download PDF
+                    </a>
+                  ) : (
+                    <span className="muted" style={{ fontSize: 13 }}>No link provided</span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {filteredPapers.length === 0 && (
+              <div className="muted" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 24 }}>No past papers available.</div>
+            )}
           </div>
         </div>
       )}
@@ -268,20 +316,28 @@ export default function Library({ store }) {
                 <option>Laptop</option>
                 <option>Tablet</option>
                 <option>Equipment</option>
+                <option>Past Paper</option>
                 <option>Other</option>
               </select>
             </div>
           </div>
-          <div className="grid grid-2" style={{ marginTop: 12 }}>
-            <div>
-              <label className="field-label">Author / Manufacturer</label>
-              <input className="input" placeholder="E.g. Lenovo" value={assetForm.author} onChange={e => setAssetForm(f => ({ ...f, author: e.target.value }))} />
+          {assetForm.category === 'Past Paper' ? (
+            <div style={{ marginTop: 12 }}>
+              <label className="field-label">File URL / Link</label>
+              <input className="input" placeholder="e.g. https://example.com/paper.pdf" value={assetForm.file_url || ''} onChange={e => setAssetForm(f => ({ ...f, file_url: e.target.value }))} />
             </div>
-            <div>
-              <label className="field-label">Total Copies</label>
-              <input type="number" min="1" className="input" value={assetForm.copies} onChange={e => setAssetForm(f => ({ ...f, copies: e.target.value }))} />
+          ) : (
+            <div className="grid grid-2" style={{ marginTop: 12 }}>
+              <div>
+                <label className="field-label">Author / Manufacturer</label>
+                <input className="input" placeholder="E.g. Lenovo" value={assetForm.author} onChange={e => setAssetForm(f => ({ ...f, author: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Total Copies</label>
+                <input type="number" min="1" className="input" value={assetForm.copies} onChange={e => setAssetForm(f => ({ ...f, copies: e.target.value }))} />
+              </div>
             </div>
-          </div>
+          )}
         </Modal>
       )}
     </div>
