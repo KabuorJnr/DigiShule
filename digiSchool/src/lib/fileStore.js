@@ -32,7 +32,7 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
     name: file.name,
     storage_path: storagePath,
     type,
-    subject,
+    subject: subject || 'General',
     target_class: targetClass || 'All Classes',
     description: description || '',
     due_date: dueDate || null,

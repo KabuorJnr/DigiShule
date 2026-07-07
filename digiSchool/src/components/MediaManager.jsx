@@ -60,6 +60,7 @@ export default function MediaManager({ notify, user }) {
           id: crypto.randomUUID(),
           file,
           type: 'gallery',
+          subject: 'Gallery',
           description: description || 'School Gallery Photo',
           uploadedBy: user?.id
         });
