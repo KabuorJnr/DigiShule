@@ -15,6 +15,7 @@ export default function StaffAttendance({ store, user }) {
   const [staff, setStaff] = useState([]);
   const [filter, setFilter] = useState('All');
   const [tab, setTab] = useState('attendance');
+  const [logs, setLogs] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
@@ -57,6 +58,13 @@ export default function StaffAttendance({ store, user }) {
     fetchTable('leave_requests')
       .then((rows) => {
         if (rows && rows.length > 0) setLeaveRequests(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      })
+      .catch(() => {});
+
+    // Load AttendAI logs
+    fetchTable('staffAttendanceLogs')
+      .then((rows) => {
+        if (rows) setLogs(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       })
       .catch(() => {});
   }, [notify]);
@@ -359,6 +367,9 @@ export default function StaffAttendance({ store, user }) {
         <button className={`tab${tab === 'attendance' ? ' active' : ''}`} onClick={() => setTab('attendance')}>
           <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Staff Roster
         </button>
+        <button className={`tab${tab === 'logs' ? ' active' : ''}`} onClick={() => setTab('logs')}>
+          <Icon name="clock" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> AttendAI Logs
+        </button>
         <button className={`tab${tab === 'leave' ? ' active' : ''}`} onClick={() => setTab('leave')}>
           <Icon name="clipboard" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Leave Requests
           {leaveTotals.pending > 0 && <Badge color="amber" style={{ marginLeft: 8 }}>{leaveTotals.pending}</Badge>}
@@ -424,6 +435,44 @@ export default function StaffAttendance({ store, user }) {
             </div>
           </div>
         </>
+      )}
+
+      {tab === 'logs' && (
+        <div className="card card-pad">
+          <div className="toolbar" style={{ marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>AttendAI Clock-In History</h3>
+          </div>
+          <div className="scroll-x">
+            <table className="table">
+              <thead>
+                <tr><th>Staff Member</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Location Data</th></tr>
+              </thead>
+              <tbody>
+                {logs.map((l) => {
+                  const staffMember = staff.find(s => s.id === l.staff_id) || { name: 'Unknown Staff' };
+                  return (
+                    <tr key={l.id}>
+                      <td style={{ fontWeight: 600 }}>{staffMember.name}</td>
+                      <td>{l.date}</td>
+                      <td style={{ color: '#059669', fontWeight: 500 }}>
+                        {l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '-'}
+                      </td>
+                      <td style={{ color: '#dc2626', fontWeight: 500 }}>
+                        {l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '-'}
+                      </td>
+                      <td className="muted" style={{ fontSize: 12 }}>
+                        {l.location_lat ? `Lat: ${l.location_lat.toFixed(4)}, Lng: ${l.location_lng.toFixed(4)}` : 'N/A'}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {logs.length === 0 && (
+                  <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No AttendAI logs recorded yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {tab === 'leave' && (

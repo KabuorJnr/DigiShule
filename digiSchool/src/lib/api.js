@@ -39,6 +39,7 @@ const TABLES = {
   invoices: 'invoices', expenses: 'expenses',
   admissions: 'admissions', clinicVisits: 'clinic_visits',
   disciplinaryRecords: 'disciplinary_records', staff: 'staff',
+  staffAttendanceLogs: 'staff_attendance_logs',
   facilities: 'facilities', notifications: 'notifications',
   schoolEvents: 'school_events', job_applications: 'job_applications',
   messages: 'messages', studentAttendance: 'student_attendance',

@@ -5,6 +5,7 @@ import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, Clipboa
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 import PrintHeader from '../components/PrintHeader';
+import AttendAIWidget from '../components/AttendAIWidget';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
@@ -259,6 +260,11 @@ export default function TeacherPortal({ store, user }) {
           .modal-header, .no-print { display: none !important; }
         }
       `}} />
+      
+      <div style={{ marginBottom: 20 }}>
+        <AttendAIWidget user={user} notify={store.notify} />
+      </div>
+
       {/* Welcome Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)',
