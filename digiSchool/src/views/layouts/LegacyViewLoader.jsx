@@ -55,5 +55,7 @@ export default function LegacyViewLoader() {
     return <Navigate to="/portal/overview" replace />;
   }
 
-  return <ViewComponent store={store} user={user} params={outletParams || {}} />;
+  const isReadOnlyView = (viewId === 'scheme_of_work' || viewId === 'lesson_plans') && user?.role !== 'teacher';
+
+  return <ViewComponent store={store} user={user} params={outletParams || {}} readOnly={isReadOnlyView} />;
 }

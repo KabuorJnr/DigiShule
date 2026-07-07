@@ -32,6 +32,10 @@ export default function SchemeOfWork({ store, user, readOnly = false }) {
         r.subject === filters.subject &&
         r.term === filters.term
       );
+      
+      if (!readOnly && user?.id) {
+        filtered = filtered.filter(r => r.teacher_id === user.id);
+      }
       // Sort by week
       filtered.sort((a, b) => a.week_number - b.week_number);
       if (filtered.length === 0 && !readOnly) {
