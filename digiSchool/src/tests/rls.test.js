@@ -34,6 +34,18 @@ describe.runIf(runRlsTests)('Row Level Security (RLS) Rules', () => {
     expect(data).toHaveLength(0);
   });
 
+  it('blocks anonymous access to lesson_plans', async () => {
+    const { data, error } = await supabase.from('lesson_plans').select('*').limit(1);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it('blocks anonymous access to schemes_of_work', async () => {
+    const { data, error } = await supabase.from('schemes_of_work').select('*').limit(1);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
   // To truly test cross-tenant isolation, we would need to authenticate as a specific user,
   // insert a record for school A, and ensure a user from school B cannot read it.
   // This baseline ensures the default deny is active for unauthenticated requests.

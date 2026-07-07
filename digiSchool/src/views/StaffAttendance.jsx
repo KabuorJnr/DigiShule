@@ -693,9 +693,15 @@ export default function StaffAttendance({ store, user }) {
                 // Send email simultaneously
                 if (composeModal.email) {
                   try {
+                    const { data } = await supabase.auth.getSession();
+                    const token = data?.session?.access_token || '';
+
                     await fetch('/api/send-message', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
                       body: JSON.stringify({
                         email: composeModal.email,
                         name: composeModal.name,

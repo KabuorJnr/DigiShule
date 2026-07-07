@@ -10,10 +10,16 @@ export function generateSecurePassword(length = 10) {
 }
 
 export async function provisionAccount({ email, username, password, name, role, schoolName }) {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token || '';
+
   // Call the Vercel API
   const res = await fetch('/api/send-email', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` 
+    },
     body: JSON.stringify({ email, username, password, name, role, schoolName })
   });
   if (!res.ok) {
