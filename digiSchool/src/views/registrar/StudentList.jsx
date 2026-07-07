@@ -244,10 +244,10 @@ export default function StudentList() {
             <div className="grid grid-2">
               <div>
                 <label className="field-label">Class</label>
-                <input className="input" list="edit-classes-list" placeholder="e.g. 7A" value={editStudent.class || ''} onChange={e => setEditStudent(s => ({ ...s, class: e.target.value }))} />
-                <datalist id="edit-classes-list">
-                  {dynamicClasses.map(c => <option key={c} value={c} />)}
-                </datalist>
+                <select className="select" value={editStudent.class || ''} onChange={e => setEditStudent(s => ({ ...s, class: e.target.value }))}>
+                  <option value="" disabled>Select Class...</option>
+                  {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div>
                 <label className="field-label">Gender</label>
