@@ -73,7 +73,7 @@ export default function Admissions({ store }) {
         const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
           email: studentAuthEmail,
           password: studentPassword,
-          options: { data: { role: 'student', full_name: newStudent.name } }
+          options: { data: { role: 'student', full_name: newStudent.name, school_id: store.schoolId } }
         });
         
         if (studentSignUpError && !studentSignUpError.message.includes('already')) {
@@ -96,7 +96,7 @@ export default function Admissions({ store }) {
           const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
             email: newStudent.guardianEmail,
             password: tempPassword,
-            options: { data: { role: 'parent', full_name: newStudent.guardianName || 'Parent/Guardian' } }
+            options: { data: { role: 'parent', full_name: newStudent.guardianName || 'Parent/Guardian', school_id: store.schoolId } }
           });
           
           if (signUpError && !signUpError.message.includes('already')) {

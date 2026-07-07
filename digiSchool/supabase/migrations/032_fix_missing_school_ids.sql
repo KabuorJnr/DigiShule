@@ -1,0 +1,1 @@
+UPDATE public.profiles SET school_id = (SELECT id FROM public.schools LIMIT 1) WHERE school_id IS NULL; UPDATE public.staff SET school_id = (SELECT id FROM public.schools LIMIT 1) WHERE school_id IS NULL;

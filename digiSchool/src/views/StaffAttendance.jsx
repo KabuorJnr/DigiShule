@@ -208,7 +208,7 @@ export default function StaffAttendance({ store, user }) {
       const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
         email: addForm.email,
         password: tempPassword,
-        options: { data: { role: addForm.role, full_name: addForm.name } }
+        options: { data: { role: addForm.role, full_name: addForm.name, school_id: store.schoolId } }
       });
       
       isExisting = signUpError && signUpError.message.toLowerCase().includes('already');

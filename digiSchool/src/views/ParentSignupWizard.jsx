@@ -92,7 +92,8 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
         options: {
           data: {
             full_name: parent.name,
-            role: 'parent'
+            role: 'parent',
+            school_id: foundStudent.school_id
           }
         }
       });
@@ -106,8 +107,8 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
       
       if (!authData?.user) throw new Error('Failed to create authentication credentials.');
 
-      // 2. Create Parent Profile linked to the Student
-      const { error: profileErr } = await supabase.from('profiles').insert({
+      // 2. Update Parent Profile linked to the Student (upsert since trigger may have created it)
+      const { error: profileErr } = await supabase.from('profiles').upsert({
         id: authData.user.id,
         username: parent.email, // using email as username
         full_name: parent.name,

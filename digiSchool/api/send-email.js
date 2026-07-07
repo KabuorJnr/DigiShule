@@ -23,19 +23,28 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (supabaseUrl && supabaseKey) {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
-        return res.status(401).json({ error: 'Unauthorized' });
+    const isParent = role === 'parent';
+
+    // Only require JWT authentication for staff/admin actions
+    if (!isParent) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+      }
+      const token = authHeader.replace('Bearer ', '').trim();
+      if (!token) {
+        return res.status(401).json({ error: 'Unauthorized: Empty token' });
+      }
+      
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+          return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+        }
       }
     }
 
@@ -49,7 +58,6 @@ export default async function handler(req, res) {
       },
     });
 
-    const isParent = role === 'parent';
     const roleDisplay = isParent ? 'Parent Portal' : 'Staff/Teacher';
 
     const textContent = `Dear ${name},

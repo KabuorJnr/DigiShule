@@ -106,7 +106,7 @@ export default function EnrollStudent() {
       const { error: studentSignUpError, data: studentAuthData } = await secondaryAuthClient.auth.signUp({
         email: studentAuthEmail,
         password: studentPassword,
-        options: { data: { role: 'student', full_name: captured.name } }
+        options: { data: { role: 'student', full_name: captured.name, school_id: store.schoolId } }
       });
       
       if (studentSignUpError && !studentSignUpError.message.includes('already')) {
@@ -132,7 +132,7 @@ export default function EnrollStudent() {
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
           email: captured.guardianEmail,
           password: tempPassword,
-          options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian' } }
+          options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian', school_id: store.schoolId } }
         });
         
         const isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
