@@ -270,3 +270,121 @@ export function exportReportCardsPDF({ school, gradeBoundaries, students, subjec
   });
   doc.save(filename);
 }
+
+export function exportSchemeOfWorkPDF({ school, scheme, rows, filename }) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  pdfHeader(doc, school, 'SCHEME OF WORK', `Class: ${scheme.class} | Subject: ${scheme.subject} | Term: ${scheme.term}`);
+  
+  autoTable(doc, {
+    head: [['Week', 'Strand', 'Sub-Strand', 'Specific Learning Outcomes', 'Key Inquiry Questions', 'Learning Resources', 'Assessment Method', 'Remarks']],
+    body: rows.map(r => [
+      r.week_number || '',
+      r.strand || '',
+      r.sub_strand || '',
+      r.specific_learning_outcomes || '',
+      r.key_inquiry_questions || '',
+      r.learning_resources || '',
+      r.assessment_method || '',
+      r.remarks || ''
+    ]),
+    startY: 132,
+    styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+    headStyles: { fillColor: [30, 58, 95], textColor: 255 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    margin: { left: 40, right: 40 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 70 },
+      2: { cellWidth: 80 },
+      3: { cellWidth: 150 },
+      4: { cellWidth: 100 },
+      5: { cellWidth: 100 },
+      6: { cellWidth: 80 },
+      7: { cellWidth: 100 }
+    }
+  });
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
+  }
+
+  doc.save(filename || 'Scheme_Of_Work.pdf');
+}
+
+export function exportLessonPlanPDF({ school, plan, filename }) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  pdfHeader(doc, school, 'LESSON PLAN', '');
+
+  let y = 132;
+  const addLine = (label, value) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(label, 40, y);
+    doc.setFont('helvetica', 'normal');
+    const textLines = doc.splitTextToSize(value || 'N/A', 400);
+    doc.text(textLines, 160, y);
+    y += (textLines.length * 14) + 6;
+  };
+
+  const addSection = (title, text) => {
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(30, 58, 95);
+    doc.text(title, 40, y);
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    
+    if (!text) {
+      doc.text('N/A', 40, y);
+      y += 20;
+    } else {
+      const textLines = doc.splitTextToSize(String(text), 515);
+      doc.text(textLines, 40, y);
+      y += (textLines.length * 14) + 10;
+    }
+  };
+
+  // Admin details
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  
+  doc.rect(40, y - 15, 515, 60);
+  doc.text(`Teacher: ${plan.teacher_name || ''}`, 50, y);
+  doc.text(`Date: ${plan.date || ''}`, 250, y);
+  doc.text(`Time: ${plan.time_slot || ''}`, 400, y);
+  y += 20;
+  doc.text(`Class: ${plan.class || ''}`, 50, y);
+  doc.text(`Subject: ${plan.subject || ''}`, 250, y);
+  doc.text(`Term: ${plan.term || ''}`, 400, y);
+  y += 40;
+
+  addSection('Strand', plan.strand);
+  addSection('Sub-Strand', plan.sub_strand);
+  addSection('Specific Learning Outcomes', plan.specific_learning_outcomes);
+  addSection('Key Inquiry Questions', plan.key_inquiry_questions);
+  addSection('Learning Resources', plan.learning_resources);
+  
+  const comp = plan.core_competencies?.length ? plan.core_competencies.join(', ') : '';
+  const vals = plan.values_developed?.length ? plan.values_developed.join(', ') : '';
+  
+  addSection('Core Competencies', comp);
+  addSection('Values Developed', vals);
+  addSection('PCIs (Pertinent & Contemporary Issues)', plan.pcis);
+
+  addSection('Introduction', plan.intro_activities);
+  addSection('Lesson Development: Step 1', plan.development_step1);
+  addSection('Lesson Development: Step 2', plan.development_step2);
+  addSection('Lesson Development: Step 3', plan.development_step3);
+  addSection('Extended Activities', plan.extended_activities);
+  addSection('Conclusion', plan.conclusion);
+  addSection('Reflection on the Lesson', plan.reflection);
+
+  doc.save(filename || 'Lesson_Plan.pdf');
+}

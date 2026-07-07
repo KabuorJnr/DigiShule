@@ -76,6 +76,8 @@ export const ROLES = {
             id: 'academic', icon: 'library', label: 'Academic',
             sub: [
               { id: 'timetable', label: 'Timetable', view: 'timetable' },
+              { id: 'schemes', label: 'Schemes of Work', view: 'scheme_of_work' },
+              { id: 'lessons', label: 'Lesson Plans', view: 'lesson_plans' },
               { id: 'examinations', label: 'Examinations', view: 'exams' },
               { id: 'gradebook', label: 'Gradebook', view: 'gradebook' }
             ]
@@ -318,6 +320,8 @@ export const ROLES = {
         items: [
           { id: 'teacher', icon: 'home', label: 'My Dashboard', view: 'teacher' },
           { id: 'timetable', icon: 'calendar', label: 'My Timetable', view: 'timetable' },
+          { id: 'schemes', icon: 'folder', label: 'Schemes of Work', view: 'scheme_of_work' },
+          { id: 'lessons', icon: 'file', label: 'Lesson Plans', view: 'lesson_plans' },
           { id: 'exams', icon: 'book', label: 'Exam Schedules', view: 'exams' },
           { id: 'teacher_resources', icon: 'folder', label: 'Assignments & Materials', view: 'teacher_resources' }
         ]

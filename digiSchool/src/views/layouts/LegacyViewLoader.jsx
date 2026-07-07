@@ -18,6 +18,8 @@ import Notices from '../Notices';
 import SchoolCalendar from '../SchoolCalendar';
 import DeveloperPortal from '../DeveloperPortal';
 import SelectProfile from '../SelectProfile';
+import SchemeOfWork from '../SchemeOfWork';
+import LessonPlans from '../LessonPlans';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -39,6 +41,8 @@ const VIEW_MAP = {
   school_calendar: SchoolCalendar,
   teacher_resources: TeacherResources,
   select_profile: SelectProfile,
+  scheme_of_work: SchemeOfWork,
+  lesson_plans: LessonPlans,
 };
 
 export default function LegacyViewLoader() {
