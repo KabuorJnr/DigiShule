@@ -9,9 +9,10 @@ import PrintHeader from '../components/PrintHeader';
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
   const teacherName = user?.name || 'Teacher';
-  const subject = user?.dept || 'Mathematics';
 
   const teacherProfile = useMemo(() => store.teachers.find(t => t.id === user?.id || t.name === teacherName) || {}, [store.teachers, user?.id, teacherName]);
+  
+  const subject = teacherProfile.subject || user?.dept || 'Mathematics';
   const assignedClass = teacherProfile.assignedClass || null;
 
   const [loadedStudents, setLoadedStudents] = useState([]);
