@@ -397,7 +397,7 @@ function CreateScheduleModal({ onClose, onSave, defaultType, venues, dynamicClas
       </div>
       <label className="field-label">Sessions</label>
       <SessionRows rows={rows} setRows={setRows} venues={venues} dynamicClasses={dynamicClasses} />
-      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: dynamicClasses[0] || '7A', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: defaultTeacherName }])}>+ Add Session</button>
+      <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setRows((rs) => [...rs, { date: '', classes: dynamicClasses[0] || '', subject: 'English', start: '08:00', end: '10:00', venue: venues[0]?.name || '', invigilator: defaultTeacherName }])}>+ Add Session</button>
     </Modal>
   );
 }

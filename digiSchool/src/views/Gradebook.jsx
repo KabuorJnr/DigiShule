@@ -16,7 +16,7 @@ const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', '
 
 export default function Gradebook({ store }) {
   const { updateStudent, gradeBoundaries, settings, notify } = store;
-  const [cls, setCls] = useState('7A');
+  const [cls, setCls] = useState('');
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
   const [assessment, setAssessment] = useState('All');

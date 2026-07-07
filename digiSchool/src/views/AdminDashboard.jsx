@@ -168,14 +168,26 @@ export default function AdminDashboard({ store, user }) {
         options: { data: { role: commissionForm.role, full_name: commissionForm.name } }
       });
       
-      if (authErr) throw new Error(`Auth Error: ${authErr.message}`);
-      if (!authData?.user) throw new Error('Failed to create credentials.');
+      let isExisting = false;
+      let finalUserId = null;
+      if (authErr && authErr.message.toLowerCase().includes('already')) {
+        isExisting = true;
+        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: commissionForm.email.trim() });
+        if (fetchErr) throw new Error(`Could not fetch existing user: ${fetchErr.message}`);
+        finalUserId = existingId;
+      } else if (authErr) {
+        throw new Error(`Auth Error: ${authErr.message}`);
+      } else {
+        finalUserId = authData?.user?.id;
+      }
+      
+      if (!finalUserId) throw new Error('Failed to create credentials.');
       
       const schoolId = store.settings?.id || localStorage.getItem('eduone_school_id');
       
       // 3. Create Profile
       const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: authData.user.id,
+        id: finalUserId,
         username: commissionForm.email.trim(),
         full_name: commissionForm.name,
         role: commissionForm.role,
@@ -186,7 +198,7 @@ export default function AdminDashboard({ store, user }) {
       
       // 4. Create Staff Record
       const newStaff = {
-        id: authData.user.id,
+        id: finalUserId,
         name: commissionForm.name,
         role: commissionForm.role,
         dept: 'General',
@@ -197,7 +209,7 @@ export default function AdminDashboard({ store, user }) {
       setDbStaff(prev => [...prev, newStaff]);
       
       // 5. Show Success
-      setCommissionGeneratedPassword(tempPass);
+      setCommissionGeneratedPassword(isExisting ? '(Already exists. Use original password)' : tempPass);
       setCommissionSuccess(true);
     } catch (err) {
       notify(`Failed to commission staff: ${err.message}`, 'error');

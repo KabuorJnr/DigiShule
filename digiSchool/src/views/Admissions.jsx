@@ -54,7 +54,7 @@ export default function Admissions({ store }) {
         id: `s_${app.id}`,
         name: app.name,
         adm: `ADM/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-        class: app.Grade || app.form || app.grade || '7A',
+        class: app.Grade || app.form || app.grade || '',
         gender: app.gender === 'M' ? 'Male' : app.gender === 'F' ? 'Female' : app.gender,
         scores: {},
         flagged: false,
@@ -123,7 +123,7 @@ export default function Admissions({ store }) {
           }
         }
         
-        notify(`${app.name} admitted and enrolled in Grade ${app.Grade || app.form || app.grade || '7A'}`, 'success', 'Admissions');
+        notify(`${app.name} admitted and enrolled in ${app.Grade || app.form || app.grade || 'unassigned class'}`, 'success', 'Admissions');
       } catch (e) {
         notify(`Admitted but failed to enroll: ${e.message}`, 'warning');
       }
@@ -143,7 +143,7 @@ export default function Admissions({ store }) {
     try { await upsertRow('admissions', applicant); } catch (e) { notify(`Could not add application: ${e.message}`, 'error'); return; }
     setApps(as => [applicant, ...as]);
     setAddOpen(false);
-    setForm({ name: '', kcpe: '', gender: 'M', Grade: '7A', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
+    setForm({ name: '', kcpe: '', gender: 'M', Grade: '', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
     notify(`Application for ${form.name} added.`);
   };
 

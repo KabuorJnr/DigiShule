@@ -71,7 +71,7 @@ export default function Timetable({ store }) {
     return saved.length ? saved : ['1A', '2A', '3A']; // Fallback since students array is no longer global
   }, [store.settings]);
   const [term, setTerm] = useState('Term 2');
-  const [cls, setCls] = useState(dynamicClasses[0] || '7A');
+  const [cls, setCls] = useState(dynamicClasses[0] || '');
   const [tab, setTab] = useState('class');
   const [teacherSel, setTeacherSel] = useState(teachers?.[0]?.name || '');
 
@@ -93,7 +93,7 @@ export default function Timetable({ store }) {
 
   useEffect(() => {
     if (!dynamicClasses.includes(cls)) {
-      setCls(dynamicClasses[0] || '7A');
+      setCls(dynamicClasses[0] || '');
     }
   }, [dynamicClasses, cls]);
 

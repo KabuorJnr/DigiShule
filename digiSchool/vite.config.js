@@ -1,9 +1,51 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const apiProxyPlugin = () => {
+  return {
+    name: 'api-proxy-plugin',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url === '/api/send-email' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              req.body = JSON.parse(body || '{}');
+            } catch (e) {
+              req.body = {};
+            }
+            
+            res.status = (code) => { res.statusCode = code; return res; };
+            res.json = (data) => {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(data));
+            };
+
+            try {
+              // Load env vars from .env manually so the api script can access process.env
+              const env = loadEnv('', process.cwd(), '');
+              Object.assign(process.env, env);
+
+              const handler = await import('./api/send-email.js');
+              await handler.default(req, res);
+            } catch (err) {
+              console.error(err);
+              res.status(500).json({ error: 'Failed to execute handler locally', details: err.message });
+            }
+          });
+        } else {
+          next();
+        }
+      });
+    }
+  }
+}
+
 export default defineConfig({
   plugins: [
+    apiProxyPlugin(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

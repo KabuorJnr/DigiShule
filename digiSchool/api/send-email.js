@@ -23,9 +23,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Wait, the host config is currently hardcoded to the old keys instead of environment variables? 
-    // The user said: "I have put the keys, password, username and port on the environment variables on vercel.."
-    // So I should use process.env!
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: process.env.SMTP_PORT || 465,
@@ -59,9 +56,9 @@ Administration
 ${schoolName || 'EduOne'}`;
 
     const info = await transporter.sendMail({
-      from: `"EduOne Systems" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
+      from: `"EduOne Africa" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
       to: email,
-      subject: `Welcome to ${schoolName || 'EduOne'} - Account Details`,
+      subject: `Welcome to EduOne Africa - Account Details`,
       text: textContent,
     });
 

@@ -9,7 +9,7 @@ import { getDynamicClasses, expandClassesWithStreams } from '../../data/seed';
 import RegistrationLoadingModal from '../../components/RegistrationLoadingModal';
 
 const EMPTY_FORM = {
-  name: '', adm: '', class: '7A', gender: 'Male',
+  name: '', adm: '', class: '', gender: 'Male',
   dob: '', birthCertNo: '', guardianName: '', guardianPhone: '', guardianEmail: '',
   address: '', parentAddress: '', medicalNotes: '', previousSchool: '',
   admissionLetterFile: null, admissionLetterName: '',
@@ -43,7 +43,7 @@ export default function EnrollStudent() {
       ...f,
       name: adm.name || '',
       gender: adm.gender === 'M' ? 'Male' : adm.gender === 'F' ? 'Female' : (adm.gender || 'Other'),
-      class: adm.form || adm.Grade || adm.grade || '7A',
+      class: adm.form || adm.Grade || adm.grade || '',
       dob: adm.dob || '',
       guardianName: adm.parentName || adm.guardianName || '',
       guardianPhone: adm.parentPhone || adm.guardianPhone || '',
@@ -66,7 +66,7 @@ export default function EnrollStudent() {
   };
 
   const handleEnroll = async () => {
-    if (!form.name.trim() || !form.adm.trim()) { notify('Name and Admission No. are required', 'warning'); return; }
+    if (!form.name.trim() || !form.adm.trim() || !form.class) { notify('Name, Admission No, and Class are required', 'warning'); return; }
     if (form.adm.trim().length < 7) { notify('Admission No. must be at least 7 characters (e.g., 26/1234) for secure passwords.', 'warning'); return; }
     const { data: existing } = await supabase.from('students').select('id').eq('adm', form.adm).maybeSingle();
     if (existing) { notify(`Adm No. ${form.adm} already exists`, 'warning'); return; }
@@ -208,7 +208,7 @@ export default function EnrollStudent() {
             <select className="select" style={{ maxWidth: 200 }} onChange={e => loadAdmission(e.target.value)} defaultValue="">
               <option value="" disabled>Auto-fill from Admission...</option>
               {pendingAdmissions.map(a => (
-                <option key={a.id} value={a.id}>{a.name} ({a.form || a.Grade || a.grade || '7A'})</option>
+                <option key={a.id} value={a.id}>{a.name} ({a.form || a.Grade || a.grade || 'Unassigned'})</option>
               ))}
             </select>
           )}
@@ -228,6 +228,7 @@ export default function EnrollStudent() {
             <div>
               <label className="field-label">Class</label>
               <select className="select" value={form.class} onChange={e => upForm({ class: e.target.value })}>
+                <option value="" disabled>Select Class...</option>
                 {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
