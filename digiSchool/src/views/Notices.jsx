@@ -183,6 +183,7 @@ export default function Notices({ store, user }) {
         }
       }
     } catch (e) {
+      console.error('Notice Post Error:', e);
       // Fallback to local if Supabase fails
       setDbNotices(prev => [{
         id: `local_${Date.now()}`, title: form.title, body: form.body,
@@ -191,7 +192,7 @@ export default function Notices({ store, user }) {
       }, ...prev]);
       setShowPost(false);
       setForm({ title: '', body: '', audience: 'all', specificUser: '', sendSms: false });
-      notify('Notice posted (local only — sync when online)', 'warning', 'Notices');
+      notify(`Notice failed to sync: ${e.message || JSON.stringify(e)} (Saved locally)`, 'error', 'Notices');
     } finally { setPosting(false); }
   };
 
