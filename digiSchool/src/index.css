@@ -963,3 +963,11 @@ textarea.input {
 @media (max-width: 600px) {
   .hide-mobile { display: none; }
 }
+
+@media (min-width: 769px) {
+  .hide-desktop { display: none !important; }
+}
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+}
+

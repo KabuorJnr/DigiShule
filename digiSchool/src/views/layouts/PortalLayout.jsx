@@ -8,7 +8,7 @@ import { setActiveSchoolId } from '../../lib/api';
 import { ROLES } from '../../data/users';
 
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
 
@@ -28,6 +28,7 @@ export default function PortalLayout() {
   const [viewParams, setViewParams] = useState({}); // Stores tab, action, filters from sidebar
   const [dataLoading, setDataLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedNav, setExpandedNav] = useState({});
   const [toasts, setToasts] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -360,14 +361,13 @@ export default function PortalLayout() {
     if (activeView !== navItem.view) return false;
     if (navItem.tab && viewParams.tab !== navItem.tab) return false;
     if (navItem.action && viewParams.action !== navItem.action) return false;
-    if (navItem.filter && viewParams.filter !== navItem.filter) return false;
     return true;
   };
 
   return (
     <div className="layout">
       {/* Sidebar */}
-      <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
+      <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileMenuOpen ? ' mobile-open' : ''}`}>
         <div className="sidebar-brand">
           <div className="logo-box">
             {settings.logo ? <img src={settings.logo} alt="logo" /> : <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
@@ -472,12 +472,24 @@ export default function PortalLayout() {
         </button>
       </aside>
 
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-overlay hide-desktop" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Main */}
       <div className="main">
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+            <button 
+              className="hide-desktop btn btn-icon" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{ padding: '0', marginLeft: '4px' }}
+            >
+              <Menu size={20} color="#1e293b" />
+            </button>
             <div className="topbar-title">{settings.name}</div>
-            <div className="topbar-search" style={{ position: 'relative', maxWidth: '400px', width: '100%' }} ref={searchInputRef}>
+            <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '400px', width: '100%', marginLeft: '8px' }} ref={searchInputRef}>
               <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666666' }} />
               <input 
                 type="text" 
