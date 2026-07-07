@@ -262,7 +262,7 @@ export default function TeacherPortal({ store, user }) {
       `}} />
       
       <div style={{ marginBottom: 20 }}>
-        <AttendAIWidget user={user} notify={store.notify} />
+        <AttendAIWidget user={user} notify={store.notify} settings={store.settings} />
       </div>
 
       {/* Welcome Banner */}

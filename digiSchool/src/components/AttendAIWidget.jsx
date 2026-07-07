@@ -2,7 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
 
-export default function AttendAIWidget({ user, notify }) {
+// Calculate distance in meters using Haversine formula
+function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+export default function AttendAIWidget({ user, notify, settings }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [todayLog, setTodayLog] = useState(null);
@@ -38,6 +52,16 @@ export default function AttendAIWidget({ user, notify }) {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
+
+          if (settings?.latitude && settings?.longitude) {
+            const distance = getDistanceInMeters(latitude, longitude, settings.latitude, settings.longitude);
+            if (distance > 50) {
+              notify(`Geofence Error: You are ${Math.round(distance)}m away from the school. You must be within 50m to log attendance.`, 'error');
+              setLoading(false);
+              return;
+            }
+          }
+
           const nowStr = new Date().toISOString();
           const todayStr = nowStr.slice(0, 10);
 
@@ -104,7 +128,7 @@ export default function AttendAIWidget({ user, notify }) {
           </h2>
           <p style={{ margin: '8px 0 0 0', opacity: 0.9 }}>Digital Check-In & Check-Out</p>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', minWidth: '200px' }}>
           <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: '1px' }}>
             {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </div>
@@ -140,11 +164,11 @@ export default function AttendAIWidget({ user, notify }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', width: '100%', justifyContent: 'flex-start', flex: '1 1 200px', maxWidth: '100%' }}>
               {!hasCheckedIn && (
                 <button 
                   className="btn" 
-                  style={{ background: 'white', color: '#0ea5e9', fontWeight: 600, padding: '10px 24px' }}
+                  style={{ background: 'white', color: '#0ea5e9', fontWeight: 600, padding: '10px 24px', flex: '1', minWidth: '150px' }}
                   onClick={() => handleAction('check_in')}
                 >
                   <CheckCircle2 size={18} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'text-bottom' }} />
@@ -154,7 +178,7 @@ export default function AttendAIWidget({ user, notify }) {
               {hasCheckedIn && !hasCheckedOut && (
                 <button 
                   className="btn" 
-                  style={{ background: 'white', color: '#ef4444', fontWeight: 600, padding: '10px 24px' }}
+                  style={{ background: 'white', color: '#ef4444', fontWeight: 600, padding: '10px 24px', flex: '1', minWidth: '150px' }}
                   onClick={() => handleAction('check_out')}
                 >
                   <LogOut size={18} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'text-bottom' }} />

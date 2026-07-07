@@ -49,7 +49,9 @@ export default function Settings({ store, user }) {
       email: form.email,
       principal: form.principal,
       logo: form.logo,
-      paymentDetails: form.paymentDetails
+      paymentDetails: form.paymentDetails,
+      latitude: form.latitude,
+      longitude: form.longitude
     }));
     notify('School details saved', 'success', 'Settings');
   }
@@ -85,6 +87,8 @@ export default function Settings({ store, user }) {
             <div><label className="field-label">Phone</label><input className="input" value={form.phone} onChange={(e) => upForm({ phone: e.target.value })} /></div>
             <div><label className="field-label">Email</label><input className="input" value={form.email} onChange={(e) => upForm({ email: e.target.value })} /></div>
             <div><label className="field-label">Principal Name</label><input className="input" value={form.principal} onChange={(e) => upForm({ principal: e.target.value })} /></div>
+            <div><label className="field-label">School Latitude</label><input className="input" type="number" step="any" placeholder="e.g. -1.2921" value={form.latitude || ''} onChange={(e) => upForm({ latitude: parseFloat(e.target.value) || '' })} /></div>
+            <div><label className="field-label">School Longitude</label><input className="input" type="number" step="any" placeholder="e.g. 36.8219" value={form.longitude || ''} onChange={(e) => upForm({ longitude: parseFloat(e.target.value) || '' })} /></div>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="field-label">School Logo</label>
