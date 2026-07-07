@@ -80,7 +80,7 @@ Administration
 ${schoolName || 'EduOne'}`;
 
     const info = await transporter.sendMail({
-      from: `"EduOne Africa" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
+      from: `"EduOne Africa" <${process.env.SMTP_USER}>`,
       to: email,
       subject: `Welcome to EduOne Africa - Account Details`,
       text: textContent,

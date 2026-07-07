@@ -156,7 +156,7 @@ export default function Gradebook({ store }) {
     notify(`Generated ${chosen.length} report card(s)`, 'success', 'Report Cards');
   }
 
-  const ScoreCell = ({ r, field }) => {
+  const ScoreCell = ({ r, field, editing, setEditing, saveScore }) => {
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (
@@ -246,17 +246,17 @@ export default function Gradebook({ store }) {
                     {r.name} {r.flagged && <Badge color="amber">Flagged</Badge>}
                   </td>
                   <td>{r.adm}</td>
-                  <ScoreCell r={r} field="a1" />
-                  <ScoreCell r={r} field="a2" />
-                  <ScoreCell r={r} field="a3" />
-                  <ScoreCell r={r} field="a4" />
-                  <td><strong>{r.average || '-'}</strong></td>
+                  <ScoreCell r={r} field="a1" editing={editing} setEditing={setEditing} saveScore={saveScore} />
+                  <ScoreCell r={r} field="a2" editing={editing} setEditing={setEditing} saveScore={saveScore} />
+                  <ScoreCell r={r} field="a3" editing={editing} setEditing={setEditing} saveScore={saveScore} />
+                  <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} />
+                  <td style={{ fontWeight: 700 }}>{r.average || '-'}</td>
                   <td>
                     <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
                       {r.grade}
                     </Badge>
                   </td>
-                  <ScoreCell r={r} field="remarks" />
+                  <ScoreCell r={r} field="remarks" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                 </tr>
               ))}
               {colAvg && (

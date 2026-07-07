@@ -4,6 +4,7 @@ import { computeRow, gradeFor } from '../../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
+import AttendAIWidget from '../../components/AttendAIWidget';
 import { upsertRow } from '../../lib/api';
 
 export default function TeacherDashboard() {
@@ -107,6 +108,10 @@ export default function TeacherDashboard() {
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Total Students" value={rows.length} sub={`across ${classes.length} classes`} />
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Class Average" value={`${avgOverall}%`} accent="#0369A1" />
         <KpiCard iconComponent={<AlertTriangle size={20} />} label="At Risk (<40%)" value={atRisk} accent={atRisk > 0 ? '#D13438' : '#107C10'} />
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <AttendAIWidget store={store} user={user} />
       </div>
 
       {/* Quick Links */}
