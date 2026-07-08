@@ -66,7 +66,13 @@ export default function StaffAttendance({ store, user }) {
           const uId = profMap[s.id] || s.id;
           const myLogs = logsToday.filter(l => l.staff_id === uId || l.staff_id === s.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
           const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-          return { ...s, checkIn: checkInStr };
+          
+          let derivedStatus = s.status;
+          if (myLogs.length === 0 && (s.status === 'Present' || s.check_in === '07:00 AM')) {
+            derivedStatus = 'Absent';
+          }
+          
+          return { ...s, checkIn: checkInStr, status: derivedStatus };
         }).sort((a, b) => a.name.localeCompare(b.name)));
       }
     }).catch((e) => notify(`Failed to load attendance data: ${e.message}`, 'error'));
@@ -214,8 +220,8 @@ export default function StaffAttendance({ store, user }) {
         dept: addForm.dept,
         subject: addForm.subject,
         email: addForm.email,
-        status: 'Present',
-        check_in: '07:00 AM'
+        status: 'Absent',
+        check_in: ''
       };
 
       const staffPayload = { ...newStaff };
@@ -276,7 +282,7 @@ export default function StaffAttendance({ store, user }) {
       }
 
       await upsertRow('staff', staffPayload);
-      setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
+      setStaff(prev => [...prev, { ...newStaff, checkIn: '' }]);
       
       if (addForm.role === 'teacher') {
         const teacherObj = {
@@ -454,7 +460,7 @@ export default function StaffAttendance({ store, user }) {
                       <td style={{ fontWeight: 600 }}>{s.name}</td>
                       <td>{s.role}</td>
                       <td className="muted">{s.dept}</td>
-                      <td>{s.checkIn}</td>
+                      <td className="check-in-col">{s.checkIn || ''}</td>
                       <td><Badge color={STATUS_COLOR[s.status]}>{s.status}</Badge></td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>

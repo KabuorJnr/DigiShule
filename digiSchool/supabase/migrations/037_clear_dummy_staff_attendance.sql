@@ -1,0 +1,1 @@
+UPDATE staff SET check_in = NULL, status = 'Absent' WHERE check_in = '07:00 AM' OR status = 'Present';
