@@ -239,9 +239,23 @@ export default function StaffAttendance({ store, user }) {
       
       isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
       if (isExisting) {
-        notify('A user with this email address is already registered. Duplicate accounts are not allowed.', 'error');
-        setProvisionStep(null);
-        return;
+        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: addForm.email });
+        if (fetchErr) throw new Error(`Could not fetch existing user: ${fetchErr.message}`);
+        
+        let query = supabase.from('profiles').select('id').eq('id', existingId).eq('role', addForm.role);
+        if (store.schoolId) query = query.eq('school_id', store.schoolId);
+        else query = query.is('school_id', null);
+        
+        const { data: existingProfiles, error: profileCheckErr } = await query;
+        if (profileCheckErr) throw new Error(`Profile check error: ${profileCheckErr.message}`);
+        
+        if (existingProfiles && existingProfiles.length > 0) {
+          notify(`This user is already registered as a ${addForm.role}. Duplicate accounts for the same role are not allowed.`, 'error');
+          setProvisionStep(null);
+          return;
+        }
+        
+        staffUserId = existingId;
       } else if (signUpError) {
         throw new Error(`Auth Error: ${signUpError.message}`);
       } else {
