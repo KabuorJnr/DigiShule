@@ -65,7 +65,7 @@ export default function StaffAttendance({ store, user }) {
         setStaff(staffRows.map((s) => {
           const uId = profMap[s.id] || s.id;
           const myLogs = logsToday.filter(l => l.staff_id === uId || l.staff_id === s.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-          const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : s.check_in || '-';
+          const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           return { ...s, checkIn: checkInStr };
         }).sort((a, b) => a.name.localeCompare(b.name)));
       }
