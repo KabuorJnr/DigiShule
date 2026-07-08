@@ -154,14 +154,14 @@ export default function EnrollStudent() {
             }).eq('id', parentUserId);
             if (updateErr) throw new Error(`Parent Profile Update Error: ${updateErr.message}`);
           } else {
-            const { error: profileErr } = await supabase.from('profiles').upsert({
+            const { error: profileErr } = await supabase.from('profiles').insert({
               id: parentUserId,
               username,
               full_name: captured.guardianName || 'Parent / Guardian',
               role: 'parent',
               student_id: newStudent.id,
               school_id: store.schoolId || null
-            }, { onConflict: 'id' });
+            });
             if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
           }
 

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS staff_attendance_logs (
     id TEXT PRIMARY KEY,
-    staff_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    staff_id UUID NOT NULL,
     school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     check_in_time TIMESTAMPTZ,
