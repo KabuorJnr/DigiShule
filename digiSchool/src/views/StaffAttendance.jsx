@@ -68,8 +68,8 @@ export default function StaffAttendance({ store, user }) {
           const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           
           let derivedStatus = s.status;
-          if (myLogs.length === 0 && (s.status === 'Present' || s.check_in === '07:00 AM')) {
-            derivedStatus = 'Absent';
+          if (s.status !== 'Inactive' && s.status !== 'On Leave') {
+            derivedStatus = myLogs.length > 0 ? 'Present' : 'Absent';
           }
           
           return { ...s, checkIn: checkInStr, status: derivedStatus };
