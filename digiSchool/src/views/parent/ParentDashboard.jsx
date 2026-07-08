@@ -9,6 +9,7 @@ export default function ParentDashboard() {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [linkAdm, setLinkAdm] = useState('');
+  const [linkPin, setLinkPin] = useState('');
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState('');
   useEffect(() => {
@@ -51,10 +52,11 @@ export default function ParentDashboard() {
       // 1. Lookup student
       const { data, error } = await supabase.rpc('lookup_student_for_signup', {
         p_school_id: currentUser.school_id,
-        p_adm: linkAdm.trim()
+        p_adm: linkAdm.trim(),
+        p_parent_pin: linkPin.trim()
       });
       if (error) throw error;
-      if (!data || data.length === 0) throw new Error('Student not found with that admission number.');
+      if (!data || data.length === 0) throw new Error('Student not found. Please verify the Admission Number and Parent PIN.');
       
       const student = data[0];
       
@@ -77,7 +79,7 @@ export default function ParentDashboard() {
       <div style={{ padding: '40px', textAlign: 'center', maxWidth: 500, margin: '0 auto' }}>
         <ShieldCheck size={48} style={{ color: '#cbd5e1', margin: '0 auto 16px' }} />
         <h2>Welcome to the Parent Portal</h2>
-        <p className="muted" style={{ marginBottom: 30 }}>Your account is not currently linked to a specific student profile. Please enter your child's Admission Number below to link your account.</p>
+        <p className="muted" style={{ marginBottom: 30 }}>Your account is not currently linked to a specific student profile. Please enter your child's Admission Number and Parent Access PIN below to link your account.</p>
         
         <form onSubmit={handleLinkStudent} style={{ background: '#fff', padding: 24, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: 16, textAlign: 'left' }}>
@@ -91,6 +93,19 @@ export default function ParentDashboard() {
               required
             />
           </div>
+          <div style={{ marginBottom: 20, textAlign: 'left' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Parent Access PIN</label>
+            <input 
+              type="password" 
+              value={linkPin}
+              onChange={(e) => setLinkPin(e.target.value)}
+              placeholder="6-digit PIN"
+              maxLength={6}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }}
+              required
+            />
+            <p className="muted" style={{ fontSize: 12, marginTop: 6, margin: '6px 0 0 0' }}>This secret PIN is provided by the school.</p>
+          </div>
           {linkError && (
             <div style={{ padding: '10px', background: '#fee2e2', color: '#b91c1c', borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
               {linkError}
@@ -98,7 +113,7 @@ export default function ParentDashboard() {
           )}
           <button 
             type="submit" 
-            disabled={linking || !linkAdm.trim()}
+            disabled={linking || !linkAdm.trim() || linkPin.trim().length < 6}
             style={{ width: '100%', padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: linking ? 'not-allowed' : 'pointer', opacity: linking ? 0.7 : 1 }}
           >
             {linking ? 'Linking Account...' : 'Link Child Profile'}

@@ -94,6 +94,7 @@ export default function EnrollStudent() {
         guardianPhone: captured.guardianPhone,
         guardianEmail: captured.guardianEmail,
         parentAddress: captured.parentAddress,
+        parentPin: String(Math.floor(100000 + Math.random() * 900000)),
         admissionLetterUrl,
       };
 

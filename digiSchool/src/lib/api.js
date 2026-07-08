@@ -377,6 +377,7 @@ export async function upsertStudent(student) {
     guardian_phone: student.guardianPhone,
     guardian_email: student.guardianEmail,
     parent_address: student.parentAddress,
+    parent_pin: student.parentPin,
     admission_letter_url: student.admissionLetterUrl,
     nemis_upi: student.nemisUpi,
     nationality: student.nationality,

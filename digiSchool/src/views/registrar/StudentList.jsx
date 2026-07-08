@@ -187,7 +187,7 @@ export default function StudentList() {
             <div className="scroll-x">
               <table className="table">
                 <thead>
-                  <tr><th>Adm No.</th><th>Full Name</th><th>Gender</th><th>Status</th><th></th></tr>
+                  <tr><th>Adm No.</th><th>Full Name</th><th>Gender</th><th>Parent PIN</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                   {list.map(s => (
@@ -195,6 +195,11 @@ export default function StudentList() {
                       <td className="muted">{s.adm}</td>
                       <td style={{ fontWeight: 600 }}>{s.name}</td>
                       <td>{s.gender || '—'}</td>
+                      <td>
+                        <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, color: '#334155', fontWeight: 600, letterSpacing: 1 }}>
+                          {s.parent_pin || 'Pending'}
+                        </span>
+                      </td>
                       <td>
                         {s.flagged
                           ? <Badge color="red"><AlertTriangle size={11} style={{ marginRight: 3 }} />Flagged</Badge>

@@ -11,6 +11,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('');
   const [admNumber, setAdmNumber] = useState('');
+  const [parentPin, setParentPin] = useState('');
   const [foundStudent, setFoundStudent] = useState(null);
 
   useEffect(() => {
@@ -33,18 +34,20 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     setError('');
     if (!selectedSchool) return setError('Please select your school.');
     if (!admNumber.trim()) return setError('Please enter your child\'s admission number.');
+    if (!parentPin.trim()) return setError('Please enter the Parent Access PIN provided by the school.');
     
     setSaving(true);
     try {
       const { data, error: fetchErr } = await supabase
         .rpc('lookup_student_for_signup', { 
           p_school_id: selectedSchool, 
-          p_adm: admNumber.trim().toUpperCase() 
+          p_adm: admNumber.trim().toUpperCase(),
+          p_parent_pin: parentPin.trim()
         });
 
       if (fetchErr) throw fetchErr;
       const student = Array.isArray(data) ? data[0] : data;
-      if (!student) throw new Error('Student not found. Please check the admission number and try again.');
+      if (!student) throw new Error('Student not found. Please verify the Admission Number and Parent Access PIN.');
 
       setFoundStudent(student);
       setStep(2);
@@ -200,6 +203,12 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
               <div>
                 <label className="field-label">Admission Number *</label>
                 <input className="input" value={admNumber} onChange={e => setAdmNumber(e.target.value)} placeholder="e.g. ADM/2026/9027" style={{ textTransform: 'uppercase' }} />
+              </div>
+
+              <div>
+                <label className="field-label">Parent Access PIN *</label>
+                <input className="input" type="password" maxLength={6} value={parentPin} onChange={e => setParentPin(e.target.value)} placeholder="6-digit PIN" />
+                <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>This secret PIN is provided by the school.</p>
               </div>
               
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
