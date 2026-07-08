@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download } from 'lucide-react';
+import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download, Mail } from 'lucide-react';
 import { fetchStudents, upsertStudent, deleteStudent } from '../../lib/api';
+import { sendParentPinEmail } from '../../utils/auth';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { exportReportCardsPDF, exportNemisCSV } from '../../utils/exporters';
@@ -16,6 +17,7 @@ export default function StudentList() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('All');
+  const [sendingPin, setSendingPin] = useState(null);
 
   // Modals state
   const [editModal, setEditModal] = useState(false);
@@ -116,6 +118,28 @@ export default function StudentList() {
     notify('Contacts exported as CSV', 'success');
   };
 
+  const handleSendPin = async (student) => {
+    if (!student.guardianEmail) {
+      return notify('No guardian email found for this student', 'warning');
+    }
+    setSendingPin(student.id);
+    try {
+      await sendParentPinEmail({
+        email: student.guardianEmail,
+        parentName: student.guardianName,
+        studentName: student.name,
+        admNumber: student.adm,
+        parentPin: student.parent_pin,
+        schoolName: store.settings?.name
+      });
+      notify(`PIN emailed to ${student.guardianEmail}`, 'success');
+    } catch (e) {
+      notify(e.message || 'Failed to send PIN', 'error');
+    } finally {
+      setSendingPin(null);
+    }
+  };
+
   const handleDownloadReportCards = () => {
     if (filtered.length === 0) return notify('No students in current view', 'warning');
     const ranked = [...filtered].map((s) => {
@@ -199,6 +223,14 @@ export default function StudentList() {
                         <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, color: '#334155', fontWeight: 600, letterSpacing: 1 }}>
                           {s.parent_pin || 'Pending'}
                         </span>
+                        <button 
+                          onClick={() => handleSendPin(s)} 
+                          disabled={sendingPin === s.id || !s.guardianEmail}
+                          style={{ background: 'transparent', border: 'none', cursor: s.guardianEmail ? 'pointer' : 'not-allowed', marginLeft: 8, padding: 4, opacity: s.guardianEmail ? 1 : 0.3 }} 
+                          title={s.guardianEmail ? `Email PIN to ${s.guardianEmail}` : 'No guardian email'}
+                        >
+                          {sendingPin === s.id ? <Loader size={14} className="spin" color="#10B981" /> : <Mail size={14} color="#10B981" />}
+                        </button>
                       </td>
                       <td>
                         {s.flagged
