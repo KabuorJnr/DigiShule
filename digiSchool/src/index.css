@@ -971,3 +971,62 @@ textarea.input {
   .hide-mobile { display: none !important; }
 }
 
+
+/* Calendar Styles */
+.calendar-cell {
+  background: #fff;
+  min-height: 100px;
+  padding: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+.calendar-cell:hover:not(.empty) {
+  background: #f8fafc;
+}
+.calendar-cell.empty {
+  background: #f8f9fa;
+  cursor: default;
+}
+.calendar-cell.today {
+  background: #f0fdf4;
+}
+.calendar-cell.today .day-number {
+  background: #22c55e;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.day-number {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+.calendar-event {
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
