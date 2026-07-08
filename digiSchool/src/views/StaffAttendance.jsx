@@ -111,6 +111,45 @@ export default function StaffAttendance({ store, user }) {
     };
   }, [staff]);
 
+  const handleExportLogs = () => {
+    if (!logs || logs.length === 0) {
+      notify('No logs available to export.', 'info');
+      return;
+    }
+    
+    const headers = ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status'];
+    const staffMap = {};
+    staff.forEach(s => { staffMap[s.id] = s; });
+    
+    const csvRows = [headers.join(',')];
+    
+    logs.forEach(l => {
+      const s = staffMap[l.staff_id] || { name: 'Unknown', role: 'Unknown' };
+      const inTime = l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '';
+      const outTime = l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '';
+      
+      const row = [
+        `"${s.name}"`,
+        s.role,
+        l.date,
+        `"${inTime}"`,
+        `"${outTime}"`,
+        l.status || 'Present'
+      ];
+      csvRows.push(row.join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `staff_attendance_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const leaveTotals = useMemo(() => ({
     total: leaveRequests.length,
     pending: leaveRequests.filter(l => l.status === 'Pending').length,
@@ -444,9 +483,14 @@ export default function StaffAttendance({ store, user }) {
                 ))}
               </div>
               {canApprove && (
-                <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
-                  + Add Staff
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportLogs}>
+                    Export Logs
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
+                    + Add Staff
+                  </button>
+                </div>
               )}
             </div>
             <div className="scroll-x">
