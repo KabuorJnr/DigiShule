@@ -1,6 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-const url = 'https://oblzjefrmtxcvbagvnrr.supabase.co';
-const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ibHpqZWZybXR4Y3ZiYWd2bnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTI2NDYsImV4cCI6MjA5NjQ4ODY0Nn0.lgN-r94YkTCsalky3lUjt7V-0uyRQUA0HX-9Hzj7jGU';
+
+const url = process.env.VITE_SUPABASE_URL;
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!url || !anonKey) {
+  console.error("Missing Supabase credentials in process.env");
+  process.exit(1);
+}
 
 const supabase = createClient(url, anonKey);
 
