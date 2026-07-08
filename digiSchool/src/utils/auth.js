@@ -9,7 +9,7 @@ export function generateSecurePassword(length = 10) {
   return retVal;
 }
 
-export async function provisionAccount({ email, username, password, name, role, schoolName }) {
+export async function provisionAccount({ email, username, password, name, role, schoolName, parentPin, studentName }) {
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token || '';
 
@@ -20,7 +20,7 @@ export async function provisionAccount({ email, username, password, name, role, 
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}` 
     },
-    body: JSON.stringify({ email, username, password, name, role, schoolName })
+    body: JSON.stringify({ email, username, password, name, role, schoolName, parentPin, studentName })
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);

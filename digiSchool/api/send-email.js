@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, username, password, name, role, schoolName } = req.body;
+    const { email, username, password, name, role, schoolName, parentPin, studentName } = req.body;
 
     if (!email || !password || !name || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -62,6 +62,9 @@ Please find your secure login credentials below:
 Portal URL: https://www.edu1app.tech
 ${username ? `Login Username: ${username}` : `Login Email: ${email}`}
 Temporary Password: ${password}
+${isParent && parentPin ? `
+Parent Access PIN: ${parentPin}
+(Please use this PIN along with your child's Admission Number to link their profile)` : ''}
 
 Please log in at your earliest convenience to access your dashboard. We highly recommend changing your password upon your first login to maintain account security.
 
@@ -88,6 +91,7 @@ ${schoolNameDisplay}`;
       <p style="margin: 8px 0; font-size: 15px;"><strong>Portal URL:</strong> <a href="https://www.edu1app.tech" style="color: #0052cc; text-decoration: none;">https://www.edu1app.tech</a></p>
       <p style="margin: 8px 0; font-size: 15px;"><strong>${username ? 'Login Username' : 'Login Email'}:</strong> ${username ? username : email}</p>
       <p style="margin: 8px 0; font-size: 15px;"><strong>Temporary Password:</strong> <code style="background-color: #f1f3f5; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 14px;">${password}</code></p>
+      ${isParent && parentPin ? `<p style="margin: 8px 0; font-size: 15px; margin-top: 15px; border-top: 1px solid #dee2e6; padding-top: 15px;"><strong>Parent Access PIN:</strong> <code style="background-color: #e6fcf5; color: #087f5b; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 16px; font-weight: bold;">${parentPin}</code><br/><span style="font-size: 13px; color: #666;">(Use this PIN along with your child's Admission Number to link ${studentName || 'their profile'})</span></p>` : ''}
     </div>
     
     <p style="font-size: 14px; color: #555555;">Please log in at your earliest convenience to access your dashboard. We highly recommend changing your password upon your first login to maintain account security.</p>
