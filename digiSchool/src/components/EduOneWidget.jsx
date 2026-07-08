@@ -43,8 +43,11 @@ export default function EduOneWidget({ user, notify, settings, store }) {
     await upsertRow('staffAttendanceLogs', newLog);
     // Update staff table
     try {
+      const { data: profs } = await supabase.from('profiles').select('id, teacher_id').eq('id', user.id);
+      const staffId = profs?.[0]?.teacher_id || user.id;
+
       const staffRows = await fetchTable('staff');
-      const me = (staffRows || []).find(s => s.id === user.id);
+      const me = (staffRows || []).find(s => s.id === staffId);
       if (me) {
         const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         await upsertRow('staff', { ...me, status: 'Present', check_in: t });
@@ -59,8 +62,11 @@ export default function EduOneWidget({ user, notify, settings, store }) {
     const newLog = { ...todayLog, check_out_time: nowStr, location_lat: lat || todayLog?.location_lat, location_lng: lng || todayLog?.location_lng };
     await upsertRow('staffAttendanceLogs', newLog);
     try {
+      const { data: profs } = await supabase.from('profiles').select('id, teacher_id').eq('id', user.id);
+      const staffId = profs?.[0]?.teacher_id || user.id;
+
       const staffRows = await fetchTable('staff');
-      const me = (staffRows || []).find(s => s.id === user.id);
+      const me = (staffRows || []).find(s => s.id === staffId);
       if (me) {
         const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         await upsertRow('staff', { ...me, check_out: t });

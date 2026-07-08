@@ -44,8 +44,16 @@ export default function StaffAttendance({ store, user }) {
   const refreshStaffData = () => {
     Promise.all([
       fetchTable('staff'),
-      fetchTable('staff_attendance_logs')
-    ]).then(([staffRows, logRows]) => {
+      fetchTable('staff_attendance_logs'),
+      supabase.from('profiles').select('id, teacher_id')
+    ]).then(([staffRows, logRows, { data: profs }]) => {
+      const profMap = {};
+      if (profs) {
+        profs.forEach(p => {
+          if (p.teacher_id) profMap[p.teacher_id] = p.id;
+        });
+      }
+
       if (logRows) {
         setLogs(logRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       }
@@ -55,8 +63,9 @@ export default function StaffAttendance({ store, user }) {
 
       if (staffRows) {
         setStaff(staffRows.map((s) => {
-          const myLogs = logsToday.filter(l => l.staff_id === s.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-          const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+          const uId = profMap[s.id] || s.id;
+          const myLogs = logsToday.filter(l => l.staff_id === uId || l.staff_id === s.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : s.check_in || '-';
           return { ...s, checkIn: checkInStr };
         }).sort((a, b) => a.name.localeCompare(b.name)));
       }
