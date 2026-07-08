@@ -7,7 +7,7 @@ const apiProxyPlugin = () => {
     name: 'api-proxy-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (req.url === '/api/send-email' && req.method === 'POST') {
+        if ((req.url === '/api/send-email' || req.url === '/api/send-pin') && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', async () => {
@@ -28,7 +28,8 @@ const apiProxyPlugin = () => {
               const env = loadEnv('', process.cwd(), '');
               Object.assign(process.env, env);
 
-              const handler = await import('./api/send-email.js');
+              const handlerPath = req.url === '/api/send-pin' ? './api/send-pin.js' : './api/send-email.js';
+              const handler = await import(handlerPath);
               await handler.default(req, res);
             } catch (err) {
               console.error(err);
