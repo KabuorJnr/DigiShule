@@ -1,4 +1,5 @@
 -- Fix notifications table columns
+ALTER TABLE public.notifications ALTER COLUMN id SET DEFAULT gen_random_uuid();
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS title TEXT;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS message TEXT;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS body TEXT;

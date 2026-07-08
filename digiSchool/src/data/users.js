@@ -14,8 +14,8 @@ export const ROLES = {
         section: 'CHILD MANAGEMENT',
         items: [
           { id: 'dashboard', icon: 'home', label: 'Dashboard', view: 'parent' },
-          { id: 'academics', icon: 'library', label: 'Academics & Reports', view: 'parent', tab: 'academics' },
-          { id: 'finance', icon: 'finance', label: 'Fees & Payments', view: 'parent', tab: 'finance' }
+          { id: 'academics', icon: 'library', label: 'Academics & Reports', view: 'student', tab: 'academics' },
+          { id: 'finance', icon: 'finance', label: 'Fees & Payments', view: 'student', tab: 'finance' }
         ]
       },
       {
