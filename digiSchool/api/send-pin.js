@@ -117,7 +117,7 @@ ${schoolNameDisplay}`;
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || 'EduOne <noreply@edu1app.tech>',
       to: email,
-      subject: \`Parent Access PIN - \${studentName}\`,
+      subject: `Parent Access PIN - ${studentName}`,
       text: textContent,
       html: htmlContent,
     });
