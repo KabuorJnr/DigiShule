@@ -147,15 +147,34 @@ export default function Settings({ store, user }) {
 
             {form.latitude && form.longitude ? (
               <div style={{ padding: 12, background: '#ecfdf5', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, marginBottom: 12 }}>
-                <strong style={{ color: '#065f46' }}>✓ Location set:</strong>{' '}
-                <span style={{ fontFamily: 'monospace' }}>{form.latitude}, {form.longitude}</span>
-                {' · '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
-                {' · '}
-                <a href={`https://www.google.com/maps?q=${form.latitude},${form.longitude}`}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
-                  View on Google Maps ↗
-                </a>
+                <div style={{ marginBottom: 12 }}>
+                  <strong style={{ color: '#065f46' }}>✓ Location set:</strong>{' '}
+                  <span style={{ fontFamily: 'monospace' }}>{form.latitude}, {form.longitude}</span>
+                  {' · '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
+                </div>
+                
+                {/* Embedded Map */}
+                <div style={{ width: '100%', height: '300px', borderRadius: 8, overflow: 'hidden', border: '1px solid #a7f3d0' }}>
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    scrolling="no" 
+                    marginHeight="0" 
+                    marginWidth="0" 
+                    src={`https://maps.google.com/maps?q=${form.latitude},${form.longitude}&z=16&output=embed`}
+                    title="School Location Map"
+                  ></iframe>
+                </div>
+                
+                <div style={{ marginTop: 8, textAlign: 'right' }}>
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${form.latitude},${form.longitude}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="btn btn-sm"
+                    style={{ background: 'white', color: '#065f46', border: '1px solid #065f46', display: 'inline-block' }}>
+                    Get Directions ↗
+                  </a>
+                </div>
               </div>
             ) : (
               <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
