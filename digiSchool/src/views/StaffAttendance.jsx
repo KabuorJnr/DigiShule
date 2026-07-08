@@ -239,9 +239,9 @@ export default function StaffAttendance({ store, user }) {
       
       isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
       if (isExisting) {
-        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: addForm.email });
-        if (fetchErr) throw new Error(`Could not fetch existing staff: ${fetchErr.message}`);
-        staffUserId = existingId;
+        notify('A user with this email address is already registered. Duplicate accounts are not allowed.', 'error');
+        setProvisionStep(null);
+        return;
       } else if (signUpError) {
         throw new Error(`Auth Error: ${signUpError.message}`);
       } else {
@@ -638,8 +638,8 @@ export default function StaffAttendance({ store, user }) {
             </div>
             <div className="grid grid-2">
               <div>
-                <label className="field-label">Subject Taught</label>
-                <input className="input" placeholder="e.g. Mathematics" value={addForm.subject} onChange={e => setAddForm(p => ({ ...p, subject: e.target.value }))} />
+                <label className="field-label">Subjects Taught</label>
+                <input className="input" placeholder="e.g. Mathematics, English" value={addForm.subject} onChange={e => setAddForm(p => ({ ...p, subject: e.target.value }))} />
               </div>
               <div>
                 <label className="field-label">Employee ID (Optional)</label>
