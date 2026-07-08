@@ -68,7 +68,7 @@ export default function SetupWizard({ onComplete }) {
             <Building size={32} />
             <h1 style={{ margin: 0, fontSize: 24 }}>System Initialization</h1>
           </div>
-          <p style={{ margin: 0, opacity: 0.9 }}>Welcome to <img src="/eduone-logo.png" alt="EduOne" style={{ height: '2.2em', verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} />. Let's pre-configure your school profile before onboarding users.</p>
+          <p style={{ margin: 0, opacity: 0.9 }}>Welcome to <img src="/eduone-logo.png" alt="EduOne" style={{ height: '3.5em', verticalAlign: 'middle', background: 'white', borderRadius: 8, padding: '2px 4px' }} />. Let's pre-configure your school profile before onboarding users.</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
