@@ -85,6 +85,22 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         // Location unavailable — proceed without it
       }
 
+      // Geofence check: if school coordinates are configured AND we got a location
+      if (lat && lng && _settings?.latitude && _settings?.longitude) {
+        const R = 6371e3;
+        const φ1 = lat * Math.PI / 180, φ2 = _settings.latitude * Math.PI / 180;
+        const Δφ = (_settings.latitude - lat) * Math.PI / 180;
+        const Δλ = (_settings.longitude - lng) * Math.PI / 180;
+        const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const radius = _settings.geofenceRadius || 50;
+        if (dist > radius) {
+          _notify(`You are ${Math.round(dist)}m from school. Must be within ${radius}m.`, 'error');
+          setActionLoading(false);
+          return;
+        }
+      }
+
       if (actionType === 'check_in') {
         await doCheckIn(lat, lng);
       } else {

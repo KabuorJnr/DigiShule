@@ -51,7 +51,8 @@ export default function Settings({ store, user }) {
       logo: form.logo,
       paymentDetails: form.paymentDetails,
       latitude: form.latitude,
-      longitude: form.longitude
+      longitude: form.longitude,
+      geofenceRadius: form.geofenceRadius || 50
     }));
     notify('School details saved', 'success', 'Settings');
   }
@@ -87,8 +88,6 @@ export default function Settings({ store, user }) {
             <div><label className="field-label">Phone</label><input className="input" value={form.phone} onChange={(e) => upForm({ phone: e.target.value })} /></div>
             <div><label className="field-label">Email</label><input className="input" value={form.email} onChange={(e) => upForm({ email: e.target.value })} /></div>
             <div><label className="field-label">Principal Name</label><input className="input" value={form.principal} onChange={(e) => upForm({ principal: e.target.value })} /></div>
-            <div><label className="field-label">School Latitude</label><input className="input" type="number" step="any" placeholder="e.g. -1.2921" value={form.latitude || ''} onChange={(e) => upForm({ latitude: parseFloat(e.target.value) || '' })} /></div>
-            <div><label className="field-label">School Longitude</label><input className="input" type="number" step="any" placeholder="e.g. 36.8219" value={form.longitude || ''} onChange={(e) => upForm({ longitude: parseFloat(e.target.value) || '' })} /></div>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="field-label">School Logo</label>
@@ -99,6 +98,72 @@ export default function Settings({ store, user }) {
               <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files[0])} />
             </div>
           </div>
+
+          {/* School Location & Geofencing */}
+          <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+            <h3 className="section-title" style={{ marginTop: 0 }}>📍 School Location & Geofencing</h3>
+            <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 16 }}>
+              Set your school's GPS coordinates. Teachers can only check in/out within the geofence radius.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 16 }}>
+              <div style={{ flex: '1 1 160px' }}>
+                <label className="field-label">Latitude</label>
+                <input className="input" type="number" step="any" placeholder="e.g. -1.2921"
+                  value={form.latitude || ''} onChange={(e) => upForm({ latitude: parseFloat(e.target.value) || '' })} />
+              </div>
+              <div style={{ flex: '1 1 160px' }}>
+                <label className="field-label">Longitude</label>
+                <input className="input" type="number" step="any" placeholder="e.g. 36.8219"
+                  value={form.longitude || ''} onChange={(e) => upForm({ longitude: parseFloat(e.target.value) || '' })} />
+              </div>
+              <div style={{ flex: '1 1 100px' }}>
+                <label className="field-label">Radius (m)</label>
+                <input className="input" type="number" min="10" max="500" placeholder="50"
+                  value={form.geofenceRadius || ''} onChange={(e) => upForm({ geofenceRadius: parseInt(e.target.value) || '' })} />
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#0ea5e9', color: 'white', whiteSpace: 'nowrap', height: 38 }}
+                onClick={() => {
+                  if (!navigator.geolocation) { notify('Geolocation not supported', 'error'); return; }
+                  notify('Detecting location...', 'info');
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      upForm({
+                        latitude: Math.round(pos.coords.latitude * 1000000) / 1000000,
+                        longitude: Math.round(pos.coords.longitude * 1000000) / 1000000
+                      });
+                      notify(`Location detected: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, 'success');
+                    },
+                    (err) => notify('Location detection failed. Allow location access in your browser and try again.', 'error'),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                  );
+                }}
+              >
+                📍 Detect My Location
+              </button>
+            </div>
+
+            {form.latitude && form.longitude ? (
+              <div style={{ padding: 12, background: '#ecfdf5', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, marginBottom: 12 }}>
+                <strong style={{ color: '#065f46' }}>✓ Location set:</strong>{' '}
+                <span style={{ fontFamily: 'monospace' }}>{form.latitude}, {form.longitude}</span>
+                {' · '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
+                {' · '}
+                <a href={`https://www.google.com/maps?q=${form.latitude},${form.longitude}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
+                  View on Google Maps ↗
+                </a>
+              </div>
+            ) : (
+              <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
+                ⚠ No location set — teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
+              </div>
+            )}
+          </div>
+
           <button className="btn btn-primary" onClick={saveGeneral}>Save Changes</button>
         </div>
       )}
