@@ -19,7 +19,7 @@ export default function Sidebar({
         </div>
         {!collapsed && (
           <div style={{ flex: 1 }}>
-            <strong>{settings.name || <img src="/eduone-logo.png" alt="EduOne" style={{ height: 64, verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} />}</strong>
+            <strong>{settings.name || <img src="/eduone-logo.png" alt="EduOne" style={{ height: 28, verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '4px 6px' }} />}</strong>
             <div style={{ fontSize: '11px', opacity: 0.7 }}>{role.portal}</div>
           </div>
         )}

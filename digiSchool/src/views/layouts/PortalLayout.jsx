@@ -374,7 +374,7 @@ export default function PortalLayout() {
           </div>
           {!collapsed && (
             <div className="brand-text">
-              <strong><img src="/eduone-logo.png" alt="EduOne" style={{ height: 72, background: 'white', borderRadius: 6, padding: '4px 8px' }} /></strong>
+              <strong><img src="/eduone-logo.png" alt="EduOne" style={{ height: 28, background: 'white', borderRadius: 4, padding: '4px 6px' }} /></strong>
               <span className="muted">{role.portal}</span>
             </div>
           )}
