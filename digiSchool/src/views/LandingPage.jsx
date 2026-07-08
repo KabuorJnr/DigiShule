@@ -39,8 +39,7 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
       {/* Navbar */}
       <nav className="bespoke-nav animate-fade-in-up">
         <div className="bespoke-brand">
-          <ShieldCheck size={28} style={{ color: '#2563eb' }} />
-          EduOne
+          <img src="/eduone-logo.png" alt="EduOne" style={{ height: 32, background: 'white', borderRadius: 6, padding: '2px 6px' }} />
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
           <button className="bespoke-btn ghost" onClick={handleGetStarted}>Sign In</button>
@@ -172,8 +171,7 @@ export default function LandingPage({ onGetStarted, onApply, onSignUp }) {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>
-            <ShieldCheck size={24} color="#3b82f6" />
-            EduOne
+            <img src="/eduone-logo.png" alt="EduOne" style={{ height: 32, background: 'white', borderRadius: 6, padding: '2px 6px' }} />
           </div>
           
           <p style={{ maxWidth: '400px', margin: '0', lineHeight: '1.6' }}>

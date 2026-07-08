@@ -18,9 +18,9 @@ export default function Sidebar({
           {settings.logo ? <img src={settings.logo} alt="logo" /> : <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
         </div>
         {!collapsed && (
-          <div className="brand-text">
-            <strong>{settings.name || 'EduOne'}</strong>
-            <span className="muted">{role.portal}</span>
+          <div style={{ flex: 1 }}>
+            <strong>{settings.name || <img src="/eduone-logo.png" alt="EduOne" style={{ height: 24, verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} />}</strong>
+            <div style={{ fontSize: '11px', opacity: 0.7 }}>{role.portal}</div>
           </div>
         )}
       </div>
