@@ -28,8 +28,12 @@ const apiProxyPlugin = () => {
               const env = loadEnv('', process.cwd(), '');
               Object.assign(process.env, env);
 
-              const handlerPath = req.url === '/api/send-pin' ? './api/send-pin.js' : './api/send-email.js';
-              const handler = await import(handlerPath);
+              let handler;
+              if (req.url === '/api/send-pin') {
+                handler = await import('./api/send-pin.js');
+              } else {
+                handler = await import('./api/send-email.js');
+              }
               await handler.default(req, res);
             } catch (err) {
               console.error(err);
