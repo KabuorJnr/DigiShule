@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import { Eye, Download, Loader } from 'lucide-react';
 import { openFilePDF, downloadFilePDF } from '../../lib/fileStore';
+import SchoolCalendar from '../SchoolCalendar';
 
 const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const PERIODS = ['08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'];
@@ -198,41 +199,7 @@ export default function ResourcesTab() {
       )}
 
       {resTab === 'calendar' && (
-        <div className="card card-pad" style={{ height: '75vh', display: 'flex', flexDirection: 'column' }}>
-          <h3 className="section-title">School Calendar & Events</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-            {store?.settings?.googleCalendarUrl ? (
-              <iframe 
-                src={store.settings.googleCalendarUrl} 
-                style={{ border: 0, width: '100%', flex: 1, minHeight: '500px', borderRadius: 8 }} 
-                frameBorder="0" 
-                scrolling="no"
-                title="School Calendar"
-              ></iframe>
-            ) : (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-                The school has not integrated a public calendar yet.
-              </div>
-            )}
-            
-            {upcomingExams.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <h4 style={{ marginBottom: 12 }}>Upcoming Exams</h4>
-                {upcomingExams.map(ex => (
-                  <div key={ex.id} style={{ display: 'flex', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 8, background: '#fff3cd', color: '#92400e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
-                      <div style={{ fontSize: 14 }}>EXAM</div>
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{ex.name}</div>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{ex.type} — Starts {ex.startDate}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <SchoolCalendar store={store} user={me} />
       )}
     </>
   );
