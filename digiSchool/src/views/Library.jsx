@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { fetchTable, upsertRow, deleteRow } from '../lib/api';
 
-export default function Library({ store }) {
+export default function Library({ store, user }) {
   const { notify } = store;
   const [tab, setTab] = useState('catalog');
   const [books, setBooks] = useState([]);
