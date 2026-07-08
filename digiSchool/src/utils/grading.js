@@ -16,13 +16,16 @@ export function computeRow(scores = {}) {
   return { a1, a2, a3, a4, average: Math.round(average * 10) / 10, remarks: safeScores.remarks || '' };
 }
 
-// Map the numerical average (1-4) to a CBC competency grade.
+// Map the numerical average (0-100) to a CBC competency grade.
 export function gradeFor(average, boundaries) {
-  // In a full CBC system, grade boundaries might be strictly configured, but we use standard defaults:
-  if (average >= 3.5) return 'EE';
-  if (average >= 2.5) return 'ME';
-  if (average >= 1.5) return 'AE';
-  if (average > 0) return 'BE';
+  if (!boundaries || boundaries.length === 0 || average === 0 || !average) return '-';
+  
+  // boundaries should be sorted by min descending (e.g. 80, 60, 40, 0)
+  for (const b of boundaries) {
+    if (average >= b.min) {
+      return b.grade;
+    }
+  }
   return '-';
 }
 

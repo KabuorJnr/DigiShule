@@ -132,14 +132,14 @@ export async function fetchConfig() {
   else query = query.limit(1); // Fallback to first school if single-tenant
 
   const { data, error } = await query.maybeSingle();
+  let cbcFallback = [
+    { grade: 'EE', min: 80 }, { grade: 'ME', min: 60 }, { grade: 'AE', min: 40 }, { grade: 'BE', min: 0 }
+  ];
 
   if (error || !data) {
     return {
       settings: {},
-      gradeBoundaries: [
-        { grade: 'A', min: 75 }, { grade: 'B', min: 60 }, { grade: 'C', min: 50 },
-        { grade: 'D', min: 40 }, { grade: 'E', min: 0 },
-      ],
+      gradeBoundaries: cbcFallback,
       feeStructure: [],
       notifToggles: { email: true, sms: false, attendance: true, fees: true, exams: true },
       venues: [],
@@ -148,11 +148,17 @@ export async function fetchConfig() {
 
   let schoolData = {};
   if (_schoolId) {
-    const { data: sData } = await supabase.from('schools').select('*').eq('id', _schoolId).maybeSingle();
+    const { data: sData } = await supabase.from('schools').select('name, motto, county').eq('id', _schoolId).single();
     if (sData) schoolData = sData;
   }
 
   const rawSettings = data.settings || {};
+  let dbBounds = data.grade_boundaries || [];
+  // Automatic migration: If the database returns the old A-E grading, swap it to CBC
+  if (dbBounds.length === 5 && dbBounds[0].grade === 'A' && dbBounds[4].grade === 'E') {
+    dbBounds = cbcFallback;
+  }
+
   return {
     settings: {
       ...rawSettings,
@@ -160,7 +166,7 @@ export async function fetchConfig() {
       motto: rawSettings.motto || schoolData.motto || '',
       county: rawSettings.county || schoolData.county || '',
     },
-    gradeBoundaries: data.grade_boundaries || [],
+    gradeBoundaries: dbBounds,
     feeStructure: data.fee_structure || [],
     notifToggles: data.notif_toggles || {},
     venues: data.venues || [],

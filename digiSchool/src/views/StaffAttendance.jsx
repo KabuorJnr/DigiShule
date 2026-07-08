@@ -61,7 +61,7 @@ export default function StaffAttendance({ store, user }) {
       })
       .catch(() => {});
 
-    // Load AttendAI logs
+    // Load EduOne logs
     fetchTable('staffAttendanceLogs')
       .then((rows) => {
         if (rows) setLogs(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
@@ -368,7 +368,7 @@ export default function StaffAttendance({ store, user }) {
           <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Staff Roster
         </button>
         <button className={`tab${tab === 'logs' ? ' active' : ''}`} onClick={() => setTab('logs')}>
-          <Icon name="clock" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> AttendAI Logs
+          <Icon name="clock" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> EduOne Logs
         </button>
         <button className={`tab${tab === 'leave' ? ' active' : ''}`} onClick={() => setTab('leave')}>
           <Icon name="clipboard" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Leave Requests
@@ -440,7 +440,7 @@ export default function StaffAttendance({ store, user }) {
       {tab === 'logs' && (
         <div className="card card-pad">
           <div className="toolbar" style={{ marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 15 }}>AttendAI Clock-In History</h3>
+            <h3 style={{ margin: 0, fontSize: 15 }}>EduOne Attendance Clock-In History</h3>
           </div>
           <div className="scroll-x">
             <table className="table">
@@ -467,7 +467,7 @@ export default function StaffAttendance({ store, user }) {
                   );
                 })}
                 {logs.length === 0 && (
-                  <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No AttendAI logs recorded yet.</td></tr>
+                  <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No EduOne logs recorded yet.</td></tr>
                 )}
               </tbody>
             </table>

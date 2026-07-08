@@ -391,46 +391,53 @@ export default function Timetable({ store }) {
                           <td key={d} className="tt-empty" onClick={() => setEditCell({ p, d, subject: SUBJECTS[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>+</td>
                         );
                       }
-                      const conflict = hasConflict(cell, p, d);
-                      return (
-                        <td
-                          key={d}
-                          className={conflict ? 'tt-conflict' : ''}
-                          style={{ background: deptColorBg[cell.dept] || '#f1f5f9' }}
-                          onClick={() => setEditCell({ p, d, ...cell })}
-                          title={conflict ? `Conflict: ${cell.teacher} double-booked` : ''}
-                        >
-                          <div className="tt-cell-sub">{cell.subject}</div>
-                          <div className="tt-cell-teacher">{cell.teacher}</div>
-                          {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                        const conflict = tab === 'class' && hasConflict(cell, p, d);
+                        return (
+                          <td
+                            key={d}
+                            className={conflict ? 'tt-conflict' : ''}
+                            style={{ 
+                              background: deptColorBg[cell.dept] || '#f1f5f9',
+                              cursor: isTimetableAdmin ? 'pointer' : 'default'
+                            }}
+                            onClick={() => isTimetableAdmin && setEditCell({ p, d, ...cell })}
+                            title={conflict ? `Conflict: ${cell.teacher} double-booked` : (isTimetableAdmin ? 'Click to edit' : '')}
+                          >
+                            <div className="tt-cell-sub">{cell.subject}</div>
+                            <div className="tt-cell-teacher">{cell.teacher}</div>
+                            {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
 
-                {tab === 'teacher' && teacherGrid().map((row, p) => (
-                  <tr key={p}>
-                    <td className="tt-period-label">P{p + 1}</td>
-                    {row.map((cell, d) => (
-                      cell ? (
-                        <td key={d} style={{ background: deptColorBg[cell.dept] || '#f1f5f9' }}>
-                          <div className="tt-cell-sub">{cell.subject}</div>
-                          <div className="tt-cell-teacher">Grade {cell.cls}</div>
-                        </td>
-                      ) : <td key={d} className="tt-empty">—</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  {tab === 'teacher' && teacherGrid().map((row, p) => (
+                    <tr key={p}>
+                      <td className="tt-period-label">P{p + 1}</td>
+                      {row.map((cell, d) => (
+                        cell ? (
+                          <td key={d} style={{ background: deptColorBg[cell.dept] || '#f1f5f9' }}>
+                            <div className="tt-cell-sub">{cell.subject}</div>
+                            <div className="tt-cell-teacher">Grade {cell.cls}</div>
+                          </td>
+                        ) : <td key={d} className="tt-empty">—</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {!hasGenerated && !generating && (
         <div className="card card-pad" style={{ textAlign: 'center', color: 'var(--muted)' }}>
-          Configure the generator above and click <strong>Generate</strong> to build the timetable grid.
+          {isTimetableAdmin ? (
+            <>Configure the generator above and click <strong>Generate</strong> to build the timetable grid.</>
+          ) : (
+            <>No timetable has been generated yet.</>
+          )}
         </div>
       )}
 

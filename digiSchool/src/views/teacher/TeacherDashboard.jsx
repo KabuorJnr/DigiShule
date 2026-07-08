@@ -4,7 +4,7 @@ import { computeRow, gradeFor } from '../../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
-import AttendAIWidget from '../../components/AttendAIWidget';
+import EduOneWidget from '../../components/EduOneWidget';
 import { upsertRow } from '../../lib/api';
 
 export default function TeacherDashboard() {
@@ -111,7 +111,7 @@ export default function TeacherDashboard() {
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <AttendAIWidget store={store} user={user} />
+        <EduOneWidget store={store} user={user} />
       </div>
 
       {/* Quick Links */}

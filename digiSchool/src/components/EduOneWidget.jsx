@@ -93,7 +93,12 @@ export default function AttendAIWidget({ user, notify, settings }) {
             const staffRows = await fetchTable('staff');
             const me = staffRows.find(s => s.id === user.id);
             if (me) {
-              await upsertRow('staff', { ...me, status: 'Present', check_in: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+              const actionTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+              if (actionType === 'check_in') {
+                await upsertRow('staff', { ...me, status: 'Present', check_in: actionTime });
+              } else {
+                await upsertRow('staff', { ...me, check_out: actionTime });
+              }
             }
           } catch (e) {
             // silent ignore
@@ -124,7 +129,7 @@ export default function AttendAIWidget({ user, notify, settings }) {
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
             <Clock size={28} />
-            AttendAI
+            EduOne Attendance
           </h2>
           <p style={{ margin: '8px 0 0 0', opacity: 0.9 }}>Digital Check-In & Check-Out</p>
         </div>
@@ -168,20 +173,20 @@ export default function AttendAIWidget({ user, notify, settings }) {
               {!hasCheckedIn && (
                 <button 
                   className="btn" 
-                  style={{ background: 'white', color: '#0ea5e9', fontWeight: 600, padding: '10px 24px', flex: '1', minWidth: '150px' }}
+                  style={{ background: 'white', color: '#0ea5e9', fontWeight: 600, padding: '6px 12px', fontSize: '13px', width: 'auto' }}
                   onClick={() => handleAction('check_in')}
                 >
-                  <CheckCircle2 size={18} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'text-bottom' }} />
+                  <CheckCircle2 size={16} style={{ marginRight: 6, display: 'inline-block', verticalAlign: 'text-bottom' }} />
                   Check In Now
                 </button>
               )}
               {hasCheckedIn && !hasCheckedOut && (
                 <button 
                   className="btn" 
-                  style={{ background: 'white', color: '#ef4444', fontWeight: 600, padding: '10px 24px', flex: '1', minWidth: '150px' }}
+                  style={{ background: 'white', color: '#ef4444', fontWeight: 600, padding: '6px 12px', fontSize: '13px', width: 'auto' }}
                   onClick={() => handleAction('check_out')}
                 >
-                  <LogOut size={18} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'text-bottom' }} />
+                  <LogOut size={16} style={{ marginRight: 6, display: 'inline-block', verticalAlign: 'text-bottom' }} />
                   Check Out
                 </button>
               )}
