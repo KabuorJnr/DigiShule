@@ -64,7 +64,8 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
   return result;
 }
 
-export default function Timetable({ store }) {
+export default function Timetable({ store, user }) {
+  const isTimetableAdmin = user?.role === 'admin' || user?.role === 'academic_director' || user?.role === 'academic';
   const { timetables, setTimetables, notify, settings, students, teachers } = store;
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(store.settings?.classes || []);

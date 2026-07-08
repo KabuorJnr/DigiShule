@@ -107,7 +107,7 @@ export default function AcademicsDashboard({ store, user }) {
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('timetable')}>Manage Timetable</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/timetable')}>Manage Timetable</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('create_exam')}>Create Exam</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('gradebook')}>Open Gradebook</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('exams')}>Exam Schedules</button>
