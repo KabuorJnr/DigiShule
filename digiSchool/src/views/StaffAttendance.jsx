@@ -42,17 +42,25 @@ export default function StaffAttendance({ store, user }) {
 
   // Fetch staff + logs (reusable for polling)
   const refreshStaffData = () => {
-    fetchTable('staff')
-      .then((rows) => setStaff(rows
-        .map((s) => ({ ...s, checkIn: s.check_in }))
-        .sort((a, b) => a.name.localeCompare(b.name))))
-      .catch((e) => notify(`Failed to load staff: ${e.message}`, 'error'));
+    Promise.all([
+      fetchTable('staff'),
+      fetchTable('staff_attendance_logs')
+    ]).then(([staffRows, logRows]) => {
+      if (logRows) {
+        setLogs(logRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      }
+      
+      const todayStr = new Date().toLocaleDateString();
+      const logsToday = (logRows || []).filter(l => new Date(l.created_at).toLocaleDateString() === todayStr);
 
-    fetchTable('staffAttendanceLogs')
-      .then((rows) => {
-        if (rows) setLogs(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-      })
-      .catch(() => {});
+      if (staffRows) {
+        setStaff(staffRows.map((s) => {
+          const myLogs = logsToday.filter(l => l.staff_id === s.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          const checkInStr = myLogs.length > 0 ? new Date(myLogs[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+          return { ...s, checkIn: checkInStr };
+        }).sort((a, b) => a.name.localeCompare(b.name)));
+      }
+    }).catch((e) => notify(`Failed to load attendance data: ${e.message}`, 'error'));
   };
 
   useEffect(() => {
