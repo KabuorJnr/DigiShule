@@ -136,7 +136,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         <img 
           src="/eduone-logo.png" 
           alt="EduOne" 
-          style={{ height: 24, background: 'white', borderRadius: 4, padding: '2px 4px', objectFit: 'contain' }} 
+          style={{ height: 38, background: 'white', borderRadius: 6, padding: '4px 6px', objectFit: 'contain' }} 
         />
         <span style={{ opacity: 0.5 }}>|</span>
         <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{timeStr}</span>

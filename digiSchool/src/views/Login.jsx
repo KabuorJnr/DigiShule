@@ -90,7 +90,7 @@ export default function Login() {
                 <GraduationCap size={40} color="#0078D4" />
               )}
             </div>
-            <h1>Log in to <img src="/eduone-logo.png" alt="EduOne" style={{ height: '1.2em', verticalAlign: 'middle', background: 'white', borderRadius: 6, padding: '2px 8px' }} /></h1>
+            <h1>Log in to <img src="/eduone-logo.png" alt="EduOne" style={{ height: '2.2em', verticalAlign: 'middle', background: 'white', borderRadius: 6, padding: '2px 8px' }} /></h1>
             <p className="hr-subtitle">For Administrators, Teachers, and Parents</p>
           </div>
 

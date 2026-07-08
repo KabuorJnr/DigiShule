@@ -141,7 +141,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
             <Building size={32} color="#10B981" />
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Commission Your School</h1>
           </div>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: 14 }}>Join <img src="/eduone-logo.png" alt="EduOne" style={{ height: '1.2em', verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} /> and digitize your institution in minutes.</p>
+          <p style={{ margin: 0, opacity: 0.8, fontSize: 14 }}>Join <img src="/eduone-logo.png" alt="EduOne" style={{ height: '2.2em', verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} /> and digitize your institution in minutes.</p>
         </div>
 
         <div style={{ padding: '40px' }}>
@@ -286,7 +286,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
                 <>
                   <CheckCircle2 size={64} color="#10B981" style={{ margin: '20px 0' }} />
                   <h2 style={{ margin: 0, color: '#0f172a' }}>School Commissioned Successfully!</h2>
-                  <p className="muted" style={{ marginBottom: 20 }}>Your Principal account has been created and your school is now active on <img src="/eduone-logo.png" alt="EduOne" style={{ height: '1.2em', verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} />.</p>
+                  <p className="muted" style={{ marginBottom: 20 }}>Your Principal account has been created and your school is now active on <img src="/eduone-logo.png" alt="EduOne" style={{ height: '2.2em', verticalAlign: 'middle', background: 'white', borderRadius: 4, padding: '2px 4px' }} />.</p>
                   <p className="muted" style={{ fontSize: 14 }}>Redirecting to your dashboard...</p>
                 </>
               )}
