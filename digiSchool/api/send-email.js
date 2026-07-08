@@ -80,54 +80,56 @@ Best regards,
 Administration
 ${schoolNameDisplay}`;
 
-    let success = false;
-    let messageId = null;
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Account Credentials</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; border: 1px solid #e9ecef;">
+    <h2 style="color: #0052cc; margin-top: 0;">Welcome to ${schoolNameDisplay}!</h2>
+    <p>Dear ${name},</p>
+    <p>Your <strong>${roleDisplay}</strong> account has been successfully provisioned. Please find your secure login credentials below:</p>
+    
+    <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; border: 1px solid #dee2e6; margin: 25px 0;">
+      <p style="margin: 8px 0; font-size: 15px;"><strong>Portal URL:</strong> <a href="https://www.edu1app.tech" style="color: #0052cc; text-decoration: none;">https://www.edu1app.tech</a></p>
+      <p style="margin: 8px 0; font-size: 15px;"><strong>${username ? 'Login Username' : 'Login Email'}:</strong> ${username ? username : email}</p>
+      <p style="margin: 8px 0; font-size: 15px;"><strong>Temporary Password:</strong> <code style="background-color: #f1f3f5; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 14px;">${password}</code></p>
+    </div>
+    
+    <p style="font-size: 14px; color: #555555;">Please log in at your earliest convenience to access your dashboard. We highly recommend changing your password upon your first login to maintain account security.</p>
+    
+    <hr style="border: none; border-top: 1px solid #e9ecef; margin: 25px 0;" />
+    
+    <p style="font-size: 13px; color: #868e96; margin-bottom: 5px;">If you have any questions or require assistance, please contact the school administration.</p>
+    <p style="font-size: 13px; color: #868e96; margin-top: 0;">Best regards,<br/>Administration, ${schoolNameDisplay}</p>
+  </div>
+</body>
+</html>
+`;
 
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const { data, error } = await resend.emails.send({
-          from: 'EduOne Africa <admin@edu1app.tech>',
-          to: email,
-          subject: `Welcome to ${schoolNameDisplay} - Account Details`,
-          text: textContent,
-        });
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-        if (error) {
-          console.warn('Resend API failed, falling back to Nodemailer:', error.message);
-        } else {
-          success = true;
-          messageId = data?.id;
-        }
-      } catch (err) {
-        console.warn('Resend caught error, falling back to Nodemailer:', err.message);
-      }
-    }
+    const info = await transporter.sendMail({
+      from: `"${schoolNameDisplay} Administration" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
+      replyTo: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+      to: email,
+      subject: `Welcome to ${schoolNameDisplay} - Account Details`,
+      text: textContent,
+      html: htmlContent,
+    });
 
-    if (!success) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 465,
-        secure: true,
-        auth: {
-          user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      const info = await transporter.sendMail({
-        from: `"${schoolNameDisplay} Administration" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
-        replyTo: process.env.SMTP_USER || 'eduone.africa@gmail.com',
-        to: email,
-        subject: `Welcome to ${schoolNameDisplay} - Account Details`,
-        text: textContent,
-      });
-      success = true;
-      messageId = info.messageId;
-    }
-
-    res.status(200).json({ success: true, messageId });
+    res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
     console.error('Email send error:', error);
     res.status(500).json({ error: 'Failed to send email', details: error.message });
