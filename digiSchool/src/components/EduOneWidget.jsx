@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, CheckCircle2, LogOut, Loader } from 'lucide-react';
+import { Clock, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
 
 // Calculate distance in meters using Haversine formula
 function getDistanceInMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // Earth radius in meters
+  const R = 6371e3;
   const φ1 = lat1 * Math.PI/180;
   const φ2 = lat2 * Math.PI/180;
   const Δφ = (lat2-lat1) * Math.PI/180;
@@ -16,9 +16,14 @@ function getDistanceInMeters(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-export default function AttendAIWidget({ user, notify, settings }) {
+export default function EduOneWidget({ user, notify, settings, store }) {
+  // Support both direct props and store-based props
+  const _notify = notify || store?.notify || (() => {});
+  const _settings = settings || store?.settings || {};
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [todayLog, setTodayLog] = useState(null);
 
   useEffect(() => {
@@ -27,15 +32,17 @@ export default function AttendAIWidget({ user, notify, settings }) {
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) { setInitialLoading(false); return; }
     const fetchTodayLog = async () => {
       try {
         const logs = await fetchTable('staffAttendanceLogs');
         const todayStr = new Date().toISOString().slice(0, 10);
-        const myLog = logs.find(l => l.staff_id === user.id && l.date === todayStr);
+        const myLog = (logs || []).find(l => l.staff_id === user.id && l.date === todayStr);
         if (myLog) setTodayLog(myLog);
       } catch (err) {
         console.error('Failed to fetch attendance log', err);
+      } finally {
+        setInitialLoading(false);
       }
     };
     fetchTodayLog();
@@ -43,7 +50,7 @@ export default function AttendAIWidget({ user, notify, settings }) {
 
   const handleAction = async (actionType) => {
     if (!navigator.geolocation) {
-      notify('Geolocation is not supported by your browser.', 'error');
+      _notify('Geolocation is not supported by your browser.', 'error');
       return;
     }
 
@@ -53,10 +60,10 @@ export default function AttendAIWidget({ user, notify, settings }) {
         try {
           const { latitude, longitude } = position.coords;
 
-          if (settings?.latitude && settings?.longitude) {
-            const distance = getDistanceInMeters(latitude, longitude, settings.latitude, settings.longitude);
+          if (_settings?.latitude && _settings?.longitude) {
+            const distance = getDistanceInMeters(latitude, longitude, _settings.latitude, _settings.longitude);
             if (distance > 50) {
-              notify(`Geofence Error: You are ${Math.round(distance)}m away from the school. You must be within 50m to log attendance.`, 'error');
+              _notify(`You are ${Math.round(distance)}m away. Must be within 50m.`, 'error');
               setLoading(false);
               return;
             }
@@ -81,17 +88,17 @@ export default function AttendAIWidget({ user, notify, settings }) {
             newLog = {
               ...todayLog,
               check_out_time: nowStr,
-              location_lat: latitude, // Update to checkout location
+              location_lat: latitude,
               location_lng: longitude
             };
           }
 
           await upsertRow('staffAttendanceLogs', newLog);
           
-          // Also try to update the main staff record status (ignore errors if it fails)
+          // Also update the main staff record
           try {
             const staffRows = await fetchTable('staff');
-            const me = staffRows.find(s => s.id === user.id);
+            const me = (staffRows || []).find(s => s.id === user.id);
             if (me) {
               const actionTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
               if (actionType === 'check_in') {
@@ -101,19 +108,19 @@ export default function AttendAIWidget({ user, notify, settings }) {
               }
             }
           } catch (e) {
-            // silent ignore
+            // silent
           }
 
           setTodayLog(newLog);
-          notify(`Successfully checked ${actionType === 'check_in' ? 'in' : 'out'}!`, 'success');
+          _notify(`Successfully checked ${actionType === 'check_in' ? 'in' : 'out'}!`, 'success');
         } catch (err) {
-          notify(`Failed to log attendance: ${err.message}`, 'error');
+          _notify(`Failed to log attendance: ${err.message}`, 'error');
         } finally {
           setLoading(false);
         }
       },
-      (err) => {
-        notify('Please enable Location access to log your attendance.', 'error');
+      () => {
+        _notify('Please enable Location access to log attendance.', 'error');
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -123,80 +130,86 @@ export default function AttendAIWidget({ user, notify, settings }) {
   const hasCheckedIn = !!todayLog?.check_in_time;
   const hasCheckedOut = !!todayLog?.check_out_time;
 
+  const timeStr = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const dateStr = currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+
+  // Compact inline bar
   return (
-    <div className="card p-6" style={{ background: 'linear-gradient(135deg, #0ea5e9, #3b82f6)', color: 'white' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Clock size={28} />
-            EduOne Attendance
-          </h2>
-          <p style={{ margin: '8px 0 0 0', opacity: 0.9 }}>Digital Check-In & Check-Out</p>
-        </div>
-        <div style={{ textAlign: 'right', minWidth: '200px' }}>
-          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: '1px' }}>
-            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
-          <div style={{ fontSize: 14, opacity: 0.9 }}>
-            {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      padding: '10px 16px',
+      background: 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+      borderRadius: 10,
+      color: 'white',
+      fontSize: 13,
+      flexWrap: 'wrap',
+    }}>
+      {/* Left: icon + label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+        <Clock size={16} />
+        <span style={{ fontWeight: 600 }}>EduOne</span>
+        <span style={{ opacity: 0.8, fontSize: 12 }}>|</span>
+        <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{timeStr}</span>
+        <span style={{ opacity: 0.7, fontSize: 11 }}>{dateStr}</span>
       </div>
 
-      <div style={{ marginTop: 24, padding: 16, background: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, backdropFilter: 'blur(10px)' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
-            <Loader className="spin" size={32} />
-          </div>
+      {/* Center: status */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {initialLoading ? (
+          <Loader className="spin" size={14} />
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ 
-                width: 48, height: 48, borderRadius: '50%', 
-                background: hasCheckedOut ? 'rgba(255,255,255,0.2)' : hasCheckedIn ? '#10b981' : 'rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <MapPin size={24} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 16 }}>
-                  {hasCheckedOut ? 'Shift Completed' : hasCheckedIn ? 'Currently Clocked In' : 'Not Clocked In'}
-                </div>
-                <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-                  {hasCheckedIn && `In: ${new Date(todayLog.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} `}
-                  {hasCheckedOut && `| Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                </div>
-              </div>
-            </div>
+          <>
+            <span style={{
+              display: 'inline-block',
+              width: 8, height: 8, borderRadius: '50%',
+              background: hasCheckedOut ? '#94a3b8' : hasCheckedIn ? '#4ade80' : '#fbbf24',
+            }} />
+            <span style={{ fontSize: 12 }}>
+              {hasCheckedOut ? 'Done' : hasCheckedIn ? 'Clocked In' : 'Not Clocked In'}
+            </span>
+            {hasCheckedIn && (
+              <span style={{ fontSize: 11, opacity: 0.75 }}>
+                (In: {new Date(todayLog.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {hasCheckedOut && ` · Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`})
+              </span>
+            )}
+          </>
+        )}
+      </div>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', width: '100%', justifyContent: 'flex-start', flex: '1 1 200px', maxWidth: '100%' }}>
-              {!hasCheckedIn && (
-                <button 
-                  className="btn" 
-                  style={{ background: 'white', color: '#0ea5e9', fontWeight: 600, padding: '6px 12px', fontSize: '13px', width: 'auto' }}
-                  onClick={() => handleAction('check_in')}
-                >
-                  <CheckCircle2 size={16} style={{ marginRight: 6, display: 'inline-block', verticalAlign: 'text-bottom' }} />
-                  Check In Now
-                </button>
-              )}
-              {hasCheckedIn && !hasCheckedOut && (
-                <button 
-                  className="btn" 
-                  style={{ background: 'white', color: '#ef4444', fontWeight: 600, padding: '6px 12px', fontSize: '13px', width: 'auto' }}
-                  onClick={() => handleAction('check_out')}
-                >
-                  <LogOut size={16} style={{ marginRight: 6, display: 'inline-block', verticalAlign: 'text-bottom' }} />
-                  Check Out
-                </button>
-              )}
-              {hasCheckedOut && (
-                <div style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.2)', borderRadius: 8, fontWeight: 500 }}>
-                  Have a great day!
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Right: action button */}
+      <div>
+        {loading ? (
+          <Loader className="spin" size={14} />
+        ) : !hasCheckedIn ? (
+          <button
+            onClick={() => handleAction('check_in')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: 'white', color: '#0ea5e9', border: 'none',
+              borderRadius: 6, padding: '5px 12px', fontSize: 12,
+              fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            <CheckCircle2 size={13} /> Check In
+          </button>
+        ) : hasCheckedIn && !hasCheckedOut ? (
+          <button
+            onClick={() => handleAction('check_out')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: 6, padding: '5px 12px', fontSize: 12,
+              fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            <LogOut size={13} /> Check Out
+          </button>
+        ) : (
+          <span style={{ fontSize: 11, opacity: 0.7 }}>✓ Complete</span>
         )}
       </div>
     </div>

@@ -40,13 +40,25 @@ export default function StaffAttendance({ store, user }) {
 
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
-  useEffect(() => {
+  // Fetch staff + logs (reusable for polling)
+  const refreshStaffData = () => {
     fetchTable('staff')
       .then((rows) => setStaff(rows
         .map((s) => ({ ...s, checkIn: s.check_in }))
         .sort((a, b) => a.name.localeCompare(b.name))))
       .catch((e) => notify(`Failed to load staff: ${e.message}`, 'error'));
-      
+
+    fetchTable('staffAttendanceLogs')
+      .then((rows) => {
+        if (rows) setLogs(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    // Initial load
+    refreshStaffData();
+
     fetchTable('job_applications')
       .then((rows) => {
         if (rows && rows.length > 0) setJobApps(rows);
@@ -61,12 +73,9 @@ export default function StaffAttendance({ store, user }) {
       })
       .catch(() => {});
 
-    // Load EduOne logs
-    fetchTable('staffAttendanceLogs')
-      .then((rows) => {
-        if (rows) setLogs(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-      })
-      .catch(() => {});
+    // Poll staff + logs every 30 seconds for near real-time updates
+    const pollId = setInterval(refreshStaffData, 30000);
+    return () => clearInterval(pollId);
   }, [notify]);
 
   const totals = useMemo(() => {
