@@ -18,10 +18,18 @@ export function computeRow(scores = {}) {
 
 // Map the numerical average (0-100) to a CBC competency grade.
 export function gradeFor(average, boundaries) {
-  if (!boundaries || boundaries.length === 0 || average === 0 || !average) return '-';
+  const defaultBoundaries = [
+    { min: 3.5, grade: 'EE' },
+    { min: 2.5, grade: 'ME' },
+    { min: 1.5, grade: 'AE' },
+    { min: 0.1, grade: 'BE' }
+  ];
+  const bnds = boundaries && boundaries.length > 0 ? boundaries : defaultBoundaries;
+  
+  if (average === 0 || !average) return '-';
   
   // boundaries should be sorted by min descending (e.g. 80, 60, 40, 0)
-  for (const b of boundaries) {
+  for (const b of bnds) {
     if (average >= b.min) {
       return b.grade;
     }

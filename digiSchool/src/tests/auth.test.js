@@ -9,7 +9,7 @@ describe('signInWithUsername', () => {
     
     // Mock from() chain
     vi.spyOn(supabase, 'from').mockImplementation(() => ({
-      select: () => ({ eq: () => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'mock' }, error: null }) }) })
+      select: () => ({ eq: () => ({ limit: () => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'mock' }, error: null }) }) }) })
     }));
   });
 
@@ -31,7 +31,7 @@ describe('signInWithUsername', () => {
     
     const mockMaybeSingle = vi.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null });
     vi.spyOn(supabase, 'from').mockImplementation(() => ({
-      select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) })
+      select: () => ({ eq: () => ({ limit: () => ({ maybeSingle: mockMaybeSingle }) }) })
     }));
 
     const res = await signInWithUsername('test@example.com', 'password123');
@@ -52,7 +52,7 @@ describe('signInWithUsername', () => {
     
     const mockMaybeSingle = vi.fn().mockResolvedValue({ data: { id: 'user-456' }, error: null });
     vi.spyOn(supabase, 'from').mockImplementation(() => ({
-      select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) })
+      select: () => ({ eq: () => ({ limit: () => ({ maybeSingle: mockMaybeSingle }) }) })
     }));
 
     const res = await signInWithUsername('STU123', 'password123');
