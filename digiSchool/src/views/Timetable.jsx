@@ -65,7 +65,7 @@ function generateAll({ classes, days, periods, breaks, assignments, term }) {
 }
 
 export default function Timetable({ store, user }) {
-  const isTimetableAdmin = user?.role === 'admin' || user?.role === 'academic_director' || user?.role === 'academic';
+  const isTimetableAdmin = user?.role === 'principal' || user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
   const { timetables, setTimetables, notify, settings, students, teachers } = store;
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(store.settings?.classes || []);
@@ -236,10 +236,10 @@ export default function Timetable({ store, user }) {
         subtitle="Generate, edit and export class & teacher timetables"
         actions={
           <>
-            <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}><Icon name="settings" size={16} /> Generate Timetable</button>
+            {isTimetableAdmin && <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}><Icon name="settings" size={16} /> Generate Timetable</button>}
             <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
             <button className="btn" onClick={exportExcel}><Icon name="chart" size={16} /> Export Excel</button>
-            <button className="btn" onClick={() => setImportOpen(true)}><Icon name="download" size={16} /> Import CSV</button>
+            {isTimetableAdmin && <button className="btn" onClick={() => setImportOpen(true)}><Icon name="download" size={16} /> Import CSV</button>}
           </>
         }
       />
@@ -260,87 +260,89 @@ export default function Timetable({ store, user }) {
       </div>
 
       {/* Generator panel */}
-      <div className="card card-pad" style={{ marginBottom: 20 }}>
-        <h3 className="section-title">Timetable Generator</h3>
-        <div className="grid grid-3" style={{ marginBottom: 16 }}>
-          <div>
-            <label className="field-label">Working Days</label>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 6 }}>
-              {DAYS.map((d, i) => (
-                <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={workingDays[i]}
-                    onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))}
-                  />
-                  {d}
-                </label>
-              ))}
+      {isTimetableAdmin && (
+        <div className="card card-pad" style={{ marginBottom: 20 }}>
+          <h3 className="section-title">Timetable Generator</h3>
+          <div className="grid grid-3" style={{ marginBottom: 16 }}>
+            <div>
+              <label className="field-label">Working Days</label>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 6 }}>
+                {DAYS.map((d, i) => (
+                  <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      checked={workingDays[i]}
+                      onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))}
+                    />
+                    {d}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Periods per day</label>
+              <input className="input" type="number" min="1" max="12" value={periodsPerDay} onChange={(e) => setPeriodsPerDay(e.target.value)} />
+            </div>
+            <div>
+              <label className="field-label">Period duration (min)</label>
+              <input className="input" type="number" min="20" max="120" value={periodDuration} onChange={(e) => setPeriodDuration(e.target.value)} />
             </div>
           </div>
-          <div>
-            <label className="field-label">Periods per day</label>
-            <input className="input" type="number" min="1" max="12" value={periodsPerDay} onChange={(e) => setPeriodsPerDay(e.target.value)} />
-          </div>
-          <div>
-            <label className="field-label">Period duration (min)</label>
-            <input className="input" type="number" min="20" max="120" value={periodDuration} onChange={(e) => setPeriodDuration(e.target.value)} />
-          </div>
-        </div>
 
-        {/* Breaks */}
-        <div style={{ marginBottom: 16 }}>
-          <label className="field-label">Break / Lunch periods</label>
-          {breaks.map((b, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-              <input className="input" type="number" placeholder="Period No." value={b.period} style={{ width: 120 }}
-                onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, period: e.target.value } : x)))} />
-              <input className="input" placeholder="Label" value={b.label} style={{ maxWidth: 240 }}
-                onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-              <button className="btn btn-icon" onClick={() => setBreaks((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button>
+          {/* Breaks */}
+          <div style={{ marginBottom: 16 }}>
+            <label className="field-label">Break / Lunch periods</label>
+            {breaks.map((b, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                <input className="input" type="number" placeholder="Period No." value={b.period} style={{ width: 120 }}
+                  onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, period: e.target.value } : x)))} />
+                <input className="input" placeholder="Label" value={b.label} style={{ maxWidth: 240 }}
+                  onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                <button className="btn btn-icon" onClick={() => setBreaks((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button>
+              </div>
+            ))}
+            <button className="btn btn-sm" onClick={() => setBreaks((bs) => [...bs, { period: '', label: 'Break' }])}>+ Add Break</button>
+          </div>
+
+          {/* Subject-Teacher assignments */}
+          <label className="field-label">Subject — Teacher assignment</label>
+          <div className="scroll-x">
+            <table className="table">
+              <thead>
+                <tr><th>Subject</th><th>Assigned Teacher</th><th>Periods / Week</th></tr>
+              </thead>
+              <tbody>
+                {assignments.map((a, i) => (
+                  <tr key={a.subject}>
+                    <td>{a.subject}</td>
+                    <td>
+                      <select className="select" value={a.teacher} style={{ height: 34 }}
+                        onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
+                        <option value="">-- Select --</option>
+                        {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <input className="input" type="number" min="0" max="10" value={a.perWeek} style={{ width: 80, height: 34 }}
+                        onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, perWeek: e.target.value } : x)))} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {generating && (
+            <div style={{ marginTop: 16 }}>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Generating timetable… {Math.round(progress)}%</div>
+              <div className="progress"><span style={{ width: `${progress}%`, background: 'var(--primary)' }} /></div>
             </div>
-          ))}
-          <button className="btn btn-sm" onClick={() => setBreaks((bs) => [...bs, { period: '', label: 'Break' }])}>+ Add Break</button>
+          )}
+          {!generating && (
+            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={handleGenerate}>Generate</button>
+          )}
         </div>
-
-        {/* Subject-Teacher assignments */}
-        <label className="field-label">Subject — Teacher assignment</label>
-        <div className="scroll-x">
-          <table className="table">
-            <thead>
-              <tr><th>Subject</th><th>Assigned Teacher</th><th>Periods / Week</th></tr>
-            </thead>
-            <tbody>
-              {assignments.map((a, i) => (
-                <tr key={a.subject}>
-                  <td>{a.subject}</td>
-                  <td>
-                    <select className="select" value={a.teacher} style={{ height: 34 }}
-                      onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
-                      <option value="">-- Select --</option>
-                      {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
-                    </select>
-                  </td>
-                  <td>
-                    <input className="input" type="number" min="0" max="10" value={a.perWeek} style={{ width: 80, height: 34 }}
-                      onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, perWeek: e.target.value } : x)))} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {generating && (
-          <div style={{ marginTop: 16 }}>
-            <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Generating timetable… {Math.round(progress)}%</div>
-            <div className="progress"><span style={{ width: `${progress}%`, background: 'var(--primary)' }} /></div>
-          </div>
-        )}
-        {!generating && (
-          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={handleGenerate}>Generate</button>
-        )}
-      </div>
+      )}
 
       {/* Tabs + grid */}
       {hasGenerated && (

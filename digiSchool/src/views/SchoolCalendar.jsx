@@ -14,6 +14,7 @@ function getFirstDayOfMonth(year, month) {
 
 export default function SchoolCalendar({ store, user }) {
   const { notify } = store;
+  const isAdmin = user?.role === 'principal' || user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -115,7 +116,7 @@ export default function SchoolCalendar({ store, user }) {
       <div 
         key={day} 
         className={`calendar-cell ${isToday ? 'today' : ''}`}
-        onClick={() => openAddModal(dateStr)}
+        onClick={() => isAdmin && openAddModal(dateStr)}
       >
         <div className="cell-header">
           <span className="day-number">{day}</span>
@@ -205,7 +206,7 @@ export default function SchoolCalendar({ store, user }) {
         .calendar-cell {
           background: #fff;
           padding: 8px;
-          cursor: pointer;
+          cursor: ${isAdmin ? 'pointer' : 'default'};
           transition: background 0.2s;
           display: flex;
           flex-direction: column;
