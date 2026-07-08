@@ -237,18 +237,51 @@ export default function AdminDashboard({ store, user }) {
         <MediaManager notify={notify} user={user} />
       ) : (
         <>
-          <div style={{ background: '#000000', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 18 }}>Administration Office</h3>
-          <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.9 }}>
-            Managing discipline, boarding, facilities, and staff welfare
-          </p>
-        </div>
-        <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
-          <div>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>Term 2 · Academic Year 2026</div>
-        </div>
-      </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            color: '#fff',
+            padding: '24px 32px',
+            borderRadius: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 32,
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Decorative background glow */}
+            <div style={{
+              position: 'absolute',
+              top: '-50%',
+              right: '-5%',
+              width: 350,
+              height: 350,
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(0,0,0,0) 70%)',
+              borderRadius: '50%',
+              pointerEvents: 'none'
+            }} />
+            
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Shield size={24} color="#10b981" />
+                Administration Office
+              </h3>
+              <p style={{ margin: '8px 0 0', fontSize: 14, color: '#94a3b8', fontWeight: 400 }}>
+                Managing discipline, boarding, facilities, and staff welfare
+              </p>
+            </div>
+            
+            <div style={{ textAlign: 'right', position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#f8fafc' }}>
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              <div style={{ fontSize: 13, color: '#38bdf8', marginTop: 6, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: 20 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
+                Term 2 · Academic Year 2026
+              </div>
+            </div>
+          </div>
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
         <Stat label="Total Students" value={students?.length || 0} color="#10B981" />
