@@ -177,7 +177,9 @@ export default function EnrollStudent() {
             password: tempPassword,
             name: captured.guardianName || 'Parent/Guardian',
             role: 'parent',
-            schoolName: store.settings?.name || 'EduOne'
+            schoolName: store.settings?.name || 'EduOne',
+            parentPin: newStudent.parentPin,
+            studentName: captured.name
           });
         }
 
