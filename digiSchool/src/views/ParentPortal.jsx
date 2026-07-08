@@ -118,7 +118,12 @@ export default function ParentPortal({ store, user }) {
   const attPct = attTotals.total ? Math.round(((attTotals.present + attTotals.late) / attTotals.total) * 100) : 0;
   const latestAtt = { rate: attPct || 0 };
 
-  const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
+  const levels = store.settings?.classes?.length > 0 
+    ? store.settings.classes.map(c => c.name) 
+    : (store.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const myLevel = child ? (levels.find(l => child.cls?.startsWith(l)) || child.cls || levels[0]) : levels[0];
+
+  const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const paid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
   const balance = termFees - paid;
 

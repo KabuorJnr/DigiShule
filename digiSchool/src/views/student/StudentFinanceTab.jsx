@@ -7,11 +7,16 @@ import Modal from '../../components/Modal';
 export default function StudentFinanceTab() {
   const { me, payments, store, setPayments, notify } = useOutletContext();
   const [payModal, setPayModal] = useState(false);
-  const [payForm, setPayForm] = useState({ reference: '', method: 'M-Pesa' });
+  const [payForm, setPayForm] = useState({ reference: '', method: 'M-Pesa', amount: '' });
 
   const { feeStructure } = store;
 
-  const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
+  const levels = store.settings?.classes?.length > 0 
+    ? store.settings.classes.map(c => c.name) 
+    : (store.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const myLevel = levels.find(l => me.cls?.startsWith(l)) || me.cls || levels[0];
+
+  const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
   const outstanding = termFees - totalPaid;
   const dueDate = '2026-07-05';
@@ -22,18 +27,20 @@ export default function StudentFinanceTab() {
     outstanding,
     payments,
     structure: feeStructure || [],
-    dueDate
+    dueDate,
+    myLevel
   };
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
   const handlePay = async () => {
     const ref = payForm.reference?.trim();
+    const amt = Number(payForm.amount);
     if (!ref) { notify('Enter a valid reference code', 'warning'); return; }
+    if (!amt || amt <= 0) { notify('Enter a valid amount', 'warning'); return; }
     
     try {
       const { upsertRow } = await import('../../lib/api');
-      const amt = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
       
       const newPayment = { 
         id: `pay_${Date.now()}`, 
@@ -50,8 +57,8 @@ export default function StudentFinanceTab() {
       await upsertRow('financePayments', newPayment);
       setPayments(prev => [newPayment, ...prev]);
       setPayModal(false);
-      setPayForm({ reference: '', method: 'M-Pesa' });
-      notify(`Reference ${ref.toUpperCase()} submitted for verification`, 'success', 'Payment');
+      setPayForm({ reference: '', method: 'M-Pesa', amount: '' });
+      notify(`Payment of KES ${amt} submitted for verification`, 'success', 'Payment');
     } catch (e) {
       notify(`Payment error: ${e.message}`, 'error', 'Payment');
     }
@@ -82,7 +89,7 @@ export default function StudentFinanceTab() {
             <thead><tr><th>Item</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
             <tbody>
               {feeAccount.structure.map((s, i) => (
-                <tr key={i}><td>{s.item}</td><td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtKES(s.amount)}</td></tr>
+                <tr key={i}><td>{s.type || s.item}</td><td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtKES(s[feeAccount.myLevel])}</td></tr>
               ))}
               <tr style={{ fontWeight: 700, background: '#f5f5f5' }}>
                 <td>Total</td><td style={{ textAlign: 'right' }}>{fmtKES(feeAccount.totalBilled)}</td>
@@ -131,9 +138,13 @@ export default function StudentFinanceTab() {
               </select>
             </div>
             <div>
-              <label className="field-label">Transaction Reference Code</label>
-              <input className="input" placeholder="e.g. QKZ1B2C3D4" value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} />
+              <label className="field-label">Amount (KES)</label>
+              <input className="input" type="number" placeholder="e.g. 5000" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} />
             </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label className="field-label">Transaction Reference Code</label>
+            <input className="input" placeholder="e.g. QKZ1B2C3D4" value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} />
           </div>
         </Modal>
       )}
