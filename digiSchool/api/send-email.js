@@ -59,10 +59,11 @@ export default async function handler(req, res) {
     });
 
     const roleDisplay = isParent ? 'Parent Portal' : 'Staff/Teacher';
+    const schoolNameDisplay = schoolName || 'EduOne';
 
     const textContent = `Dear ${name},
 
-Welcome to ${schoolName || 'EduOne'}! 
+Welcome to ${schoolNameDisplay}! 
 
 Your ${roleDisplay} account has been successfully provisioned. 
 Please find your secure login credentials below:
@@ -77,16 +78,56 @@ If you have any questions or require assistance, please contact the school admin
 
 Best regards,
 Administration
-${schoolName || 'EduOne'}`;
+${schoolNameDisplay}`;
 
-    const info = await transporter.sendMail({
-      from: `"EduOne Africa" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: `Welcome to EduOne Africa - Account Details`,
-      text: textContent,
-    });
+    let success = false;
+    let messageId = null;
 
-    res.status(200).json({ success: true, messageId: info.messageId });
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { Resend } = await import('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { data, error } = await resend.emails.send({
+          from: 'EduOne Africa <admin@edu1app.tech>',
+          to: email,
+          subject: `Welcome to ${schoolNameDisplay} - Account Details`,
+          text: textContent,
+        });
+
+        if (error) {
+          console.warn('Resend API failed, falling back to Nodemailer:', error.message);
+        } else {
+          success = true;
+          messageId = data?.id;
+        }
+      } catch (err) {
+        console.warn('Resend caught error, falling back to Nodemailer:', err.message);
+      }
+    }
+
+    if (!success) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: process.env.SMTP_PORT || 465,
+        secure: true,
+        auth: {
+          user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${schoolNameDisplay} Administration" <${process.env.SMTP_USER || 'eduone.africa@gmail.com'}>`,
+        replyTo: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+        to: email,
+        subject: `Welcome to ${schoolNameDisplay} - Account Details`,
+        text: textContent,
+      });
+      success = true;
+      messageId = info.messageId;
+    }
+
+    res.status(200).json({ success: true, messageId });
   } catch (error) {
     console.error('Email send error:', error);
     res.status(500).json({ error: 'Failed to send email', details: error.message });
