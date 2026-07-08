@@ -133,8 +133,11 @@ export default function EduOneWidget({ user, notify, settings, store }) {
     }}>
       {/* Left: label + time */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-        <Clock size={16} />
-        <span style={{ fontWeight: 600 }}>EduOne</span>
+        <img 
+          src="/eduone-logo.png" 
+          alt="EduOne" 
+          style={{ height: 24, background: 'white', borderRadius: 4, padding: '2px 4px', objectFit: 'contain' }} 
+        />
         <span style={{ opacity: 0.5 }}>|</span>
         <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{timeStr}</span>
         <span style={{ opacity: 0.7, fontSize: 11 }}>{dateStr}</span>
