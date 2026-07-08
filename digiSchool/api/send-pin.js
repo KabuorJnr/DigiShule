@@ -105,12 +105,12 @@ ${schoolNameDisplay}`;
 `;
 
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.resend.com',
-      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 465,
       secure: true,
       auth: {
-        user: process.env.SMTP_USER || 'resend',
-        pass: process.env.RESEND_API_KEY,
+        user: process.env.SMTP_USER || 'eduone.africa@gmail.com',
+        pass: process.env.SMTP_PASS,
       },
     });
 
