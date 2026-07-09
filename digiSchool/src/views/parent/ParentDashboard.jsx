@@ -8,6 +8,7 @@ import { fetchTable } from '../../lib/api';
 import { KpiCard, ProgressBar, Badge } from '../../components/widgets';
 import { computeRow, gradeFor } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
+import { printReceipt } from '../../lib/printReceipt';
 import Modal from '../../components/Modal';
 
 export default function ParentDashboard() {

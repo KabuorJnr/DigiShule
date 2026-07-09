@@ -45,9 +45,8 @@ export default function AcademicsTab() {
         <>
           <div className="card card-pad" style={{ marginBottom: 16 }}>
             <h3 className="section-title">Class Information</h3>
-            <div className="grid grid-4" style={{ gap: 12 }}>
-              <div><span className="muted" style={{ fontSize: 12 }}>Grade</span><div style={{ fontWeight: 600, fontSize: 18 }}>Grade {me.class}</div></div>
-              <div><span className="muted" style={{ fontSize: 12 }}>Stream</span><div style={{ fontWeight: 600, fontSize: 18 }}>{me.class.slice(1)}</div></div>
+            <div className="grid grid-3" style={{ gap: 12 }}>
+              <div><span className="muted" style={{ fontSize: 12 }}>Grade / Class</span><div style={{ fontWeight: 600, fontSize: 18 }}>{me.class}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Class Teacher</span><div style={{ fontWeight: 600 }}>{store.teachers?.find(t => t.assignedClass === me.class)?.name || 'Not Assigned'}</div></div>
               <div><span className="muted" style={{ fontSize: 12 }}>Total Students</span><div style={{ fontWeight: 600, fontSize: 18 }}>{classmates.length}</div></div>
             </div>

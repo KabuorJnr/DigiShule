@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Badge, KpiCard, ProgressBar } from '../../components/widgets';
 import { Calendar, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
 import Modal from '../../components/Modal';
+import { printReceipt } from '../../lib/printReceipt';
 
 export default function StudentFinanceTab() {
   const { me, payments, store, setPayments, notify } = useOutletContext();
@@ -101,7 +102,7 @@ export default function StudentFinanceTab() {
         <div className="card card-pad">
           <h3 className="section-title">Payment History</h3>
           <table className="table">
-            <thead><tr><th>Date</th><th>Method</th><th>Ref</th><th>Status</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+            <thead><tr><th>Date</th><th>Method</th><th>Ref</th><th>Status</th><th style={{ textAlign: 'right' }}>Amount</th><th></th></tr></thead>
             <tbody>
               {feeAccount.payments.map(p => (
                 <tr key={p.id}>
@@ -114,9 +115,16 @@ export default function StudentFinanceTab() {
                     </Badge>
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtKES(p.amount)}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    {p.status === 'Verified' && (
+                      <button className="btn btn-sm" onClick={() => printReceipt(p, me, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
+                        🖨️ Print Receipt
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
-              {feeAccount.payments.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 20 }}>No payments recorded.</td></tr>}
+              {feeAccount.payments.length === 0 && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 20 }}>No payments recorded.</td></tr>}
             </tbody>
           </table>
         </div>

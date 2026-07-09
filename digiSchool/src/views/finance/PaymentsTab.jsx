@@ -3,10 +3,11 @@ import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
 import { upsertRow, updateRow } from '../../lib/api';
+import { printReceipt } from '../../lib/printReceipt';
 import { useOutletContext } from 'react-router-dom';
 
 export default function PaymentsTab() {
-  const { payments, invoices, setPayments, notify, params, students } = useOutletContext();
+  const { store, payments, invoices, setPayments, notify, params, students } = useOutletContext();
   const [modalOpen, setModalOpen] = useState(params.action === 'record_payment');
   const [form, setForm] = useState({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
 
@@ -81,8 +82,12 @@ export default function PaymentsTab() {
                     </Badge>
                   </td>
                   <td>
-                    {(p.status === 'Verification Pending' || p.status === 'Pending') && (
+                    {(p.status === 'Verification Pending' || p.status === 'Pending') ? (
                       <button className="btn btn-sm btn-primary" onClick={() => handleConfirm(p.id)}>Confirm</button>
+                    ) : (
+                      <button className="btn btn-sm" onClick={() => printReceipt(p, student, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
+                        🖨️ Receipt
+                      </button>
                     )}
                   </td>
                   <td style={{ fontWeight: 700 }}>{fmtKES(p.amount)}</td>
