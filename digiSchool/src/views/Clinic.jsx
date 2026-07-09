@@ -114,7 +114,7 @@ export default function Clinic({ store }) {
 
   return (
     <div className="print-friendly">
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page { margin: 0; }
           body * { visibility: hidden; }
@@ -129,7 +129,7 @@ export default function Clinic({ store }) {
         @media screen {
           .print-only { display: none; }
         }
-      \`}} />
+      `}} />
       <div className="no-print">
         <PageHeader
           title="Clinic & Health"
@@ -151,10 +151,10 @@ export default function Clinic({ store }) {
         </div>
 
         <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid var(--border)', marginBottom: 20 }}>
-          <button className={\`tab \${activeTab === 'directory' ? 'active' : ''}\`} onClick={() => setActiveTab('directory')}>
+          <button className={`tab ${activeTab === 'directory' ? 'active' : ''}`} onClick={() => setActiveTab('directory')}>
             <Icon name="users" size={16} style={{ marginRight: 6 }} /> Student Directory
           </button>
-          <button className={\`tab \${activeTab === 'visits' ? 'active' : ''}\`} onClick={() => setActiveTab('visits')}>
+          <button className={`tab ${activeTab === 'visits' ? 'active' : ''}`} onClick={() => setActiveTab('visits')}>
             <Icon name="activity" size={16} style={{ marginRight: 6 }} /> Recent Visits
           </button>
         </div>
@@ -252,7 +252,7 @@ export default function Clinic({ store }) {
                     <td className="no-print">
                       <button className="btn btn-sm" onClick={() => {
                         setNotifyParentOpen(v);
-                        setParentMsg(\`Dear Parent,\\nYour child \${v.student} visited the clinic today for \${v.complaint}. Outcome: \${v.outcome}.\\nPlease follow up if necessary.\`);
+                        setParentMsg(`Dear Parent,\nYour child ${v.student} visited the clinic today for ${v.complaint}. Outcome: ${v.outcome}.\nPlease follow up if necessary.`);
                       }}>Notify Parent</button>
                     </td>
                   </tr>
@@ -307,7 +307,7 @@ export default function Clinic({ store }) {
 
       {/* Notify Parent Modal */}
       {notifyParentOpen && (
-        <Modal title={\`Message Parent of \${notifyParentOpen.student}\`} onClose={() => setNotifyParentOpen(null)} footer={
+        <Modal title={`Message Parent of ${notifyParentOpen.student}`} onClose={() => setNotifyParentOpen(null)} footer={
           <><button className="btn" onClick={() => setNotifyParentOpen(null)}>Cancel</button><button className="btn btn-primary" onClick={sendParentNotice}>Send Message</button></>
         }>
           <label className="field-label">Message Content</label>
