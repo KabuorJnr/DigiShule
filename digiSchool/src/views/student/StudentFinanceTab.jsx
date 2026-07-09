@@ -17,7 +17,7 @@ export default function StudentFinanceTab() {
   const myLevel = levels.find(l => me.cls?.startsWith(l)) || me.cls || levels[0];
 
   const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
-  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
   const outstanding = termFees - totalPaid;
   const dueDate = '2026-07-05';
 
@@ -101,17 +101,22 @@ export default function StudentFinanceTab() {
         <div className="card card-pad">
           <h3 className="section-title">Payment History</h3>
           <table className="table">
-            <thead><tr><th>Date</th><th>Method</th><th>Ref</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+            <thead><tr><th>Date</th><th>Method</th><th>Ref</th><th>Status</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
             <tbody>
               {feeAccount.payments.map(p => (
                 <tr key={p.id}>
                   <td className="muted">{p.date}</td>
                   <td><Badge color={p.method === 'M-Pesa' ? 'green' : 'blue'}>{p.method}</Badge></td>
                   <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{p.ref}</td>
+                  <td>
+                    <Badge color={p.status === 'Verification Pending' || p.status === 'Pending' ? 'yellow' : 'green'}>
+                      {p.status || 'Verified'}
+                    </Badge>
+                  </td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtKES(p.amount)}</td>
                 </tr>
               ))}
-              {feeAccount.payments.length === 0 && <tr><td colSpan={4} className="muted" style={{ textAlign: 'center', padding: 20 }}>No payments recorded.</td></tr>}
+              {feeAccount.payments.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 20 }}>No payments recorded.</td></tr>}
             </tbody>
           </table>
         </div>

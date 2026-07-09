@@ -44,14 +44,27 @@ export default function BillingTab() {
       due_date: form.due_date,
       created_at: new Date().toISOString()
     };
-    
+    const newNotif = {
+      id: `notif_inv_${Date.now()}`,
+      title: 'New Invoice Issued',
+      message: `A new invoice of KES ${form.amount} has been issued and is due on ${form.due_date}`,
+      type: 'Billing',
+      user_id: form.student_id,
+      read: false,
+      created_at: new Date().toISOString()
+    };
+
     setInvoices(prev => [newInvoice, ...prev]);
+    if (store.setNotifications) {
+      store.setNotifications(prev => [newNotif, ...(prev || [])]);
+    }
     notify('Invoice generated successfully.');
     setModalOpen(false);
     setForm({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
     try {
       const { upsertRow } = await import('../../lib/api');
       await upsertRow('invoices', newInvoice);
+      await upsertRow('notifications', newNotif);
     } catch (e) {
       console.warn('API error ignored for mock:', e.message);
     }
@@ -81,8 +94,20 @@ export default function BillingTab() {
       due_date: bulkForm.due_date,
       created_at: new Date().toISOString()
     }));
+    const newNotifs = targetStudents.map((s, idx) => ({
+      id: `notif_inv_${Date.now()}_${idx}`,
+      title: 'New Invoice Issued',
+      message: `A new invoice of KES ${bulkForm.amount} has been issued and is due on ${bulkForm.due_date}`,
+      type: 'Billing',
+      user_id: s.id,
+      read: false,
+      created_at: new Date().toISOString()
+    }));
 
     setInvoices(prev => [...newInvoices, ...prev]);
+    if (store.setNotifications) {
+      store.setNotifications(prev => [...newNotifs, ...(prev || [])]);
+    }
     notify(`Bulk Invoices generated for ${newInvoices.length} students.`, 'success');
     setBulkModalOpen(false);
     setBulkForm({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
@@ -90,6 +115,7 @@ export default function BillingTab() {
     try {
       const { upsertRow } = await import('../../lib/api');
       await Promise.all(newInvoices.map(inv => upsertRow('invoices', inv)));
+      await Promise.all(newNotifs.map(n => upsertRow('notifications', n)));
     } catch (e) {
       console.warn('API error ignored for mock bulk:', e.message);
     }

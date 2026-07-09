@@ -40,6 +40,19 @@ export default function PaymentsTab() {
     }
   };
 
+  const handleConfirm = async (id) => {
+    try {
+      const payment = payments.find(p => p.id === id);
+      if (!payment) return;
+      const updated = { ...payment, status: 'Verified' };
+      setPayments(prev => prev.map(p => p.id === id ? updated : p));
+      notify('Payment confirmed.');
+      await upsertRow('financePayments', updated);
+    } catch (e) {
+      notify(`Failed to confirm payment: ${e.message}`, 'error');
+    }
+  };
+
   return (
     <div className="card card-pad">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -50,7 +63,7 @@ export default function PaymentsTab() {
       <div className="scroll-x">
         <table className="table">
           <thead>
-            <tr><th>Date</th><th>Student</th><th>Method</th><th>Ref</th><th>Amount</th></tr>
+            <tr><th>Date</th><th>Student</th><th>Method</th><th>Ref</th><th>Status</th><th>Action</th><th>Amount</th></tr>
           </thead>
           <tbody>
             {payments.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No payments recorded.</td></tr>}
@@ -62,6 +75,16 @@ export default function PaymentsTab() {
                   <td style={{ fontWeight: 600 }}>{student ? student.name : p.student_id}</td>
                   <td><Badge color={p.method === 'M-Pesa' ? 'green' : p.method === 'Bank' ? 'blue' : 'gray'}>{p.method}</Badge></td>
                   <td className="muted">{p.ref}</td>
+                  <td>
+                    <Badge color={p.status === 'Verification Pending' || p.status === 'Pending' ? 'yellow' : 'green'}>
+                      {p.status || 'Verified'}
+                    </Badge>
+                  </td>
+                  <td>
+                    {(p.status === 'Verification Pending' || p.status === 'Pending') && (
+                      <button className="btn btn-sm btn-primary" onClick={() => handleConfirm(p.id)}>Confirm</button>
+                    )}
+                  </td>
                   <td style={{ fontWeight: 700 }}>{fmtKES(p.amount)}</td>
                 </tr>
               );
