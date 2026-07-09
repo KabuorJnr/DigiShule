@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard } from '../components/widgets';
 import { Search, GraduationCap, Users, UserCheck } from 'lucide-react';
+import { expandClassesWithStreams } from '../data/seed';
 
 export default function ClassTeachers(props) {
   const context = useOutletContext() || {};
@@ -12,8 +13,7 @@ export default function ClassTeachers(props) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const classes = useMemo(() => {
-    const raw = Array.isArray(settings.classes) ? settings.classes : [];
-    return raw.map(c => typeof c === 'string' ? c : (c.name || '')).filter(Boolean);
+    return expandClassesWithStreams(settings.classes || []);
   }, [settings.classes]);
 
   const assignedCount = classes.filter(cls => teachers.some(t => t.assignedClass === cls)).length;
