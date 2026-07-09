@@ -82,11 +82,11 @@ export default function PortalLayout() {
   useEffect(() => { timetablesRef.current = timetables; }, [timetables]);
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return { students: [], staff: [] };
+    if (!searchQuery.trim()) return { students: [], staff: [], notices: [] };
     const q = searchQuery.toLowerCase();
     return {
-      students: students.filter(s => s?.name?.toLowerCase().includes(q) || s?.admission_number?.toLowerCase().includes(q)).slice(0, 5),
-      staff: teachers.filter(t => t?.name?.toLowerCase().includes(q) || t?.staff_id?.toLowerCase().includes(q)).slice(0, 5)
+      students: students.filter(s => s?.name?.toLowerCase().includes(q) || s?.adm?.toLowerCase().includes(q) || String(s?.adm || '').toLowerCase().includes(q)).slice(0, 5),
+      staff: teachers.filter(t => t?.name?.toLowerCase().includes(q) || t?.id?.toLowerCase().includes(q) || t?.dept?.toLowerCase().includes(q)).slice(0, 5)
     };
   }, [searchQuery, students, teachers]);
 
@@ -586,27 +586,41 @@ export default function PortalLayout() {
               {showSearchResults && searchQuery.trim() && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden' }}>
                   {searchResults.students.length > 0 && (
-                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ padding: '8px 12px', borderBottom: searchResults.staff.length > 0 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Students</div>
                       {searchResults.students.map(s => (
-                        <div key={s.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }} 
-                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('registrar', { search: s.name }); }}
+                        <div key={s.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderRadius: 4 }} 
+                             onClick={() => {
+                               setSearchQuery('');
+                               setShowSearchResults(false);
+                               // Navigate to a student view available to the current role
+                               const role = currentUser?.role;
+                               if (role === 'student' || role === 'parent') {
+                                 // Students/parents stay in their portal
+                                 store.navigate(ROLES[role]?.home || 'overview');
+                               } else if (role === 'nurse' || role === 'clinic') {
+                                 store.navigate('clinic');
+                               } else {
+                                 // Admin, principal, deputy, registrar, academics go to registry
+                                 store.navigate('registrar', { search: s.name });
+                               }
+                             }}
                              onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.admission_number || ''}</span>
+                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} · {s.class || ''}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {searchResults.staff.length > 0 && (
-                    <div style={{ padding: '8px 12px', borderBottom: searchResults.students.length === 0 ? 'none' : '1px solid var(--border)' }}>
+                    <div style={{ padding: '8px 12px' }}>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Staff</div>
                       {searchResults.staff.map(t => (
-                        <div key={t.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }} 
-                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('staff', { search: t.name }); }}
+                        <div key={t.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderRadius: 4 }} 
+                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('staff_attendance', { search: t.name }); }}
                              onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{t.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{t.department || ''}</span>
+                          <strong>{t.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{t.dept || t.role || ''}</span>
                         </div>
                       ))}
                     </div>
