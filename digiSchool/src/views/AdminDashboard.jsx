@@ -129,9 +129,22 @@ export default function AdminDashboard({ store, user }) {
     try {
       const scheduledDt = `${scheduleForm.date}T${scheduleForm.time}:00`;
       const updated = { ...selectedMeeting, status: 'Scheduled', scheduled_date: scheduledDt, teacher_name: scheduleForm.teacher_name };
+      
+      // Save meeting request
       await upsertRow('parentMeetingRequests', updated);
+      
+      // Auto-add to school calendar
+      const eventPayload = {
+        id: `evt_${Date.now()}`,
+        title: `Parent-Teacher Meeting: ${updated.parent_name} & ${scheduleForm.teacher_name}`,
+        date: scheduleForm.date,
+        type: 'meeting',
+        audience: ['teachers', 'parents']
+      };
+      await upsertRow('calendarEvents', eventPayload);
+
       setMeetingRequests(prev => prev.map(m => m.id === updated.id ? updated : m));
-      notify(`Meeting scheduled and ${scheduleForm.teacher_name} tagged successfully.`, 'success');
+      notify(`Meeting scheduled and ${scheduleForm.teacher_name} tagged successfully. Added to Calendar.`, 'success');
       setScheduleMeetingOpen(false);
       setSelectedMeeting(null);
       setScheduleForm({ date: '', time: '', teacher_name: '' });

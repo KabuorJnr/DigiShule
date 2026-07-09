@@ -13,6 +13,7 @@ import Modal from '../../components/Modal';
 export default function ParentDashboard() {
   const { user: currentUser, store, params } = useOutletContext();
   const [child, setChild] = useState(null);
+  const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [linkAdm, setLinkAdm] = useState('');
   const [linkPin, setLinkPin] = useState('');
@@ -26,6 +27,7 @@ export default function ParentDashboard() {
   const [disciplinary, setDisciplinary] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [schoolEvents, setSchoolEvents] = useState([]);
+  const [meetingRequests, setMeetingRequests] = useState([]);
 
   // Modal states
   const [msgModal, setMsgModal] = useState(false);
@@ -37,20 +39,29 @@ export default function ParentDashboard() {
   // Active tab from sidebar params
   const activeTab = params?.tab || 'dashboard';
 
+  // ── Set default selected child ──
+  useEffect(() => {
+    if (!selectedChildId && currentUser) {
+      const linked = currentUser.linked_students || [];
+      if (linked.length > 0) setSelectedChildId(linked[0].id);
+      else if (currentUser.student_id || currentUser.studentId) setSelectedChildId(currentUser.student_id || currentUser.studentId);
+    }
+  }, [currentUser, selectedChildId]);
+
   // ── Fetch child profile ──
   useEffect(() => {
     async function fetchChild() {
-      const studentId = currentUser?.student_id || currentUser?.studentId;
-      if (!studentId) { setLoading(false); return; }
+      if (!selectedChildId) { setLoading(false); return; }
+      setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('students').select('*').eq('id', studentId).maybeSingle();
+          .from('students').select('*').eq('id', selectedChildId).maybeSingle();
         if (!error && data) setChild(data);
       } catch (err) { console.error("Error fetching child:", err); }
       finally { setLoading(false); }
     }
     fetchChild();
-  }, [currentUser]);
+  }, [selectedChildId]);
 
   // ── Fetch all supporting data once child is loaded ──
   useEffect(() => {
@@ -63,7 +74,8 @@ export default function ParentDashboard() {
       fetchTable('disciplinaryRecords').catch(() => []),
       fetchTable('notifications').catch(() => []),
       fetchTable('schoolEvents').catch(() => []),
-    ]).then(([pays, att, health, disc, notifs, events]) => {
+      fetchTable('parentMeetingRequests').catch(() => []),
+    ]).then(([pays, att, health, disc, notifs, events, meetings]) => {
       if (!active) return;
       setPayments((pays || []).filter(p => p.student_id === child.id || p.adm === child.adm));
       setAttendance((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
@@ -71,6 +83,7 @@ export default function ParentDashboard() {
       setDisciplinary((disc || []).filter(d => d.adm === child.adm));
       setNotifications(notifs || []);
       setSchoolEvents(events || []);
+      setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
     });
     return () => { active = false; };
   }, [child?.id, child?.adm]);
@@ -140,6 +153,31 @@ export default function ParentDashboard() {
     }
   };
 
+  const handleRequestMeeting = async () => {
+    if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
+    try {
+      const { upsertRow } = await import('../../lib/api');
+      const payload = {
+        id: `meet_${Date.now()}`,
+        parent_id: currentUser.id || 'parent',
+        parent_name: currentUser.name || 'Parent',
+        student_id: child.id,
+        student_name: child.name,
+        teacher_name: msgForm.to, // Using the same form state for simplicity
+        reason: `${msgForm.subject} - ${msgForm.body}`,
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('parentMeetingRequests', payload);
+      setMeetingRequests([...meetingRequests, payload]);
+      notify(`Meeting requested with ${msgForm.to} successfully!`, 'success', 'Meetings');
+      setMsgModal(false);
+      setMsgForm({ to: 'Class Teacher', subject: '', body: '' });
+    } catch (e) {
+      notify(`Failed to request meeting: ${e.message}`, 'error');
+    }
+  };
+
   // ── Link student handler ──
   const handleLinkStudent = async (e) => {
     e.preventDefault();
@@ -155,7 +193,21 @@ export default function ParentDashboard() {
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('Student not found. Please verify the Admission Number and Parent PIN.');
       const student = data[0];
-      const { error: updateErr } = await supabase.from('profiles').update({ student_id: student.id }).eq('id', currentUser.id);
+      
+      const currentLinked = currentUser.linked_students || [];
+      const isAlreadyLinked = currentLinked.find(s => s.id === student.id);
+      
+      const newLinked = isAlreadyLinked ? currentLinked : [...currentLinked, {
+        id: student.id,
+        name: student.name,
+        adm: student.adm,
+        class: student.class
+      }];
+
+      const { error: updateErr } = await supabase.from('profiles').update({ 
+        student_id: student.id, // Primary student
+        linked_students: newLinked 
+      }).eq('id', currentUser.id);
       if (updateErr) throw updateErr;
       window.location.reload();
     } catch (err) {
@@ -207,18 +259,39 @@ export default function ParentDashboard() {
   // ── DASHBOARD TAB (default) ──
   // ══════════════════════════════════════════════════════════
   if (activeTab === 'dashboard' || !activeTab) {
+    const linkedStudents = currentUser?.linked_students || [];
+    
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
+        {/* Child Switcher / Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
-            <h1 style={{ margin: '0 0 6px 0', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
-              Overview for {child.name}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
+                Overview for {child.name}
+              </h1>
+              {linkedStudents.length > 1 && (
+                <select 
+                  className="select" 
+                  style={{ padding: '4px 8px', fontSize: 13, minWidth: 150 }}
+                  value={selectedChildId}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                >
+                  {linkedStudents.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
             <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
               Grade: {child.class || 'N/A'} • Admission: {child.adm || 'Pending'} • Gender: {child.gender || 'N/A'}
             </p>
           </div>
+          {linkedStudents.length > 0 && (
+            <button className="btn" onClick={() => setChild(null)} style={{ fontSize: 13 }}>
+              + Link Another Child
+            </button>
+          )}
         </div>
 
         {/* Disciplinary Alert */}
@@ -255,8 +328,8 @@ export default function ParentDashboard() {
             <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}>
               <Mail size={16} /> Contact Teacher
             </button>
-            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/resources'}>
-              <Calendar size={16} /> View Timetable
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => { setMsgForm({ ...msgForm, isMeeting: true }); setMsgModal(true); }}>
+              <Calendar size={16} /> Request Meeting
             </button>
           </div>
         </div>
@@ -359,10 +432,12 @@ export default function ParentDashboard() {
           </div>
         </div>
 
-        {/* Contact Teacher Modal */}
+        {/* Contact Teacher / Meeting Modal */}
         {msgModal && (
-          <Modal title="Contact Teacher" onClose={() => setMsgModal(false)} footer={
-            <button className="btn btn-primary" onClick={handleSendMessage}><Send size={16} style={{ marginRight: 6 }} /> Send Message</button>
+          <Modal title={msgForm.isMeeting ? "Request a Meeting" : "Contact Teacher"} onClose={() => { setMsgModal(false); setMsgForm({ to: 'Class Teacher', subject: '', body: '', isMeeting: false }); }} footer={
+            <button className="btn btn-primary" onClick={msgForm.isMeeting ? handleRequestMeeting : handleSendMessage}>
+              <Send size={16} style={{ marginRight: 6 }} /> {msgForm.isMeeting ? "Request Meeting" : "Send Message"}
+            </button>
           }>
             <div style={{ marginBottom: 12 }}>
               <label className="field-label">To</label>
@@ -371,14 +446,15 @@ export default function ParentDashboard() {
                 <option>School Administration</option>
                 <option>Finance Office</option>
                 <option>Health Center</option>
+                <option>Principal</option>
               </select>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label className="field-label">Subject</label>
+              <label className="field-label">{msgForm.isMeeting ? "Topic/Reason" : "Subject"}</label>
               <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Child's progress inquiry" />
             </div>
             <div>
-              <label className="field-label">Message</label>
+              <label className="field-label">{msgForm.isMeeting ? "Details (Optional)" : "Message"}</label>
               <textarea className="input" style={{ height: 120 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Type your message here..." />
             </div>
           </Modal>
@@ -446,31 +522,89 @@ export default function ParentDashboard() {
   // ══════════════════════════════════════════════════════════
   if (activeTab === 'contact') {
     return (
-      <div style={{ padding: '24px', maxWidth: '700px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Contact Teacher</h2>
-        <div className="card card-pad">
-          <div style={{ marginBottom: 16 }}>
-            <label className="field-label">To</label>
-            <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
-              <option>Class Teacher</option>
-              <option>School Administration</option>
-              <option>Finance Office</option>
-              <option>Health Center</option>
-              <option>Principal</option>
-            </select>
+      <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Contact & Meetings</h2>
+        
+        <div className="grid grid-2" style={{ gap: 24 }}>
+          <div className="card card-pad">
+            <h3 className="section-title">Send a Message</h3>
+            <div style={{ marginBottom: 16 }}>
+              <label className="field-label">To</label>
+              <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
+                <option>Class Teacher</option>
+                <option>School Administration</option>
+                <option>Finance Office</option>
+                <option>Health Center</option>
+                <option>Principal</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label className="field-label">Subject</label>
+              <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Child's academic progress" />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label className="field-label">Message</label>
+              <textarea className="input" style={{ height: 160 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Write your message to the teacher..." />
+            </div>
+            <button className="btn btn-primary" onClick={handleSendMessage} style={{ width: '100%' }}>
+              <Send size={16} style={{ marginRight: 8 }} /> Send Message
+            </button>
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="field-label">Subject</label>
-            <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Child's academic progress" />
+
+          <div className="card card-pad">
+            <h3 className="section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              My Meeting Requests
+              <button className="btn" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => { setMsgForm({ ...msgForm, isMeeting: true }); setMsgModal(true); }}>+ New Request</button>
+            </h3>
+            {meetingRequests.length === 0 ? (
+              <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No meeting requests yet.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {meetingRequests.map((m, i) => (
+                  <div key={m.id || i} style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <strong style={{ fontSize: 14 }}>{m.teacher_name || 'Teacher'}</strong>
+                      <Badge color={m.status === 'Scheduled' ? 'green' : m.status === 'Pending' ? 'amber' : 'red'}>{m.status}</Badge>
+                    </div>
+                    <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>{m.reason}</div>
+                    {m.status === 'Scheduled' && m.scheduled_date && (
+                      <div style={{ fontSize: 12, color: '#0f172a', background: '#f8fafc', padding: 8, borderRadius: 4 }}>
+                        <Calendar size={12} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} /> 
+                        Scheduled for: {new Date(m.scheduled_date).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div style={{ marginBottom: 20 }}>
-            <label className="field-label">Message</label>
-            <textarea className="input" style={{ height: 160 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Write your message to the teacher..." />
-          </div>
-          <button className="btn btn-primary" onClick={handleSendMessage} style={{ width: '100%' }}>
-            <Send size={16} style={{ marginRight: 8 }} /> Send Message
-          </button>
         </div>
+
+        {/* Meeting Modal triggered from the list */}
+        {msgModal && msgForm.isMeeting && (
+          <Modal title="Request a Meeting" onClose={() => { setMsgModal(false); setMsgForm({ to: 'Class Teacher', subject: '', body: '', isMeeting: false }); }} footer={
+            <button className="btn btn-primary" onClick={handleRequestMeeting}>
+              <Send size={16} style={{ marginRight: 6 }} /> Request Meeting
+            </button>
+          }>
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">Meet With</label>
+              <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
+                <option>Class Teacher</option>
+                <option>School Administration</option>
+                <option>Principal</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">Topic/Reason</label>
+              <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Discuss grades" />
+            </div>
+            <div>
+              <label className="field-label">Details</label>
+              <textarea className="input" style={{ height: 120 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Preferred days/times, specific questions..." />
+            </div>
+          </Modal>
+        )}
       </div>
     );
   }
