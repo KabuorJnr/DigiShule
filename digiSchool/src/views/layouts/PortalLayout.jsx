@@ -196,8 +196,8 @@ export default function PortalLayout() {
   const loadAllData = useCallback(async (background = false) => {
     if (!background) setDataLoading(true);
     try {
-      // ── Real mode: fetch from Supabase ──
-      const [cfg, ex, tt, notifs, st, tch] = await Promise.all([
+      // Use allSettled so one failing query doesn't block all others
+      const [cfg, ex, tt, notifs, st, tch] = await Promise.allSettled([
         api.fetchConfig(),
         api.fetchExamSchedules(),
         api.fetchTimetables(),
@@ -205,19 +205,28 @@ export default function PortalLayout() {
         api.fetchAllStudentsUnpaginated(),
         api.fetchTeachers()
       ]);
-      setSettings(cfg.settings); setGradeBoundaries(cfg.gradeBoundaries);
-      setFeeStructure(cfg.feeStructure); setNotifToggles(cfg.notifToggles);
-      setVenues(cfg.venues);
-      setExamSchedules(ex); setTimetables(tt);
-      setStudents(st || []);
-      setTeachers(tch || []);
-      setNotifications((notifs || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      // Apply results only if they resolved successfully
+      if (cfg.status === 'fulfilled') {
+        setSettings(cfg.value.settings);
+        setGradeBoundaries(cfg.value.gradeBoundaries);
+        setFeeStructure(cfg.value.feeStructure);
+        setNotifToggles(cfg.value.notifToggles);
+        setVenues(cfg.value.venues);
+      }
+      if (ex.status === 'fulfilled') setExamSchedules(ex.value);
+      if (tt.status === 'fulfilled') setTimetables(tt.value);
+      if (st.status === 'fulfilled') setStudents(st.value || []);
+      if (tch.status === 'fulfilled') setTeachers(tch.value || []);
+      if (notifs.status === 'fulfilled') {
+        setNotifications((notifs.value || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      }
     } catch (e) {
-      notify(`Failed to load data: ${e.message || e}`, 'error');
+      // Only show error for truly unexpected failures
+      console.error('[loadAllData] Unexpected error:', e);
     } finally {
       if (!background) setDataLoading(false);
     }
-  }, [notify]);
+  }, []);
 
   const handleSelectProfile = useCallback(async (profile, greet = true) => {
     const sid = profile.school_id || profile.schoolId || localStorage.getItem('eduone_school_id');
