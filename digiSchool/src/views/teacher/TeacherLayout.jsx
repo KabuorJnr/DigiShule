@@ -71,6 +71,7 @@ export default function TeacherLayout() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', path: '/portal/teacher' },
     { id: 'classes', label: 'My Classes', path: '/portal/teacher/classes' },
+    { id: 'attendance', label: 'Attendance', path: '/portal/teacher/attendance' },
     { id: 'gradebook', label: 'Gradebook', path: '/portal/teacher/gradebook' }
   ];
 

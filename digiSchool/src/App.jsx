@@ -32,6 +32,7 @@ import SettingsTab from './views/student/SettingsTab';
 import TeacherLayout from './views/teacher/TeacherLayout';
 import TeacherDashboard from './views/teacher/TeacherDashboard';
 import MyClasses from './views/teacher/MyClasses';
+import TeacherAttendance from './views/teacher/TeacherAttendance';
 import GradebookTab from './views/teacher/GradebookTab';
 
 import StaffLayout from './views/staff/StaffLayout';
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="teacher" element={<TeacherLayout />}>
           <Route index element={<TeacherDashboard />} />
           <Route path="classes" element={<MyClasses />} />
+          <Route path="attendance" element={<TeacherAttendance />} />
           <Route path="gradebook" element={<GradebookTab />} />
         </Route>
 

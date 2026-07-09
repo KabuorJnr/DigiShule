@@ -54,7 +54,7 @@ export default function Clinic({ store }) {
   }, [students]);
 
   const openLogForStudent = (st) => {
-    setForm({ student: st.name, adm: st.adm, complaint: '', treatment: '', outcome: 'Returned to class' });
+    setForm({ student: st.name, adm: st.adm, student_id: st.id, medicalInfo: st.medicalInfo, complaint: '', treatment: '', outcome: 'Returned to class' });
     setLogOpen(true);
   };
 
@@ -67,6 +67,7 @@ export default function Clinic({ store }) {
       id: `c${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
       student: form.student,
+      student_id: form.student_id,
       adm: form.adm || '—',
       complaint: form.complaint,
       treatment: form.treatment,
@@ -88,13 +89,17 @@ export default function Clinic({ store }) {
     if (!parentMsg) return;
     try {
       const payload = {
-        id: `notif_${Date.now()}`,
-        title: `Clinic Update: ${notifyParentOpen.student}`,
-        content: parentMsg,
-        target_role: 'parent',
-        date: new Date().toISOString().slice(0, 10),
+        id: `msg_${Date.now()}`,
+        sender_role: 'nurse',
+        sender_name: 'School Clinic',
+        recipient_role: 'parent',
+        student_id: notifyParentOpen.student_id,
+        subject: `Clinic Update: ${notifyParentOpen.student}`,
+        body: parentMsg,
+        status: 'Unread',
+        created_at: new Date().toISOString(),
       };
-      await upsertRow('notifications', payload);
+      await upsertRow('messages', payload);
       notify('Message sent to parent successfully.');
       setNotifyParentOpen(null);
       setParentMsg('');
@@ -200,7 +205,7 @@ export default function Clinic({ store }) {
                 </thead>
                 <tbody>
                   {groupedStudents[selectedClass]?.map(st => (
-                    <tr key={st.id}>
+                    <tr key={st.id} style={{ cursor: 'pointer' }} onClick={() => openLogForStudent(st)} className="hoverable-row">
                       <td style={{ fontWeight: 600 }}>{st.name}</td>
                       <td className="muted">{st.adm}</td>
                       <td>
@@ -213,7 +218,7 @@ export default function Clinic({ store }) {
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button className="btn btn-sm btn-primary" onClick={() => openLogForStudent(st)}>+ Log Visit</button>
+                        <button className="btn btn-sm btn-primary" onClick={(e) => { e.stopPropagation(); openLogForStudent(st); }}>+ Log Visit</button>
                       </td>
                     </tr>
                   ))}
@@ -266,6 +271,19 @@ export default function Clinic({ store }) {
         <Modal title="Log Clinic Visit" onClose={() => setLogOpen(false)} footer={
           <><button className="btn" onClick={() => setLogOpen(false)}>Cancel</button><button className="btn btn-primary" onClick={logVisit}>Save Visit</button></>
         }>
+          {form.medicalInfo ? (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <div style={{ color: '#991b1b', fontWeight: 600, fontSize: 13, marginBottom: 4, display: 'flex', alignItems: 'center' }}>
+                <Icon name="warning" size={14} style={{ marginRight: 6 }} /> Known Medical Conditions / Allergies
+              </div>
+              <div style={{ color: '#7f1d1d', fontSize: 14 }}>{form.medicalInfo}</div>
+            </div>
+          ) : (
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <div style={{ color: '#64748b', fontSize: 13 }}>No medical conditions recorded for this student.</div>
+            </div>
+          )}
+
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student Name</label>
