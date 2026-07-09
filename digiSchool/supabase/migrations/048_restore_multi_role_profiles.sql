@@ -12,7 +12,7 @@ INSERT INTO public.profiles (id, full_name, role, school_id, created_at)
 SELECT 
   gen_random_uuid() AS id,
   s.name AS full_name,
-  s.role,
+  s.role::app_role,
   s.school_id,
   now()
 FROM public.staff s
