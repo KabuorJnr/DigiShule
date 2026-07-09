@@ -8,7 +8,7 @@ export default function ClassTeachers(props) {
   const store = props.store || context.store;
   const user = props.user || context.user;
   
-  const { teachers, updateTeacher, settings, notify } = store;
+  const { teachers = [], updateTeacher, settings = {}, notify } = store || {};
   const [searchTerm, setSearchTerm] = useState('');
 
   const classes = useMemo(() => {
