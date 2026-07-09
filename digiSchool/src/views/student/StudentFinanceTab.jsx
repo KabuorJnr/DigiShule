@@ -19,7 +19,7 @@ export default function StudentFinanceTab() {
 
   const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
-  const outstanding = termFees - totalPaid;
+  const outstanding = Math.max(0, termFees - totalPaid);
   const dueDate = '2026-07-05';
 
   const feeAccount = {
@@ -79,7 +79,7 @@ export default function StudentFinanceTab() {
           <h3 className="section-title" style={{ margin: 0 }}>Payment Progress</h3>
           <span style={{ fontWeight: 700, color: '#107C10' }}>{((feeAccount.totalPaid / feeAccount.totalBilled) * 100 || 0).toFixed(0)}% Paid</span>
         </div>
-        <ProgressBar value={(feeAccount.totalPaid / feeAccount.totalBilled) * 100 || 0} color="#107C10" />
+        <ProgressBar value={feeAccount.totalBilled > 0 ? Math.min(100, (feeAccount.totalPaid / feeAccount.totalBilled) * 100) : 0} color="#107C10" />
         <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setPayModal(true)}>Make Payment</button>
       </div>
 

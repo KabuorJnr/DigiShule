@@ -33,8 +33,8 @@ export default function StudentDashboard() {
   ], [overallAvg]);
 
   const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
-  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
-  const outstanding = termFees - totalPaid;
+  const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
+  const outstanding = Math.max(0, termFees - totalPaid);
 
   const feeAccount = {
     totalBilled: termFees,
@@ -58,7 +58,7 @@ export default function StudentDashboard() {
         <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={rank ? `${rank.position} / ${rank.classSize}` : '—'} />
         <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />
         <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(feeAccount.outstanding)} accent={feeAccount.outstanding > 0 ? '#D13438' : '#107C10'}>
-          <div style={{ marginTop: 6 }}><ProgressBar value={(feeAccount.totalPaid / feeAccount.totalBilled) * 100} color="#107C10" /></div>
+          <div style={{ marginTop: 6 }}><ProgressBar value={feeAccount.totalBilled > 0 ? Math.min(100, (feeAccount.totalPaid / feeAccount.totalBilled) * 100) : 0} color="#107C10" /></div>
         </KpiCard>
       </div>
 
