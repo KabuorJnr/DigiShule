@@ -11,18 +11,27 @@ export const ROLES = {
     home: 'parent',
     nav: [
       {
-        section: 'CHILD MANAGEMENT',
+        section: 'CHILD OVERVIEW',
         items: [
           { id: 'dashboard', icon: 'home', label: 'Dashboard', view: 'parent' },
           { id: 'academics', icon: 'library', label: 'Academics & Reports', view: 'student', tab: 'academics' },
+          { id: 'attendance', icon: 'clipboard', label: 'Attendance', view: 'parent', tab: 'attendance' },
           { id: 'finance', icon: 'finance', label: 'Fees & Payments', view: 'student', tab: 'finance' }
         ]
       },
       {
         section: 'COMMUNICATIONS',
         items: [
+          { id: 'contact_teacher', icon: 'pen', label: 'Contact Teacher', view: 'parent', tab: 'contact' },
           { id: 'notices', icon: 'bell', label: 'Notices & Alerts', view: 'notices' },
           { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
+        ]
+      },
+      {
+        section: 'RECORDS',
+        items: [
+          { id: 'health', icon: 'clinic', label: 'Health Records', view: 'parent', tab: 'health' },
+          { id: 'disciplinary', icon: 'warning', label: 'Disciplinary', view: 'parent', tab: 'disciplinary' }
         ]
       },
       {
@@ -371,27 +380,7 @@ export const ROLES = {
     ],
   },
 
-  parent: {
-    label: 'Parent',
-    portal: 'Parent Portal',
-    accent: '#000000',
-    home: 'parent',
-    nav: [
-      {
-        section: 'CORE',
-        items: [
-          { id: 'parent', icon: 'users', label: 'My Child', view: 'parent' },
-          { id: 'notices', icon: 'bell', label: 'Notices & Messages', view: 'notices' }
-        ]
-      },
-      {
-        section: 'ACCOUNT',
-        items: [
-          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
-        ]
-      }
-    ],
-  },
+
 
   clinic: {
     label: 'Nurse',

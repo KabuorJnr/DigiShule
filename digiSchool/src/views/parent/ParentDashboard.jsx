@@ -1,56 +1,134 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell } from 'lucide-react';
+import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell, 
+  BarChart3, Trophy, Wallet, Calendar, Mail, Heart, ClipboardList, 
+  CheckCircle2, XCircle, Send, Award, DollarSign } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
-import { Icon } from '../../components/icons';
+import { fetchTable } from '../../lib/api';
+import { KpiCard, ProgressBar, Badge } from '../../components/widgets';
+import { computeRow, gradeFor } from '../../utils/grading';
+import { SUBJECTS } from '../../data/seed';
+import Modal from '../../components/Modal';
 
 export default function ParentDashboard() {
-  const { user: currentUser } = useOutletContext();
+  const { user: currentUser, store, params } = useOutletContext();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [linkAdm, setLinkAdm] = useState('');
   const [linkPin, setLinkPin] = useState('');
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState('');
+
+  // Data states
+  const [payments, setPayments] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [healthRecords, setHealthRecords] = useState([]);
+  const [disciplinary, setDisciplinary] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [schoolEvents, setSchoolEvents] = useState([]);
+
+  // Modal states
+  const [msgModal, setMsgModal] = useState(false);
+  const [msgForm, setMsgForm] = useState({ to: 'Class Teacher', subject: '', body: '' });
+
+  const notify = store?.notify || (() => {});
+  const { gradeBoundaries, feeStructure } = store || {};
+
+  // Active tab from sidebar params
+  const activeTab = params?.tab || 'dashboard';
+
+  // ── Fetch child profile ──
   useEffect(() => {
     async function fetchChild() {
       const studentId = currentUser?.student_id || currentUser?.studentId;
-      if (!studentId) {
-        setLoading(false);
-        return;
-      }
+      if (!studentId) { setLoading(false); return; }
       try {
         const { data, error } = await supabase
-          .from('students')
-          .select('*')
-          .eq('id', studentId)
-          .maybeSingle();
-        
-        if (!error && data) {
-          setChild(data);
-        }
-      } catch (err) {
-        console.error("Error fetching child:", err);
-      } finally {
-        setLoading(false);
-      }
+          .from('students').select('*').eq('id', studentId).maybeSingle();
+        if (!error && data) setChild(data);
+      } catch (err) { console.error("Error fetching child:", err); }
+      finally { setLoading(false); }
     }
     fetchChild();
   }, [currentUser]);
 
-  if (loading) {
-    return <div style={{ padding: '24px' }}>Loading child data...</div>;
-  }
+  // ── Fetch all supporting data once child is loaded ──
+  useEffect(() => {
+    if (!child) return;
+    let active = true;
+    Promise.all([
+      fetchTable('financePayments').catch(() => []),
+      fetchTable('studentAttendance').catch(() => []),
+      fetchTable('clinicVisits').catch(() => []),
+      fetchTable('disciplinaryRecords').catch(() => []),
+      fetchTable('notifications').catch(() => []),
+      fetchTable('schoolEvents').catch(() => []),
+    ]).then(([pays, att, health, disc, notifs, events]) => {
+      if (!active) return;
+      setPayments((pays || []).filter(p => p.student_id === child.id || p.adm === child.adm));
+      setAttendance((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
+      setHealthRecords((health || []).filter(h => h.adm === child.adm));
+      setDisciplinary((disc || []).filter(d => d.adm === child.adm));
+      setNotifications(notifs || []);
+      setSchoolEvents(events || []);
+    });
+    return () => { active = false; };
+  }, [child?.id, child?.adm]);
 
+  // ── Computed values ──
+  const subjects = useMemo(() => {
+    if (!child) return [];
+    return SUBJECTS.map(sub => {
+      const scores = (child.scores || {})[sub];
+      if (!scores) return null;
+      const row = computeRow(scores);
+      const grade = gradeFor(row.average, gradeBoundaries);
+      return { subject: sub, ...row, grade };
+    }).filter(Boolean);
+  }, [child, gradeBoundaries]);
 
+  const overallAvg = subjects.length 
+    ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1) 
+    : 0;
 
+  const levels = store?.settings?.classes?.length > 0 
+    ? store.settings.classes.map(c => c.name) 
+    : (store?.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const myLevel = child ? (levels.find(l => child.class?.startsWith(l)) || child.class || levels[0]) : levels[0];
+
+  const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
+  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const outstanding = termFees - totalPaid;
+  const feePercent = termFees > 0 ? ((totalPaid / termFees) * 100) : 0;
+
+  const totalAttendance = attendance.length;
+  const presentCount = attendance.filter(a => a.status === 'Present' || a.status === 'present').length;
+  const absentCount = attendance.filter(a => a.status === 'Absent' || a.status === 'absent').length;
+  const lateCount = attendance.filter(a => a.status === 'Late' || a.status === 'late').length;
+  const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : '—';
+
+  const unresolvedDisc = disciplinary.filter(d => d.status !== 'Resolved');
+  const parentNotices = (notifications || []).filter(n => 
+    (n.audience || []).includes('all') || (n.audience || []).includes('parents') || (n.audience || []).includes('students')
+  );
+
+  const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
+
+  // ── Contact teacher handler ──
+  const handleSendMessage = () => {
+    if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
+    setMsgModal(false);
+    setMsgForm({ to: 'Class Teacher', subject: '', body: '' });
+    notify('Message sent successfully!', 'success', 'Messages');
+  };
+
+  // ── Link student handler ──
   const handleLinkStudent = async (e) => {
     e.preventDefault();
     if (!linkAdm.trim()) return;
     setLinking(true);
     setLinkError('');
     try {
-      // 1. Lookup student
       const { data, error } = await supabase.rpc('lookup_student_for_signup', {
         p_school_id: currentUser.school_id,
         p_adm: linkAdm.trim(),
@@ -58,16 +136,9 @@ export default function ParentDashboard() {
       });
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('Student not found. Please verify the Admission Number and Parent PIN.');
-      
       const student = data[0];
-      
-      // 2. Link parent profile
-      const { error: updateErr } = await supabase.from('profiles').update({
-        student_id: student.id
-      }).eq('id', currentUser.id);
-      
+      const { error: updateErr } = await supabase.from('profiles').update({ student_id: student.id }).eq('id', currentUser.id);
       if (updateErr) throw updateErr;
-      
       window.location.reload();
     } catch (err) {
       setLinkError(err.message);
@@ -75,6 +146,12 @@ export default function ParentDashboard() {
     }
   };
 
+  // ── Loading state ──
+  if (loading) {
+    return <div style={{ padding: '24px', textAlign: 'center' }}>Loading child data...</div>;
+  }
+
+  // ── Linking screen (no child linked yet) ──
   if (!child) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', maxWidth: 500, margin: '0 auto' }}>
@@ -85,38 +162,22 @@ export default function ParentDashboard() {
         <form onSubmit={handleLinkStudent} style={{ background: '#fff', padding: 24, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: 16, textAlign: 'left' }}>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Admission Number</label>
-            <input 
-              type="text" 
-              value={linkAdm}
-              onChange={(e) => setLinkAdm(e.target.value)}
-              placeholder="e.g. ADM/2023/001"
-              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }}
-              required
-            />
+            <input type="text" value={linkAdm} onChange={(e) => setLinkAdm(e.target.value)} placeholder="e.g. ADM/2023/001"
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }} required />
           </div>
           <div style={{ marginBottom: 20, textAlign: 'left' }}>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Parent Access PIN</label>
-            <input 
-              type="password" 
-              value={linkPin}
-              onChange={(e) => setLinkPin(e.target.value)}
-              placeholder="6-digit PIN"
-              maxLength={6}
-              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }}
-              required
-            />
-            <p className="muted" style={{ fontSize: 12, marginTop: 6, margin: '6px 0 0 0' }}>This secret PIN is provided by the school.</p>
+            <input type="password" value={linkPin} onChange={(e) => setLinkPin(e.target.value)} placeholder="6-digit PIN" maxLength={6}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }} required />
+            <p className="muted" style={{ fontSize: 12, margin: '6px 0 0 0' }}>This secret PIN is provided by the school.</p>
           </div>
           {linkError && (
             <div style={{ padding: '10px', background: '#fee2e2', color: '#b91c1c', borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
               {linkError}
             </div>
           )}
-          <button 
-            type="submit" 
-            disabled={linking || !linkAdm.trim() || linkPin.trim().length < 6}
-            style={{ width: '100%', padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: linking ? 'not-allowed' : 'pointer', opacity: linking ? 0.7 : 1 }}
-          >
+          <button type="submit" disabled={linking || !linkAdm.trim() || linkPin.trim().length < 6}
+            style={{ width: '100%', padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: linking ? 'not-allowed' : 'pointer', opacity: linking ? 0.7 : 1 }}>
             {linking ? 'Linking Account...' : 'Link Child Profile'}
           </button>
         </form>
@@ -124,51 +185,359 @@ export default function ParentDashboard() {
     );
   }
 
-  return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
-            Overview for {child.name}
-          </h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '15px' }}>
-            Grade: {child.class || child.grade || 'N/A'} • Admission: {child.adm || child.admission_number || 'Pending'}
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-        <button 
-          onClick={() => window.location.href = '/portal/student'}
-          style={{
-            background: '#0f172a',
-            color: '#fff',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <BookOpen size={18} />
-          Access Student Portal
-        </button>
-      </div>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Bell size={18} color="#64748b" /> Recent Notices
-          </h3>
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', fontSize: '14px', color: '#475569' }}>
-            You will see official school notices, fee reminders, and event announcements here.
+  // ══════════════════════════════════════════════════════════
+  // ── DASHBOARD TAB (default) ──
+  // ══════════════════════════════════════════════════════════
+  if (activeTab === 'dashboard' || !activeTab) {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <h1 style={{ margin: '0 0 6px 0', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
+              Overview for {child.name}
+            </h1>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+              Grade: {child.class || 'N/A'} • Admission: {child.adm || 'Pending'} • Gender: {child.gender || 'N/A'}
+            </p>
           </div>
         </div>
+
+        {/* Disciplinary Alert */}
+        {unresolvedDisc.length > 0 && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <AlertTriangle size={20} style={{ color: '#dc2626', marginTop: 2 }} />
+            <div>
+              <strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>Active Disciplinary Notice</strong>
+              <div style={{ fontSize: 14 }}>Your child has {unresolvedDisc.length} unresolved disciplinary record{unresolvedDisc.length !== 1 ? 's' : ''}. Please contact the school administration.</div>
+            </div>
+          </div>
+        )}
+
+        {/* KPI Summary Cards */}
+        <div className="stat-tiles">
+          <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#3b82f6" />
+          <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== '—' ? `${attendanceRate}%` : '—'} accent={Number(attendanceRate) >= 80 ? '#10B981' : '#F59E0B'} />
+          <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(outstanding)} accent={outstanding > 0 ? '#D13438' : '#107C10'}>
+            <div style={{ marginTop: 6 }}><ProgressBar value={feePercent} color="#107C10" /></div>
+          </KpiCard>
+          <KpiCard iconComponent={<Heart size={20} />} label="Health Visits" value={healthRecords.length} accent="#8B5CF6" />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="card card-pad" style={{ marginBottom: 16 }}>
+          <h3 className="section-title">Quick Actions</h3>
+          <div className="grid grid-4" style={{ gap: 10 }}>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/academics'}>
+              <BarChart3 size={16} /> View Report Card
+            </button>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/finance'}>
+              <DollarSign size={16} /> Pay Fees
+            </button>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}>
+              <Mail size={16} /> Contact Teacher
+            </button>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/resources'}>
+              <Calendar size={16} /> View Timetable
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
+          {/* Academic Snapshot */}
+          <div className="card card-pad">
+            <h3 className="section-title">Academic Snapshot</h3>
+            {subjects.length === 0 ? (
+              <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No scores available yet.</div>
+            ) : (
+              <table className="table">
+                <thead><tr><th>Subject</th><th style={{ textAlign: 'right' }}>Average</th><th style={{ textAlign: 'center' }}>Grade</th></tr></thead>
+                <tbody>
+                  {subjects.slice(0, 8).map(s => (
+                    <tr key={s.subject}>
+                      <td style={{ fontWeight: 500 }}>{s.subject}</td>
+                      <td style={{ textAlign: 'right' }}>{s.average.toFixed(1)}%</td>
+                      <td style={{ textAlign: 'center' }}><Badge color={s.average >= 60 ? 'green' : s.average >= 40 ? 'amber' : 'red'}>{s.grade}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Fee Summary */}
+          <div className="card card-pad">
+            <h3 className="section-title">Fee Summary — Term 2</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div style={{ background: '#f0fdf4', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{fmtKES(totalPaid)}</div>
+                <div style={{ fontSize: 12, color: '#166534' }}>Paid</div>
+              </div>
+              <div style={{ background: outstanding > 0 ? '#fef2f2' : '#f0fdf4', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: outstanding > 0 ? '#dc2626' : '#16a34a' }}>{fmtKES(outstanding)}</div>
+                <div style={{ fontSize: 12, color: outstanding > 0 ? '#991b1b' : '#166534' }}>Outstanding</div>
+              </div>
+            </div>
+            <ProgressBar value={feePercent} color="#107C10" />
+            <div className="muted" style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>{feePercent.toFixed(0)}% of fees paid</div>
+            
+            {payments.length > 0 && (
+              <>
+                <h4 style={{ fontSize: 13, fontWeight: 600, marginTop: 16, marginBottom: 8, color: '#475569' }}>Recent Payments</h4>
+                {payments.slice(0, 3).map(p => (
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{p.method || 'Payment'}</div>
+                      <div className="muted" style={{ fontSize: 11 }}>{p.date || (p.created_at || '').slice(0, 10)}</div>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: '#16a34a' }}>{fmtKES(p.amount)}</div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
+          {/* Attendance Summary */}
+          <div className="card card-pad">
+            <h3 className="section-title">Attendance Summary</h3>
+            {totalAttendance === 0 ? (
+              <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No attendance records found.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div style={{ background: '#f0fdf4', padding: 14, borderRadius: 8, textAlign: 'center' }}>
+                  <CheckCircle2 size={20} style={{ color: '#16a34a', marginBottom: 4 }} />
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#16a34a' }}>{presentCount}</div>
+                  <div style={{ fontSize: 12, color: '#166534' }}>Present</div>
+                </div>
+                <div style={{ background: '#fef2f2', padding: 14, borderRadius: 8, textAlign: 'center' }}>
+                  <XCircle size={20} style={{ color: '#dc2626', marginBottom: 4 }} />
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#dc2626' }}>{absentCount}</div>
+                  <div style={{ fontSize: 12, color: '#991b1b' }}>Absent</div>
+                </div>
+                <div style={{ background: '#fefce8', padding: 14, borderRadius: 8, textAlign: 'center' }}>
+                  <Clock size={20} style={{ color: '#ca8a04', marginBottom: 4 }} />
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#ca8a04' }}>{lateCount}</div>
+                  <div style={{ fontSize: 12, color: '#854d0e' }}>Late</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Notices */}
+          <div className="card card-pad">
+            <h3 className="section-title">Recent Notices</h3>
+            {parentNotices.length === 0 ? (
+              <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No recent notices.</div>
+            ) : (
+              parentNotices.slice(0, 4).map(n => (
+                <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by || 'School'}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Contact Teacher Modal */}
+        {msgModal && (
+          <Modal title="Contact Teacher" onClose={() => setMsgModal(false)} footer={
+            <button className="btn btn-primary" onClick={handleSendMessage}><Send size={16} style={{ marginRight: 6 }} /> Send Message</button>
+          }>
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">To</label>
+              <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
+                <option>Class Teacher</option>
+                <option>School Administration</option>
+                <option>Finance Office</option>
+                <option>Health Center</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">Subject</label>
+              <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Child's progress inquiry" />
+            </div>
+            <div>
+              <label className="field-label">Message</label>
+              <textarea className="input" style={{ height: 120 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Type your message here..." />
+            </div>
+          </Modal>
+        )}
       </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ── ATTENDANCE TAB ──
+  // ══════════════════════════════════════════════════════════
+  if (activeTab === 'attendance') {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Attendance Records — {child.name}</h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#0f172a' }}>{totalAttendance}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>Total Days</div>
+          </div>
+          <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #bbf7d0' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#16a34a' }}>{presentCount}</div>
+            <div style={{ fontSize: 13, color: '#166534' }}>Present</div>
+          </div>
+          <div style={{ background: '#fef2f2', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #fecaca' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#dc2626' }}>{absentCount}</div>
+            <div style={{ fontSize: 13, color: '#991b1b' }}>Absent</div>
+          </div>
+          <div style={{ background: '#fefce8', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #fef08a' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#ca8a04' }}>{lateCount}</div>
+            <div style={{ fontSize: 13, color: '#854d0e' }}>Late</div>
+          </div>
+        </div>
+
+        <div className="card card-pad">
+          <h3 className="section-title">Attendance Log</h3>
+          {attendance.length === 0 ? (
+            <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No attendance records available.</div>
+          ) : (
+            <table className="table">
+              <thead><tr><th>Date</th><th>Status</th><th>Notes</th></tr></thead>
+              <tbody>
+                {attendance.slice(0, 30).map((a, i) => (
+                  <tr key={a.id || i}>
+                    <td>{a.date || (a.created_at || '').slice(0, 10)}</td>
+                    <td>
+                      <Badge color={a.status === 'Present' || a.status === 'present' ? 'green' : a.status === 'Late' || a.status === 'late' ? 'amber' : 'red'}>
+                        {a.status}
+                      </Badge>
+                    </td>
+                    <td className="muted">{a.notes || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ── CONTACT TEACHER TAB ──
+  // ══════════════════════════════════════════════════════════
+  if (activeTab === 'contact') {
+    return (
+      <div style={{ padding: '24px', maxWidth: '700px', margin: '0 auto' }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Contact Teacher</h2>
+        <div className="card card-pad">
+          <div style={{ marginBottom: 16 }}>
+            <label className="field-label">To</label>
+            <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
+              <option>Class Teacher</option>
+              <option>School Administration</option>
+              <option>Finance Office</option>
+              <option>Health Center</option>
+              <option>Principal</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label className="field-label">Subject</label>
+            <input className="input" value={msgForm.subject} onChange={e => setMsgForm({ ...msgForm, subject: e.target.value })} placeholder="e.g. Child's academic progress" />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label className="field-label">Message</label>
+            <textarea className="input" style={{ height: 160 }} value={msgForm.body} onChange={e => setMsgForm({ ...msgForm, body: e.target.value })} placeholder="Write your message to the teacher..." />
+          </div>
+          <button className="btn btn-primary" onClick={handleSendMessage} style={{ width: '100%' }}>
+            <Send size={16} style={{ marginRight: 8 }} /> Send Message
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ── HEALTH RECORDS TAB ──
+  // ══════════════════════════════════════════════════════════
+  if (activeTab === 'health') {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records — {child.name}</h2>
+        <div className="card card-pad">
+          {healthRecords.length === 0 ? (
+            <div className="muted" style={{ padding: 30, textAlign: 'center' }}>
+              <Heart size={32} style={{ color: '#cbd5e1', marginBottom: 8 }} />
+              <div>No health/clinic visit records found.</div>
+            </div>
+          ) : (
+            <table className="table">
+              <thead><tr><th>Date</th><th>Complaint</th><th>Diagnosis</th><th>Treatment</th><th>Status</th></tr></thead>
+              <tbody>
+                {healthRecords.map((h, i) => (
+                  <tr key={h.id || i}>
+                    <td>{h.date || (h.created_at || '').slice(0, 10)}</td>
+                    <td>{h.complaint || h.symptoms || '—'}</td>
+                    <td>{h.diagnosis || '—'}</td>
+                    <td>{h.treatment || h.action_taken || '—'}</td>
+                    <td><Badge color={h.status === 'Resolved' ? 'green' : 'amber'}>{h.status || 'Visited'}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ── DISCIPLINARY RECORDS TAB ──
+  // ══════════════════════════════════════════════════════════
+  if (activeTab === 'disciplinary') {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Disciplinary Records — {child.name}</h2>
+        
+        {unresolvedDisc.length > 0 && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <AlertTriangle size={20} style={{ color: '#dc2626', marginTop: 2 }} />
+            <div>
+              <strong>Action Required:</strong> {unresolvedDisc.length} unresolved case{unresolvedDisc.length !== 1 ? 's' : ''}. Please contact the school administration.
+            </div>
+          </div>
+        )}
+        
+        <div className="card card-pad">
+          {disciplinary.length === 0 ? (
+            <div className="muted" style={{ padding: 30, textAlign: 'center' }}>
+              <CheckCircle2 size={32} style={{ color: '#10B981', marginBottom: 8 }} />
+              <div>No disciplinary records. Great behavior!</div>
+            </div>
+          ) : (
+            <table className="table">
+              <thead><tr><th>Date</th><th>Incident</th><th>Action</th><th>Status</th></tr></thead>
+              <tbody>
+                {disciplinary.map((d, i) => (
+                  <tr key={d.id || i}>
+                    <td>{d.date || (d.created_at || '').slice(0, 10)}</td>
+                    <td>{d.incident || d.offense || '—'}</td>
+                    <td>{d.action_taken || d.punishment || '—'}</td>
+                    <td><Badge color={d.status === 'Resolved' ? 'green' : 'red'}>{d.status || 'Open'}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Fallback for unknown tabs ──
+  return (
+    <div style={{ padding: '24px', textAlign: 'center' }}>
+      <div className="muted">Select a section from the sidebar menu.</div>
     </div>
   );
 }
