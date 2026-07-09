@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
-import { upsertRow } from '../../lib/api';
+import { upsertRow, updateRow } from '../../lib/api';
 import { useOutletContext } from 'react-router-dom';
 
 export default function PaymentsTab() {
@@ -47,7 +47,6 @@ export default function PaymentsTab() {
       const updated = { ...payment, status: 'Verified' };
       setPayments(prev => prev.map(p => p.id === id ? updated : p));
       notify('Payment confirmed.');
-      const { updateRow } = await import('../../lib/api');
       await updateRow('financePayments', id, { status: 'Verified' });
     } catch (e) {
       notify(`Failed to confirm payment: ${e.message}`, 'error');
