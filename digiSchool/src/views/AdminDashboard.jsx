@@ -188,28 +188,30 @@ export default function AdminDashboard({ store, user }) {
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
-      // 4. Send Email Automatically via Edge Function
-      const emailBody = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2>Welcome to the School Portal</h2>
-          <p>Hello ${commissionForm.name},</p>
-          <p>You have been invited to join the School Portal as a staff member.</p>
-          <p>Your Access PIN is: <strong style="font-size: 18px; color: #0284c7;">${tempPin}</strong></p>
-          <p>Please visit the portal and click <strong>'Staff Activation'</strong> on the login page to set up your account.</p>
-          <p>Thank you.</p>
-        </div>
-      `;
+      // 4. Send Email Automatically via Vercel API
+      const session = await supabase.auth.getSession();
+      const token = session?.data?.session?.access_token;
       
-      const { error: invokeErr } = await supabase.functions.invoke('send-email', {
-        body: {
-          to: email,
-          subject: 'Your Staff Activation PIN',
-          html: emailBody
-        }
+      const payload = {
+        email,
+        name: commissionForm.name,
+        role: commissionForm.role,
+        password: tempPin, // We use the password field in the email template to send the PIN
+        schoolName: store.settings?.name || 'EduOne School Portal'
+      };
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
       });
       
-      if (invokeErr) {
-        console.error('Email sending failed:', invokeErr);
+      if (!response.ok) {
+        const errData = await response.json();
+        console.error('Email sending failed:', errData);
         notify('Account created, but failed to send the email automatically.', 'warning');
       }
       
