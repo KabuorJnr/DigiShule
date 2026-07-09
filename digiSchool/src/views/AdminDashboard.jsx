@@ -188,8 +188,10 @@ export default function AdminDashboard({ store, user }) {
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
-      // 4. Show Success
-      setCommissionGeneratedPassword(`PIN: ${tempPin}`);
+      // 4. Show Success (Hide PIN from Admin, prepare mailto link)
+      const mailtoLink = `mailto:${email}?subject=Your Staff Activation PIN&body=Hello ${commissionForm.name},%0D%0A%0D%0AYou have been invited to join the School Portal.%0D%0A%0D%0AYour Access PIN is: ${tempPin}%0D%0A%0D%0APlease visit the portal and click 'Staff Activation' to set up your account.%0D%0A%0D%0AThank you.`;
+      
+      setCommissionGeneratedPassword(mailtoLink);
       setCommissionSuccess(true);
     } catch (err) {
       notify(`Failed to commission staff: ${err.message}`, 'error');
@@ -552,12 +554,13 @@ export default function AdminDashboard({ store, user }) {
               <CheckCircle2 size={64} color="#10B981" style={{ margin: '0 auto 16px' }} />
               <h3 style={{ margin: '0 0 8px' }}>Staff Commissioned!</h3>
               <p className="muted">The account has been created for <strong>{commissionForm.email}</strong>.</p>
-              <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', margin: '24px 0', textAlign: 'left' }}>
-                <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Temporary Password</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', letterSpacing: 1 }}>{commissionGeneratedPassword}</div>
+              <div style={{ background: '#f1f5f9', padding: '24px 16px', borderRadius: '8px', margin: '24px 0', textAlign: 'center' }}>
+                <a href={commissionGeneratedPassword} className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                  <Mail size={16} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'middle' }} /> Send PIN via Email
+                </a>
               </div>
-              <p style={{ fontSize: 14, color: '#D13438', fontWeight: 500 }}>Please copy this password and share it with the staff member securely. They will need it for their first login.</p>
-              <button className="btn btn-primary" style={{ marginTop: 24, width: '100%' }} onClick={() => setCommissionModalOpen(false)}>Done</button>
+              <p style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>For security, the PIN is hidden. Click the button above to email it securely.</p>
+              <button className="btn" style={{ marginTop: 24, width: '100%' }} onClick={() => setCommissionModalOpen(false)}>Done</button>
             </div>
           ) : (
             <>
