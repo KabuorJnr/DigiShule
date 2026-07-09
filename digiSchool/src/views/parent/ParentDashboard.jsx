@@ -110,7 +110,7 @@ export default function ParentDashboard() {
   const myLevel = child ? (levels.find(l => child.class?.startsWith(l)) || child.class || levels[0]) : levels[0];
 
   const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
-  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
   const outstanding = termFees - totalPaid;
   const feePercent = termFees > 0 ? ((totalPaid / termFees) * 100) : 0;
 
@@ -378,7 +378,10 @@ export default function ParentDashboard() {
                 {payments.slice(0, 3).map(p => (
                   <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                     <div>
-                      <div style={{ fontWeight: 500, fontSize: 13 }}>{p.method || 'Payment'}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {p.method || 'Payment'}
+                        {(p.status === 'Verification Pending' || p.status === 'Pending') && <span style={{ fontSize: 10, background: '#fef08a', color: '#854d0e', padding: '2px 6px', borderRadius: 8 }}>Pending</span>}
+                      </div>
                       <div className="muted" style={{ fontSize: 11 }}>{p.date || (p.created_at || '').slice(0, 10)}</div>
                     </div>
                     <div style={{ fontWeight: 600, fontSize: 13, color: '#16a34a' }}>{fmtKES(p.amount)}</div>
