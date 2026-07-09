@@ -14,7 +14,8 @@ export default function ParentDashboard() {
   const [linkError, setLinkError] = useState('');
   useEffect(() => {
     async function fetchChild() {
-      if (!currentUser?.student_id) {
+      const studentId = currentUser?.student_id || currentUser?.studentId;
+      if (!studentId) {
         setLoading(false);
         return;
       }
@@ -22,7 +23,7 @@ export default function ParentDashboard() {
         const { data, error } = await supabase
           .from('students')
           .select('*')
-          .eq('id', currentUser.student_id)
+          .eq('id', studentId)
           .maybeSingle();
         
         if (!error && data) {
