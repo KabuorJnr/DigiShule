@@ -35,6 +35,7 @@ export default function StaffLayout() {
   const tabs = [
     { id: 'attendance', label: 'Staff Roster', path: '/portal/staff' },
     { id: 'leave', label: 'Leave Requests', path: '/portal/staff/leave' },
+    { id: 'classes', label: 'Class Teachers', path: '/portal/staff/classes' },
     ...(canApprove ? [{ id: 'recruitment', label: 'Recruitment & HR', path: '/portal/staff/recruitment' }] : [])
   ];
 

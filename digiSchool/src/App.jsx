@@ -38,6 +38,7 @@ import StaffLayout from './views/staff/StaffLayout';
 import LogAttendance from './views/staff/LogAttendance';
 import LeaveRequests from './views/staff/LeaveRequests';
 import Recruitment from './views/staff/Recruitment';
+import ClassTeachers from './views/ClassTeachers';
 
 import ParentLayout from './views/parent/ParentLayout';
 import ParentDashboard from './views/parent/ParentDashboard';
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="staff" element={<StaffLayout />}>
           <Route index element={<LogAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />
+          <Route path="classes" element={<ClassTeachers />} />
           <Route path="recruitment" element={<Recruitment />} />
         </Route>
 

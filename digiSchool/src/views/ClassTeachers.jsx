@@ -1,8 +1,13 @@
 import { useState, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard } from '../components/widgets';
 import { Search, GraduationCap, Users, UserCheck } from 'lucide-react';
 
-export default function ClassTeachers({ store, user }) {
+export default function ClassTeachers(props) {
+  const context = useOutletContext() || {};
+  const store = props.store || context.store;
+  const user = props.user || context.user;
+  
   const { teachers, updateTeacher, settings, notify } = store;
   const [searchTerm, setSearchTerm] = useState('');
 
