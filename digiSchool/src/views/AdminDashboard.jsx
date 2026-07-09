@@ -132,19 +132,9 @@ export default function AdminDashboard({ store, user }) {
       
       // Save meeting request
       await upsertRow('parentMeetingRequests', updated);
-      
-      // Auto-add to school calendar
-      const eventPayload = {
-        id: `evt_${Date.now()}`,
-        title: `Parent-Teacher Meeting: ${updated.parent_name} & ${scheduleForm.teacher_name}`,
-        date: scheduleForm.date,
-        type: 'meeting',
-        audience: ['teachers', 'parents']
-      };
-      await upsertRow('calendarEvents', eventPayload);
 
       setMeetingRequests(prev => prev.map(m => m.id === updated.id ? updated : m));
-      notify(`Meeting scheduled and ${scheduleForm.teacher_name} tagged successfully. Added to Calendar.`, 'success');
+      notify(`Meeting scheduled and ${scheduleForm.teacher_name} tagged successfully.`, 'success');
       setScheduleMeetingOpen(false);
       setSelectedMeeting(null);
       setScheduleForm({ date: '', time: '', teacher_name: '' });
@@ -171,58 +161,35 @@ export default function AdminDashboard({ store, user }) {
     
     setCommissionSaving(true);
     try {
-      // 1. Generate temp password
-      const tempPass = `EduOne@${Math.floor(1000 + Math.random() * 9000)}`;
+      const email = commissionForm.email.trim();
       
-      // 2. Create Auth User using secondary client to preserve Principal session
-      const { data: authData, error: authErr } = await secondaryAuthClient.auth.signUp({
-        email: commissionForm.email.trim(),
-        password: tempPass,
-        options: { data: { role: commissionForm.role, full_name: commissionForm.name } }
-      });
-      
-      let isExisting = false;
-      let finalUserId = null;
-      if (authErr && authErr.message.toLowerCase().includes('already')) {
-        isExisting = true;
-        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: commissionForm.email.trim() });
-        if (fetchErr) throw new Error(`Could not fetch existing user: ${fetchErr.message}`);
-        finalUserId = existingId;
-      } else if (authErr) {
-        throw new Error(`Auth Error: ${authErr.message}`);
-      } else {
-        finalUserId = authData?.user?.id;
-      }
-      
-      if (!finalUserId) throw new Error('Failed to create credentials.');
+      // 1. Check if staff already exists with this email (using id as email temporarily or searching by id)
+      // Since staff.id is TEXT, we'll use email as the ID for pending staff or generate an ID.
+      // Let's just use email as ID.
+      const { data: existingStaff } = await supabase.from('staff').select('id').eq('id', email).maybeSingle();
+      if (existingStaff) throw new Error('A staff member with this email already exists.');
+
+      // 2. Generate a 6-digit Access PIN
+      const tempPin = Math.floor(100000 + Math.random() * 900000).toString();
       
       const schoolId = store.settings?.id || localStorage.getItem('eduone_school_id');
       
-      // 3. Create Profile
-      const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: finalUserId,
-        username: commissionForm.email.trim(),
-        full_name: commissionForm.name,
-        role: commissionForm.role,
-        school_id: schoolId
-      });
-      
-      if (profileErr) throw new Error(`Profile Error: ${profileErr.message}`);
-      
-      // 4. Create Staff Record
+      // 3. Create Pending Staff Record
       const newStaff = {
-        id: finalUserId,
+        id: email, // Using email as the temporary/permanent ID until they sign up
         name: commissionForm.name,
         role: commissionForm.role,
         dept: 'General',
-        status: 'Active',
-        school_id: schoolId
+        status: 'Pending',
+        school_id: schoolId,
+        pin: tempPin
       };
+      
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
-      // 5. Show Success
-      setCommissionGeneratedPassword(isExisting ? '(Already exists. Use original password)' : tempPass);
+      // 4. Show Success
+      setCommissionGeneratedPassword(`PIN: ${tempPin}`);
       setCommissionSuccess(true);
     } catch (err) {
       notify(`Failed to commission staff: ${err.message}`, 'error');

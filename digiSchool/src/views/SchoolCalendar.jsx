@@ -32,8 +32,44 @@ export default function SchoolCalendar({ store, user }) {
   const loadEvents = async () => {
     setLoading(true);
     try {
+      // 1. Fetch global calendar events
       const data = await fetchTable('calendarEvents');
-      setEvents(data || []);
+      let combined = data || [];
+
+      // 2. Fetch parent meeting requests and filter based on user role
+      const meetings = await fetchTable('parentMeetingRequests');
+      if (meetings && meetings.length > 0) {
+        meetings.forEach(m => {
+          if (m.status !== 'Scheduled' || !m.scheduled_date) return;
+          
+          // Filtering logic for privacy
+          let canView = false;
+          if (isAdmin) {
+            canView = true;
+          } else if (user?.role === 'teacher') {
+            canView = (m.teacher_name === user.name);
+          } else if (user?.role === 'parent') {
+            canView = (m.parent_id === user.id);
+          }
+
+          if (canView) {
+            // Convert to calendar event format
+            const dt = new Date(m.scheduled_date);
+            const dateStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+            
+            combined.push({
+              id: m.id,
+              title: `Meeting: ${m.parent_name} & ${m.teacher_name}`,
+              description: m.reason,
+              date: dateStr,
+              time: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isMeeting: true
+            });
+          }
+        });
+      }
+
+      setEvents(combined);
     } catch (e) {
       notify(`Failed to load calendar events: ${e.message}`, 'error');
     } finally {
@@ -123,8 +159,14 @@ export default function SchoolCalendar({ store, user }) {
         </div>
         <div className="cell-events">
           {dayEvents.map(ev => (
-            <div key={ev.id} className="calendar-event" title={ev.description}>
-              {ev.title}
+            <div 
+              key={ev.id} 
+              className="calendar-event" 
+              title={ev.description}
+              style={ev.isMeeting ? { background: '#e0f2fe', color: '#0369a1', borderLeft: '2px solid #0284c7' } : {}}
+            >
+              <div style={{ fontWeight: 600 }}>{ev.title}</div>
+              {ev.time && <div style={{ fontSize: 10, opacity: 0.8 }}>{ev.time}</div>}
             </div>
           ))}
         </div>

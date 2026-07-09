@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { signInWithUsername, supabase } from '../lib/supabaseClient';
-import { Eye, EyeOff, Shield, GraduationCap, CheckCircle2, Mail, Phone } from 'lucide-react';
+import { Eye, EyeOff, Shield, GraduationCap, CheckCircle2, Mail, Phone, User } from 'lucide-react';
 import Modal from '../components/Modal';
 
 // Read school config set by the Setup Wizard
@@ -215,6 +215,26 @@ export default function Login() {
             <p style={{ margin: 0, color: '#576871', fontSize: 14 }}>
               To get an account or resolve login issues, please contact the school administration directly using the details below:
             </p>
+            {/* Registration Links */}
+            <div className="hr-register-links" style={{ marginTop: 24, padding: '16px 0', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button 
+                type="button" 
+                onClick={() => navigate('/parent-signup')} 
+                className="btn" 
+                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 8, background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155' }}
+              >
+                <User size={16} /> Parent Registration
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={() => navigate('/staff-signup')} 
+                className="btn" 
+                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 8, background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155' }}
+              >
+                <Shield size={16} /> Staff Activation
+              </button>
+            </div>
             
             <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
               <h4 style={{ margin: '0 0 12px', fontSize: 16 }}>{schoolName}</h4>
