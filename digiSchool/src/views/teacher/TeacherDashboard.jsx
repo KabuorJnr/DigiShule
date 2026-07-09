@@ -122,7 +122,7 @@ export default function TeacherDashboard() {
             <button key={q.label} onClick={() => {
               if (q.action === 'open_leave') setShowLeaveModal(true);
               else if (q.action === 'open_inbox') setInboxModalOpen(true);
-              else navigate('/portal/' + q.view);
+              else navigate(q.view);
             }} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: q.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><q.icon size={18} color={q.color} /></div>
               <div><div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{q.label}</div><div className="muted" style={{ fontSize: 11, marginTop: 1 }}>{q.desc}</div></div>

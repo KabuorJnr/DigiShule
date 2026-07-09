@@ -350,15 +350,15 @@ export default function AdminDashboard({ store, user }) {
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/staff')}>Staff Attendance</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/facilities')}>Facilities Management</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/admissions')}>Student Records</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/notices')}>Post Notice</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/finance')}>Finance Overview</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/clinic')}>Health / Clinic</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/library')}>Library</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/class_teachers')}>Class Teachers</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/settings')}>Settings</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Staff Attendance</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('facilities')}>Facilities Management</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('finance')}>Finance Overview</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('clinic')}>Health / Clinic</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('library')}>Library</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('class_teachers')}>Class Teachers</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>Settings</button>
         </div>
       </div>
 
