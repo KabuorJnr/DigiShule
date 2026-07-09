@@ -73,7 +73,7 @@ export default function AcademicsDashboard({ store, user }) {
           <h2 style={{ margin: 0, fontSize: 22 }}>Deputy Academics Dashboard</h2>
           <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Academic overview and performance analytics</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/portal/notices')}>Post Notice</button>
+        <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
       </div>
 
       <div style={{ background: '#0078D4', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -107,13 +107,13 @@ export default function AcademicsDashboard({ store, user }) {
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/timetable')}>Manage Timetable</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/create_exam')}>Create Exam</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/gradebook')}>Open Gradebook</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/exams')}>Exam Schedules</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/staff')}>Staff Attendance</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/notices')}>Post Notice</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('/portal/admissions')}>Student Records</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('timetable')}>Manage Timetable</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('create_exam')}>Create Exam</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('gradebook')}>Open Gradebook</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('exams')}>Exam Schedules</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff_attendance')}>Staff Attendance</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={handleExportPendingMarks}>
             <FileText size={16} style={{ marginRight: 6 }}/> Pending Marks
           </button>

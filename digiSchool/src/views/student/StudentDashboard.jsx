@@ -65,9 +65,9 @@ export default function StudentDashboard() {
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('/portal/student/academics')}><BarChart3 size={16} /> View Assessment</button>
-          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('/portal/student/academics')}><ClipboardList size={16} /> View Assignments</button>
-          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('/portal/student/resources')}><Calendar size={16} /> Weekly Timetable</button>
+          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('student/academics')}><BarChart3 size={16} /> View Assessment</button>
+          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('student/academics')}><ClipboardList size={16} /> View Assignments</button>
+          <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => navigate('student/resources')}><Calendar size={16} /> Weekly Timetable</button>
           <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}><Mail size={16} /> Message School</button>
         </div>
       </div>

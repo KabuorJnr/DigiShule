@@ -20,6 +20,7 @@ import DeveloperPortal from '../DeveloperPortal';
 import SelectProfile from '../SelectProfile';
 import SchemeOfWork from '../SchemeOfWork';
 import LessonPlans from '../LessonPlans';
+import StaffAttendance from '../StaffAttendance';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -43,6 +44,7 @@ const VIEW_MAP = {
   select_profile: SelectProfile,
   scheme_of_work: SchemeOfWork,
   lesson_plans: LessonPlans,
+  staff_attendance: StaffAttendance,
 };
 
 export default function LegacyViewLoader() {

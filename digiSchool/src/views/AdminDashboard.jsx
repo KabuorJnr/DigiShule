@@ -274,7 +274,7 @@ export default function AdminDashboard({ store, user }) {
           <button className="btn" onClick={() => setShowMediaManager(!showMediaManager)}>
             {showMediaManager ? 'Back to Dashboard' : 'Media Gallery Manager'}
           </button>
-          <button className="btn btn-primary" onClick={() => navigate('/portal/notices')}>Post Notice</button>
+          <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
         </div>
       </div>
 
@@ -350,7 +350,7 @@ export default function AdminDashboard({ store, user }) {
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <h3 className="section-title">Quick Actions</h3>
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff')}>Staff Attendance</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff_attendance')}>Staff Attendance</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('facilities')}>Facilities Management</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
@@ -398,7 +398,7 @@ export default function AdminDashboard({ store, user }) {
             </div>
           ))}
           {dbFacilities.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No facilities added.</div>}
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('/portal/facilities')}>
+          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('facilities')}>
             Manage Facilities
           </button>
         </div>
@@ -408,7 +408,7 @@ export default function AdminDashboard({ store, user }) {
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
-            <button className="btn btn-sm" onClick={() => navigate('/portal/staff')}>Manage Leave</button>
+            <button className="btn btn-sm" onClick={() => navigate('staff/leave')}>Manage Leave</button>
           </div>
           <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
         </div>
@@ -416,7 +416,7 @@ export default function AdminDashboard({ store, user }) {
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ margin: 0, color: '#dc2626' }}>Pending Expense Approvals</h3>
-            <button className="btn btn-sm" onClick={() => navigate('/portal/finance')}>Finance Module</button>
+            <button className="btn btn-sm" onClick={() => navigate('finance')}>Finance Module</button>
           </div>
           {expenses.filter(e => e.status === 'Pending').map(e => (
             <div key={e.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
@@ -463,8 +463,8 @@ export default function AdminDashboard({ store, user }) {
 
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Scheduled Appointments</h3>
-            <button className="btn btn-sm" onClick={() => navigate('/portal/school_calendar')}>View Global Calendar</button>
+            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Upcoming Events</h3>
+            <button className="btn btn-sm" onClick={() => navigate('school_calendar')}>View Global Calendar</button>
           </div>
           <div className="scroll-x" style={{ maxHeight: '300px', overflowY: 'auto' }}>
             {(() => {
