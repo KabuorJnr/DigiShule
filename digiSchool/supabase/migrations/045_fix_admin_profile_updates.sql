@@ -8,11 +8,11 @@ CREATE POLICY "Admins can update profiles"
 ON public.profiles
 FOR UPDATE
 USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'school_admin'
   AND (school_id = ANY(public.my_school_ids()) OR school_id IS NULL)
 )
 WITH CHECK (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'school_admin'
 );
 
 -- Backfill missing school_ids in profiles for staff who were commissioned
