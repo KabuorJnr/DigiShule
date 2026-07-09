@@ -8,9 +8,10 @@
 --
 -- This migration re-creates any missing profile rows from the staff table.
 
-INSERT INTO public.profiles (id, full_name, role, school_id, created_at)
+INSERT INTO public.profiles (id, username, full_name, role, school_id, created_at)
 SELECT 
   gen_random_uuid() AS id,
+  LOWER(REPLACE(s.name, ' ', '.')) || '_' || SUBSTR(gen_random_uuid()::text, 1, 6) AS username,
   s.name AS full_name,
   s.role::app_role,
   s.school_id,
