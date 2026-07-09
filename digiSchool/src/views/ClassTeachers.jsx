@@ -12,7 +12,8 @@ export default function ClassTeachers(props) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const classes = useMemo(() => {
-    return Array.isArray(settings.classes) ? settings.classes : [];
+    const raw = Array.isArray(settings.classes) ? settings.classes : [];
+    return raw.map(c => typeof c === 'string' ? c : (c.name || '')).filter(Boolean);
   }, [settings.classes]);
 
   const assignedCount = classes.filter(cls => teachers.some(t => t.assignedClass === cls)).length;
