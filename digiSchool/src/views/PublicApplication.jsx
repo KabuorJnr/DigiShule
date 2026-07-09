@@ -14,7 +14,7 @@ export default function PublicApplication({ onBack }) {
   const [form, setForm] = useState({
     studentName: '', kcpeMarks: '', dob: '', gender: 'Male', grade: levels[0],
     parentName: '', parentPhone: '', parentEmail: '',
-    address: '', boarding: 'Day',
+    address: '', boarding: 'Day', medicalInfo: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -37,6 +37,7 @@ export default function PublicApplication({ onBack }) {
         parentPhone: form.parentPhone,
         parentEmail: form.parentEmail,
         boardingStatus: form.boarding,
+        medicalInfo: form.medicalInfo,
       };
 
       const { error } = await supabase.from('admissions').insert(applicant);
@@ -126,6 +127,10 @@ export default function PublicApplication({ onBack }) {
                       <option>Boarding</option>
                     </select>
                   </div>
+                </div>
+                <div>
+                  <label className="field-label" style={{ fontSize: 14 }}>Medical Information / Known Conditions (Optional)</label>
+                  <textarea className="input" placeholder="List any allergies, ongoing conditions, or medical history the school nurse should know about..." value={form.medicalInfo} onChange={e => setForm({...form, medicalInfo: e.target.value})} rows={3}></textarea>
                 </div>
                 <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
                   <button type="submit" className="btn btn-primary" style={{ padding: '12px 30px', fontSize: 16 }}>Next: Parent Details →</button>

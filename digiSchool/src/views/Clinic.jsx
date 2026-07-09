@@ -15,6 +15,8 @@ export default function Clinic({ store }) {
   const [form, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
   const [notifyParentOpen, setNotifyParentOpen] = useState(null);
   const [parentMsg, setParentMsg] = useState('');
+  const [activeTab, setActiveTab] = useState('directory');
+  const [selectedClass, setSelectedClass] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -23,7 +25,13 @@ export default function Clinic({ store }) {
       .catch((e) => notify(`Failed to load clinic visits: ${e.message}`, 'error'));
       
     fetchStudents(0, 1000).then(res => {
-      if (active) setStudents(res.data || []);
+      if (active) {
+        const sorted = (res.data || []).sort((a, b) => a.name.localeCompare(b.name));
+        setStudents(sorted);
+        // Set default class if not set
+        const classes = [...new Set(sorted.map(s => s.class || 'Unassigned'))].sort();
+        if (classes.length > 0) setSelectedClass(classes[0]);
+      }
     }).catch(() => {});
     
     return () => { active = false; };
@@ -31,9 +39,24 @@ export default function Clinic({ store }) {
 
   const totals = useMemo(() => ({
     total: visits.length,
-    today: visits.filter((v) => v.date === '2026-06-09').length,
+    today: visits.filter((v) => v.date === new Date().toISOString().slice(0, 10)).length,
     referred: visits.filter((v) => v.outcome === 'Referred to hospital').length,
   }), [visits]);
+
+  const groupedStudents = useMemo(() => {
+    const groups = {};
+    students.forEach(s => {
+      const c = s.class || 'Unassigned';
+      if (!groups[c]) groups[c] = [];
+      groups[c].push(s);
+    });
+    return groups;
+  }, [students]);
+
+  const openLogForStudent = (st) => {
+    setForm({ student: st.name, adm: st.adm, complaint: '', treatment: '', outcome: 'Returned to class' });
+    setLogOpen(true);
+  };
 
   const logVisit = async () => {
     if (!form.student || !form.complaint) {
@@ -61,16 +84,6 @@ export default function Clinic({ store }) {
     notify(`Clinic visit logged for ${form.student}.`);
   };
 
-  const handleStudentSelect = (e) => {
-    const stId = e.target.value;
-    const st = students.find(s => s.id === stId);
-    if (st) {
-      setForm(f => ({ ...f, student: st.name, adm: st.adm_no }));
-    } else {
-      setForm(f => ({ ...f, student: '', adm: '' }));
-    }
-  };
-
   const sendParentNotice = async () => {
     if (!parentMsg) return;
     try {
@@ -96,7 +109,7 @@ export default function Clinic({ store }) {
 
   return (
     <div className="print-friendly">
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{__html: \`
         @media print {
           @page { margin: 0; }
           body * { visibility: hidden; }
@@ -111,17 +124,16 @@ export default function Clinic({ store }) {
         @media screen {
           .print-only { display: none; }
         }
-      `}} />
+      \`}} />
       <div className="no-print">
         <PageHeader
           title="Clinic & Health"
-          subtitle="Student visits, treatments and referrals"
+          subtitle="Student visits, treatments and medical directory"
           actions={
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn" onClick={handlePrint}>
                 <Icon name="clipboard" size={16} /> Print Report
               </button>
-              <button className="btn btn-primary" onClick={() => setLogOpen(true)}>+ Log Visit</button>
             </div>
           }
         />
@@ -131,6 +143,15 @@ export default function Clinic({ store }) {
           <KpiCard iconComponent={<Icon name="calendar" size={24} />} label="Today" value={totals.today} accent="#0369A1" />
           <KpiCard iconComponent={<Icon name="warning" size={24} />} label="Referrals" value={totals.referred} accent="#EF4444" sub="To hospital" />
           <KpiCard iconComponent={<Icon name="check" size={24} />} label="Supplies Status" value="Adequate" accent="#10B981" />
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid var(--border)', marginBottom: 20 }}>
+          <button className={\`tab \${activeTab === 'directory' ? 'active' : ''}\`} onClick={() => setActiveTab('directory')}>
+            <Icon name="users" size={16} style={{ marginRight: 6 }} /> Student Directory
+          </button>
+          <button className={\`tab \${activeTab === 'visits' ? 'active' : ''}\`} onClick={() => setActiveTab('visits')}>
+            <Icon name="activity" size={16} style={{ marginRight: 6 }} /> Recent Visits
+          </button>
         </div>
       </div>
 
@@ -143,52 +164,121 @@ export default function Clinic({ store }) {
         </div>
       </div>
 
-      <div className="card card-pad">
-        <div className="section-title">Visit Log</div>
-        <div className="scroll-x">
-          <table className="table">
-            <thead>
-              <tr><th>Date</th><th>Student</th><th>Adm. No.</th><th>Complaint</th><th>Treatment</th><th>Outcome</th><th className="no-print">Action</th></tr>
-            </thead>
-            <tbody>
-              {visits.map((v) => (
-                <tr key={v.id}>
-                  <td>{v.date}</td>
-                  <td style={{ fontWeight: 600 }}>{v.student}</td>
-                  <td className="muted">{v.adm}</td>
-                  <td>{v.complaint}</td>
-                  <td>{v.treatment}</td>
-                  <td><Badge color={OUTCOME_COLOR[v.outcome] || 'gray'}>{v.outcome}</Badge></td>
-                  <td className="no-print">
-                    <button className="btn btn-sm" onClick={() => {
-                      setNotifyParentOpen(v);
-                      setParentMsg(`Dear Parent,\nYour child ${v.student} visited the clinic today for ${v.complaint}. Outcome: ${v.outcome}.\nPlease follow up if necessary.`);
-                    }}>Notify Parent</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {activeTab === 'directory' && (
+        <div className="grid no-print" style={{ gridTemplateColumns: '220px 1fr', gap: 20 }}>
+          <div className="card" style={{ padding: '8px 0', height: 'fit-content' }}>
+            <h3 style={{ margin: '8px 16px', fontSize: 14, color: '#64748b' }}>Select Class</h3>
+            {Object.keys(groupedStudents).sort().map(cls => (
+              <button 
+                key={cls} 
+                className="btn" 
+                style={{ 
+                  display: 'flex', width: '100%', justifyContent: 'space-between', 
+                  borderRadius: 0, border: 'none', 
+                  background: selectedClass === cls ? '#e0f2fe' : 'transparent',
+                  color: selectedClass === cls ? '#0369a1' : 'inherit'
+                }}
+                onClick={() => setSelectedClass(cls)}
+              >
+                <span>{cls}</span>
+                <span className="muted" style={{ fontSize: 12 }}>{groupedStudents[cls].length}</span>
+              </button>
+            ))}
+          </div>
 
+          <div className="card card-pad fade-in">
+            <h3 className="section-title">{selectedClass} — Medical Directory</h3>
+            <div className="scroll-x">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Admission No.</th>
+                    <th>Medical Information / Conditions</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupedStudents[selectedClass]?.map(st => (
+                    <tr key={st.id}>
+                      <td style={{ fontWeight: 600 }}>{st.name}</td>
+                      <td className="muted">{st.adm}</td>
+                      <td>
+                        {st.medicalInfo ? (
+                          <div style={{ color: '#991b1b', fontSize: 13, background: '#fef2f2', padding: '6px 10px', borderRadius: 6, display: 'inline-block' }}>
+                            {st.medicalInfo}
+                          </div>
+                        ) : (
+                          <span className="muted" style={{ fontSize: 13 }}>None provided</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button className="btn btn-sm btn-primary" onClick={() => openLogForStudent(st)}>+ Log Visit</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!groupedStudents[selectedClass]?.length && (
+                    <tr><td colSpan={4} className="muted" style={{ textAlign: 'center', padding: 20 }}>No students in this class.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'visits' && (
+        <div className="card card-pad fade-in">
+          <div className="section-title">Recent Visit Logs</div>
+          <div className="scroll-x">
+            <table className="table">
+              <thead>
+                <tr><th>Date</th><th>Student</th><th>Adm. No.</th><th>Complaint</th><th>Treatment</th><th>Outcome</th><th className="no-print">Action</th></tr>
+              </thead>
+              <tbody>
+                {visits.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.date}</td>
+                    <td style={{ fontWeight: 600 }}>{v.student}</td>
+                    <td className="muted">{v.adm}</td>
+                    <td>{v.complaint}</td>
+                    <td>{v.treatment}</td>
+                    <td><Badge color={OUTCOME_COLOR[v.outcome] || 'gray'}>{v.outcome}</Badge></td>
+                    <td className="no-print">
+                      <button className="btn btn-sm" onClick={() => {
+                        setNotifyParentOpen(v);
+                        setParentMsg(\`Dear Parent,\\nYour child \${v.student} visited the clinic today for \${v.complaint}. Outcome: \${v.outcome}.\\nPlease follow up if necessary.\`);
+                      }}>Notify Parent</button>
+                    </td>
+                  </tr>
+                ))}
+                {visits.length === 0 && (
+                  <tr><td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 20 }}>No clinic visits logged yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Log Visit Modal */}
       {logOpen && (
         <Modal title="Log Clinic Visit" onClose={() => setLogOpen(false)} footer={
-          <><button className="btn" onClick={() => setLogOpen(false)}>Cancel</button><button className="btn btn-primary" onClick={logVisit}>Save</button></>
+          <><button className="btn" onClick={() => setLogOpen(false)}>Cancel</button><button className="btn btn-primary" onClick={logVisit}>Save Visit</button></>
         }>
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student Name</label>
-              <select className="select" onChange={handleStudentSelect}>
-                <option value="">Select a student...</option>
-                {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <input className="input" value={form.student} disabled />
             </div>
-            <div><label className="field-label">Admission No.</label><input className="input" value={form.adm} disabled /></div>
+            <div>
+              <label className="field-label">Admission No.</label>
+              <input className="input" value={form.adm} disabled />
+            </div>
           </div>
-          <label className="field-label" style={{ marginTop: 12 }}>Complaint</label>
-          <input className="input" value={form.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} />
-          <label className="field-label" style={{ marginTop: 12 }}>Treatment</label>
+          <label className="field-label" style={{ marginTop: 12 }}>Complaint / Symptoms</label>
+          <input className="input" value={form.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} autoFocus />
+          <label className="field-label" style={{ marginTop: 12 }}>Treatment / Action Taken</label>
           <input className="input" value={form.treatment} onChange={(e) => setForm((f) => ({ ...f, treatment: e.target.value }))} />
           <label className="field-label" style={{ marginTop: 12 }}>Outcome</label>
           <select className="select" value={form.outcome} onChange={(e) => setForm((f) => ({ ...f, outcome: e.target.value }))}>
@@ -197,8 +287,9 @@ export default function Clinic({ store }) {
         </Modal>
       )}
 
+      {/* Notify Parent Modal */}
       {notifyParentOpen && (
-        <Modal title={`Message Parent of ${notifyParentOpen.student}`} onClose={() => setNotifyParentOpen(null)} footer={
+        <Modal title={\`Message Parent of \${notifyParentOpen.student}\`} onClose={() => setNotifyParentOpen(null)} footer={
           <><button className="btn" onClick={() => setNotifyParentOpen(null)}>Cancel</button><button className="btn btn-primary" onClick={sendParentNotice}>Send Message</button></>
         }>
           <label className="field-label">Message Content</label>

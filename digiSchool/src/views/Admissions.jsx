@@ -61,6 +61,7 @@ export default function Admissions({ store }) {
         guardianName: app.parentName || '',
         guardianPhone: app.parentPhone || '',
         guardianEmail: app.parentEmail || '',
+        medicalInfo: app.medicalInfo || '',
       };
       try {
         await upsertStudent(newStudent);
@@ -138,12 +139,12 @@ export default function Admissions({ store }) {
       id: `ad${Date.now()}`, name: form.name, kcpe: Number(form.kcpe), gender: form.gender,
       form: form.Grade, date: new Date().toISOString().slice(0, 10), status: 'Pending',
       dob: form.dob, parentName: form.parentName, parentPhone: form.parentPhone, parentEmail: form.parentEmail,
-      boardingStatus: form.boardingStatus,
+      boardingStatus: form.boardingStatus, medicalInfo: form.medicalInfo
     };
     try { await upsertRow('admissions', applicant); } catch (e) { notify(`Could not add application: ${e.message}`, 'error'); return; }
     setApps(as => [applicant, ...as]);
     setAddOpen(false);
-    setForm({ name: '', kcpe: '', gender: 'M', Grade: '', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day' });
+    setForm({ name: '', kcpe: '', gender: 'M', Grade: '', dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day', medicalInfo: '' });
     notify(`Application for ${form.name} added.`);
   };
 
@@ -291,6 +292,10 @@ export default function Admissions({ store }) {
               <label className="field-label">Parent Email (Optional)</label>
               <input type="email" className="input" placeholder="For parent portal access" value={form.parentEmail} onChange={e => setForm(f => ({ ...f, parentEmail: e.target.value }))} />
             </div>
+            <div>
+              <label className="field-label">Medical Information / Known Conditions</label>
+              <textarea className="input" placeholder="Allergies, chronic conditions..." value={form.medicalInfo || ''} onChange={e => setForm(f => ({ ...f, medicalInfo: e.target.value }))} rows={2}></textarea>
+            </div>
           </div>
         </Modal>
       )}
@@ -317,6 +322,7 @@ export default function Admissions({ store }) {
               {viewStudent.parentEmail && <div><span className="field-label">Parent Email</span><div>{viewStudent.parentEmail}</div></div>}
             </div>
             {viewStudent.boardingStatus && <div><span className="field-label">Boarding Status</span><div><Badge color="blue">{viewStudent.boardingStatus}</Badge></div></div>}
+            {viewStudent.medicalInfo && <div><span className="field-label">Medical Info</span><div>{viewStudent.medicalInfo}</div></div>}
             <div><span className="field-label">Status</span><div><Badge color={STATUS_COLOR[viewStudent.status]}>{viewStudent.status}</Badge></div></div>
           </div>
         </Modal>

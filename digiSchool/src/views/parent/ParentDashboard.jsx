@@ -620,6 +620,14 @@ export default function ParentDashboard() {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
         <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records — {child.name}</h2>
+        
+        {child.medicalInfo && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 16, borderRadius: 8, marginBottom: 20 }}>
+            <div style={{ fontWeight: 600, color: '#991b1b', marginBottom: 4 }}>Medical Information / Known Conditions</div>
+            <div style={{ color: '#7f1d1d', whiteSpace: 'pre-wrap', fontSize: 14 }}>{child.medicalInfo}</div>
+          </div>
+        )}
+
         <div className="card card-pad">
           {healthRecords.length === 0 ? (
             <div className="muted" style={{ padding: 30, textAlign: 'center' }}>

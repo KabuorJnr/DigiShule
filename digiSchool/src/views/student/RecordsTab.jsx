@@ -70,8 +70,16 @@ export default function RecordsTab() {
       )}
 
       {tab === 'health' && (
-        <div className="card card-pad">
+        <div className="card card-pad fade-in">
           <h3 className="section-title">Health & Clinic Records</h3>
+          
+          {me?.medicalInfo && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 16, borderRadius: 8, marginBottom: 20 }}>
+              <div style={{ fontWeight: 600, color: '#991b1b', marginBottom: 4 }}>Medical Information / Known Conditions</div>
+              <div style={{ color: '#7f1d1d', whiteSpace: 'pre-wrap', fontSize: 14 }}>{me.medicalInfo}</div>
+            </div>
+          )}
+
           {healthRecords.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <div style={{ width: 60, height: 60, background: '#e0e7ff', color: '#4f46e5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
