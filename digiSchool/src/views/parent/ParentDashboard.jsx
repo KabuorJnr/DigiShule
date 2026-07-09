@@ -161,6 +161,18 @@ export default function ParentDashboard() {
     }
   };
 
+  const handleMarkInboxRead = async (msgId) => {
+    try {
+      const { upsertRow } = await import('../../lib/api');
+      const msg = inboxMessages.find(m => m.id === msgId);
+      const updatedMsg = { ...msg, status: 'Read' };
+      await upsertRow('messages', updatedMsg);
+      setInboxMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
+    } catch (e) {
+      notify(`Failed to mark read: ${e.message}`, 'error');
+    }
+  };
+
   const handleRequestMeeting = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
     try {
@@ -677,8 +689,13 @@ export default function ParentDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject || 'Message from School'}</div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {m.status === 'Unread' && <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>}
-                      <span style={{ fontSize: 11, color: '#64748b' }}>{(m.created_at || '').slice(0, 10)}</span>
+                      {m.status === 'Unread' && (
+                        <>
+                          <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>
+                          <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: 11, cursor: 'pointer', padding: 0, fontWeight: 600, textDecoration: 'underline' }}>Mark Read</button>
+                        </>
+                      )}
+                      <span style={{ fontSize: 11, color: '#64748b', marginLeft: m.status === 'Unread' ? 4 : 0 }}>{(m.created_at || '').slice(0, 10)}</span>
                     </div>
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>

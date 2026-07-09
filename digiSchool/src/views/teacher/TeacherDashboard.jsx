@@ -88,6 +88,17 @@ export default function TeacherDashboard() {
     } catch (e) { store.notify(`Failed to reply: ${e.message}`, 'error'); }
   };
 
+  const handleMarkRead = async (msgId) => {
+    try {
+      const msg = messages.find(m => m.id === msgId);
+      const updatedMsg = { ...msg, status: 'Read' };
+      await upsertRow('messages', updatedMsg);
+      setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
+    } catch (e) {
+      store.notify(`Failed to mark read: ${e.message}`, 'error');
+    }
+  };
+
   return (
     <div>
       {/* Welcome Banner */}
@@ -168,9 +179,33 @@ export default function TeacherDashboard() {
         <Modal title="Parent Messages Inbox" onClose={() => setInboxModalOpen(false)}>
           <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             {messages.length === 0 ? <div className="muted" style={{textAlign:'center', padding:20}}>No messages.</div> : messages.map(m => (
-              <div key={m.id} className="card card-pad" style={{ marginBottom: 10 }}>
-                <strong>{m.sender_name}</strong> - {m.subject}
-                <p>{m.body}</p>
+              <div key={m.id} className="card card-pad" style={{ marginBottom: 16, background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderLeft: `4px solid ${m.status === 'Unread' ? '#3b82f6' : '#94a3b8'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <strong style={{ fontSize: 15 }}>{m.sender_name}</strong>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Parent of: {m.student_name}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {m.status === 'Unread' && (
+                      <button className="btn btn-sm btn-primary" onClick={() => handleMarkRead(m.id)}>Mark Read</button>
+                    )}
+                    <Badge color={m.status === 'Unread' ? 'blue' : m.status === 'Replied' ? 'green' : 'gray'}>{m.status}</Badge>
+                    <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(m.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{m.subject}</div>
+                <p style={{ margin: 0, fontSize: 13, color: '#334155', lineHeight: 1.5 }}>{m.body}</p>
+
+                {m.reply ? (
+                  <div style={{ marginTop: 12, padding: 12, background: '#e0f2fe', borderRadius: 6, fontSize: 13, color: '#0369a1' }}>
+                    <strong>Your Reply:</strong> {m.reply}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                    <input type="text" className="input" style={{ flex: 1, padding: '8px 12px' }} placeholder="Type a reply..." value={replyText[m.id] || ''} onChange={e => setReplyText(p => ({ ...p, [m.id]: e.target.value }))} />
+                    <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => handleReplyMessage(m.id)}>Reply</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
