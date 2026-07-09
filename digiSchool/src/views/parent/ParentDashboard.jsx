@@ -132,7 +132,7 @@ export default function ParentDashboard() {
             Overview for {child.name}
           </h1>
           <p style={{ margin: 0, color: '#64748b', fontSize: '15px' }}>
-            Grade: {child.grade || 'N/A'} • Admission: {child.admission_number || 'Pending'}
+            Grade: {child.class || child.grade || 'N/A'} • Admission: {child.adm || child.admission_number || 'Pending'}
           </p>
         </div>
       </div>
