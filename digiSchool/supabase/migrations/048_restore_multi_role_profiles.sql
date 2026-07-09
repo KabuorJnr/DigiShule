@@ -8,10 +8,10 @@
 --
 -- This migration re-creates any missing profile rows from the staff table.
 
-INSERT INTO public.profiles (id, name, role, school_id, created_at)
+INSERT INTO public.profiles (id, full_name, role, school_id, created_at)
 SELECT 
-  gen_random_uuid() AS id,  -- We can't recover the original auth.uid() easily
-  s.name,
+  gen_random_uuid() AS id,
+  s.name AS full_name,
   s.role,
   s.school_id,
   now()
@@ -20,7 +20,7 @@ WHERE
   -- Only re-insert where there is NO matching profile with the same name AND role
   NOT EXISTS (
     SELECT 1 FROM public.profiles p 
-    WHERE LOWER(p.name) = LOWER(s.name) 
+    WHERE LOWER(COALESCE(p.full_name, '')) = LOWER(s.name) 
     AND p.role::text = s.role
     AND p.school_id = s.school_id
   )
@@ -31,3 +31,4 @@ WHERE
 -- the Admin Portal > Staff > Commission/Re-activate to re-create their credentials.
 
 NOTIFY pgrst, 'reload schema';
+
