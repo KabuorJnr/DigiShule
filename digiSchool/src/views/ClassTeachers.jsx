@@ -12,7 +12,7 @@ export default function ClassTeachers(props) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const classes = useMemo(() => {
-    return settings.classes || [];
+    return Array.isArray(settings.classes) ? settings.classes : [];
   }, [settings.classes]);
 
   const assignedCount = classes.filter(cls => teachers.some(t => t.assignedClass === cls)).length;
