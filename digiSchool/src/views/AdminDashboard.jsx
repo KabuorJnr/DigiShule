@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
 import MediaManager from '../components/MediaManager';
-import { Download, UserPlus, Shield, CheckCircle2 } from 'lucide-react';
+import { Download, UserPlus, Shield, CheckCircle2, Key } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 
 function Stat({ label, value, color, sub }) {
@@ -50,6 +50,29 @@ export default function AdminDashboard({ store, user }) {
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionSuccess, setCommissionSuccess] = useState(false);
   const [commissionGeneratedPassword, setCommissionGeneratedPassword] = useState('');
+
+  // Reset Staff Password State
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordEmail, setResetPasswordEmail] = useState('');
+  const [resetPasswordSending, setResetPasswordSending] = useState(false);
+
+  const handleResetStaffPassword = async () => {
+    if (!resetPasswordEmail.trim()) return notify('Please enter the staff email', 'warning');
+    setResetPasswordSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetPasswordEmail.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      if (error) throw error;
+      notify(`Password reset link sent to ${resetPasswordEmail}`, 'success', 'Password Reset');
+      setResetPasswordOpen(false);
+      setResetPasswordEmail('');
+    } catch (err) {
+      notify(`Failed to send reset: ${err.message}`, 'error');
+    } finally {
+      setResetPasswordSending(false);
+    }
+  };
 
   useEffect(() => {
     fetchTable('expenses').then(setExpenses).catch(() => {});
@@ -344,6 +367,9 @@ export default function AdminDashboard({ store, user }) {
           <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setCommissionModalOpen(true)}>
             <UserPlus size={18} /> Commission Staff
           </button>
+          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setResetPasswordOpen(true)}>
+            <Key size={18} /> Reset Staff Password
+          </button>
         </div>
       </div>
 
@@ -506,6 +532,43 @@ export default function AdminDashboard({ store, user }) {
         </div>
       </div>
       </>
+      )}
+
+      {resetPasswordOpen && (
+        <Modal title="Reset Staff Password" onClose={() => setResetPasswordOpen(false)} footer={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" onClick={() => setResetPasswordOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleResetStaffPassword} disabled={resetPasswordSending}>
+              {resetPasswordSending ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </div>
+        }>
+          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
+            Enter the staff member's email address. They will receive a link to set a new password.
+          </p>
+          <label className="field-label">Staff Email Address</label>
+          <input
+            type="email"
+            className="input"
+            placeholder="e.g. nurse@school.ac.ke"
+            value={resetPasswordEmail}
+            onChange={e => setResetPasswordEmail(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleResetStaffPassword()}
+            style={{ marginTop: 4 }}
+          />
+          <div style={{ marginTop: 12 }}>
+            {['clinic', 'librarian', 'nurse'].map(role => {
+              const found = dbStaff.find(s => s.role?.toLowerCase() === role);
+              if (!found) return null;
+              return (
+                <button key={role} className="btn btn-sm" style={{ marginRight: 6, marginBottom: 6 }}
+                  onClick={() => setResetPasswordEmail(found.id || '')}>
+                  Use: {found.name} ({role})
+                </button>
+              );
+            })}
+          </div>
+        </Modal>
       )}
 
       {disciplineModal && (
