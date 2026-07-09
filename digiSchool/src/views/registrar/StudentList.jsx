@@ -29,7 +29,7 @@ export default function StudentList() {
   // Fetch Students with Pagination
   const { data, isLoading } = useQuery({
     queryKey: ['students', page, search, classFilter],
-    queryFn: () => fetchStudents(page, 50, { search, class: classFilter === 'All' ? null : classFilter }),
+    queryFn: () => fetchStudents(page, 50, { search, class: classFilter === 'All' ? null : classFilter, activeOnly: true }),
     keepPreviousData: true,
   });
 

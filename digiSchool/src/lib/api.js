@@ -233,6 +233,9 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
   if (filters.class) {
     query = query.eq('class', filters.class);
   }
+  if (filters.activeOnly) {
+    query = query.neq('status', 'Inactive').neq('status', 'Graduated');
+  }
   if (_schoolId) {
     query = query.eq('school_id', _schoolId);
   }
