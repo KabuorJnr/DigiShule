@@ -13,16 +13,22 @@ SELECT
   gen_random_uuid() AS id,
   LOWER(REPLACE(s.name, ' ', '.')) || '_' || SUBSTR(gen_random_uuid()::text, 1, 6) AS username,
   s.name AS full_name,
-  s.role::app_role,
+  LOWER(s.role)::app_role,
   s.school_id,
   now()
 FROM public.staff s
 WHERE 
+  -- Only process staff with roles that are valid app_role enum values
+  LOWER(s.role) IN (
+    'principal', 'admin', 'school_admin', 'teacher', 'student', 'parent',
+    'deputy_academics', 'deputy_admin', 'bursar', 'registrar', 'librarian',
+    'clinic', 'nurse', 'finance', 'staff'
+  )
   -- Only re-insert where there is NO matching profile with the same name AND role
-  NOT EXISTS (
+  AND NOT EXISTS (
     SELECT 1 FROM public.profiles p 
     WHERE LOWER(COALESCE(p.full_name, '')) = LOWER(s.name) 
-    AND p.role::text = s.role
+    AND p.role::text = LOWER(s.role)
     AND p.school_id = s.school_id
   )
   AND s.school_id IS NOT NULL
