@@ -115,11 +115,29 @@ export default function ParentDashboard() {
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
   // ── Contact teacher handler ──
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
-    setMsgModal(false);
-    setMsgForm({ to: 'Class Teacher', subject: '', body: '' });
-    notify('Message sent successfully!', 'success', 'Messages');
+    try {
+      const { upsertRow } = await import('../../lib/api');
+      const messagePayload = {
+        id: `msg_${Date.now()}`,
+        sender_id: currentUser.id || 'parent',
+        sender_name: currentUser.name || 'Parent',
+        recipient_role: msgForm.to,
+        student_id: child.id,
+        student_name: child.name,
+        subject: msgForm.subject,
+        body: msgForm.body,
+        status: 'Unread',
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('messages', messagePayload);
+      notify(`Message sent to ${msgForm.to} successfully!`, 'success', 'Messages');
+      setMsgModal(false);
+      setMsgForm({ to: 'Class Teacher', subject: '', body: '' });
+    } catch (e) {
+      notify(`Failed to send message: ${e.message}`, 'error');
+    }
   };
 
   // ── Link student handler ──
