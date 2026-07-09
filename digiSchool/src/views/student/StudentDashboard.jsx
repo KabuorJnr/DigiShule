@@ -32,9 +32,14 @@ export default function StudentDashboard() {
     { term: 'Term 2', avg: Number(overallAvg) || 0 }
   ], [overallAvg]);
 
-  const termFees = feeStructure?.reduce((s, f) => s + (f.f1 || 0), 0) || 0;
+  const levels = store.settings?.classes?.length > 0 
+    ? store.settings.classes.map(c => c.name) 
+    : (store.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const myLevel = levels.find(l => me?.cls?.startsWith(l)) || me?.cls || levels[0];
+
+  const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
-  const outstanding = Math.max(0, termFees - totalPaid);
+  const outstanding = termFees - totalPaid;
 
   const feeAccount = {
     totalBilled: termFees,

@@ -119,7 +119,7 @@ export default function ParentDashboard() {
 
   const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
-  const outstanding = Math.max(0, termFees - totalPaid);
+  const outstanding = termFees - totalPaid;
   const feePercent = termFees > 0 ? Math.min(100, (totalPaid / termFees) * 100) : 0;
 
   const totalAttendance = attendance.length;

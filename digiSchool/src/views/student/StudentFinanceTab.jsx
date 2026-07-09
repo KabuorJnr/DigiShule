@@ -19,7 +19,7 @@ export default function StudentFinanceTab() {
 
   const termFees = feeStructure?.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0) || 0;
   const totalPaid = payments.reduce((acc, p) => p.status !== 'Verification Pending' && p.status !== 'Pending' ? acc + Number(p.amount) : acc, 0);
-  const outstanding = Math.max(0, termFees - totalPaid);
+  const outstanding = termFees - totalPaid;
   const dueDate = '2026-07-05';
 
   const feeAccount = {
