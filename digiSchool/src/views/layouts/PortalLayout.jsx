@@ -355,6 +355,16 @@ export default function PortalLayout() {
         const updatedStaff = { ...staffRecord, status: 'Active', pin: null };
         await api.upsertRow('staff', updatedStaff);
         setStaffRecord(updatedStaff);
+        
+        // If they are a teacher, update the teachers table too
+        if (staffRecord.role === 'teacher' || staffRecord.role === 'class teacher') {
+          const teacherMatch = teachers.find(t => t.id === staffRecord.id);
+          if (teacherMatch) {
+             await api.updateTeacher(staffRecord.id, { status: 'Active' });
+             updateTeacher(staffRecord.id, { status: 'Active' });
+          }
+        }
+        
         notify('Account activated successfully! Welcome to the portal.', 'success');
       } catch (err) {
         setActivationError('Failed to activate: ' + err.message);

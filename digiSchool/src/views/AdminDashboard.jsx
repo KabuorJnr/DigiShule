@@ -212,6 +212,22 @@ export default function AdminDashboard({ store, user }) {
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
+      // 4.5 Create Teacher Record if applicable
+      if (commissionForm.role === 'teacher' || commissionForm.role === 'class teacher') {
+        const teacherObj = {
+          id: finalUserId,
+          name: commissionForm.name,
+          subject: 'General',
+          role: 'teacher',
+          emp_id: finalUserId,
+          status: 'Pending',
+          school_id: schoolId,
+          assigned_class: null
+        };
+        await upsertRow('teachers', teacherObj);
+        if (store.addTeacher) store.addTeacher({ ...teacherObj, assignedClass: null });
+      }
+      
       // 5. Send Email Automatically via Vercel API
       const session = await supabase.auth.getSession();
       const token = session?.data?.session?.access_token;
