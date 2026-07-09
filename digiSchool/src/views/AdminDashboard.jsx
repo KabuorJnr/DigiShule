@@ -188,10 +188,32 @@ export default function AdminDashboard({ store, user }) {
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
-      // 4. Show Success (Hide PIN from Admin, prepare mailto link)
-      const mailtoLink = `mailto:${email}?subject=Your Staff Activation PIN&body=Hello ${commissionForm.name},%0D%0A%0D%0AYou have been invited to join the School Portal.%0D%0A%0D%0AYour Access PIN is: ${tempPin}%0D%0A%0D%0APlease visit the portal and click 'Staff Activation' to set up your account.%0D%0A%0D%0AThank you.`;
+      // 4. Send Email Automatically via Edge Function
+      const emailBody = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Welcome to the School Portal</h2>
+          <p>Hello ${commissionForm.name},</p>
+          <p>You have been invited to join the School Portal as a staff member.</p>
+          <p>Your Access PIN is: <strong style="font-size: 18px; color: #0284c7;">${tempPin}</strong></p>
+          <p>Please visit the portal and click <strong>'Staff Activation'</strong> on the login page to set up your account.</p>
+          <p>Thank you.</p>
+        </div>
+      `;
       
-      setCommissionGeneratedPassword(mailtoLink);
+      const { error: invokeErr } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: email,
+          subject: 'Your Staff Activation PIN',
+          html: emailBody
+        }
+      });
+      
+      if (invokeErr) {
+        console.error('Email sending failed:', invokeErr);
+        notify('Account created, but failed to send the email automatically.', 'warning');
+      }
+      
+      setCommissionGeneratedPassword('Email Sent Automatically');
       setCommissionSuccess(true);
     } catch (err) {
       notify(`Failed to commission staff: ${err.message}`, 'error');
@@ -555,11 +577,12 @@ export default function AdminDashboard({ store, user }) {
               <h3 style={{ margin: '0 0 8px' }}>Staff Commissioned!</h3>
               <p className="muted">The account has been created for <strong>{commissionForm.email}</strong>.</p>
               <div style={{ background: '#f1f5f9', padding: '24px 16px', borderRadius: '8px', margin: '24px 0', textAlign: 'center' }}>
-                <a href={commissionGeneratedPassword} className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
-                  <Mail size={16} style={{ marginRight: 8, display: 'inline-block', verticalAlign: 'middle' }} /> Send PIN via Email
-                </a>
+                <div style={{ color: '#0f172a', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Mail size={20} color="#10B981" /> 
+                  Activation Email Sent Successfully
+                </div>
               </div>
-              <p style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>For security, the PIN is hidden. Click the button above to email it securely.</p>
+              <p style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>The staff member will receive an email with their PIN to activate their account.</p>
               <button className="btn" style={{ marginTop: 24, width: '100%' }} onClick={() => setCommissionModalOpen(false)}>Done</button>
             </div>
           ) : (
