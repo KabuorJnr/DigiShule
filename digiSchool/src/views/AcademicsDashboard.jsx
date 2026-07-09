@@ -111,6 +111,7 @@ export default function AcademicsDashboard({ store, user }) {
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('create_exam')}>Create Exam</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('gradebook')}>Open Gradebook</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('exams')}>Exam Schedules</button>
+          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('registrar')}>Class Lists</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff_attendance')}>Staff Attendance</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
           <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>

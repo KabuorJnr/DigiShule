@@ -146,6 +146,7 @@ export const ROLES = {
           { id: 'exams', icon: 'exam', label: 'Exam Schedules', view: 'exams' },
           { id: 'create_exam', icon: 'plus', label: 'Create Exam', view: 'create_exam' },
           { id: 'gradebook', icon: 'dashboard', label: 'Gradebook', view: 'gradebook' },
+          { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' },
           { id: 'staff', icon: 'users', label: 'Staff', view: 'staff' }
         ]
       },
