@@ -36,6 +36,12 @@ export default function PortalLayout() {
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+
+  // Staff Activation state
+  const [staffRecord, setStaffRecord] = useState(null);
+  const [activationPinInput, setActivationPinInput] = useState('');
+  const [activationError, setActivationError] = useState('');
+  const [activating, setActivating] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,6 +237,13 @@ export default function PortalLayout() {
       const profiles = await api.fetchProfiles(userId);
       if (!profiles || profiles.length === 0) throw new Error("No profile");
       
+      // Fetch staff record if applicable
+      const profile = profiles[0];
+      if (profile.role !== 'parent' && profile.role !== 'student') {
+        const { data: staffData } = await supabase.from('staff').select('*').eq('id', profile.id).maybeSingle();
+        if (staffData) setStaffRecord(staffData);
+      }
+
       if (profiles.length === 1) {
         await handleSelectProfile(profiles[0], greet);
       } else {
@@ -328,6 +341,58 @@ export default function PortalLayout() {
   if (!currentUser) {
     navigateRouter('/login', { replace: true });
     return null;
+  }
+
+  // ---- Staff Activation Interception ----
+  if (staffRecord && staffRecord.status === 'Pending') {
+    const handleActivate = async () => {
+      if (activationPinInput.trim() !== staffRecord.pin) {
+        setActivationError('Invalid Activation PIN');
+        return;
+      }
+      setActivating(true);
+      try {
+        const updatedStaff = { ...staffRecord, status: 'Active', pin: null };
+        await api.upsertRow('staff', updatedStaff);
+        setStaffRecord(updatedStaff);
+        notify('Account activated successfully! Welcome to the portal.', 'success');
+      } catch (err) {
+        setActivationError('Failed to activate: ' + err.message);
+      } finally {
+        setActivating(false);
+      }
+    };
+
+    return (
+      <div className="layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f1f5f9' }}>
+        <div className="card card-pad" style={{ maxWidth: 400, width: '100%', textAlign: 'center', borderTop: '4px solid #10B981', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ marginBottom: 8, color: '#0f172a' }}>Account Activation</h2>
+          <p className="muted" style={{ marginBottom: 24, fontSize: 14 }}>
+            Welcome! Please enter the 6-digit Activation PIN sent to your email to commission your account.
+          </p>
+          <input 
+            type="text" 
+            className="input" 
+            placeholder="Enter PIN" 
+            value={activationPinInput} 
+            onChange={e => { setActivationPinInput(e.target.value); setActivationError(''); }}
+            style={{ textAlign: 'center', letterSpacing: 8, fontSize: 24, marginBottom: 16, fontWeight: 'bold' }}
+            maxLength={6}
+          />
+          {activationError && (
+            <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 13, background: '#fef2f2', padding: '8px', borderRadius: 4 }}>
+              {activationError}
+            </div>
+          )}
+          <button className="btn btn-primary" style={{ width: '100%', marginBottom: 12, padding: '12px' }} onClick={handleActivate} disabled={activating}>
+            {activating ? 'Activating...' : 'Activate Account'}
+          </button>
+          <button className="btn" style={{ width: '100%', padding: '10px' }} onClick={handleLogout}>
+            Log Out
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // ---- Logged-in shell ----

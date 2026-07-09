@@ -225,15 +225,6 @@ export default function Login() {
               >
                 <User size={16} /> Parent Registration
               </button>
-              
-              <button 
-                type="button" 
-                onClick={() => navigate('/staff-signup')} 
-                className="btn" 
-                style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 8, background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155' }}
-              >
-                <Shield size={16} /> Staff Activation
-              </button>
             </div>
             
             <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>

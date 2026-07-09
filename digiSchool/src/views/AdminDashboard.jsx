@@ -162,21 +162,45 @@ export default function AdminDashboard({ store, user }) {
     setCommissionSaving(true);
     try {
       const email = commissionForm.email.trim();
-      
-      // 1. Check if staff already exists with this email (using id as email temporarily or searching by id)
-      // Since staff.id is TEXT, we'll use email as the ID for pending staff or generate an ID.
-      // Let's just use email as ID.
-      const { data: existingStaff } = await supabase.from('staff').select('id').eq('id', email).maybeSingle();
-      if (existingStaff) throw new Error('A staff member with this email already exists.');
+      const schoolId = store.settings?.id || localStorage.getItem('eduone_school_id');
 
-      // 2. Generate a 6-digit Access PIN
+      // 1. Generate temp password and 6-digit PIN
+      const tempPass = `EduOne@${Math.floor(1000 + Math.random() * 9000)}`;
       const tempPin = Math.floor(100000 + Math.random() * 900000).toString();
       
-      const schoolId = store.settings?.id || localStorage.getItem('eduone_school_id');
+      // 2. Create Auth User using secondary client to preserve Principal session
+      const { data: authData, error: authErr } = await secondaryAuthClient.auth.signUp({
+        email,
+        password: tempPass,
+        options: { data: { role: commissionForm.role, full_name: commissionForm.name } }
+      });
       
-      // 3. Create Pending Staff Record
+      let finalUserId = null;
+      if (authErr && authErr.message.toLowerCase().includes('already')) {
+        const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: email });
+        if (fetchErr) throw new Error(`Could not fetch existing user: ${fetchErr.message}`);
+        finalUserId = existingId;
+      } else if (authErr) {
+        throw new Error(`Auth Error: ${authErr.message}`);
+      } else {
+        finalUserId = authData?.user?.id;
+      }
+      
+      if (!finalUserId) throw new Error('Failed to create credentials.');
+      
+      // 3. Create Profile
+      const { error: profileErr } = await supabase.from('profiles').upsert({
+        id: finalUserId,
+        username: email,
+        full_name: commissionForm.name,
+        role: commissionForm.role,
+        school_id: schoolId
+      });
+      if (profileErr) throw new Error(`Profile Error: ${profileErr.message}`);
+      
+      // 4. Create Pending Staff Record with PIN
       const newStaff = {
-        id: email, // Using email as the temporary/permanent ID until they sign up
+        id: finalUserId,
         name: commissionForm.name,
         role: commissionForm.role,
         dept: 'General',
@@ -188,7 +212,7 @@ export default function AdminDashboard({ store, user }) {
       await upsertRow('staff', newStaff);
       setDbStaff(prev => [...prev, newStaff]);
       
-      // 4. Send Email Automatically via Vercel API
+      // 5. Send Email Automatically via Vercel API
       const session = await supabase.auth.getSession();
       const token = session?.data?.session?.access_token;
       
@@ -196,7 +220,8 @@ export default function AdminDashboard({ store, user }) {
         email,
         name: commissionForm.name,
         role: commissionForm.role,
-        password: tempPin, // We use the password field in the email template to send the PIN
+        password: tempPass,
+        activationPin: tempPin,
         schoolName: store.settings?.name || 'EduOne School Portal'
       };
 
@@ -210,12 +235,10 @@ export default function AdminDashboard({ store, user }) {
       });
       
       if (!response.ok) {
-        const errData = await response.json();
-        console.error('Email sending failed:', errData);
+        console.error('Email sending failed:', await response.text());
         notify('Account created, but failed to send the email automatically.', 'warning');
       }
       
-      setCommissionGeneratedPassword('Email Sent Automatically');
       setCommissionSuccess(true);
     } catch (err) {
       notify(`Failed to commission staff: ${err.message}`, 'error');
