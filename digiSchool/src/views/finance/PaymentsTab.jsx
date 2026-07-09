@@ -47,7 +47,8 @@ export default function PaymentsTab() {
       const updated = { ...payment, status: 'Verified' };
       setPayments(prev => prev.map(p => p.id === id ? updated : p));
       notify('Payment confirmed.');
-      await upsertRow('financePayments', updated);
+      const { updateRow } = await import('../../lib/api');
+      await updateRow('financePayments', id, { status: 'Verified' });
     } catch (e) {
       notify(`Failed to confirm payment: ${e.message}`, 'error');
     }

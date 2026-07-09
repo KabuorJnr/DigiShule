@@ -528,6 +528,29 @@ export async function upsertRow(key, row) {
   }
 }
 
+export async function updateRow(key, id, row, idColumn = 'id') {
+  const table = TABLES[key] || key;
+  const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
+
+  if (!navigator.onLine) {
+    console.warn(`[Offline] Queueing update for ${table}`);
+    await queueMutation('upsert', { table, payload }); // offline sync treats upsert/update similarly if PK matches
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from(table).update(payload).eq(idColumn, id);
+    if (error) throw error;
+  } catch (error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.warn(`[Offline fallback] Queueing update for ${table}`);
+      await queueMutation('upsert', { table, payload });
+      return;
+    }
+    throw error;
+  }
+}
+
 export async function deleteRow(key, id, idColumn = 'id') {
   const table = TABLES[key] || key;
 
