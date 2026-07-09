@@ -29,6 +29,7 @@ export default function ParentDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [schoolEvents, setSchoolEvents] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
+  const [inboxMessages, setInboxMessages] = useState([]);
 
   // Modal states
   const [msgModal, setMsgModal] = useState(false);
@@ -76,15 +77,21 @@ export default function ParentDashboard() {
       fetchTable('notifications').catch(() => []),
       fetchTable('schoolEvents').catch(() => []),
       fetchTable('parentMeetingRequests').catch(() => []),
-    ]).then(([pays, att, health, disc, notifs, events, meetings]) => {
+      fetchTable('messages').catch(() => []),
+    ]).then(([pays, att, health, disc, notifs, events, meetings, msgs]) => {
       if (!active) return;
       setPayments((pays || []).filter(p => p.student_id === child.id || p.adm === child.adm));
       setAttendance((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
-      setHealthRecords((health || []).filter(h => h.adm === child.adm));
+      setHealthRecords((health || []).filter(h => h.adm === child.adm || h.student_id === child.id));
       setDisciplinary((disc || []).filter(d => d.adm === child.adm));
       setNotifications(notifs || []);
       setSchoolEvents(events || []);
       setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
+      // Inbox: messages where recipient_role = 'parent' and linked to this child
+      setInboxMessages((msgs || []).filter(m =>
+        m.recipient_role === 'parent' &&
+        (m.student_id === child.id || m.student_id === child.adm || !m.student_id)
+      ));
     });
     return () => { active = false; };
   }, [child?.id, child?.adm]);
@@ -649,6 +656,39 @@ export default function ParentDashboard() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+
+        {/* Inbox messages from clinic/school */}
+        <div className="card card-pad" style={{ marginTop: 24 }}>
+          <h3 className="section-title" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Mail size={16} /> Messages from School / Clinic
+            {inboxMessages.length > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{inboxMessages.length}</span>}
+          </h3>
+          {inboxMessages.length === 0 ? (
+            <div className="muted" style={{ padding: 20, textAlign: 'center' }}>
+              <Mail size={28} style={{ color: '#cbd5e1', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+              <div>No messages from the school or clinic.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {inboxMessages.map((m, i) => (
+                <div key={m.id || i} style={{ padding: '14px 16px', background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderRadius: 8, borderLeft: `4px solid ${m.sender_role === 'nurse' || m.sender_role === 'clinic' ? '#8b5cf6' : '#3b82f6'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject || 'Message from School'}</div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {m.status === 'Unread' && <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>}
+                      <span style={{ fontSize: 11, color: '#64748b' }}>{(m.created_at || '').slice(0, 10)}</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                    From: <strong>{m.sender_name || m.sender_role || 'School'}</strong>
+                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' 🏥'}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
