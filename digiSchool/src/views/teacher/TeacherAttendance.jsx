@@ -38,7 +38,7 @@ export default function TeacherAttendance() {
     setLoadingHistory(true);
     fetchTable('studentAttendance').then(rows => {
       if (!active) return;
-      const todays = (rows || []).filter(r => r.date === date && r.class_name === selectedClass);
+      const todays = (rows || []).filter(r => r.date === date && r.class === selectedClass);
       
       const newState = {};
       todays.forEach(record => {
@@ -76,8 +76,7 @@ export default function TeacherAttendance() {
           date,
           student_id: student.id,
           adm: student.adm,
-          student_name: student.name,
-          class_name: selectedClass,
+          class: selectedClass,
           status,
           recorded_by: store.currentUser?.name || 'Teacher'
         };
