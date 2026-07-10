@@ -71,7 +71,9 @@ export const ROLES = {
             id: 'staff_management', icon: 'users', label: 'Staff Management',
             sub: [
               { id: 'teaching_staff', label: 'Staff Attendance', view: 'staff' },
-              { id: 'leave_management', label: 'Leave Management', view: 'staff' }
+              { id: 'leave_management', label: 'Leave Management', view: 'staff' },
+              { id: 'teacher_mgmt_p', label: 'Teaching Staff', view: 'teacher_management' },
+              { id: 'assign_subjects_p', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' }
             ]
           },
           {
@@ -148,6 +150,14 @@ export const ROLES = {
           { id: 'gradebook', icon: 'dashboard', label: 'Gradebook', view: 'gradebook' },
           { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' },
           { id: 'staff', icon: 'users', label: 'Staff', view: 'staff' }
+        ]
+      },
+      {
+        section: 'TEACHER MANAGEMENT',
+        items: [
+          { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
+          { id: 'qualifications', icon: 'exam', label: 'Qualifications', view: 'teacher_management', tab: 'qualifications' }
         ]
       },
       {

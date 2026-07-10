@@ -45,7 +45,11 @@ const TABLES = {
   messages: 'messages', studentAttendance: 'student_attendance',
   assignmentSubmissions: 'assignment_submissions',
   parentMeetingRequests: 'parent_meeting_requests',
-  calendarEvents: 'calendar_events'
+  calendarEvents: 'calendar_events',
+  departments: 'departments',
+  subjects: 'subjects',
+  teacherQualifications: 'teacher_subject_qualifications',
+  subjectAssignments: 'subject_assignments'
 };
 
 export async function fetchTable(key) {
