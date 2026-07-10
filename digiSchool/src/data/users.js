@@ -37,7 +37,7 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: 'settings', label: 'Profile Settings', view: 'settings' },
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
@@ -170,7 +170,7 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: 'settings', label: 'Settings', view: 'settings' },
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
@@ -213,7 +213,7 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
-          { id: 'settings', icon: 'settings', label: 'Settings', view: 'settings' },
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }

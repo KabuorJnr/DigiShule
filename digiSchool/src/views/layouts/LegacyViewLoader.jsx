@@ -22,6 +22,7 @@ import SchemeOfWork from '../SchemeOfWork';
 import LessonPlans from '../LessonPlans';
 import StaffAttendance from '../StaffAttendance';
 import TeacherManagement from '../TeacherManagement';
+import MyProfile from '../MyProfile';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,

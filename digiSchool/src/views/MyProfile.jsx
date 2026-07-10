@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { PageHeader } from '../components/widgets';
 import {
@@ -44,6 +44,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     phone:   savedOverrides.phone   || user?.phone   || '',
     title:   savedOverrides.title   || user?.dept    || '',
     bio:     savedOverrides.bio     || user?.bio     || '',
+    tsc_number: savedOverrides.tsc_number || '',
   });
 
   const [pwForm, setPwForm]     = useState({ current: '', next: '', confirm: '' });
@@ -57,6 +58,21 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
   const upForm = (patch) => setForm(f => ({ ...f, ...patch }));
 
+  // Load teacher-specific fields if applicable
+  const isStaff = ['teacher', 'principal', 'deputy_academic', 'deputy_admin'].includes(user?.role);
+  useEffect(() => {
+    if (isStaff && store.teachers) {
+      const teacherRecord = store.teachers.find(t => t.id === user?.id || t.emp_id === user?.id);
+      if (teacherRecord) {
+        setForm(f => ({
+          ...f,
+          tsc_number: f.tsc_number || teacherRecord.tsc_number || '',
+          bio: f.bio || teacherRecord.bio || ''
+        }));
+      }
+    }
+  }, [store.teachers, user?.id, isStaff]);
+
   // ── Save profile details ──────────────────────────────────────
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Name is required.'); return; }
@@ -64,7 +80,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     setSaving(true);
     try {
       // 1. Always persist to localStorage
-      const overrides = { name: form.name, email: form.email, phone: form.phone, title: form.title, bio: form.bio };
+      const overrides = { name: form.name, email: form.email, phone: form.phone, title: form.title, bio: form.bio, tsc_number: form.tsc_number };
       localStorage.setItem('eduone_profile_overrides', JSON.stringify(overrides));
 
       // Update the demo_user in localStorage too (so sidebar reflects new name)
@@ -88,6 +104,14 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         // Update email in Supabase Auth if changed
         if (form.email && form.email !== supaUser.email) {
           await supabase.auth.updateUser({ email: form.email });
+        }
+
+        // 2b. Sync to teachers table if staff
+        if (isStaff) {
+          const teacherRecord = store.teachers?.find(t => t.id === user?.id || t.emp_id === user?.id);
+          if (teacherRecord) {
+            await store.updateTeacher(teacherRecord.id, { tsc_number: form.tsc_number, bio: form.bio, name: form.name });
+          }
         }
       }
 
@@ -197,6 +221,13 @@ export default function MyProfile({ store, user, onUserUpdate }) {
           <Field label="Role" icon={Building2}>
             <input className="input" value={ROLE_LABELS[user?.role] || user?.role || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
           </Field>
+          
+          {/* Staff Specific Details */}
+          {['teacher', 'principal', 'deputy_academic', 'deputy_admin'].includes(user?.role) && (
+            <Field label="TSC Number" icon={Tag}>
+              <input className="input" value={form.tsc_number} onChange={e => upForm({ tsc_number: e.target.value })} placeholder="Enter your TSC Number" />
+            </Field>
+          )}
         </div>
 
         <div style={{ marginTop: 14 }}>

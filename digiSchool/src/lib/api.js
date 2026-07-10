@@ -191,6 +191,13 @@ export async function saveConfig(patch) {
   if (error) throw error;
 }
 
+// ---- Profiles ---------------------------------------------------------------
+
+export async function updateProfile(id, patch) {
+  const { error } = await supabase.from('profiles').update(patch).eq('id', id);
+  if (error) throw error;
+}
+
 // ---- Teachers / students --------------------------------------------------
 export async function fetchTeachers() {
   let query = supabase.from('teachers').select('*').order('id');
@@ -223,6 +230,8 @@ export async function upsertTeacher(teacher) {
     phone: teacher.phone,
     status: teacher.status || 'Active',
     assigned_class: teacher.assignedClass || null,
+    tsc_number: teacher.tsc_number || null,
+    bio: teacher.bio || null,
     school_id: _schoolId,
   });
   if (error) throw error;
