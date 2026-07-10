@@ -76,13 +76,61 @@ export default function Timetable({ store, user }) {
   const [tab, setTab] = useState('class');
   const [teacherSel, setTeacherSel] = useState(teachers?.[0]?.name || '');
 
+  const [scheduleModal, setScheduleModal] = useState(false);
   const [workingDays, setWorkingDays] = useState(DAYS.map(() => true));
-  const [periodsPerDay, setPeriodsPerDay] = useState(8);
-  const [periodDuration, setPeriodDuration] = useState(40);
-  const [breaks, setBreaks] = useState([
-    { period: 3, label: 'Break' },
-    { period: 6, label: 'Lunch' },
-  ]);
+  
+  const [scheduleConfig, setScheduleConfig] = useState(settings?.timetable_schedule || {
+    startTime: '07:00',
+    periods: 9,
+    duration: 40,
+    breakAfter: 4,
+    breakDuration: 30,
+    lunchAfter: 7,
+    lunchDuration: 90
+  });
+
+  const timeConfig = useMemo(() => {
+    let currentTime = new Date(`2000-01-01T${scheduleConfig.startTime}:00`);
+    const addMins = (date, mins) => new Date(date.getTime() + mins * 60000);
+    const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    
+    const intervals = [];
+    const times = []; // For PDF
+    
+    let breakTimeStr = '-';
+    let lunchTimeStr = '-';
+    let breaks = [];
+    
+    for (let p = 1; p <= scheduleConfig.periods; p++) {
+      const pStart = formatTime(currentTime);
+      currentTime = addMins(currentTime, scheduleConfig.duration);
+      const pEnd = formatTime(currentTime);
+      
+      intervals.push({ type: 'lesson', start: pStart, end: pEnd, period: p });
+      times.push(`${pStart}-\n${pEnd}`);
+      
+      if (p === scheduleConfig.breakAfter) {
+        const bStart = formatTime(currentTime);
+        currentTime = addMins(currentTime, scheduleConfig.breakDuration);
+        const bEnd = formatTime(currentTime);
+        breakTimeStr = `${bStart}-${bEnd}`;
+        times.push(`${bStart}-\n${bEnd}`);
+        breaks.push({ period: p, label: 'Break' });
+      }
+      
+      if (p === scheduleConfig.lunchAfter) {
+        const lStart = formatTime(currentTime);
+        currentTime = addMins(currentTime, scheduleConfig.lunchDuration);
+        const lEnd = formatTime(currentTime);
+        lunchTimeStr = `${lStart}-${lEnd}`;
+        times.push(`${lStart}-\n${lEnd}`);
+        breaks.push({ period: p, label: 'Lunch' });
+      }
+    }
+    
+    const endTimeStr = formatTime(currentTime);
+    return { endTimeStr, breakTimeStr, lunchTimeStr, times, intervals, breaks };
+  }, [scheduleConfig]);
   const [assignments, setAssignments] = useState(() => defaultAssignments(teachers || []));
 
   useEffect(() => {
@@ -119,8 +167,8 @@ export default function Timetable({ store, user }) {
         const gen = generateAll({
           classes: dynamicClasses,
           days: activeDays,
-          periods: Number(periodsPerDay),
-          breaks,
+          periods: scheduleConfig.periods,
+          breaks: timeConfig.breaks,
           assignments,
           term,
         });
@@ -190,6 +238,7 @@ export default function Timetable({ store, user }) {
         title: `GRADE ${cls.replace(/[^0-9]/g, '')} ${term.toUpperCase()} JUNIOR SECONDARY TIMETABLE`,
         grid: tt.grid,
         days: tt.days,
+        times: timeConfig.times,
         filename: `timetable-${cls}-${term}.pdf`
       });
       notify('Timetable exported as PDF', 'success', 'Export');
@@ -271,88 +320,123 @@ export default function Timetable({ store, user }) {
         </div>
       </div>
 
-      {/* Generator panel */}
+      {/* Generator block */}
       {isTimetableAdmin && (
-        <div className="card card-pad" style={{ marginBottom: 20 }}>
-          <h3 className="section-title">Timetable Generator</h3>
-          <div className="grid grid-3" style={{ marginBottom: 16 }}>
-            <div>
+        <div className="grid" style={{ gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: 24, marginBottom: 20, alignItems: 'start' }}>
+          
+          {/* Left Column: School Schedule Card */}
+          <div className="card card-pad" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <Icon name="clock" size={20} color="#0284c7" />
+              <h3 className="section-title" style={{ margin: 0, color: '#0284c7', fontSize: 16 }}>School Schedule</h3>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span className="muted">Start:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{scheduleConfig.startTime}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span className="muted">End:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{timeConfig.endTimeStr}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span className="muted">Periods:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{scheduleConfig.periods}/day</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span className="muted">Duration:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{scheduleConfig.duration} min</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span className="muted">Break:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{timeConfig.breakTimeStr}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="muted">Lunch:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{timeConfig.lunchTimeStr}</span>
+              </div>
+            </div>
+            
+            <button className="btn btn-outline" style={{ width: '100%', marginTop: 20, color: '#0ea5e9', borderColor: '#bae6fd', background: '#fff' }} onClick={() => setScheduleModal(true)}>
+              <Icon name="settings" size={16} /> Edit Schedule
+            </button>
+            
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, color: '#0284c7' }}>
+                <Icon name="history" size={16} />
+                <span style={{ fontWeight: 600, fontSize: 14 }}>Recent Generations</span>
+              </div>
+              <div style={{ textAlign: 'center', padding: '16px 0', color: '#94a3b8', fontSize: 13 }}>
+                No generations yet
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                <button className="btn btn-primary" style={{ width: 48, height: 48, borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e3a8a' }}>
+                  <Icon name="bot" size={24} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Generation Settings & Assignments */}
+          <div className="card card-pad">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 className="section-title" style={{ margin: 0 }}>Timetable Generator</h3>
+              {generating && <div className="muted" style={{ fontSize: 13 }}>Generating… {Math.round(progress)}%</div>}
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
               <label className="field-label">Working Days</label>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 6 }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingTop: 6 }}>
                 {DAYS.map((d, i) => (
-                  <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                    <input
-                      type="checkbox"
-                      checked={workingDays[i]}
-                      onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))}
-                    />
+                  <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={workingDays[i]} onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))} />
                     {d}
                   </label>
                 ))}
               </div>
             </div>
-            <div>
-              <label className="field-label">Periods per day</label>
-              <input className="input" type="number" min="1" max="12" value={periodsPerDay} onChange={(e) => setPeriodsPerDay(e.target.value)} />
-            </div>
-            <div>
-              <label className="field-label">Period duration (min)</label>
-              <input className="input" type="number" min="20" max="120" value={periodDuration} onChange={(e) => setPeriodDuration(e.target.value)} />
-            </div>
-          </div>
 
-          {/* Breaks */}
-          <div style={{ marginBottom: 16 }}>
-            <label className="field-label">Break / Lunch periods</label>
-            {breaks.map((b, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                <input className="input" type="number" placeholder="Period No." value={b.period} style={{ width: 120 }}
-                  onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, period: e.target.value } : x)))} />
-                <input className="input" placeholder="Label" value={b.label} style={{ maxWidth: 240 }}
-                  onChange={(e) => setBreaks((bs) => bs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                <button className="btn btn-icon" onClick={() => setBreaks((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={16} /></button>
-              </div>
-            ))}
-            <button className="btn btn-sm" onClick={() => setBreaks((bs) => [...bs, { period: '', label: 'Break' }])}>+ Add Break</button>
-          </div>
-
-          {/* Subject-Teacher assignments */}
-          <label className="field-label">Subject — Teacher assignment</label>
-          <div className="scroll-x">
-            <table className="table">
-              <thead>
-                <tr><th>Subject</th><th>Assigned Teacher</th><th>Periods / Week</th></tr>
-              </thead>
-              <tbody>
-                {assignments.map((a, i) => (
-                  <tr key={a.subject}>
-                    <td>{a.subject}</td>
-                    <td>
-                      <select className="select" value={a.teacher} style={{ height: 34 }}
-                        onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
-                        <option value="">-- Select --</option>
-                        {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      <input className="input" type="number" min="0" max="10" value={a.perWeek} style={{ width: 80, height: 34 }}
-                        onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, perWeek: e.target.value } : x)))} />
-                    </td>
+            <label className="field-label">Subject — Teacher Assignments</label>
+            <div className="scroll-x" style={{ border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>
+              <table className="table" style={{ margin: 0 }}>
+                <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
+                  <tr>
+                    <th style={{ padding: '8px 12px' }}>Subject</th>
+                    <th style={{ padding: '8px 12px' }}>Assigned Teacher</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>Periods / Wk</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {generating && (
-            <div style={{ marginTop: 16 }}>
-              <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Generating timetable… {Math.round(progress)}%</div>
-              <div className="progress"><span style={{ width: `${progress}%`, background: 'var(--primary)' }} /></div>
+                </thead>
+                <tbody>
+                  {assignments.map((a, i) => (
+                    <tr key={a.subject}>
+                      <td style={{ padding: '6px 12px', fontWeight: 500 }}>{a.subject}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <select className="select" value={a.teacher} style={{ height: 32, fontSize: 13 }}
+                          onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
+                          <option value="">-- Select --</option>
+                          {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+                        </select>
+                      </td>
+                      <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                        <input className="input" type="number" min="0" max="10" value={a.perWeek} style={{ width: 60, height: 32, textAlign: 'center', fontSize: 13 }}
+                          onChange={(e) => setAssignments((as) => as.map((x, j) => (j === i ? { ...x, perWeek: e.target.value } : x)))} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-          {!generating && (
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={handleGenerate}>Generate</button>
-          )}
+
+            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={handleGenerate} disabled={generating} style={{ minWidth: 160 }}>
+                {generating ? 'Generating...' : 'Generate New Timetable'}
+              </button>
+            </div>
+            
+            {generating && <div className="progress" style={{ marginTop: 12 }}><span style={{ width: `${progress}%`, background: 'var(--primary)' }} /></div>}
+          </div>
         </div>
       )}
 
@@ -463,7 +547,88 @@ export default function Timetable({ store, user }) {
       {importOpen && (
         <ImportModal onClose={() => setImportOpen(false)} notify={notify} />
       )}
+
+      {scheduleModal && (
+        <ScheduleModal 
+          config={scheduleConfig} 
+          onClose={() => setScheduleModal(false)}
+          onSave={async (newConfig) => {
+            setScheduleConfig(newConfig);
+            setScheduleModal(false);
+            try {
+              const { updateSettings } = await import('../lib/api');
+              await updateSettings({ timetable_schedule: newConfig });
+              notify('Schedule settings saved successfully', 'success');
+            } catch (e) {
+              notify('Could not save schedule to server, but applied locally.', 'warning');
+            }
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function ScheduleModal({ config, onClose, onSave }) {
+  const [form, setForm] = useState(config);
+  
+  return (
+    <Modal
+      title="Edit School Schedule"
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => onSave(form)}>Save Schedule</button>
+        </>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="grid grid-2">
+          <div>
+            <label className="field-label">Start Time</label>
+            <input className="input" type="time" value={form.startTime} onChange={e => setForm(f => ({...f, startTime: e.target.value}))} />
+          </div>
+          <div>
+            <label className="field-label">Periods per Day</label>
+            <input className="input" type="number" min="1" max="15" value={form.periods} onChange={e => setForm(f => ({...f, periods: parseInt(e.target.value) || 1}))} />
+          </div>
+        </div>
+        
+        <div>
+          <label className="field-label">Period Duration (minutes)</label>
+          <input className="input" type="number" min="10" max="120" value={form.duration} onChange={e => setForm(f => ({...f, duration: parseInt(e.target.value) || 40}))} />
+        </div>
+        
+        <div style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 6, background: '#f8fafc' }}>
+          <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#475569' }}>Short Break</h4>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label" style={{ fontSize: 11 }}>After Period</label>
+              <input className="input" type="number" min="1" max="10" value={form.breakAfter} onChange={e => setForm(f => ({...f, breakAfter: parseInt(e.target.value) || 0}))} />
+            </div>
+            <div>
+              <label className="field-label" style={{ fontSize: 11 }}>Duration (min)</label>
+              <input className="input" type="number" min="5" max="60" value={form.breakDuration} onChange={e => setForm(f => ({...f, breakDuration: parseInt(e.target.value) || 0}))} />
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 6, background: '#f8fafc' }}>
+          <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#475569' }}>Lunch Break</h4>
+          <div className="grid grid-2">
+            <div>
+              <label className="field-label" style={{ fontSize: 11 }}>After Period</label>
+              <input className="input" type="number" min="1" max="10" value={form.lunchAfter} onChange={e => setForm(f => ({...f, lunchAfter: parseInt(e.target.value) || 0}))} />
+            </div>
+            <div>
+              <label className="field-label" style={{ fontSize: 11 }}>Duration (min)</label>
+              <input className="input" type="number" min="20" max="120" value={form.lunchDuration} onChange={e => setForm(f => ({...f, lunchDuration: parseInt(e.target.value) || 0}))} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

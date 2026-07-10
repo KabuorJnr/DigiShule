@@ -389,7 +389,7 @@ export function exportLessonPlanPDF({ school, plan, filename }) {
   doc.save(filename || 'Lesson_Plan.pdf');
 }
 
-export function exportTimetableLandscapePDF({ title, grid, days, filename }) {
+export function exportTimetableLandscapePDF({ title, grid, days, filename, times }) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
   
   // Title
@@ -402,14 +402,15 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename }) {
   doc.setLineWidth(1.5);
   doc.line(x, 43, x + textWidth, 43);
 
-  // Hardcoded times matching the Junior Secondary layout (up to 12 periods)
-  const TIMES = [
+  // Use dynamic times if provided, otherwise fallback
+  const fallbackTimes = [
     '8:00-\n8:40', '8:40-\n9:20', '9:20-\n9:30', '9:30-\n10:10', 
     '10:10-\n10:50', '10:50-\n11:20', '11:20-\n12:00', '12:00-\n12:40', 
     '12:40-\n2:00', '2:00-\n2:40', '2:40-\n3:20', '3:20-\n4:00'
   ];
+  const activeTimes = times || fallbackTimes;
 
-  const head = ['DAY', ...TIMES.slice(0, grid.length)];
+  const head = ['DAY', ...activeTimes.slice(0, grid.length)];
   const body = [];
 
   for (let d = 0; d < days.length; d++) {
@@ -433,8 +434,12 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename }) {
           });
         }
       } else if (cell.type === 'lesson') {
-        let sub = cell.subject ? cell.subject.substring(0, 4).toUpperCase() : '';
-        let txt = sub ? `${sub} 1` : '-';
+        let sub = cell.subject || '';
+        let abbr = '';
+        if (cell.teacher && cell.teacher !== 'TBD') {
+          abbr = cell.teacher.split(' ').map(n => n[0]).join('.').toUpperCase();
+        }
+        let txt = sub ? (abbr ? `${sub}\n(${abbr})` : sub) : '-';
         row.push({ 
           content: txt, 
           styles: { halign: 'center', valign: 'middle', fontStyle: 'italic', fontSize: 10 } 

@@ -11,7 +11,16 @@ export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
   const teacherName = user?.name || 'Teacher';
 
-  const teacherProfile = useMemo(() => store.teachers.find(t => t.id === user?.id || t.name === teacherName) || {}, [store.teachers, user?.id, teacherName]);
+  const teacherProfile = useMemo(() => {
+    if (!store.teachers) return {};
+    return store.teachers.find(t => 
+      t.id === user?.id || 
+      t.id === user?.teacher_id || 
+      t.emp_id === user?.teacher_id ||
+      t.emp_id === user?.id ||
+      (t.name || '').toLowerCase() === teacherName.toLowerCase()
+    ) || {};
+  }, [store.teachers, user?.id, user?.teacher_id, teacherName]);
   
   const subject = teacherProfile.subject || user?.dept || 'Mathematics';
   const assignedClass = teacherProfile.assignedClass || null;
@@ -20,14 +29,15 @@ export default function TeacherPortal({ store, user }) {
   
   useEffect(() => {
     let active = true;
-    import('../lib/api').then(({ fetchStudents }) => {
-      // Fetch up to 200 students for quick overview, typically from their assigned class
-      fetchStudents(0, 200, { class: assignedClass || null }).then(res => {
-        if (active) setLoadedStudents(res.data);
-      }).catch(() => {});
-    });
+    if (active) {
+      if (assignedClass) {
+        setLoadedStudents(store.students.filter(s => s.class === assignedClass));
+      } else {
+        setLoadedStudents(store.students);
+      }
+    }
     return () => { active = false; };
-  }, [assignedClass]);
+  }, [assignedClass, store.students]);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
   const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });

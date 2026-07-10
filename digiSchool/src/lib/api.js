@@ -198,6 +198,17 @@ export async function updateProfile(id, patch) {
   if (error) throw error;
 }
 
+export async function fetchStaffRolesByTeacherId(teacherId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('teacher_id', teacherId);
+  if (error) throw error;
+  return data || [];
+}
+
+export async function deleteStaffRole(userId, role) {
+  const { error } = await supabase.from('profiles').delete().match({ id: userId, role: role });
+  if (error) throw error;
+}
+
 // ---- Teachers / students --------------------------------------------------
 export async function fetchTeachers() {
   let query = supabase.from('teachers').select('*').order('id');

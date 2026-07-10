@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard, Badge } from '../../components/widgets';
 import { Icon } from '../../components/icons';
-import { upsertRow } from '../../lib/api';
+import { upsertRow, fetchStaffRolesByTeacherId, deleteStaffRole } from '../../lib/api';
 import Modal from '../../components/Modal';
 import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../../utils/auth';
@@ -26,6 +26,12 @@ export default function LogAttendance() {
   const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
   const [provisionStep, setProvisionStep] = useState(null);
   const [createdCredentials, setCreatedCredentials] = useState(null);
+
+  // Manage Roles Modal
+  const [manageRolesModal, setManageRolesModal] = useState(false);
+  const [managingStaff, setManagingStaff] = useState(null);
+  const [staffRoles, setStaffRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
 
   const totals = useMemo(() => {
     const activeStaff = staff.filter(s => s.status !== 'Inactive');
@@ -75,6 +81,55 @@ export default function LogAttendance() {
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
     notify(`${member.name} has been offboarded.`, 'success');
+  };
+
+  const openManageRoles = async (member) => {
+    setManagingStaff(member);
+    setManageRolesModal(true);
+    setLoadingRoles(true);
+    try {
+      const roles = await fetchStaffRolesByTeacherId(member.id);
+      setStaffRoles(roles);
+    } catch (e) {
+      notify(`Failed to fetch roles: ${e.message}`, 'error');
+      setManageRolesModal(false);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
+  const releaseRole = async (profileId, role) => {
+    if (!window.confirm(`Are you sure you want to release the role '${role}' from ${managingStaff.name}?`)) return;
+    try {
+      await deleteStaffRole(profileId, role);
+      const remainingRoles = staffRoles.filter(r => !(r.id === profileId && r.role === role));
+      setStaffRoles(remainingRoles);
+      notify(`Role '${role}' released successfully.`, 'success');
+
+      if (remainingRoles.length === 0) {
+        // Last role released, offboard them
+        const updated = { ...managingStaff, status: 'Inactive' };
+        await upsertRow('staff', {
+          id: updated.id, name: updated.name, role: updated.role,
+          dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
+        });
+        setStaff((ss) => ss.map((s) => (s.id === managingStaff.id ? updated : s)));
+        notify(`${managingStaff.name} has been fully offboarded.`, 'info');
+        setManageRolesModal(false);
+      } else if (managingStaff.role === role) {
+        // The released role was their primary role in the staff table, update it
+        const nextRole = remainingRoles[0].role;
+        const updated = { ...managingStaff, role: nextRole };
+        await upsertRow('staff', {
+          id: updated.id, name: updated.name, role: updated.role,
+          dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
+        });
+        setStaff((ss) => ss.map((s) => (s.id === managingStaff.id ? updated : s)));
+        setManagingStaff(updated);
+      }
+    } catch (e) {
+      notify(`Failed to release role: ${e.message}`, 'error');
+    }
   };
 
   const submitAddStaff = async () => {
@@ -174,10 +229,14 @@ export default function LogAttendance() {
                 <tr key={s.id}>
                   <td style={{ fontWeight: 600 }}>{s.name}</td><td>{s.role}</td><td className="muted">{s.dept}</td><td>{s.checkIn}</td>
                   <td><Badge color={STATUS_COLOR[s.status]}>{s.status}</Badge></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sm btn-primary" onClick={() => setSelectedStaff(s)}>View Profile</button>
-                      <button className="btn btn-sm" onClick={() => toggleStatus(s.id)}>Change Status</button>
+                  <td style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button className="btn btn-sm btn-outline" onClick={() => {
+                        setMessageForm({ subject: '', body: '' });
+                        setSelectedStaff(s);
+                        setComposeModal(true);
+                      }}>Message</button>
+                      {canApprove && <button className="btn btn-sm btn-outline" onClick={() => openManageRoles(s)}>Manage Roles</button>}
                       {canApprove && <button className="btn btn-sm" style={{ color: '#dc2626', borderColor: '#fca5a5' }} onClick={() => offboardStaff(s.id)}>Offboard</button>}
                     </div>
                   </td>
@@ -306,6 +365,57 @@ export default function LogAttendance() {
           
           <div style={{ fontSize: 13, color: '#64748b', textAlign: 'center' }}>
             Instruct the staff member to log in using the email/username and password above. They can change this password after logging in.
+          </div>
+        </Modal>
+      )}
+
+      {manageRolesModal && managingStaff && (
+        <Modal 
+          title={`Manage Roles for ${managingStaff.name}`} 
+          onClose={() => setManageRolesModal(false)}
+          footer={<button className="btn" onClick={() => setManageRolesModal(false)}>Close</button>}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+              Below are all the active roles assigned to this staff member. You can release specific roles here without fully offboarding them from the system. If you release their last remaining role, they will be automatically fully offboarded.
+            </p>
+            {loadingRoles ? (
+              <div style={{ textAlign: 'center', padding: 20 }} className="muted">Loading roles...</div>
+            ) : (
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+                <table className="table" style={{ margin: 0 }}>
+                  <thead style={{ background: '#f8fafc' }}>
+                    <tr>
+                      <th style={{ padding: '12px 16px' }}>Role</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffRoles.map(r => (
+                      <tr key={r.id + r.role}>
+                        <td style={{ padding: '12px 16px', fontWeight: 500 }}>{r.role}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <button 
+                            className="btn btn-sm" 
+                            style={{ color: '#dc2626', borderColor: '#fca5a5' }} 
+                            onClick={() => releaseRole(r.id, r.role)}
+                          >
+                            Release Role
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {staffRoles.length === 0 && (
+                      <tr>
+                        <td colSpan={2} style={{ padding: 24, textAlign: 'center' }} className="muted">
+                          No active roles found in profiles table.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </Modal>
       )}
