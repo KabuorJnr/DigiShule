@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public.departments (
 ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.departments;
 CREATE POLICY "school isolation" ON public.departments
-  USING (school_id = ANY(public.my_school_ids()));
+  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- Seed standard departments
 -- (These will be inserted per-school when the admin first opens teacher management)
@@ -37,7 +38,8 @@ CREATE TABLE IF NOT EXISTS public.subjects (
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.subjects;
 CREATE POLICY "school isolation" ON public.subjects
-  USING (school_id = ANY(public.my_school_ids()));
+  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- ═══════════════════════════════════════════════════════════
 -- 3. TEACHER SUBJECT QUALIFICATIONS
@@ -56,7 +58,8 @@ CREATE TABLE IF NOT EXISTS public.teacher_subject_qualifications (
 ALTER TABLE public.teacher_subject_qualifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.teacher_subject_qualifications;
 CREATE POLICY "school isolation" ON public.teacher_subject_qualifications
-  USING (school_id = ANY(public.my_school_ids()));
+  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- ═══════════════════════════════════════════════════════════
 -- 4. SUBJECT ASSIGNMENTS (class-stream-subject → teacher)
@@ -81,7 +84,8 @@ CREATE TABLE IF NOT EXISTS public.subject_assignments (
 ALTER TABLE public.subject_assignments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.subject_assignments;
 CREATE POLICY "school isolation" ON public.subject_assignments
-  USING (school_id = ANY(public.my_school_ids()));
+  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- Reload PostgREST schema cache
 NOTIFY pgrst, 'reload schema';
