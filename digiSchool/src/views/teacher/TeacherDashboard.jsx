@@ -163,14 +163,44 @@ export default function TeacherDashboard() {
 
       {/* Leave Modal */}
       {showLeaveModal && (
-        <Modal title="Leave Application" onClose={() => setShowLeaveModal(false)} footer={<button className="btn btn-primary" onClick={submitLeaveRequest}>Submit</button>}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div className="grid grid-2">
-              <div><label className="field-label">Start</label><input type="date" className="input" value={leaveForm.start} onChange={e => setLeaveForm(f => ({ ...f, start: e.target.value }))} /></div>
-              <div><label className="field-label">End</label><input type="date" className="input" value={leaveForm.end} onChange={e => setLeaveForm(f => ({ ...f, end: e.target.value }))} /></div>
-            </div>
-            <div><label className="field-label">Reason</label><textarea className="input" value={leaveForm.reason} onChange={e => setLeaveForm(f => ({ ...f, reason: e.target.value }))} /></div>
+        <Modal 
+          title="Leave Management" 
+          onClose={() => setShowLeaveModal(false)} 
+          footer={leaveTab === 'apply' ? <button className="btn btn-primary" onClick={submitLeaveRequest} disabled={leaveSaving}>{leaveSaving ? 'Submitting...' : 'Submit Request'}</button> : null}
+        >
+          <div style={{ display: 'flex', gap: 10, borderBottom: '1px solid var(--border)', paddingBottom: 10, marginBottom: 16 }}>
+            <button className={`btn btn-sm ${leaveTab === 'apply' ? 'btn-primary' : ''}`} onClick={() => setLeaveTab('apply')}>Apply for Leave</button>
+            <button className={`btn btn-sm ${leaveTab === 'history' ? 'btn-primary' : ''}`} onClick={() => setLeaveTab('history')}>My Requests</button>
           </div>
+
+          {leaveTab === 'apply' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="grid grid-2">
+                <div><label className="field-label">Start Date</label><input type="date" className="input" value={leaveForm.start} onChange={e => setLeaveForm(f => ({ ...f, start: e.target.value }))} /></div>
+                <div><label className="field-label">End Date</label><input type="date" className="input" value={leaveForm.end} onChange={e => setLeaveForm(f => ({ ...f, end: e.target.value }))} /></div>
+              </div>
+              <div><label className="field-label">Reason</label><textarea className="input" placeholder="Briefly explain the reason for your leave..." value={leaveForm.reason} onChange={e => setLeaveForm(f => ({ ...f, reason: e.target.value }))} /></div>
+            </div>
+          ) : (
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {leaveRequests.length === 0 ? (
+                <div className="muted" style={{ textAlign: 'center', padding: '20px 0' }}>You have not submitted any leave requests yet.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {leaveRequests.map(l => (
+                    <div key={l.id} className="card card-pad" style={{ background: '#f8fafc', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{new Date(l.start_date).toLocaleDateString()} &mdash; {new Date(l.end_date).toLocaleDateString()}</div>
+                        <Badge color={l.status === 'Approved' ? 'green' : l.status === 'Rejected' ? 'red' : 'yellow'}>{l.status}</Badge>
+                      </div>
+                      <div style={{ fontSize: 13, color: '#475569', marginBottom: 8 }}>{l.reason}</div>
+                      <div style={{ fontSize: 11, color: '#94a3b8' }}>Submitted on: {new Date(l.created_at).toLocaleDateString()}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Modal>
       )}
 
