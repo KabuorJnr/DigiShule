@@ -25,7 +25,12 @@ export default function ExamSchedules({ store }) {
   const [sortDir, setSortDir] = useState('asc');
   const [chipDetail, setChipDetail] = useState(null);
 
-  const dynamicClasses = useMemo(() => getDynamicClasses(store.students), [store.students]);
+  const dynamicClasses = useMemo(() => {
+    if (settings?.classes?.length) {
+      return settings.classes.map(c => c.name);
+    }
+    return [...new Set(getDynamicClasses(store.students).map(c => c.replace(/\s*[A-Z]$/, '')))];
+  }, [settings?.classes, store.students]);
 
   const flat = useMemo(() =>
     examSchedules.flatMap((s) =>
@@ -333,8 +338,8 @@ function SessionRows({ rows, setRows, venues, dynamicClasses }) {
               <td>
                 <select className="select" value={r.classes} style={{ height: 32, width: 110 }} onChange={(e) => update(i, { classes: e.target.value })}>
                   <option value="">Select</option>
-                  {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
-                  <option value="Grade 7-12">All Grades</option>
+                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <option value="All Grades">All Grades</option>
                 </select>
               </td>
               <td>

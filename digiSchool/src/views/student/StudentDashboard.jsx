@@ -59,8 +59,8 @@ export default function StudentDashboard() {
   return (
     <>
       <div className="stat-tiles">
-        <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#0078D4" />
-        <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={rank ? `${rank.position} / ${rank.classSize}` : '—'} />
+        <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={isPublished ? `${overallAvg}%` : 'Pending'} accent="#0078D4" />
+        <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={isPublished && rank ? `${rank.position} / ${rank.classSize}` : 'Pending'} />
         <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />
         <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(feeAccount.outstanding)} accent={feeAccount.outstanding > 0 ? '#D13438' : '#107C10'}>
           <div style={{ marginTop: 6 }}><ProgressBar value={feeAccount.totalBilled > 0 ? Math.min(100, (feeAccount.totalPaid / feeAccount.totalBilled) * 100) : 0} color="#107C10" /></div>

@@ -164,45 +164,54 @@ export default function AcademicsTab() {
 
       {tab === 'results' && (
         <>
-          <div className="card card-pad" style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 className="section-title" style={{ margin: 0 }}>Term 2 Results</h3>
-              {rank && <span className="muted">Class Position: <strong>{rank.position} / {rank.classSize}</strong></span>}
+          {store.settings?.results_published ? (
+            <>
+              <div className="card card-pad" style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>Term 2 Results</h3>
+                  {rank && <span className="muted">Class Position: <strong>{rank.position} / {rank.classSize}</strong></span>}
+                </div>
+                <div className="scroll-x">
+                  <table className="table">
+                    <thead><tr><th>Subject</th><th>CAT 1 /30</th><th>CAT 2 /30</th><th>Midterm /100</th><th>End-Term /100</th><th>Total</th><th>Avg %</th><th>Grade</th></tr></thead>
+                    <tbody>
+                      {subjects.map(r => (
+                        <tr key={r.subject}>
+                          <td style={{ fontWeight: 600 }}>{r.subject}</td>
+                          <td>{r.cat1}</td><td>{r.cat2}</td><td>{r.midterm}</td><td>{r.endterm}</td>
+                          <td style={{ fontWeight: 700 }}>{r.total}</td>
+                          <td style={{ fontWeight: 700 }}>{r.average}</td>
+                          <td><Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>{r.grade}</Badge></td>
+                        </tr>
+                      ))}
+                      <tr style={{ fontWeight: 700, background: '#f5f5f5' }}>
+                        <td colSpan={6}>Overall Average</td>
+                        <td>{overallAvg}%</td>
+                        <td><Badge color={Number(overallAvg) >= 70 ? 'green' : Number(overallAvg) >= 50 ? 'amber' : 'red'}>{gradeFor(Number(overallAvg), gradeBoundaries)}</Badge></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="card card-pad">
+                <h3 className="section-title">Subject Performance Analysis</h3>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={subjects} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                    <XAxis dataKey="subject" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                    <Tooltip formatter={v => `${v}%`} />
+                    <Bar dataKey="average" fill="#0078D4" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <div className="card card-pad">
+              <h3 className="section-title">Term 2 Results</h3>
+              <p className="muted">Current term exam results are undergoing review and have not yet been published by the Academic Office.</p>
             </div>
-            <div className="scroll-x">
-              <table className="table">
-                <thead><tr><th>Subject</th><th>CAT 1 /30</th><th>CAT 2 /30</th><th>Midterm /100</th><th>End-Term /100</th><th>Total</th><th>Avg %</th><th>Grade</th></tr></thead>
-                <tbody>
-                  {subjects.map(r => (
-                    <tr key={r.subject}>
-                      <td style={{ fontWeight: 600 }}>{r.subject}</td>
-                      <td>{r.cat1}</td><td>{r.cat2}</td><td>{r.midterm}</td><td>{r.endterm}</td>
-                      <td style={{ fontWeight: 700 }}>{r.total}</td>
-                      <td style={{ fontWeight: 700 }}>{r.average}</td>
-                      <td><Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>{r.grade}</Badge></td>
-                    </tr>
-                  ))}
-                  <tr style={{ fontWeight: 700, background: '#f5f5f5' }}>
-                    <td colSpan={6}>Overall Average</td>
-                    <td>{overallAvg}%</td>
-                    <td><Badge color={Number(overallAvg) >= 70 ? 'green' : Number(overallAvg) >= 50 ? 'amber' : 'red'}>{gradeFor(Number(overallAvg), gradeBoundaries)}</Badge></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div className="card card-pad">
-            <h3 className="section-title">Subject Performance Analysis</h3>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={subjects} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                <Tooltip formatter={v => `${v}%`} />
-                <Bar dataKey="average" fill="#0078D4" radius={[4, 4, 0, 0]} maxBarSize={36} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          )}
         </>
       )}
     </>

@@ -331,9 +331,11 @@ export default function ParentPortal({ store, user }) {
           <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
             <Icon name="finance" size={18} /> Pay School Fees
           </button>
-          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
-            <Download size={18} /> Download Transcript
-          </button>
+          {store.settings?.results_published && (
+            <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
+              <Download size={18} /> Download Transcript
+            </button>
+          )}
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadStatement}>
             <Download size={18} /> Download Statement
           </button>
@@ -342,24 +344,33 @@ export default function ParentPortal({ store, user }) {
 
       <div className="grid grid-2" style={{ alignItems: 'start' }}>
         <div className="card card-pad">
-          <div className="section-title">Academic Performance — Term 2</div>
-          <div className="scroll-x">
-            <table className="table">
-              <thead>
-                <tr><th>Subject</th><th>Total</th><th>Avg %</th><th>Grade</th></tr>
-              </thead>
-              <tbody>
-                {subjects.map((r) => (
-                  <tr key={r.subject}>
-                    <td style={{ fontWeight: 600 }}>{r.subject}</td>
-                    <td>{r.total}</td>
-                    <td style={{ fontWeight: 700 }}>{r.average}</td>
-                    <td><Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>{r.grade}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {store.settings?.results_published ? (
+            <>
+              <div className="section-title">Academic Performance — Term 2</div>
+              <div className="scroll-x">
+                <table className="table">
+                  <thead>
+                    <tr><th>Subject</th><th>Total</th><th>Avg %</th><th>Grade</th></tr>
+                  </thead>
+                  <tbody>
+                    {subjects.map((r) => (
+                      <tr key={r.subject}>
+                        <td style={{ fontWeight: 600 }}>{r.subject}</td>
+                        <td>{r.total}</td>
+                        <td style={{ fontWeight: 700 }}>{r.average}</td>
+                        <td><Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>{r.grade}</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="section-title">Academic Performance — Term 2</div>
+              <p className="muted">Current term exam results are undergoing review and have not yet been published by the Academic Office.</p>
+            </>
+          )}
         </div>
 
         <div>

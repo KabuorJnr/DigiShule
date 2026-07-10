@@ -15,7 +15,7 @@ const GRADE_COLORS = { EE: '#10B981', ME: '#3B82F6', AE: '#F59E0B', BE: '#EF4444
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
-  const { updateStudent, gradeBoundaries, settings, notify } = store;
+  const { updateStudent, gradeBoundaries, settings, setSettings, notify } = store;
   const [cls, setCls] = useState('');
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
@@ -191,6 +191,15 @@ export default function Gradebook({ store }) {
         subtitle="Inspect, edit and analyse student performance"
         actions={
           <div style={{ display: 'flex', gap: 10 }}>
+            {(store.user?.role?.includes('Admin') || store.user?.role?.includes('Principal') || store.user?.role?.includes('Deputy')) && (
+              <button 
+                className={`btn ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
+                onClick={togglePublishResults}
+              >
+                <Icon name={settings?.results_published ? "close" : "check"} size={16} /> 
+                {settings?.results_published ? 'Unpublish Results' : 'Publish Results'}
+              </button>
+            )}
             <button className="btn" onClick={exportExcel}><Icon name="file" size={16} /> Export Excel</button>
             <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
           </div>
