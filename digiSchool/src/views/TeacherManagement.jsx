@@ -685,8 +685,10 @@ export default function TeacherManagement({ store, user, params = {} }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 140 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>STREAM</label>
                 <select className="select" value={selectedStream} onChange={e => setSelectedStream(e.target.value)}>
-                  <option value="">All Streams</option>
-                  {streams.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="">Select Stream</option>
+                  {streams
+                    .filter(s => !['select stream', 'all streams'].includes(s.toLowerCase()))
+                    .map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             )}
