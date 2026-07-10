@@ -388,3 +388,103 @@ export function exportLessonPlanPDF({ school, plan, filename }) {
 
   doc.save(filename || 'Lesson_Plan.pdf');
 }
+
+export function exportTimetableLandscapePDF({ title, grid, days, filename }) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  
+  // Title
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  // Underline
+  const textWidth = doc.getTextWidth(title);
+  const x = (doc.internal.pageSize.getWidth() - textWidth) / 2;
+  doc.text(title, x, 40);
+  doc.setLineWidth(1.5);
+  doc.line(x, 43, x + textWidth, 43);
+
+  // Hardcoded times matching the Junior Secondary layout (up to 12 periods)
+  const TIMES = [
+    '8:00-\n8:40', '8:40-\n9:20', '9:20-\n9:30', '9:30-\n10:10', 
+    '10:10-\n10:50', '10:50-\n11:20', '11:20-\n12:00', '12:00-\n12:40', 
+    '12:40-\n2:00', '2:00-\n2:40', '2:40-\n3:20', '3:20-\n4:00'
+  ];
+
+  const head = ['DAY', ...TIMES.slice(0, grid.length)];
+  const body = [];
+
+  for (let d = 0; d < days.length; d++) {
+    const row = [{ content: days[d].toUpperCase(), styles: { fontStyle: 'bold', halign: 'center', valign: 'middle' } }];
+    for (let p = 0; p < grid.length; p++) {
+      const cell = grid[p][d];
+      if (cell.type === 'break') {
+        if (d === 0) {
+          let bLabel = cell.label.toUpperCase();
+          // Ensure break labels have a space so they wrap correctly vertically
+          if (!bLabel.includes(' ')) {
+            if (p === 2) bLabel = 'SHORT BREAK';
+            else if (p === 5) bLabel = 'LONG BREAK';
+            else if (p === 8) bLabel = 'LUNCH BREAK';
+          }
+          const wrapped = bLabel.split(' ').join('\n');
+          row.push({ 
+            content: wrapped, 
+            rowSpan: days.length, 
+            styles: { halign: 'center', valign: 'middle', fontStyle: 'bold', fontSize: 13, minCellWidth: 30 } 
+          });
+        }
+      } else if (cell.type === 'lesson') {
+        let sub = cell.subject ? cell.subject.substring(0, 4).toUpperCase() : '';
+        let txt = sub ? `${sub} 1` : '-';
+        row.push({ 
+          content: txt, 
+          styles: { halign: 'center', valign: 'middle', fontStyle: 'italic', fontSize: 10 } 
+        });
+      } else {
+        row.push({ 
+          content: '-', 
+          styles: { halign: 'center', valign: 'middle' } 
+        });
+      }
+    }
+    body.push(row);
+  }
+
+  autoTable(doc, {
+    head: [head],
+    body: body,
+    startY: 60,
+    theme: 'grid',
+    styles: { 
+      fontSize: 10, 
+      cellPadding: 8, 
+      lineColor: [0, 0, 0], 
+      lineWidth: 1,
+      textColor: [0, 0, 0]
+    },
+    headStyles: { 
+      fillColor: [255, 255, 255], 
+      textColor: [0, 0, 0], 
+      fontStyle: 'bold', 
+      halign: 'center', 
+      valign: 'middle',
+      lineWidth: 1,
+      lineColor: [0, 0, 0]
+    },
+    bodyStyles: {
+      fillColor: [255, 255, 255]
+    },
+    margin: { left: 40, right: 40 }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 40;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('PREPARED BY ..............................................................', 40, finalY);
+  
+  const rightText = 'SCHOOL STAMP ..............................................................';
+  const rightWidth = doc.getTextWidth(rightText);
+  doc.text(rightText, doc.internal.pageSize.getWidth() - 40 - rightWidth, finalY);
+
+  doc.save(filename);
+}

@@ -3,7 +3,7 @@ import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
-import { exportTablePDF, downloadExcel } from '../utils/exporters';
+import { exportTablePDF, downloadExcel, exportTimetableLandscapePDF } from '../utils/exporters';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const TERMS = ['Term 1', 'Term 2', 'Term 3'];
@@ -184,6 +184,18 @@ export default function Timetable({ store, user }) {
 
   function exportPDF() {
     if (!tt) return notify('Generate a timetable first', 'warning');
+    
+    if (tab === 'class') {
+      exportTimetableLandscapePDF({
+        title: `GRADE ${cls.replace(/[^0-9]/g, '')} ${term.toUpperCase()} JUNIOR SECONDARY TIMETABLE`,
+        grid: tt.grid,
+        days: tt.days,
+        filename: `timetable-${cls}-${term}.pdf`
+      });
+      notify('Timetable exported as PDF', 'success', 'Export');
+      return;
+    }
+
     const head = ['Period', ...tt.days];
     let body;
     if (tab === 'teacher') {

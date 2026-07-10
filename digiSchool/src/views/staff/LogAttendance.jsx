@@ -112,8 +112,8 @@ export default function LogAttendance() {
       }
       await upsertRow('staff', staffPayload);
       setStaff(prev => [...prev, { ...newStaff, checkIn: newStaff.check_in }]);
-      if (addForm.role === 'teacher') {
-        const teacherObj = { id: newStaff.id, name: newStaff.name, subject: newStaff.subject || newStaff.dept, role: 'teacher', emp_id: newStaff.id, phone: addForm.phone, status: 'Active', assignedClass: null };
+      if (['teacher', 'deputy_admin', 'deputy_academic', 'principal'].includes(addForm.role)) {
+        const teacherObj = { id: newStaff.id, name: newStaff.name, subject: newStaff.subject || newStaff.dept, role: addForm.role, emp_id: newStaff.id, phone: addForm.phone, status: 'Active', assignedClass: null };
         if (store.addTeacher) store.addTeacher(teacherObj);
       }
       setProvisionStep('email');
