@@ -17,10 +17,44 @@ export default function StaffLayout() {
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
   useEffect(() => {
-    fetchTable('staff')
-      .then((rows) => setStaff(rows.map((s) => ({ ...s, checkIn: s.check_in })).sort((a, b) => a.name.localeCompare(b.name))))
+    Promise.all([
+      fetchTable('staff'),
+      fetchTable('staffAttendanceLogs'),
+      supabase.from('profiles').select('id, teacher_id')
+    ])
+      .then(([staffRows, logsRows, profRes]) => {
+        const profs = profRes?.data || [];
+        const profMap = {};
+        profs.forEach(p => {
+          if (p.teacher_id) profMap[p.teacher_id] = p.id;
+        });
+
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const logsToday = (logsRows || []).filter(l => l.date === todayStr);
+
+        const formatted = staffRows.map((s) => {
+          const uId = profMap[s.id] || s.id;
+          const myLogs = logsToday.filter(l => l.staff_id === uId || l.staff_id === s.id).sort((a, b) => new Date(a.check_in_time) - new Date(b.check_in_time));
+          
+          let checkInStr = s.check_in || '';
+          if (myLogs.length > 0 && myLogs[0].check_in_time) {
+            checkInStr = new Date(myLogs[0].check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } else if (checkInStr === '07:00 AM') {
+            checkInStr = ''; // clear dummy data if no log exists
+          }
+          
+          let derivedStatus = s.status;
+          if (s.status !== 'Inactive' && s.status !== 'On Leave') {
+            derivedStatus = myLogs.length > 0 ? 'Present' : 'Absent';
+          }
+
+          return { ...s, checkIn: checkInStr, status: derivedStatus };
+        }).sort((a, b) => a.name.localeCompare(b.name));
+
+        setStaff(formatted);
+      })
       .catch((e) => notify(`Failed to load staff: ${e.message}`, 'error'));
-      
+
     fetchTable('job_applications')
       .then((rows) => setJobApps(rows || []))
       .catch(() => setJobApps([]));
