@@ -33,11 +33,11 @@ export default function PortalLayout() {
   const [toasts, setToasts] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [subjectAssignments, setSubjectAssignments] = useState([]);
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
+  const [dataLoading, setDataLoading] = useState(true);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-
-  // Staff Activation state
   const [staffRecord, setStaffRecord] = useState(null);
   const [activationPinInput, setActivationPinInput] = useState('');
   const [activationError, setActivationError] = useState('');
@@ -180,6 +180,7 @@ export default function PortalLayout() {
       notifToggles, setNotifToggles: setTogglesP,
       timetables, setTimetables: setTimetablesP,
       notifications, setNotifications,
+      subjectAssignments, setSubjectAssignments,
       notify,
       navigate: (v, p = {}) => { 
         setViewParams(p); 
@@ -196,14 +197,14 @@ export default function PortalLayout() {
   const loadAllData = useCallback(async (background = false) => {
     if (!background) setDataLoading(true);
     try {
-      // Use allSettled so one failing query doesn't block all others
-      const [cfg, ex, tt, notifs, st, tch] = await Promise.allSettled([
+      const [cfg, ex, tt, notifs, st, tch, assigns] = await Promise.allSettled([
         api.fetchConfig(),
         api.fetchExamSchedules(),
         api.fetchTimetables(),
         api.fetchTable('notifications'),
         api.fetchAllStudentsUnpaginated(),
-        api.fetchTeachers()
+        api.fetchTeachers(),
+        api.fetchTable('subjectAssignments')
       ]);
       // Apply results only if they resolved successfully
       if (cfg.status === 'fulfilled') {
@@ -213,10 +214,12 @@ export default function PortalLayout() {
         setNotifToggles(cfg.value.notifToggles);
         setVenues(cfg.value.venues);
       }
-      if (ex.status === 'fulfilled') setExamSchedules(ex.value);
-      if (tt.status === 'fulfilled') setTimetables(tt.value);
+      if (ex.status === 'fulfilled') setExamSchedules(ex.value || []);
+      if (tt.status === 'fulfilled') setTimetables(tt.value || []);
       if (st.status === 'fulfilled') setStudents(st.value || []);
       if (tch.status === 'fulfilled') setTeachers(tch.value || []);
+      
+      const subjectAssignments = assigns?.status === 'fulfilled' ? (assigns.value || []) : [];
       if (notifs.status === 'fulfilled') {
         setNotifications((notifs.value || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
       }

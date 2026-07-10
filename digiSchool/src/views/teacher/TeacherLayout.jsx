@@ -29,17 +29,28 @@ export default function TeacherLayout() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
 
+  const subjectAssignments = useMemo(() => {
+    if (!store.subjectAssignments) return [];
+    return store.subjectAssignments.filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
+  }, [store.subjectAssignments, teacherProfile.id, user?.id]);
+
+  const subjectClasses = useMemo(() => {
+    return subjectAssignments.map(a => a.stream_name ? `${a.class_name} ${a.stream_name}` : a.class_name);
+  }, [subjectAssignments]);
+
   useEffect(() => {
     let active = true;
     if (active) {
-      if (assignedClass) {
-        setLoadedStudents(store.students.filter(s => s.class === assignedClass));
+      if (assignedClass || subjectClasses.length > 0) {
+        setLoadedStudents(store.students.filter(s => 
+          s.class === assignedClass || subjectClasses.includes(s.class)
+        ));
       } else {
-        setLoadedStudents(store.students);
+        setLoadedStudents([]);
       }
     }
     return () => { active = false; };
-  }, [assignedClass, store.students]);
+  }, [assignedClass, subjectClasses, store.students]);
 
   useEffect(() => {
     let active = true;
