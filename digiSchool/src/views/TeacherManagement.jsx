@@ -192,14 +192,34 @@ export default function TeacherManagement({ store, user, params = {} }) {
       const loadedQuals = quals.status === 'fulfilled' ? (quals.value || []) : [];
       const loadedAssigns = assigns.status === 'fulfilled' ? (assigns.value || []) : [];
 
-      // Seed subjects if empty
-      if (loadedSubjects.length === 0) {
+      // Sync subjects with settings.subjects
+      const settingsSubjects = settings?.subjects || [];
+      if (settingsSubjects.length > 0) {
+        const syncedSubjects = [];
+        for (const s of settingsSubjects) {
+          let match = loadedSubjects.find(l => l.name.toLowerCase() === s.name.toLowerCase());
+          if (!match) {
+            match = { 
+              id: `subj_${s.name.replace(/\s+/g, '_').toLowerCase()}`, 
+              name: s.name, 
+              department: s.dept, 
+              code: s.name.substring(0,3).toUpperCase() 
+            };
+            try { await upsertRow('subjects', match); } catch(e) {}
+          } else if (match.department !== s.dept) {
+            match.department = s.dept;
+            try { await upsertRow('subjects', match); } catch(e) {}
+          }
+          syncedSubjects.push(match);
+        }
+        loadedSubjects = syncedSubjects;
+      } else if (loadedSubjects.length === 0) {
         try {
           for (const s of DEFAULT_SUBJECTS) {
             await upsertRow('subjects', { id: `subj_${s.code}`, ...s });
           }
         } catch (e) { 
-          console.warn('Could not seed subjects in DB (table might not exist yet):', e.message); 
+          console.warn('Could not seed subjects in DB:', e.message); 
         }
         loadedSubjects = DEFAULT_SUBJECTS.map(s => ({ id: `subj_${s.code}`, ...s }));
       }
@@ -212,7 +232,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [settings?.subjects]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
