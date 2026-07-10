@@ -73,10 +73,10 @@ function StatusPill({ status }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12,
-      background: assigned ? '#dcfce7' : '#fef3c7',
-      color: assigned ? '#166534' : '#92400e'
+      background: assigned ? '#dcfce7' : '#f1f5f9',
+      color: assigned ? '#166534' : '#475569'
     }}>
-      {assigned ? '✓ Assigned' : '⚠ Unassigned'}
+      {assigned ? '✓ Assigned' : '○ Unassigned'}
     </span>
   );
 }
@@ -742,7 +742,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                   <span>Assignment Progress</span>
                   <span>{assignedCount}/{totalSubjects} assigned</span>
                 </div>
-                <ProgressBar value={assignPct} color={assignPct >= 80 ? '#10B981' : assignPct >= 50 ? '#F59E0B' : '#EF4444'} />
+                <ProgressBar value={assignPct} color={assignPct === 100 ? '#10B981' : '#3B82F6'} />
               </div>
 
               {/* Subject Cards */}
@@ -762,7 +762,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
                   return (
                     <div key={assignment.id} className="card card-pad" style={{
-                      borderLeft: `4px solid ${assignment.status === 'assigned' ? '#10B981' : '#F59E0B'}`
+                      borderLeft: `4px solid ${assignment.status === 'assigned' ? '#10B981' : '#94A3B8'}`
                     }}>
                       {/* Subject Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
