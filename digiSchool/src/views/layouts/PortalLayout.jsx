@@ -35,7 +35,6 @@ export default function PortalLayout() {
   const [notifications, setNotifications] = useState([]);
   const [subjectAssignments, setSubjectAssignments] = useState([]);
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
-  const [dataLoading, setDataLoading] = useState(true);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [staffRecord, setStaffRecord] = useState(null);
