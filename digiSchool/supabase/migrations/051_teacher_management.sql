@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.departments (
 ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.departments;
 CREATE POLICY "school isolation" ON public.departments
-  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  USING (school_id = ANY(public.my_school_ids()))
   WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- Seed standard departments
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.subjects (
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.subjects;
 CREATE POLICY "school isolation" ON public.subjects
-  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  USING (school_id = ANY(public.my_school_ids()))
   WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- ═══════════════════════════════════════════════════════════
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_subject_qualifications (
 ALTER TABLE public.teacher_subject_qualifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.teacher_subject_qualifications;
 CREATE POLICY "school isolation" ON public.teacher_subject_qualifications
-  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  USING (school_id = ANY(public.my_school_ids()))
   WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- ═══════════════════════════════════════════════════════════
@@ -84,7 +84,8 @@ CREATE TABLE IF NOT EXISTS public.subject_assignments (
 ALTER TABLE public.subject_assignments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "school isolation" ON public.subject_assignments;
 CREATE POLICY "school isolation" ON public.subject_assignments
-  FOR ALL USING (school_id = ANY(public.my_school_ids()))
+  AS PERMISSIVE FOR ALL
+  USING (school_id = ANY(public.my_school_ids()))
   WITH CHECK (school_id = ANY(public.my_school_ids()));
 
 -- Reload PostgREST schema cache
