@@ -8,8 +8,8 @@ import PrintHeader from '../components/PrintHeader';
 const OUTCOME_COLOR = { 'Returned to class': 'green', 'Sent home': 'amber', 'Referred to hospital': 'red' };
 
 export default function Clinic({ store }) {
-  const { notify } = store;
-  const [students, setStudents] = useState([]);
+  const { notify, students: storeStudents } = store;
+  const students = storeStudents || [];
   const [visits, setVisits] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const [form, setForm] = useState({ student: '', adm: '', complaint: '', treatment: '', outcome: 'Returned to class' });
@@ -17,6 +17,7 @@ export default function Clinic({ store }) {
   const [parentMsg, setParentMsg] = useState('');
   const [activeTab, setActiveTab] = useState('directory');
   const [selectedClass, setSelectedClass] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -24,18 +25,15 @@ export default function Clinic({ store }) {
       .then((rows) => { if (active) setVisits(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))); })
       .catch((e) => notify(`Failed to load clinic visits: ${e.message}`, 'error'));
       
-    fetchStudents(0, 1000).then(res => {
-      if (active) {
-        const sorted = (res.data || []).sort((a, b) => a.name.localeCompare(b.name));
-        setStudents(sorted);
-        // Set default class if not set
-        const classes = [...new Set(sorted.map(s => s.class || 'Unassigned'))].sort();
-        if (classes.length > 0) setSelectedClass(classes[0]);
-      }
-    }).catch(() => {});
-    
     return () => { active = false; };
   }, [notify]);
+
+  useEffect(() => {
+    if (students.length > 0 && !selectedClass) {
+      const classes = [...new Set(students.map(s => s.class || 'Unassigned'))].sort();
+      if (classes.length > 0) setSelectedClass(classes[0]);
+    }
+  }, [students, selectedClass]);
 
   const totals = useMemo(() => ({
     total: visits.length,
@@ -52,6 +50,14 @@ export default function Clinic({ store }) {
     });
     return groups;
   }, [students]);
+
+  const displayedStudents = useMemo(() => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return students.filter(s => s.name?.toLowerCase().includes(q) || s.adm?.toLowerCase().includes(q));
+    }
+    return groupedStudents[selectedClass] || [];
+  }, [students, groupedStudents, selectedClass, searchQuery]);
 
   const openLogForStudent = (st) => {
     setForm({ student: st.name, adm: st.adm, student_id: st.id, medicalInfo: st.medicalInfo, complaint: '', treatment: '', outcome: 'Returned to class' });
@@ -192,7 +198,21 @@ export default function Clinic({ store }) {
           </div>
 
           <div className="card card-pad fade-in">
-            <h3 className="section-title">{selectedClass} — Medical Directory</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 className="section-title" style={{ margin: 0 }}>
+                {searchQuery.trim() ? 'Search Results' : `${selectedClass} — Medical Directory`}
+              </h3>
+              <div style={{ position: 'relative', width: 250 }}>
+                <Icon name="search" size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <input 
+                  className="input" 
+                  placeholder="Search all students..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: 32, margin: 0, width: '100%' }}
+                />
+              </div>
+            </div>
             <div className="scroll-x">
               <table className="table">
                 <thead>
@@ -204,7 +224,7 @@ export default function Clinic({ store }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedStudents[selectedClass]?.map(st => (
+                  {displayedStudents.map(st => (
                     <tr key={st.id} style={{ cursor: 'pointer' }} onClick={() => openLogForStudent(st)} className="hoverable-row">
                       <td style={{ fontWeight: 600 }}>{st.name}</td>
                       <td className="muted">{st.adm}</td>
@@ -222,8 +242,10 @@ export default function Clinic({ store }) {
                       </td>
                     </tr>
                   ))}
-                  {!groupedStudents[selectedClass]?.length && (
-                    <tr><td colSpan={4} className="muted" style={{ textAlign: 'center', padding: 20 }}>No students in this class.</td></tr>
+                  {displayedStudents.length === 0 && (
+                    <tr><td colSpan={4} className="muted" style={{ textAlign: 'center', padding: 20 }}>
+                      {searchQuery.trim() ? 'No students match your search.' : 'No students in this class.'}
+                    </td></tr>
                   )}
                 </tbody>
               </table>
