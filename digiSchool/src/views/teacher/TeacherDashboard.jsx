@@ -11,7 +11,8 @@ export default function TeacherDashboard() {
   const { 
     store, user, teacherName, subject, assignedClass,
     loadedStudents, messages, setMessages,
-    leaveRequests, setLeaveRequests, meetingRequests
+    leaveRequests, setLeaveRequests, meetingRequests,
+    subjectAssignments
   } = useOutletContext();
 
   const { gradeBoundaries, navigate } = store;
@@ -27,12 +28,18 @@ export default function TeacherDashboard() {
 
   const rows = useMemo(() => {
     return loadedStudents.map((s) => {
-      const scores = s.scores?.[subject];
+      const assignment = subjectAssignments?.find(a => a.class_name === s.class || `${a.class_name} ${a.stream_name}` === s.class);
+      const actualSubject = assignment ? assignment.subject_name : subject;
+
+      const scores = s.scores?.[actualSubject];
       const row = computeRow(scores);
       const grade = gradeFor(row.average, gradeBoundaries);
       return { ...s, ...row, grade };
     });
-  }, [loadedStudents, gradeBoundaries, subject]);
+  }, [loadedStudents, gradeBoundaries, subject, subjectAssignments]);
+
+  const uniqueSubjects = [...new Set((subjectAssignments?.length ? subjectAssignments.map(a => a.subject_name) : [subject]))].filter(Boolean);
+  const displaySubject = uniqueSubjects.length > 1 ? uniqueSubjects.join(', ') : (uniqueSubjects[0] || subject);
 
   const classes = [...new Set(rows.map((r) => r.class))].sort();
   const avgOverall = rows.length ? (rows.reduce((s, r) => s + r.average, 0) / rows.length).toFixed(1) : 0;
@@ -105,7 +112,7 @@ export default function TeacherDashboard() {
       <div style={{ background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)', color: '#fff', borderRadius: 12, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>Welcome, {teacherName}</div>
-          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{subject} Teacher · {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
+          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{displaySubject} Teacher — {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 18px', textAlign: 'center' }}>
           <div style={{ fontSize: 22, fontWeight: 800 }}>{avgOverall}%</div>
@@ -115,7 +122,7 @@ export default function TeacherDashboard() {
 
       {/* KPI Tiles */}
       <div className="stat-tiles" style={{ marginBottom: 20 }}>
-        <KpiCard iconComponent={<BookOpen size={20} />} label="My Subject" value={subject} />
+        <KpiCard iconComponent={<BookOpen size={20} />} label={uniqueSubjects.length > 1 ? "Subjects" : "My Subject"} value={displaySubject} />
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Total Students" value={rows.length} sub={`across ${classes.length} classes`} />
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Class Average" value={`${avgOverall}%`} accent="#0369A1" />
         <KpiCard iconComponent={<AlertTriangle size={20} />} label="At Risk (<40%)" value={atRisk} accent={atRisk > 0 ? '#D13438' : '#107C10'} />

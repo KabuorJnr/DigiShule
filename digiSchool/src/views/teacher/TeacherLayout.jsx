@@ -117,7 +117,8 @@ export default function TeacherLayout() {
         loadedStudents, setLoadedStudents,
         messages, setMessages,
         leaveRequests, setLeaveRequests,
-        meetingRequests, setMeetingRequests
+        meetingRequests, setMeetingRequests,
+        subjectAssignments, subjectClasses
       }} />
     </div>
   );

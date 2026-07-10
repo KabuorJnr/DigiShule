@@ -11,7 +11,6 @@ import Facilities from '../Facilities';
 import TeacherResources from '../TeacherResources';
 import ClassTeachers from '../ClassTeachers';
 import ParentPortal from '../ParentPortal';
-import CreateExam from '../CreateExam';
 import AcademicsDashboard from '../AcademicsDashboard';
 import AdminDashboard from '../AdminDashboard';
 import Notices from '../Notices';
@@ -29,7 +28,6 @@ const VIEW_MAP = {
   overview: Overview,
   timetable: Timetable,
   exams: ExamSchedules,
-  create_exam: CreateExam,
   academics_dashboard: AcademicsDashboard,
   admin_dashboard: AdminDashboard,
   gradebook: Gradebook,
