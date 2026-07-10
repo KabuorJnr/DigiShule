@@ -196,6 +196,14 @@ export const ROLES = {
         ]
       },
       {
+        section: 'TEACHER MANAGEMENT',
+        items: [
+          { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
+          { id: 'qualifications', icon: 'exam', label: 'Qualifications', view: 'teacher_management', tab: 'qualifications' }
+        ]
+      },
+      {
         section: 'COMMUNICATIONS',
         items: [
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },

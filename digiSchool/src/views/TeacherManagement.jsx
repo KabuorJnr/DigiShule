@@ -198,8 +198,10 @@ export default function TeacherManagement({ store, user, params = {} }) {
           for (const s of DEFAULT_SUBJECTS) {
             await upsertRow('subjects', { id: `subj_${s.code}`, ...s });
           }
-          loadedSubjects = DEFAULT_SUBJECTS.map(s => ({ id: `subj_${s.code}`, ...s }));
-        } catch (e) { console.warn('Could not seed subjects:', e.message); }
+        } catch (e) { 
+          console.warn('Could not seed subjects in DB (table might not exist yet):', e.message); 
+        }
+        loadedSubjects = DEFAULT_SUBJECTS.map(s => ({ id: `subj_${s.code}`, ...s }));
       }
 
       setSubjects(loadedSubjects);
