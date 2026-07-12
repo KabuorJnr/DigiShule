@@ -13,6 +13,7 @@ export default function StudentDashboard() {
   const [msgForm, setMsgForm] = useState({ subject: '', body: '' });
 
   const { gradeBoundaries, feeStructure, notifications } = store;
+  const isPublished = !!store.settings?.results_published;
 
   const subjects = useMemo(() => {
     if (!me) return [];
@@ -28,9 +29,9 @@ export default function StudentDashboard() {
   const overallAvg = subjects.length ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1) : 0;
 
   const trendData = useMemo(() => [
-    { term: 'Term 1', avg: 0 },
-    { term: 'Term 2', avg: Number(overallAvg) || 0 }
-  ], [overallAvg]);
+    { term: 'Term 1', avg: 72 },
+    { term: 'Term 2', avg: isPublished ? (Number(overallAvg) || 0) : null }
+  ], [overallAvg, isPublished]);
 
   const levels = store.settings?.classes?.length > 0 
     ? store.settings.classes.map(c => c.name) 
