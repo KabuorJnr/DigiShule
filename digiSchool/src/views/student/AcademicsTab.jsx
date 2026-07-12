@@ -27,7 +27,7 @@ export default function AcademicsTab() {
   const overallAvg = subjects.length ? (subjects.reduce((s, r) => s + r.average, 0) / subjects.length).toFixed(1) : 0;
 
   const classmates = useMemo(() => {
-    if (!me) return [];
+    if (!me || !students) return [];
     return students.filter(s => s.class === me.class).sort((a, b) => a.name.localeCompare(b.name));
   }, [me, students]);
 
