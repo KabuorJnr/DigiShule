@@ -22,6 +22,7 @@ export default function StudentLayout() {
   const { notify } = store;
 
   const [me, setMe] = useState(null);
+  const [isLoadingMe, setIsLoadingMe] = useState(true);
   const [rank, setRank] = useState(null);
   const [payments, setPayments] = useState([]);
   
@@ -39,6 +40,7 @@ export default function StudentLayout() {
   useEffect(() => {
     let active = true;
     const loadMe = async () => {
+      setIsLoadingMe(true);
       const targetId = params?.childId || user?.student_id || user?.studentId || user?.link || user?.id;
       const targetAdm = user?.username;
       
@@ -47,7 +49,10 @@ export default function StudentLayout() {
       if (!res && targetAdm) res = await fetchStudentByQuery('adm', targetAdm);
       if (!res && targetId) res = await fetchStudentByQuery('adm', targetId);
       
-      if (active && res) setMe(res);
+      if (active) {
+        if (res) setMe(res);
+        setIsLoadingMe(false);
+      }
     };
     loadMe();
     return () => { active = false; };
@@ -96,6 +101,14 @@ export default function StudentLayout() {
     });
     return () => { active = false; };
   }, []);
+
+  if (isLoadingMe) {
+    return (
+      <div style={{ padding: '40px 20px', textAlign: 'center', marginTop: 40 }}>
+        <p className="muted">Loading student profile...</p>
+      </div>
+    );
+  }
 
   if (!me) {
     return (
