@@ -45,9 +45,11 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
   return storagePath;
 }
 
-/** List files by type (and optionally subject). RLS auto-scopes to school. */
+/** List files by type (and optionally subject). Explicit school_id filter + RLS. */
 export async function listFiles(type, subject) {
+  const schoolId = getActiveSchoolId();
   let query = supabase.from('file_metadata').select('*').order('uploaded_at', { ascending: false });
+  if (schoolId) query = query.eq('school_id', schoolId);
   if (type) query = query.eq('type', type);
   if (subject && subject !== 'All') query = query.eq('subject', subject);
   const { data, error } = await query;

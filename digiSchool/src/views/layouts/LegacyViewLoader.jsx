@@ -46,6 +46,7 @@ const VIEW_MAP = {
   lesson_plans: LessonPlans,
   staff_attendance: StaffAttendance,
   teacher_management: TeacherManagement,
+  my_profile: MyProfile,
 };
 
 export default function LegacyViewLoader() {
