@@ -71,6 +71,9 @@ export async function fetchTable(key) {
     
     if (_schoolId) {
       query = query.eq('school_id', _schoolId);
+    } else {
+      // Prevent fetching data without a school context to avoid cross-school leakage
+      return [];
     }
     const { data, error } = await query;
     if (error) throw error;
@@ -530,7 +533,8 @@ export async function saveTimetables(map, term) {
 
 
 export async function upsertRow(key, row) {
-  const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
+  if (!_schoolId) throw new Error('Cannot upsert row without an active school context');
+  const payload = { ...row, school_id: _schoolId };
   const table = TABLES[key] || key;
   
   if (!navigator.onLine) {
@@ -553,8 +557,9 @@ export async function upsertRow(key, row) {
 }
 
 export async function updateRow(key, id, row, idColumn = 'id') {
+  if (!_schoolId) throw new Error('Cannot update row without an active school context');
   const table = TABLES[key] || key;
-  const payload = _schoolId ? { ...row, school_id: _schoolId } : row;
+  const payload = { ...row, school_id: _schoolId };
 
   if (!navigator.onLine) {
     console.warn(`[Offline] Queueing update for ${table}`);

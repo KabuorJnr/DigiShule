@@ -76,9 +76,13 @@ export default function Notices({ store, user }) {
   const loadNotices = useCallback(async () => {
     setLoading(true);
     try {
+      const schoolId = getActiveSchoolId();
+      if (!schoolId) { setDbNotices([]); setLoading(false); return; }
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('school_id', schoolId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setDbNotices(data && data.length > 0 ? data : []);
@@ -129,6 +133,11 @@ export default function Notices({ store, user }) {
     }
     setPosting(true);
     const schoolId = getActiveSchoolId();
+    if (!schoolId) {
+      notify('No active school selected', 'error');
+      setPosting(false);
+      return;
+    }
     try {
       const row = {
         title: form.title,
