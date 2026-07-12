@@ -16,6 +16,8 @@ const BUCKET = 'eduone-files';
 /** Upload a File object to Supabase Storage and save metadata to DB. */
 export async function saveFile({ id, file, type, subject, targetClass, description, dueDate, uploadedBy }) {
   const schoolId = getActiveSchoolId();
+  if (!schoolId) throw new Error('No active school selected for upload');
+  
   const ext = file.name.split('.').pop();
   // Path format: {school_id}/{type}/{id}.ext — matches storage RLS policy
   const storagePath = `${schoolId}/${type}/${id}.${ext}`;
@@ -48,8 +50,10 @@ export async function saveFile({ id, file, type, subject, targetClass, descripti
 /** List files by type (and optionally subject). Explicit school_id filter + RLS. */
 export async function listFiles(type, subject) {
   const schoolId = getActiveSchoolId();
+  if (!schoolId) return []; // Prevent leakage if school context is missing
+  
   let query = supabase.from('file_metadata').select('*').order('uploaded_at', { ascending: false });
-  if (schoolId) query = query.eq('school_id', schoolId);
+  query = query.eq('school_id', schoolId); // Always enforce filter
   if (type) query = query.eq('type', type);
   if (subject && subject !== 'All') query = query.eq('subject', subject);
   const { data, error } = await query;

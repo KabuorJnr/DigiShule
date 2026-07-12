@@ -650,8 +650,10 @@ export default function PortalLayout() {
                 style={{ background: '#D13438', borderColor: '#D13438', marginRight: 16, height: 32, fontSize: 13 }}
                 onClick={() => {
                   setActiveRoleOverride(null);
-                  setView(ROLES[currentUser.role].home || 'overview');
+                  const home = ROLES[currentUser.role].home || 'overview';
+                  setView(home);
                   setViewParams({});
+                  navigateRouter(`/portal/${home}`);
                   notify('Returned to Principal Office', 'info', 'Office Visit');
                 }}
               >
@@ -747,6 +749,7 @@ export default function PortalLayout() {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_academic');
                   setView('academics_dashboard');
+                  navigateRouter('/portal/academics_dashboard');
                   notify('Entered Deputy Academics Office', 'success', 'Office Visit');
                 }}>Continue to Office</button>
               </div>
@@ -780,6 +783,7 @@ export default function PortalLayout() {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_admin');
                   setView('admin_dashboard');
+                  navigateRouter('/portal/admin_dashboard');
                   notify('Entered Deputy Administration Office', 'success', 'Office Visit');
                 }}>Continue to Office</button>
               </div>
