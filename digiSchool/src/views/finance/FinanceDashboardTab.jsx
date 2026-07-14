@@ -26,9 +26,20 @@ export default function FinanceDashboardTab() {
   }, [students]);
 
   // --- FILTERING LOGIC ---
+  const getTermFromDate = (dateString) => {
+    if (!dateString) return 'Term 1';
+    const month = new Date(dateString).getMonth() + 1;
+    if (month <= 4) return 'Term 1';
+    if (month <= 8) return 'Term 2';
+    return 'Term 3';
+  };
+
   const filteredInvoices = useMemo(() => {
     return invoices.filter(i => {
-      if (termFilter !== 'All' && i.term !== termFilter) return false;
+      if (termFilter !== 'All') {
+        const term = getTermFromDate(i.issue_date || i.created_at);
+        if (term !== termFilter) return false;
+      }
       
       if (classFilter !== 'All') {
         const student = students.find(s => s.id === i.student_id);
@@ -41,9 +52,8 @@ export default function FinanceDashboardTab() {
   const filteredPayments = useMemo(() => {
     return payments.filter(p => {
       if (termFilter !== 'All') {
-        // Approximate term filter based on invoice if matched
-        const inv = invoices.find(i => i.id === p.invoice_id);
-        if (inv && inv.term !== termFilter) return false;
+        const term = getTermFromDate(p.date || p.created_at);
+        if (term !== termFilter) return false;
       }
       
       if (classFilter !== 'All') {
@@ -52,11 +62,18 @@ export default function FinanceDashboardTab() {
       }
       return true;
     });
-  }, [payments, invoices, students, termFilter, classFilter]);
+  }, [payments, students, termFilter, classFilter]);
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => e.status === 'Approved');
-  }, [expenses]);
+    return expenses.filter(e => {
+      if (e.status !== 'Approved') return false;
+      if (termFilter !== 'All') {
+        const term = getTermFromDate(e.date || e.created_at);
+        if (term !== termFilter) return false;
+      }
+      return true;
+    });
+  }, [expenses, termFilter]);
 
   // --- KPIs ---
   const totalInvoiced = filteredInvoices.reduce((acc, i) => acc + Number(i.amount), 0);
@@ -160,9 +177,8 @@ export default function FinanceDashboardTab() {
 
         {/* Centered School Title */}
         <div style={{ 
-          position: 'absolute', 
-          left: '50%', 
-          transform: 'translateX(-50%)', 
+          flex: 1,
+          textAlign: 'center',
           fontWeight: 700, 
           fontSize: 18, 
           color: 'var(--text)',
@@ -170,8 +186,6 @@ export default function FinanceDashboardTab() {
         }}>
           {schoolName} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>| Finance</span>
         </div>
-
-        <div style={{ flex: 1 }}></div>
 
         <ExportMenu 
           dashboardRef={dashboardRef}

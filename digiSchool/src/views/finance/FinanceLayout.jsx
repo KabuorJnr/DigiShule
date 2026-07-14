@@ -46,38 +46,44 @@ export default function FinanceLayout() {
     });
   }, []);
 
-  return (
-    <div>
-      <PageHeader
-        title="Finance & Accounting"
-        subtitle="Manage billing, payments, expenses, and fee structures."
-      />
+  const isDashboard = location.pathname.endsWith('/finance') || location.pathname.endsWith('/finance/');
 
-      <div className="tabs" style={{ marginBottom: 24, borderBottom: '1px solid var(--border)', display: 'flex', gap: 24 }}>
-        {TABS.map(t => {
-          const isActive = t.id === '' 
-            ? location.pathname.endsWith('/finance') || location.pathname.endsWith('/finance/')
-            : location.pathname.includes(`/finance/${t.id}`);
-            
-          return (
-            <NavLink
-              key={t.id}
-              to={t.path}
-              end={t.id === ''}
-              className="tab"
-              style={{
-                background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--text)' : 'var(--text-muted)',
-                borderBottom: isActive ? '2px solid var(--text)' : '2px solid transparent',
-                textDecoration: 'none'
-              }}
-            >
-              {t.label}
-            </NavLink>
-          );
-        })}
-      </div>
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {!isDashboard && (
+        <>
+          <PageHeader
+            title="Finance & Accounting"
+            subtitle="Manage billing, payments, expenses, and fee structures."
+          />
+
+          <div className="tabs" style={{ marginBottom: 24, borderBottom: '1px solid var(--border)', display: 'flex', gap: 24 }}>
+            {TABS.map(t => {
+              const isActive = t.id === '' 
+                ? location.pathname.endsWith('/finance') || location.pathname.endsWith('/finance/')
+                : location.pathname.includes(`/finance/${t.id}`);
+                
+              return (
+                <NavLink
+                  key={t.id}
+                  to={t.path}
+                  end={t.id === ''}
+                  className="tab"
+                  style={{
+                    background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer',
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                    borderBottom: isActive ? '2px solid var(--text)' : '2px solid transparent',
+                    textDecoration: 'none'
+                  }}
+                >
+                  {t.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <Outlet context={{ 
         store, user, params, 
