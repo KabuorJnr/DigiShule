@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   --bg: #f8fafc;
@@ -13,8 +13,8 @@
   --brick: #ef4444;
   --line: rgba(37, 99, 235, 0.12);
   --line-strong: rgba(37, 99, 235, 0.25);
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'Outfit', sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
