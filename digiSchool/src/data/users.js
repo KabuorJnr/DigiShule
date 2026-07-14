@@ -235,10 +235,10 @@ export const ROLES = {
       {
         section: 'INVOICES & BILLING',
         items: [
-          { id: 'all_invoices', icon: 'file', label: 'All Invoices', view: 'finance', tab: 'invoices' },
-          { id: 'generate_invoice', icon: 'plus', label: 'Generate Invoice', view: 'finance', tab: 'invoices', action: 'generate_invoice' },
-          { id: 'bulk_invoicing', icon: 'folder', label: 'Bulk Invoicing', view: 'finance', tab: 'invoices', action: 'bulk_invoice' },
-          { id: 'overdue_invoices', icon: 'warning', label: 'Overdue Invoices', view: 'finance', tab: 'invoices', filter: 'overdue' }
+          { id: 'all_invoices', icon: 'file', label: 'All Invoices', view: 'finance', tab: 'billing' },
+          { id: 'generate_invoice', icon: 'plus', label: 'Generate Invoice', view: 'finance', tab: 'billing', action: 'generate_invoice' },
+          { id: 'bulk_invoicing', icon: 'folder', label: 'Bulk Invoicing', view: 'finance', tab: 'billing', action: 'bulk_invoice' },
+          { id: 'overdue_invoices', icon: 'warning', label: 'Overdue Invoices', view: 'finance', tab: 'billing', filter: 'overdue' }
         ]
       },
       {

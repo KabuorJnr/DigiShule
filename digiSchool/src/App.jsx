@@ -14,6 +14,7 @@ import EnrollStudent from './views/registrar/EnrollStudent';
 import Transfers from './views/registrar/Transfers';
 
 import FinanceLayout from './views/finance/FinanceLayout';
+import FinanceDashboardTab from './views/finance/FinanceDashboardTab';
 import BillingTab from './views/finance/BillingTab';
 import PaymentsTab from './views/finance/PaymentsTab';
 import StatementsTab from './views/finance/StatementsTab';
@@ -68,7 +69,8 @@ export default function App() {
         </Route>
 
         <Route path="finance" element={<FinanceLayout />}>
-          <Route index element={<BillingTab />} />
+          <Route index element={<FinanceDashboardTab />} />
+          <Route path="billing" element={<BillingTab />} />
           <Route path="payments" element={<PaymentsTab />} />
           <Route path="statements" element={<StatementsTab />} />
           <Route path="fee_structure" element={<FeeStructureTab />} />

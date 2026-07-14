@@ -4,7 +4,8 @@ import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
 
 const TABS = [
-  { id: '', label: 'Invoices & Billing', path: '.' },
+  { id: '', label: 'Dashboard', path: '.' },
+  { id: 'billing', label: 'Invoices & Billing', path: 'billing' },
   { id: 'payments', label: 'Payments', path: 'payments' },
   { id: 'statements', label: 'Student Statements', path: 'statements' },
   { id: 'fee_structure', label: 'School Fee Structure', path: 'fee_structure' },
@@ -24,7 +25,7 @@ export default function FinanceLayout() {
 
   useEffect(() => {
     if (params?.tab) {
-      const targetPath = params.tab === 'invoices' ? '/portal/finance' : `/portal/finance/${params.tab}`;
+      const targetPath = (params.tab === 'billing' || params.tab === 'invoices') ? '/portal/finance/billing' : `/portal/finance/${params.tab}`;
       if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
         navigate(targetPath, { replace: true });
       }
