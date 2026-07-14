@@ -448,7 +448,7 @@ export default function ParentDashboard() {
               parentNotices.slice(0, 4).map(n => (
                 <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by || 'School'}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by || 'Admin'} ({n.role || 'School Office'})</div>
                 </div>
               ))
             )}

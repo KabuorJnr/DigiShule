@@ -46,8 +46,8 @@ export default function SettingsTab() {
               <h4 style={{ margin: 0, fontSize: 14 }}>{n.title}</h4>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
                 <span className="muted" style={{ fontSize: 12 }}>{(n.created_at || '').slice(0, 10)}</span>
-                <Badge color="blue">{n.role}</Badge>
-                <span className="muted" style={{ fontSize: 12 }}>by {n.posted_by}</span>
+                <Badge color="blue">{n.role || 'Staff'}</Badge>
+                <span className="muted" style={{ fontSize: 12 }}>by {n.posted_by || 'Admin'}</span>
               </div>
               <p style={{ margin: 0, fontSize: 13, color: '#444', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{n.body}</p>
             </div>
