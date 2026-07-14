@@ -189,6 +189,7 @@ export default function PortalLayout() {
           teacher: ['classes', 'attendance', 'gradebook'],
           student: ['academics', 'records', 'resources', 'finance', 'settings'],
           staff: ['leave', 'classes', 'recruitment'],
+          finance: ['billing', 'payments', 'statements', 'fee_structure', 'expenses', 'reports']
         };
         const validSubs = nestedSubRoutes[v];
         if (p.tab && validSubs && validSubs.includes(p.tab)) {

@@ -24,15 +24,6 @@ export default function FinanceLayout() {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
-    if (params?.tab) {
-      const targetPath = (params.tab === 'billing' || params.tab === 'invoices') ? '/portal/finance/billing' : `/portal/finance/${params.tab}`;
-      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
-        navigate(targetPath, { replace: true });
-      }
-    }
-  }, [params?.tab, location.pathname, navigate]);
-
-  useEffect(() => {
     Promise.all([
       fetchTable('invoices').catch(() => []),
       fetchTable('financePayments').catch(() => []),
@@ -46,7 +37,8 @@ export default function FinanceLayout() {
     });
   }, []);
 
-  const isDashboard = location.pathname.endsWith('/finance') || location.pathname.endsWith('/finance/');
+  // Use params.tab for an instant synchronous check, avoiding React Router's async location.pathname flicker
+  const isDashboard = !params?.tab;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
