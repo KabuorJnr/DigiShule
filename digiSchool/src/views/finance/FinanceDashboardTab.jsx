@@ -11,7 +11,8 @@ import ExportMenu from './dashboard/ExportMenu';
 import { useRef } from 'react';
 
 export default function FinanceDashboardTab() {
-  const { invoices, payments, expenses, students } = useOutletContext();
+  const { invoices, payments, expenses, students, store } = useOutletContext();
+  const schoolName = store?.settings?.name || 'DigiShule System';
   
   // --- SLICER STATES ---
   const [termFilter, setTermFilter] = useState('All');
@@ -131,7 +132,7 @@ export default function FinanceDashboardTab() {
     <div className="finance-dashboard" style={{ animation: 'fade-in 0.4s ease-out' }}>
       
       {/* --- TOP BAR: SLICERS & FILTERS --- */}
-      <div className="card card-pad" style={{ marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', background: 'var(--surface-raised)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+      <div className="card card-pad" style={{ marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', background: 'var(--surface-raised)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontWeight: 600 }}>
           <Filter size={18} /> SLICERS
         </div>
@@ -155,6 +156,19 @@ export default function FinanceDashboardTab() {
               <option key={c} value={c}>{c === 'All' ? 'All Classes' : c}</option>
             ))}
           </select>
+        </div>
+
+        {/* Centered School Title */}
+        <div style={{ 
+          position: 'absolute', 
+          left: '50%', 
+          transform: 'translateX(-50%)', 
+          fontWeight: 700, 
+          fontSize: 18, 
+          color: 'var(--text)',
+          letterSpacing: 0.5
+        }}>
+          {schoolName} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>| Finance</span>
         </div>
 
         <div style={{ flex: 1 }}></div>
