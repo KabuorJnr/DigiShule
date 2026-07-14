@@ -67,6 +67,12 @@ export default function LandingPage() {
 
   return (
     <>
+      <div className="bg-blobs">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
+      </div>
+
       <div className="utility-bar">
         <div className="wrap utility-inner">
           <div className="utility-left">
@@ -91,9 +97,9 @@ export default function LandingPage() {
       {showAnnounce && (
         <div className="announce" id="announceBar">
           <div className="wrap announce-inner">
-            <span className="badge">NEW</span>
-            <span>Upgrade your school's management today — 14-day free setup.</span>
-            <a href="#enroll" className="link">Start Free Trial →</a>
+            <span className="badge">SPECIAL</span>
+            <span>Transform your school administration today — get a 14-day zero-risk trial.</span>
+            <a href="#enroll" className="link">Claim your trial →</a>
             <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">✕</button>
           </div>
         </div>
@@ -111,15 +117,15 @@ export default function LandingPage() {
                 <a href="#why">Features <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6" /></svg></a>
                 <div className="dropdown">
                   <a href="#why">Why EduOne</a>
-                  <a href="#why">Offline-First</a>
+                  <a href="#why">Offline-First Engine</a>
                   <a href="#why">Security &amp; Roles</a>
-                  <a href="#why">Integrations</a>
+                  <a href="#why">MPESA Integrations</a>
                 </div>
               </div>
               <div className="nav-item">
                 <a href="#programs">Portals <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6" /></svg></a>
                 <div className="dropdown">
-                  <a href="#programs">Principal Admin</a>
+                  <a href="#programs">Principal Dashboard</a>
                   <a href="#programs">Finance &amp; Registrar</a>
                   <a href="#programs">Teacher Gradebook</a>
                   <a href="#programs">Student &amp; Parent Apps</a>
@@ -134,7 +140,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <a href="#fees">Pricing</a>
-              <a href="#stories">Testimonials</a>
+              <a href="#stories">Success Stories</a>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button className="btn btn-ghost nav-cta" onClick={() => navigate('/login')}>Login</button>
@@ -152,13 +158,13 @@ export default function LandingPage() {
           <div className="wrap hero-grid">
             <div>
               <div className="eyebrow">B2B SaaS · Offline-First · CBC Compliant</div>
-              <h1>The Next-Generation<br />Operating System for<br /><em>Modern Schools.</em></h1>
-              <p className="lede">EduOne connects principals, teachers, parents, and students in one seamless, offline-capable platform. Automate finance, gradebooks, and CBC reporting effortlessly.</p>
+              <h1>Run your entire school<br />like a <em>masterpiece.</em></h1>
+              <p className="lede">Ditch the spreadsheets and paper trails. EduOne is the all-in-one system that automates fee collection, simplifies CBC grading, and keeps parents engaged—even when your internet is down.</p>
               <div className="hero-actions">
-                <button onClick={() => navigate('/signup')} className="btn btn-primary">Start Free Trial</button>
-                <a href="#how" className="btn btn-ghost">Book a Demo</a>
+                <button onClick={() => navigate('/signup')} className="btn btn-primary">Start your 14-Day Free Trial</button>
+                <a href="#why" className="btn btn-ghost">Explore Features</a>
               </div>
-              <div className="hero-note"><span className="live-dot"></span> 214 partner schools currently online</div>
+              <div className="hero-note"><span className="live-dot"></span> Trusted by 200+ forward-thinking schools</div>
             </div>
 
             <div className="tt-card">
@@ -205,10 +211,10 @@ export default function LandingPage() {
         <section className="stats">
           <div className="wrap">
             <div className="stats-grid">
-              <div className="stat"><div className="num">100%</div><div className="cap">CBC Compliant Reporting</div></div>
-              <div className="stat"><div className="num">100+</div><div className="cap">Partner Schools</div></div>
-              <div className="stat"><div className="num">24/7</div><div className="cap">Offline-First Support</div></div>
-              <div className="stat"><div className="num">6</div><div className="cap">Dedicated User Portals</div></div>
+              <div className="stat"><div className="num">100%</div><div className="cap">Automated CBC Reports</div></div>
+              <div className="stat"><div className="num">40%</div><div className="cap">Avg. Increase in Fee Collection</div></div>
+              <div className="stat"><div className="num">0</div><div className="cap">Data Loss with Offline-First</div></div>
+              <div className="stat"><div className="num">24/7</div><div className="cap">Real-time Parent Access</div></div>
             </div>
           </div>
         </section>
@@ -217,15 +223,15 @@ export default function LandingPage() {
         <section className="sec" id="how">
           <div className="wrap">
             <div className="sec-head">
-              <div className="eyebrow">Onboarding</div>
+              <div className="eyebrow">Zero Friction Onboarding</div>
               <h2>Four steps to digitalize your entire school.</h2>
-              <p>We handle the heavy lifting of data migration and setup so you can focus entirely on delivering quality education.</p>
+              <p>We handle the heavy lifting of data migration and setup so you can focus entirely on delivering quality education. You can be fully operational by Monday.</p>
             </div>
             <div className="steps">
-              <div className="step"><span className="n">01</span><h3>Sign Up</h3><p>Create an account for your school and access your dedicated instance in seconds.</p></div>
-              <div className="step"><span className="n">02</span><h3>System Config</h3><p>Set up your fee structures, grade boundaries, and timetables using our intuitive setup wizard.</p></div>
-              <div className="step"><span className="n">03</span><h3>Import Data</h3><p>Bulk import your teachers and students via CSV, and we'll instantly generate their portal accounts.</p></div>
-              <div className="step"><span className="n">04</span><h3>Go Live</h3><p>Your staff and parents can log in immediately. Automated billing and SMS notifications begin instantly.</p></div>
+              <div className="step"><span className="n">01</span><h3>Sign Up</h3><p>Create an account for your school and instantly access your dedicated, secure cloud instance.</p></div>
+              <div className="step"><span className="n">02</span><h3>System Config</h3><p>Set up your unique fee structures, grade boundaries, and timetables using our intuitive setup wizard.</p></div>
+              <div className="step"><span className="n">03</span><h3>Import Data</h3><p>Bulk import your teachers and students via CSV, and we'll instantly generate their secure portal accounts.</p></div>
+              <div className="step"><span className="n">04</span><h3>Go Live</h3><p>Your staff and parents log in immediately. Automated billing and SMS notifications begin instantly.</p></div>
             </div>
           </div>
         </section>
@@ -236,34 +242,34 @@ export default function LandingPage() {
             <div className="sec-head">
               <div className="eyebrow">The Platform</div>
               <h2>One platform, six dedicated portals.</h2>
-              <p>Custom-built experiences for every stakeholder in your institution, securely connected to a central database.</p>
+              <p>Custom-built experiences for every stakeholder in your institution. No more juggling five different apps to run one school.</p>
             </div>
             <div className="programs">
               <div className="prog-card">
                 <div className="grade">ADMINISTRATION</div>
                 <h3>Principal Portal</h3>
                 <ul>
-                  <li>Bird's eye view dashboard &amp; analytics</li>
-                  <li>Complete staff and student oversight</li>
-                  <li>Global system configuration and settings</li>
+                  <li>Spot fee defaulters instantly on the dashboard</li>
+                  <li>Generate whole-school reports in one click</li>
+                  <li>Maintain absolute control over staff permissions</li>
                 </ul>
               </div>
               <div className="prog-card">
                 <div className="grade">ACADEMICS</div>
                 <h3>Teacher Portal</h3>
                 <ul>
-                  <li>Streamlined gradebooks &amp; assessments</li>
-                  <li>Daily attendance with offline capabilities</li>
-                  <li>Automated CBC report card generation</li>
+                  <li>Grade anywhere, anytime with offline support</li>
+                  <li>Never lose work to a bad internet connection</li>
+                  <li>Auto-generate CBC rubric scores instantly</li>
                 </ul>
               </div>
               <div className="prog-card">
                 <div className="grade">OPERATIONS</div>
                 <h3>Finance &amp; Registrar</h3>
                 <ul>
-                  <li>Automated invoicing &amp; fee tracking</li>
-                  <li>Direct mobile money integration</li>
-                  <li>Smart fee reminders via SMS</li>
+                  <li>Stop chasing payments with SMS reminders</li>
+                  <li>MPESA integration means the money finds you</li>
+                  <li>Digital receipts issued and logged instantly</li>
                 </ul>
               </div>
             </div>
@@ -274,16 +280,16 @@ export default function LandingPage() {
         <section className="sec" id="why">
           <div className="wrap">
             <div className="sec-head">
-              <div className="eyebrow">Core Features</div>
-              <h2>Why modern schools run on EduOne.</h2>
+              <div className="eyebrow">Core Advantages</div>
+              <h2>Why top-tier schools run on EduOne.</h2>
             </div>
             <div className="features">
-              <div className="feat"><span className="mark">◆</span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Syncs automatically when back online.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Automated CBC Reporting</h3><p>Generates compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Automated Billing</h3><p>Generate bulk invoices, track payments, and auto-issue digital receipts without any manual data entry.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes and parents only see their specific children.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Everything syncs perfectly the moment they reconnect.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements. Keep them in the loop automatically.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Automated CBC Reporting</h3><p>Say goodbye to weekend grading. Generate fully compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Automated Billing</h3><p>Generate bulk invoices, track mobile money payments, and auto-issue digital receipts without touching a single spreadsheet.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes, parents only see their specific children, and your data is locked down tight.</p></div>
+              <div className="feat"><span className="mark">◆</span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources directly to their phones.</p></div>
             </div>
           </div>
         </section>
@@ -293,13 +299,13 @@ export default function LandingPage() {
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow">SaaS Pricing</div>
-              <h2>Transparent pricing. No hidden fees.</h2>
-              <p>Select a plan that fits your school's size and needs. All plans include automated backups and basic support.</p>
+              <h2>Transparent pricing. Infinite value.</h2>
+              <p>Select a plan that fits your school's size. All plans include automated backups, bank-grade encryption, and world-class support.</p>
             </div>
 
             <div className="fee-tabs">
               <button className={`fee-tab ${feeTab === 'basic' ? 'active' : ''}`} onClick={() => setFeeTab('basic')}>Basic Plan</button>
-              <button className={`fee-tab ${feeTab === 'pro' ? 'active' : ''}`} onClick={() => setFeeTab('pro')}>Pro Plan (Popular)</button>
+              <button className={`fee-tab ${feeTab === 'pro' ? 'active' : ''}`} onClick={() => setFeeTab('pro')}>Pro Plan (Best Value)</button>
               <button className={`fee-tab ${feeTab === 'enterprise' ? 'active' : ''}`} onClick={() => setFeeTab('enterprise')}>Enterprise</button>
             </div>
 
@@ -313,7 +319,7 @@ export default function LandingPage() {
                 <div className="ledger-row"><span className="item">SMS Notifications</span><span className="val opt">Not Included</span></div>
                 <div className="ledger-total"><span>Subscription</span><span className="val">KES 5,000 / mo</span></div>
               </div>
-              <p className="fee-note">Perfect for small growing schools looking to digitize their core records and operations efficiently.</p>
+              <p className="fee-note">Perfect for small growing schools looking to ditch paper records and digitize operations efficiently.</p>
             </div>
 
             <div className={`fee-panel ${feeTab === 'pro' ? 'active' : ''}`}>
@@ -326,7 +332,7 @@ export default function LandingPage() {
                 <div className="ledger-row"><span className="item">Priority 24/7 Support</span><span className="val">Included</span></div>
                 <div className="ledger-total"><span>Subscription</span><span className="val">KES 10,000 / mo</span></div>
               </div>
-              <p className="fee-note">Our most popular tier. Everything you need to fully automate communication and management for a mid-to-large school.</p>
+              <p className="fee-note">Our most popular tier. Everything you need to fully automate communication and management for a thriving school.</p>
             </div>
 
             <div className={`fee-panel ${feeTab === 'enterprise' ? 'active' : ''}`}>
@@ -349,11 +355,11 @@ export default function LandingPage() {
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow">Trusted by Educators</div>
-              <h2>What our partners are saying.</h2>
+              <h2>Real results from real schools.</h2>
             </div>
             <div className="quotes">
               <div className="quote">
-                <p className="q">"Since switching to EduOne, our fee collection has improved by 40% due to the automated SMS reminders. It's transformed our cash flow."</p>
+                <p className="q">"We used to spend three weeks generating end-of-term reports. With EduOne, it takes 30 minutes. Our teachers finally have their weekends back."</p>
                 <div className="who"><b>Mrs. Omondi</b>School Principal, Nairobi</div>
               </div>
               <div className="quote">
@@ -361,7 +367,7 @@ export default function LandingPage() {
                 <div className="who"><b>Mr. Kamau</b>Senior Teacher</div>
               </div>
               <div className="quote">
-                <p className="q">"I love seeing my daughter's real-time progress and downloading her report cards directly from my phone without visiting the office."</p>
+                <p className="q">"I love seeing my daughter's real-time progress and downloading her report cards directly from my phone without visiting the office. Very transparent."</p>
                 <div className="who"><b>D. Owino</b>Parent</div>
               </div>
             </div>
