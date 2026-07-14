@@ -15,7 +15,10 @@ Go to **SQL Editor** and run:
 
 ```sql
 -- File metadata table
-CREATE TABLE IF NOT EXISTS file_metadata (
+ ENABLE ROW LEVEL SECURITY;
+
+-- All authenticated users can read file metadata
+CREATE POLICY "all read fiCREATE TABLE IF NOT EXISTS file_metadata (
   id            TEXT PRIMARY KEY,
   name          TEXT NOT NULL,
   storage_path  TEXT NOT NULL,
@@ -29,10 +32,7 @@ CREATE TABLE IF NOT EXISTS file_metadata (
 );
 
 -- Enable Row Level Security
-ALTER TABLE file_metadata ENABLE ROW LEVEL SECURITY;
-
--- All authenticated users can read file metadata
-CREATE POLICY "all read file_metadata"
+ALTER TABLE file_metadatale_metadata"
   ON file_metadata FOR SELECT
   USING (true);
 

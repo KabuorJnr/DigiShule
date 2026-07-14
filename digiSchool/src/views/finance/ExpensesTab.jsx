@@ -6,7 +6,8 @@ import { upsertRow } from '../../lib/api';
 import { useOutletContext } from 'react-router-dom';
 
 export default function ExpensesTab() {
-  const { expenses, setExpenses, user, notify, params, store } = useOutletContext();
+  const { expenses, setExpenses, user, params, store } = useOutletContext();
+  const notify = store?.notify || (() => {});
   const [modalOpen, setModalOpen] = useState(params.action === 'record_expense');
   const [catModalOpen, setCatModalOpen] = useState(params.action === 'categories');
   const [form, setForm] = useState({ category: '', amount: '', description: '' });

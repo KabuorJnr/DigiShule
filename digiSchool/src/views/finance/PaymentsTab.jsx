@@ -2,18 +2,29 @@ import { useState, useEffect } from 'react';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
-import { upsertRow, updateRow } from '../../lib/api';
+import { upsertRow, updateRow, fetchTable } from '../../lib/api';
 import { printReceipt } from '../../lib/printReceipt';
 import { useOutletContext } from 'react-router-dom';
 
 export default function PaymentsTab() {
-  const { store, payments, invoices, setPayments, notify, params, students } = useOutletContext();
+  const { store, payments, invoices, setPayments, params, students } = useOutletContext();
+  const notify = store?.notify || (() => {});
   const [modalOpen, setModalOpen] = useState(params.action === 'record_payment');
   const [form, setForm] = useState({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
 
   useEffect(() => {
     if (params.action === 'record_payment') setModalOpen(true);
   }, [params.action]);
+
+  /** Re-fetch payments from DB and update parent state */
+  const refreshPayments = async () => {
+    try {
+      const fresh = await fetchTable('financePayments');
+      setPayments(fresh || []);
+    } catch (e) {
+      console.warn('Could not refresh payments:', e.message);
+    }
+  };
 
   const handleRecord = async () => {
     if (!form.student_id || !form.amount) {
@@ -30,14 +41,18 @@ export default function PaymentsTab() {
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
-    setPayments(prev => [payment, ...prev]);
-    notify(`Payment of ${fmtKES(form.amount)} recorded successfully.`);
-    setModalOpen(false);
-    setForm({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
     try {
       await upsertRow('financePayments', payment);
+      await refreshPayments();
+      notify(`Payment of ${fmtKES(form.amount)} recorded successfully.`);
+      setModalOpen(false);
+      setForm({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
     } catch (e) {
-      console.warn('API error ignored for mock:', e.message);
+      // Fallback: add locally if DB write fails
+      setPayments(prev => [payment, ...prev]);
+      notify(`Payment saved locally. Sync may be needed: ${e.message}`, 'warning');
+      setModalOpen(false);
+      setForm({ invoice_id: '', student_id: '', amount: '', method: 'M-Pesa', ref: '' });
     }
   };
 
@@ -45,12 +60,12 @@ export default function PaymentsTab() {
     try {
       const payment = payments.find(p => p.id === id);
       if (!payment) return;
-      const updated = { ...payment, status: 'Verified' };
-      setPayments(prev => prev.map(p => p.id === id ? updated : p));
-      notify('Payment confirmed.');
+      // Persist to DB first, then refresh to ensure consistency
       await updateRow('financePayments', id, { status: 'Verified' });
+      await refreshPayments();
+      notify('Payment verified successfully.');
     } catch (e) {
-      notify(`Failed to confirm payment: ${e.message}`, 'error');
+      notify(`Failed to verify payment: ${e.message}`, 'error');
     }
   };
 

@@ -6,7 +6,8 @@ import { fmtKES } from '../../data/modules';
 import { expandClassesWithStreams } from '../../data/seed';
 
 export default function BillingTab() {
-  const { invoices, setInvoices, notify, params, students, store } = useOutletContext();
+  const { invoices, setInvoices, params, students, store } = useOutletContext();
+  const notify = store?.notify || (() => {});
   const [modalOpen, setModalOpen] = useState(params.action === 'generate_invoice');
   const [form, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
   const [bulkModalOpen, setBulkModalOpen] = useState(false);

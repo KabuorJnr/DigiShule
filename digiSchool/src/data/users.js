@@ -346,6 +346,8 @@ export const ROLES = {
         section: 'TEACHING',
         items: [
           { id: 'teacher', icon: 'home', label: 'My Dashboard', view: 'teacher' },
+          { id: 'my_classes', icon: 'users', label: 'My Classes', view: 'teacher', tab: 'classes' },
+          { id: 'attendance', icon: 'clipboard', label: 'Attendance', view: 'teacher', tab: 'attendance' },
           { id: 'timetable', icon: 'calendar', label: 'My Timetable', view: 'timetable' },
           { id: 'schemes', icon: 'folder', label: 'Schemes of Work', view: 'scheme_of_work' },
           { id: 'lessons', icon: 'file', label: 'Lesson Plans', view: 'lesson_plans' },

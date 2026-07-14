@@ -4,7 +4,7 @@ import { Badge, KpiCard, ProgressBar } from '../../components/widgets';
 import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 export default function RecordsTab() {
-  const { attendanceRecords, healthRecords } = useOutletContext();
+  const { attendanceRecords, healthRecords, me } = useOutletContext();
   const [tab, setTab] = useState('attendance');
 
   const attLog = useMemo(() => {

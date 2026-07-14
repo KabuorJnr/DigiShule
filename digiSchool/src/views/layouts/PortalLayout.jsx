@@ -184,7 +184,18 @@ export default function PortalLayout() {
       navigate: (v, p = {}) => { 
         setViewParams(p); 
         setView(v); 
-        navigateRouter(`/portal/${v}`);
+        // For nested layout routes with known sub-routes, navigate directly
+        const nestedSubRoutes = {
+          teacher: ['classes', 'attendance', 'gradebook'],
+          student: ['academics', 'records', 'resources', 'finance', 'settings'],
+          staff: ['leave', 'classes', 'recruitment'],
+        };
+        const validSubs = nestedSubRoutes[v];
+        if (p.tab && validSubs && validSubs.includes(p.tab)) {
+          navigateRouter(`/portal/${v}/${p.tab}`);
+        } else {
+          navigateRouter(`/portal/${v}`);
+        }
       },
       removeToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
     }),

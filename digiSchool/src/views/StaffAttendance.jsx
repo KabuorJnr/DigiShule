@@ -40,19 +40,36 @@ export default function StaffAttendance({ store, user }) {
 
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
+  // Reverse lookup: auth user UUID → staff record (for resolving log staff_id to names)
+  const [uidToStaffMap, setUidToStaffMap] = useState({});
+
   // Fetch staff + logs (reusable for polling)
   const refreshStaffData = () => {
     Promise.all([
       fetchTable('staff'),
       fetchTable('staff_attendance_logs'),
-      supabase.from('profiles').select('id, teacher_id')
+      supabase.from('profiles').select('id, teacher_id, full_name')
     ]).then(([staffRows, logRows, { data: profs }]) => {
+      // profMap: staff.id (teacher_id) → auth user UUID
       const profMap = {};
-      if (profs) {
+      // uidStaffMap: auth user UUID → staff record (for log lookups)
+      const uidStaffMap = {};
+      if (profs && staffRows) {
         profs.forEach(p => {
-          if (p.teacher_id) profMap[p.teacher_id] = p.id;
+          if (p.teacher_id) {
+            profMap[p.teacher_id] = p.id;
+            const matchedStaff = staffRows.find(s => s.id === p.teacher_id);
+            if (matchedStaff) {
+              uidStaffMap[p.id] = matchedStaff;
+            }
+          }
         });
       }
+      // Also map staff by their own id (for direct matches)
+      if (staffRows) {
+        staffRows.forEach(s => { uidStaffMap[s.id] = s; });
+      }
+      setUidToStaffMap(uidStaffMap);
 
       if (logRows) {
         setLogs(logRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
@@ -111,6 +128,11 @@ export default function StaffAttendance({ store, user }) {
     };
   }, [staff]);
 
+  // Helper: resolve a log's staff_id to a staff record using the uidToStaffMap
+  const resolveStaffFromLog = (staffId) => {
+    return uidToStaffMap[staffId] || staff.find(s => s.id === staffId) || null;
+  };
+
   const handleExportLogs = () => {
     if (!logs || logs.length === 0) {
       notify('No logs available to export.', 'info');
@@ -118,19 +140,17 @@ export default function StaffAttendance({ store, user }) {
     }
     
     const headers = ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status'];
-    const staffMap = {};
-    staff.forEach(s => { staffMap[s.id] = s; });
     
     const csvRows = [headers.join(',')];
     
     logs.forEach(l => {
-      const s = staffMap[l.staff_id] || { name: 'Unknown', role: 'Unknown' };
+      const s = resolveStaffFromLog(l.staff_id) || { name: 'Unknown', role: 'Unknown' };
       const inTime = l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '';
       const outTime = l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '';
       
       const row = [
         `"${s.name}"`,
-        s.role,
+        s.role || 'Staff',
         l.date,
         `"${inTime}"`,
         `"${outTime}"`,
@@ -539,7 +559,7 @@ export default function StaffAttendance({ store, user }) {
               </thead>
               <tbody>
                 {logs.map((l) => {
-                  const staffMember = staff.find(s => s.id === l.staff_id) || { name: 'Unknown Staff' };
+                  const staffMember = resolveStaffFromLog(l.staff_id) || { name: 'Unknown Staff' };
                   return (
                     <tr key={l.id}>
                       <td style={{ fontWeight: 600 }}>{staffMember.name}</td>
