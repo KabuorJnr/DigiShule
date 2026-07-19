@@ -4,14 +4,25 @@ import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
 import { expandClassesWithStreams } from '../../data/seed';
+import { Search } from 'lucide-react';
+
+const PAGE_SIZE = 25;
 
 export default function BillingTab() {
   const { invoices, setInvoices, params, students, store } = useOutletContext();
   const notify = store?.notify || (() => {});
+  const addAuditLog = store?.addAuditLog || (() => {});
   const [modalOpen, setModalOpen] = useState(params.action === 'generate_invoice');
   const [form, setForm] = useState({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
+
+  // Filters & Pagination
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(0);
 
   const classes = useMemo(() => {
     const saved = expandClassesWithStreams(store?.settings?.classes || []);
@@ -23,14 +34,32 @@ export default function BillingTab() {
     if (params.action === 'generate_invoice') setModalOpen(true);
   }, [params.action]);
 
+  // Filtered & sorted invoices
   const displayInvoices = useMemo(() => {
     let list = [...invoices].sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
     if (params.filter === 'overdue') {
       const today = new Date().toISOString().slice(0, 10);
       list = list.filter(i => i.status === 'Pending' && i.due_date < today);
     }
+    if (statusFilter !== 'All') list = list.filter(i => i.status === statusFilter);
+    if (dateFrom) list = list.filter(i => (i.due_date || i.created_at?.slice(0, 10)) >= dateFrom);
+    if (dateTo) list = list.filter(i => (i.due_date || i.created_at?.slice(0, 10)) <= dateTo);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(i => {
+        const student = students.find(s => s.id === i.student_id);
+        return (
+          student?.name?.toLowerCase().includes(q) ||
+          student?.adm_no?.toLowerCase().includes(q) ||
+          i.id?.toLowerCase().includes(q)
+        );
+      });
+    }
     return list;
-  }, [invoices, params.filter]);
+  }, [invoices, params.filter, statusFilter, dateFrom, dateTo, search, students]);
+
+  const totalPages = Math.max(1, Math.ceil(displayInvoices.length / PAGE_SIZE));
+  const pageData = displayInvoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleGenerate = async () => {
     if (!form.student_id || !form.amount || !form.due_date) {
@@ -60,6 +89,7 @@ export default function BillingTab() {
       store.setNotifications(prev => [newNotif, ...(prev || [])]);
     }
     notify('Invoice generated successfully.');
+    addAuditLog('Invoice Generated', `Invoice for ${students.find(s => s.id === form.student_id)?.name || form.student_id}`, form.amount);
     setModalOpen(false);
     setForm({ student_id: '', amount: '', due_date: '', type: 'Term Fee' });
     try {
@@ -110,6 +140,7 @@ export default function BillingTab() {
       store.setNotifications(prev => [...newNotifs, ...(prev || [])]);
     }
     notify(`Bulk Invoices generated for ${newInvoices.length} students.`, 'success');
+    addAuditLog('Bulk Invoices', `Generated ${newInvoices.length} invoices for ${bulkForm.target_class === 'All' ? 'all classes' : bulkForm.target_class}`, Number(bulkForm.amount) * newInvoices.length);
     setBulkModalOpen(false);
     setBulkForm({ target_class: 'All', amount: '', due_date: '', type: 'Term Fee' });
 
@@ -131,6 +162,24 @@ export default function BillingTab() {
           <button className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Generate Invoice</button>
         </div>
       </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input className="input" placeholder="Search by student, adm no, invoice ID..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} style={{ paddingLeft: 36 }} />
+          </div>
+        </div>
+        <select className="select" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} style={{ minWidth: 120 }}>
+          <option value="All">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Paid">Paid</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+        <input type="date" className="input" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(0); }} style={{ width: 140 }} title="From date" />
+        <input type="date" className="input" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0); }} style={{ width: 140 }} title="To date" />
+      </div>
       
       <div className="scroll-x">
         <table className="table">
@@ -138,8 +187,8 @@ export default function BillingTab() {
             <tr><th>Invoice ID</th><th>Student</th><th>Amount</th><th>Due Date</th><th>Status</th></tr>
           </thead>
           <tbody>
-            {displayInvoices.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No invoices found.</td></tr>}
-            {displayInvoices.map(i => {
+            {pageData.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No invoices match your filters.</td></tr>}
+            {pageData.map(i => {
               const student = students.find(s => s.id === i.student_id);
               return (
                 <tr key={i.id}>
@@ -156,6 +205,15 @@ export default function BillingTab() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+          <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages} ({displayInvoices.length} total)</span>
+          <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+        </div>
+      )}
 
       {modalOpen && (
         <Modal title="Generate Invoice" onClose={() => setModalOpen(false)} footer={

@@ -261,56 +261,112 @@ export const ROLES = {
       {
         section: 'CORE',
         items: [
-          { id: 'finance', icon: 'finance', label: 'Finance & Fees', view: 'finance' },
+          { id: 'finance_dash', icon: 'dashboard', label: 'Executive Dashboard', view: 'finance' },
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
         ]
       },
       {
-        section: 'INVOICES & BILLING',
+        section: 'ACCOUNTS RECEIVABLE',
         items: [
-          { id: 'all_invoices', icon: 'file', label: 'All Invoices', view: 'finance', tab: 'billing' },
-          { id: 'generate_invoice', icon: 'plus', label: 'Generate Invoice', view: 'finance', tab: 'billing', action: 'generate_invoice' },
-          { id: 'bulk_invoicing', icon: 'folder', label: 'Bulk Invoicing', view: 'finance', tab: 'billing', action: 'bulk_invoice' },
-          { id: 'overdue_invoices', icon: 'warning', label: 'Overdue Invoices', view: 'finance', tab: 'billing', filter: 'overdue' }
+          { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
+          { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' },
+          { id: 'payment_plans', icon: 'clipboard', label: 'Payment Plans', view: 'finance', tab: 'payment_plans' }
         ]
       },
       {
-        section: 'PAYMENTS',
+        section: 'ACCOUNTS PAYABLE',
         items: [
-          { id: 'all_payments', icon: 'payment', label: 'All Payments', view: 'finance', tab: 'payments' },
-          { id: 'record_payments', icon: 'finance', label: 'Record Payments', view: 'finance', tab: 'payments', action: 'record_payment' },
-          { id: 'pending_payments', icon: 'clock', label: 'Pending Payments', view: 'finance', tab: 'payments', filter: 'pending' },
-          { id: 'reconciliation', icon: 'chart', label: 'Reconciliation', view: 'finance', tab: 'payments', action: 'reconcile' }
+          { id: 'all_expenses', icon: 'finance', label: 'Expenses', view: 'finance', tab: 'expenses' },
+          { id: 'procurement', icon: 'folder', label: 'Procurement', view: 'finance', tab: 'procurement' },
+          { id: 'payroll', icon: 'users', label: 'Payroll', view: 'finance', tab: 'payroll' }
         ]
       },
       {
-        section: 'FEE STRUCTURE',
+        section: 'ACCOUNTING & ASSETS',
         items: [
-          { id: 'fee_statements', icon: 'clipboard', label: 'Fee Statements & Print', view: 'finance', tab: 'fee_structure' }
+          { id: 'budget', icon: 'analytics', label: 'Budget Management', view: 'finance', tab: 'budget' },
+          { id: 'assets', icon: 'facilities', label: 'Fixed Assets', view: 'finance', tab: 'assets' },
+          { id: 'journals', icon: 'pen', label: 'Journal Entries', view: 'finance', tab: 'journal' },
+          { id: 'tax', icon: 'file', label: 'Tax & Statutory', view: 'finance', tab: 'tax' }
         ]
       },
       {
-        section: 'EXPENSE MANAGEMENT',
+        section: 'ANALYSIS & SUPPORT',
         items: [
-          { id: 'all_expenses', icon: 'finance', label: 'All Expenses', view: 'finance', tab: 'expenses' },
-          { id: 'record_expense', icon: 'pen', label: 'Record Expense', view: 'finance', tab: 'expenses', action: 'record_expense' },
-          { id: 'expense_categories', icon: 'list', label: 'Categories', view: 'finance', tab: 'expenses', action: 'categories' }
-        ]
-      },
-      {
-        section: 'REPORTS & ANALYSIS',
-        items: [
-          { id: 'fee_report', icon: 'dashboard', label: 'Fee Report', view: 'finance', tab: 'reports' },
-          { id: 'expense_report', icon: 'analytics', label: 'Expense Report', view: 'finance', tab: 'reports' },
-          { id: 'cash_flow', icon: 'analytics', label: 'Cash Flow', view: 'finance', tab: 'reports' },
-          { id: 'student_statements', icon: 'clipboard', label: 'Student Statements', view: 'finance', tab: 'reports' },
-          { id: 'downloads', icon: 'download', label: 'Downloads', view: 'finance', tab: 'reports', action: 'downloads' }
+          { id: 'reports', icon: 'chart', label: 'Financial Reports', view: 'finance', tab: 'reports' },
+          { id: 'scholarships', icon: 'student', label: 'Scholarships', view: 'finance', tab: 'scholarships' },
+          { id: 'ai_copilot', icon: 'dashboard', label: 'AI Finance Assistant', view: 'finance', tab: 'ai' },
+          { id: 'audit_trail', icon: 'clipboard', label: 'Audit Centre', view: 'finance', tab: 'audit' }
         ]
       },
       {
         section: 'SYSTEM',
         items: [
-          { id: 'notifications', icon: 'bell', label: 'Notifications', view: 'finance', action: 'notif' },
+          { id: 'finance_users', icon: 'shield', label: 'Team & Permissions', view: 'finance', tab: 'permissions' },
+          { id: 'settings', icon: 'settings', label: 'Finance Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ],
+  },
+
+  bursar: {
+    label: 'Accountant',
+    portal: 'Finance Portal',
+    accent: '#000000',
+    home: 'finance',
+    nav: [
+      {
+        section: 'CORE',
+        items: [
+          { id: 'finance_dash', icon: 'dashboard', label: 'Overview', view: 'finance' },
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'RECEIVABLES',
+        items: [
+          { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
+          { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' }
+        ]
+      },
+      {
+        section: 'PAYABLES',
+        items: [
+          { id: 'all_expenses', icon: 'finance', label: 'Expenses', view: 'finance', tab: 'expenses' },
+          { id: 'procurement', icon: 'folder', label: 'Procurement', view: 'finance', tab: 'procurement' }
+        ]
+      },
+      {
+        section: 'GENERAL LEDGER',
+        items: [
+          { id: 'journals', icon: 'pen', label: 'Journal Entries', view: 'finance', tab: 'journal' },
+          { id: 'tax', icon: 'file', label: 'Tax & Statutory', view: 'finance', tab: 'tax' }
+        ]
+      },
+      {
+        section: 'PAYROLL',
+        items: [
+          { id: 'payroll', icon: 'users', label: 'Payroll', view: 'finance', tab: 'payroll' }
+        ]
+      },
+      {
+        section: 'ASSETS',
+        items: [
+          { id: 'assets', icon: 'facilities', label: 'Fixed Assets', view: 'finance', tab: 'assets' }
+        ]
+      },
+      {
+        section: 'REPORTS',
+        items: [
+          { id: 'reports', icon: 'chart', label: 'Financial Reports', view: 'finance', tab: 'reports' }
+        ]
+      },
+      {
+        section: 'SYSTEM',
+        items: [
           { id: 'settings', icon: 'settings', label: 'Finance Settings', view: 'settings' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]

@@ -22,6 +22,18 @@ import StatementsTab from './views/finance/StatementsTab';
 import FeeStructureTab from './views/finance/FeeStructureTab';
 import ExpensesTab from './views/finance/ExpensesTab';
 import ReportsTab from './views/finance/ReportsTab';
+import DefaultersTab from './views/finance/DefaultersTab';
+import PaymentPlansTab from './views/finance/PaymentPlansTab';
+import BudgetTab from './views/finance/BudgetTab';
+import ScholarshipsTab from './views/finance/ScholarshipsTab';
+import AuditTab from './views/finance/AuditTab';
+import ProcurementTab from './views/finance/ProcurementTab';
+import PayrollTab from './views/finance/PayrollTab';
+import AssetTab from './views/finance/AssetTab';
+import TaxTab from './views/finance/TaxTab';
+import AIFinanceTab from './views/finance/AIFinanceTab';
+import FinanceUsersTab from './views/finance/FinanceUsersTab';
+import JournalTab from './views/finance/JournalTab';
 
 import StudentLayout from './views/student/StudentLayout';
 import StudentDashboard from './views/student/StudentDashboard';
@@ -74,10 +86,22 @@ export default function App() {
           <Route index element={<FinanceDashboardTab />} />
           <Route path="billing" element={<BillingTab />} />
           <Route path="payments" element={<PaymentsTab />} />
+          <Route path="defaulters" element={<DefaultersTab />} />
           <Route path="statements" element={<StatementsTab />} />
           <Route path="fee_structure" element={<FeeStructureTab />} />
           <Route path="expenses" element={<ExpensesTab />} />
+          <Route path="payment_plans" element={<PaymentPlansTab />} />
+          <Route path="budget" element={<BudgetTab />} />
+          <Route path="scholarships" element={<ScholarshipsTab />} />
           <Route path="reports" element={<ReportsTab />} />
+          <Route path="audit" element={<AuditTab />} />
+          <Route path="procurement" element={<ProcurementTab />} />
+          <Route path="payroll" element={<PayrollTab />} />
+          <Route path="assets" element={<AssetTab />} />
+          <Route path="tax" element={<TaxTab />} />
+          <Route path="ai" element={<AIFinanceTab />} />
+          <Route path="permissions" element={<FinanceUsersTab />} />
+          <Route path="journal" element={<JournalTab />} />
         </Route>
 
         <Route path="student" element={<StudentLayout />}>

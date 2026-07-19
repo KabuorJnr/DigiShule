@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ResponsiveContainer, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 import { KpiCard } from '../../components/widgets';
+import { Badge } from '../../components/widgets';
 import { Icon } from '../../components/icons';
 import { fmtKES } from '../../data/modules';
 import { useOutletContext } from 'react-router-dom';
 
 export default function ReportsTab() {
-  const { invoices, payments, expenses } = useOutletContext();
+  const { invoices, payments, expenses, students } = useOutletContext();
+  const [agingDrilldown, setAgingDrilldown] = useState(null);
   
   const totalBilled = invoices.reduce((acc, i) => acc + Number(i.amount), 0);
   const totalCollected = payments.reduce((acc, p) => acc + Number(p.amount), 0);
@@ -27,17 +29,86 @@ export default function ReportsTab() {
   const trendData = useMemo(() => {
     const timeline = {};
     payments.forEach(p => {
-      const month = p.date.substring(0, 7);
+      const month = p.date?.substring(0, 7) || new Date(p.created_at).toISOString().substring(0, 7);
       if (!timeline[month]) timeline[month] = { month, Income: 0, Expenses: 0 };
       timeline[month].Income += Number(p.amount);
     });
     expenses.filter(e => e.status === 'Approved').forEach(e => {
-      const month = e.date.substring(0, 7);
+      const month = e.date?.substring(0, 7) || new Date(e.created_at).toISOString().substring(0, 7);
       if (!timeline[month]) timeline[month] = { month, Income: 0, Expenses: 0 };
       timeline[month].Expenses += Number(e.amount);
     });
     return Object.values(timeline).sort((a, b) => a.month.localeCompare(b.month));
   }, [payments, expenses]);
+
+  // --- AGING REPORT ---
+  const agingData = useMemo(() => {
+    const today = new Date();
+    const buckets = {
+      'Current': { count: 0, amount: 0, students: [] },
+      '1-30 days': { count: 0, amount: 0, students: [] },
+      '31-60 days': { count: 0, amount: 0, students: [] },
+      '61-90 days': { count: 0, amount: 0, students: [] },
+      '90+ days': { count: 0, amount: 0, students: [] }
+    };
+
+    // Build student balances
+    const studentBalances = {};
+    invoices.forEach(i => {
+      if (i.status === 'Paid') return;
+      if (!studentBalances[i.student_id]) {
+        studentBalances[i.student_id] = { amount: 0, oldestDue: null };
+      }
+      studentBalances[i.student_id].amount += Number(i.amount);
+      const due = i.due_date || i.created_at?.slice(0, 10);
+      if (due && (!studentBalances[i.student_id].oldestDue || due < studentBalances[i.student_id].oldestDue)) {
+        studentBalances[i.student_id].oldestDue = due;
+      }
+    });
+
+    // Subtract payments
+    payments.forEach(p => {
+      if (studentBalances[p.student_id]) {
+        studentBalances[p.student_id].amount -= Number(p.amount);
+      }
+    });
+
+    // Classify into buckets
+    Object.entries(studentBalances).forEach(([studentId, data]) => {
+      if (data.amount <= 0) return;
+      const student = students.find(s => s.id === studentId);
+      const daysOverdue = data.oldestDue
+        ? Math.max(0, Math.floor((today - new Date(data.oldestDue)) / (1000 * 60 * 60 * 24)))
+        : 0;
+
+      let bucket;
+      if (daysOverdue === 0) bucket = 'Current';
+      else if (daysOverdue <= 30) bucket = '1-30 days';
+      else if (daysOverdue <= 60) bucket = '31-60 days';
+      else if (daysOverdue <= 90) bucket = '61-90 days';
+      else bucket = '90+ days';
+
+      buckets[bucket].count++;
+      buckets[bucket].amount += data.amount;
+      buckets[bucket].students.push({
+        name: student?.name || studentId,
+        adm_no: student?.adm_no || '—',
+        class: student?.class || '—',
+        balance: data.amount,
+        daysOverdue
+      });
+    });
+
+    return buckets;
+  }, [invoices, payments, students]);
+
+  const agingChartData = Object.entries(agingData).map(([name, data]) => ({
+    name,
+    Amount: data.amount,
+    Count: data.count
+  }));
+
+  const AGING_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'];
 
   return (
     <div>
@@ -83,6 +154,115 @@ export default function ReportsTab() {
             <div style={{ textAlign: 'center', padding: 40 }} className="muted">No transactions recorded yet.</div>
           )}
         </div>
+      </div>
+
+      {/* --- AGING REPORT SECTION --- */}
+      <div style={{ marginTop: 24 }}>
+        <div className="grid grid-2" style={{ gap: 24 }}>
+          {/* Aging Chart */}
+          <div className="card card-pad">
+            <div className="section-title">Outstanding Fees — Aging Analysis</div>
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={agingChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis tickFormatter={v => `${v / 1000}k`} stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={v => fmtKES(v)} contentStyle={{ backgroundColor: 'var(--surface-raised)', borderRadius: 8, border: '1px solid var(--border)' }} />
+                  <Bar dataKey="Amount" radius={[4, 4, 0, 0]} barSize={40} cursor="pointer"
+                    onClick={(data) => setAgingDrilldown(agingDrilldown === data.name ? null : data.name)}>
+                    {agingChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={AGING_COLORS[index]} opacity={agingDrilldown && agingDrilldown !== entry.name ? 0.3 : 1} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Aging Summary Table */}
+          <div className="card card-pad">
+            <div className="section-title">Aging Summary</div>
+            <table className="table" style={{ fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th>Bucket</th>
+                  <th style={{ textAlign: 'center' }}>Students</th>
+                  <th style={{ textAlign: 'right' }}>Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(agingData).map(([bucket, data], i) => (
+                  <tr key={bucket} style={{ cursor: data.count > 0 ? 'pointer' : 'default', background: agingDrilldown === bucket ? 'var(--surface)' : 'transparent' }}
+                    onClick={() => data.count > 0 && setAgingDrilldown(agingDrilldown === bucket ? null : bucket)}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: AGING_COLORS[i] }} />
+                        <span style={{ fontWeight: 500 }}>{bucket}</span>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <Badge color={data.count === 0 ? 'gray' : i >= 3 ? 'red' : i >= 2 ? 'amber' : 'green'}>{data.count}</Badge>
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: data.amount > 0 ? AGING_COLORS[i] : 'var(--text-muted)' }}>
+                      {fmtKES(data.amount)}
+                    </td>
+                    <td style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
+                      {data.count > 0 ? '→' : ''}
+                    </td>
+                  </tr>
+                ))}
+                <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+                  <td>TOTAL</td>
+                  <td style={{ textAlign: 'center' }}>{Object.values(agingData).reduce((s, d) => s + d.count, 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtKES(Object.values(agingData).reduce((s, d) => s + d.amount, 0))}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Drilldown Table */}
+        {agingDrilldown && agingData[agingDrilldown]?.students.length > 0 && (
+          <div className="card card-pad" style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className="section-title" style={{ margin: 0 }}>
+                Students in "{agingDrilldown}" bucket
+              </div>
+              <button className="btn btn-sm" onClick={() => setAgingDrilldown(null)}>Close</button>
+            </div>
+            <div className="scroll-x">
+              <table className="table" style={{ fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Adm No</th>
+                    <th>Class</th>
+                    <th style={{ textAlign: 'center' }}>Days Overdue</th>
+                    <th style={{ textAlign: 'right' }}>Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agingData[agingDrilldown].students
+                    .sort((a, b) => b.balance - a.balance)
+                    .map((s, i) => (
+                      <tr key={i}>
+                        <td style={{ fontWeight: 600 }}>{s.name}</td>
+                        <td className="muted">{s.adm_no}</td>
+                        <td>{s.class}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <Badge color={s.daysOverdue >= 90 ? 'red' : s.daysOverdue >= 30 ? 'amber' : 'green'}>{s.daysOverdue}d</Badge>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#EF4444' }}>{fmtKES(s.balance)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

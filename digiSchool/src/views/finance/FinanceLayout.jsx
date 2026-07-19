@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
@@ -7,10 +7,22 @@ const TABS = [
   { id: '', label: 'Dashboard', path: '.' },
   { id: 'billing', label: 'Invoices & Billing', path: 'billing' },
   { id: 'payments', label: 'Payments', path: 'payments' },
-  { id: 'statements', label: 'Student Statements', path: 'statements' },
-  { id: 'fee_structure', label: 'School Fee Structure', path: 'fee_structure' },
-  { id: 'expenses', label: 'Expense Management', path: 'expenses' },
-  { id: 'reports', label: 'Reports & Analysis', path: 'reports' }
+  { id: 'defaulters', label: 'Defaulters', path: 'defaulters' },
+  { id: 'statements', label: 'Statements', path: 'statements' },
+  { id: 'fee_structure', label: 'Fee Structure', path: 'fee_structure' },
+  { id: 'expenses', label: 'Expenses', path: 'expenses' },
+  { id: 'payment_plans', label: 'Payment Plans', path: 'payment_plans' },
+  { id: 'budget', label: 'Budget', path: 'budget' },
+  { id: 'scholarships', label: 'Scholarships', path: 'scholarships' },
+  { id: 'reports', label: 'Reports', path: 'reports' },
+  { id: 'audit', label: 'Audit Trail', path: 'audit' },
+  { id: 'procurement', label: 'Procurement', path: 'procurement' },
+  { id: 'payroll', label: 'Payroll', path: 'payroll' },
+  { id: 'assets', label: 'Assets', path: 'assets' },
+  { id: 'journal', label: 'Journal Entries', path: 'journal' },
+  { id: 'tax', label: 'Tax & Statutory', path: 'tax' },
+  { id: 'ai', label: 'AI Assistant', path: 'ai' },
+  { id: 'permissions', label: 'Permissions', path: 'permissions' }
 ];
 
 export default function FinanceLayout() {
@@ -22,20 +34,47 @@ export default function FinanceLayout() {
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [students, setStudents] = useState([]);
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [scholarships, setScholarships] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
 
   useEffect(() => {
     Promise.all([
       fetchTable('invoices').catch(() => []),
       fetchTable('financePayments').catch(() => []),
       fetchTable('expenses').catch(() => []),
-      import('../../lib/api').then(({ fetchStudents }) => fetchStudents(0, 1000).then(r => r.data || [])).catch(() => [])
-    ]).then(([invs, pays, exps, stus]) => {
+      import('../../lib/api').then(({ fetchStudents }) => fetchStudents(0, 1000).then(r => r.data || [])).catch(() => []),
+      fetchTable('payment_plans').catch(() => []),
+      fetchTable('scholarships').catch(() => []),
+      fetchTable('finance_audit_log').catch(() => [])
+    ]).then(([invs, pays, exps, stus, plans, schs, logs]) => {
       setInvoices(invs);
       setPayments(pays);
       setExpenses(exps);
       setStudents(stus || []);
+      setPaymentPlans(plans || []);
+      setScholarships(schs || []);
+      setAuditLogs(logs || []);
     });
   }, []);
+
+  // Audit log helper — passed to child tabs via context
+  const addAuditLog = useCallback((action, details, amount) => {
+    const log = {
+      id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      action,
+      details,
+      amount: amount ? Number(amount) : null,
+      user: user?.name || 'System',
+      timestamp: new Date().toISOString()
+    };
+    setAuditLogs(prev => [log, ...prev]);
+
+    // Persist to DB (fire and forget)
+    import('../../lib/api').then(({ upsertRow }) => {
+      upsertRow('finance_audit_log', log).catch(() => {});
+    });
+  }, [user?.name]);
 
   // Use params.tab for an instant synchronous check, avoiding React Router's async location.pathname flicker
   const isDashboard = !params?.tab;
@@ -49,7 +88,7 @@ export default function FinanceLayout() {
             subtitle="Manage billing, payments, expenses, and fee structures."
           />
 
-          <div className="tabs" style={{ marginBottom: 24, borderBottom: '1px solid var(--border)', display: 'flex', gap: 24 }}>
+          <div className="tabs" style={{ marginBottom: 24, borderBottom: '1px solid var(--border)', display: 'flex', gap: 4, overflowX: 'auto', flexShrink: 0 }}>
             {TABS.map(t => {
               const isActive = t.id === '' 
                 ? location.pathname.endsWith('/finance') || location.pathname.endsWith('/finance/')
@@ -62,11 +101,13 @@ export default function FinanceLayout() {
                   end={t.id === ''}
                   className="tab"
                   style={{
-                    background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer',
+                    background: 'none', border: 'none', padding: '0 12px 12px', cursor: 'pointer',
                     fontWeight: isActive ? 600 : 400,
                     color: isActive ? 'var(--text)' : 'var(--text-muted)',
                     borderBottom: isActive ? '2px solid var(--text)' : '2px solid transparent',
-                    textDecoration: 'none'
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    fontSize: 13
                   }}
                 >
                   {t.label}
@@ -78,11 +119,16 @@ export default function FinanceLayout() {
       )}
 
       <Outlet context={{ 
-        store, user, params, 
+        store: { ...store, addAuditLog, paymentPlans, setPaymentPlans, scholarships, setScholarships, auditLogs, setAuditLogs },
+        user, params, 
         invoices, setInvoices, 
         payments, setPayments, 
         expenses, setExpenses, 
-        students, setStudents 
+        students, setStudents,
+        paymentPlans, setPaymentPlans,
+        scholarships, setScholarships,
+        auditLogs, setAuditLogs,
+        addAuditLog
       }} />
     </div>
   );

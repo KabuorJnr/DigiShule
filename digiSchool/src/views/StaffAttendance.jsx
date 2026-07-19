@@ -714,6 +714,7 @@ export default function StaffAttendance({ store, user }) {
                   <option value="librarian">Librarian</option>
                   <option value="registrar">Registrar</option>
                   <option value="finance">Bursar / Finance</option>
+                  <option value="accountant">Accountant</option>
                 </select>
               </div>
               <div>
