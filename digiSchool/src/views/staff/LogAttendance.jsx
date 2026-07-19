@@ -261,7 +261,7 @@ export default function LogAttendance() {
               <div>
                 <label className="field-label">Role *</label>
                 <select className="select" value={addForm.role} onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
-                  <option value="teacher">Teacher</option><option value="principal">Principal / Admin</option><option value="deputy_academic">Deputy Principal (Academics)</option><option value="deputy_admin">Deputy Principal (Admin)</option><option value="clinic">Clinic / Nurse</option><option value="librarian">Librarian</option><option value="registrar">Registrar</option><option value="finance">Bursar / Finance</option>
+                  <option value="teacher">Teacher</option><option value="principal">Principal / Admin</option><option value="deputy_academic">Deputy Principal (Academics)</option><option value="deputy_admin">Deputy Principal (Admin)</option><option value="dos">Director of Studies (DoS)</option><option value="clinic">Clinic / Nurse</option><option value="librarian">Librarian</option><option value="registrar">Registrar</option><option value="finance">Bursar / Finance</option>
                 </select>
               </div>
               <div><label className="field-label">Department *</label><input className="input" placeholder="e.g. Science" value={addForm.dept} onChange={e => setAddForm(p => ({ ...p, dept: e.target.value }))} /></div>

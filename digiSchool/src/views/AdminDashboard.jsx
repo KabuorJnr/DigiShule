@@ -707,6 +707,7 @@ export default function AdminDashboard({ store, user }) {
                     <option value="admin">Admin</option>
                     <option value="deputy_admin">Deputy Principal (Admin)</option>
                     <option value="deputy_academic">Deputy Principal (Academics)</option>
+                    <option value="dos">Director of Studies (DoS)</option>
                     <option value="clinic">Clinic / Nurse</option>
                     <option value="librarian">Librarian</option>
                     <option value="finance">Bursar / Finance</option>
