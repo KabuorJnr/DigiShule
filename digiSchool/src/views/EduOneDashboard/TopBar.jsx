@@ -1,7 +1,7 @@
 import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, Sun, Moon } from 'lucide-react';
 import { ROLES } from '../../data/users';
 
 const useStyles = createUseStyles({
@@ -173,6 +173,20 @@ export default function TopBar({
 }) {
   const classes = useStyles();
 
+  const [isDark, setIsDark] = React.useState(() => {
+    return localStorage.getItem('eduone_theme') === 'dark';
+  });
+
+  React.useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('eduone_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('eduone_theme', 'light');
+    }
+  }, [isDark]);
+
   return (
     <header className={classes.topBar}>
       <div className={classes.leftGroup}>
@@ -253,6 +267,13 @@ export default function TopBar({
             Return to Principal Office
           </button>
         )}
+        <button 
+          className={classes.bellBtn} 
+          onClick={() => setIsDark(!isDark)} 
+          aria-label="Toggle Dark Mode"
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <button className={classes.bellBtn} onClick={() => setNotifOpen(true)} aria-label="Notifications">
           <Bell size={18} />
           {unreadCount > 0 && <span className={classes.bellBadge}>{unreadCount}</span>}

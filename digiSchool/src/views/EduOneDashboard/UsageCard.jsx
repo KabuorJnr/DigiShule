@@ -7,7 +7,7 @@ const useStyles = createUseStyles({
     background: `linear-gradient(135deg, ${tokens.colors.brandPrimary} 0%, ${tokens.colors.brandSecondary} 100%)`,
     borderRadius: tokens.borderRadius['2xl'],
     padding: '1rem',
-    color: tokens.colors.white,
+    color: '#ffffff',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -48,8 +48,8 @@ const useStyles = createUseStyles({
   },
   btnLight: {
     width: '100%',
-    backgroundColor: tokens.colors.white,
-    color: tokens.colors.slate900,
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
     fontSize: '0.75rem',
     fontWeight: 600,
     borderRadius: tokens.borderRadius.lg,
@@ -61,7 +61,7 @@ const useStyles = createUseStyles({
   btnDark: {
     width: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    color: tokens.colors.white,
+    color: '#ffffff',
     fontSize: '0.75rem',
     fontWeight: 600,
     borderRadius: tokens.borderRadius.lg,

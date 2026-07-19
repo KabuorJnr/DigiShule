@@ -18,13 +18,42 @@ import IconRail from '../EduOneDashboard/IconRail';
 import TopBar from '../EduOneDashboard/TopBar';
 
 const useStyles = createUseStyles({
+  '@global': {
+    ':root': {
+      '--color-bg': '#EDEDF0',
+      '--color-surface': '#ffffff',
+      '--color-slate-50': '#f8fafc',
+      '--color-slate-100': '#f1f5f9',
+      '--color-slate-200': '#e2e8f0',
+      '--color-slate-300': '#cbd5e1',
+      '--color-slate-400': '#94a3b8',
+      '--color-slate-500': '#64748b',
+      '--color-slate-600': '#475569',
+      '--color-slate-700': '#334155',
+      '--color-slate-900': '#0f172a',
+    },
+    '.dark': {
+      '--color-bg': '#09090b',
+      '--color-surface': '#18181b',
+      '--color-slate-50': '#27272a',
+      '--color-slate-100': '#3f3f46',
+      '--color-slate-200': '#52525b',
+      '--color-slate-300': '#71717a',
+      '--color-slate-400': '#a1a1aa',
+      '--color-slate-500': '#a1a1aa',
+      '--color-slate-600': '#d4d4d8',
+      '--color-slate-700': '#e4e4e7',
+      '--color-slate-900': '#fafafa',
+    }
+  },
   layout: {
     display: 'flex',
     height: '100vh',
     width: '100%',
     padding: '1.5rem',
     gap: '0',
-    backgroundColor: '#EDEDF0',
+    backgroundColor: tokens.colors.bg,
+    color: tokens.colors.slate900,
     fontFamily: '"Inter", sans-serif',
     boxSizing: 'border-box'
   },
