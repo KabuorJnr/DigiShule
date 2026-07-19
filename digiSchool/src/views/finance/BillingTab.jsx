@@ -78,8 +78,10 @@ export default function BillingTab() {
       id: `notif_inv_${Date.now()}`,
       title: 'New Invoice Issued',
       message: `A new invoice of KES ${form.amount} has been issued and is due on ${form.due_date}`,
-      type: 'Billing',
-      user_id: form.student_id,
+      body: `A new invoice of KES ${form.amount} has been issued and is due on ${form.due_date}`,
+      posted_by: 'Finance Department',
+      role: 'Billing',
+      audience: [form.student_id],
       read: false,
       created_at: new Date().toISOString()
     };
@@ -129,8 +131,10 @@ export default function BillingTab() {
       id: `notif_inv_${Date.now()}_${idx}`,
       title: 'New Invoice Issued',
       message: `A new invoice of KES ${bulkForm.amount} has been issued and is due on ${bulkForm.due_date}`,
-      type: 'Billing',
-      user_id: s.id,
+      body: `A new invoice of KES ${bulkForm.amount} has been issued and is due on ${bulkForm.due_date}`,
+      posted_by: 'Finance Department',
+      role: 'Billing',
+      audience: [s.id],
       read: false,
       created_at: new Date().toISOString()
     }));

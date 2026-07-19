@@ -142,8 +142,10 @@ export default function DefaultersTab() {
       id: `notif_reminder_${Date.now()}_${student.id}`,
       title: 'Fee Balance Reminder',
       message,
-      type: 'Billing',
-      user_id: student.id,
+      body: message,
+      posted_by: 'Finance Department',
+      role: 'Billing',
+      audience: [student.id],
       read: false,
       created_at: new Date().toISOString()
     };
@@ -175,8 +177,10 @@ export default function DefaultersTab() {
           id: `notif_reminder_${Date.now()}_${student.id}`,
           title: 'Fee Balance Reminder',
           message,
-          type: 'Billing',
-          user_id: student.id,
+          body: message,
+          posted_by: 'Finance Department',
+          role: 'Billing',
+          audience: [student.id],
           read: false,
           created_at: new Date().toISOString()
         });
