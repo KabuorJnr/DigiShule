@@ -4,7 +4,6 @@ import { tokens } from './theme';
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
 import { ChevronDown, ChevronRight, Key, LogOut, PanelLeft, PanelLeftClose } from 'lucide-react';
 import NavSection from './NavSection';
-import UsageCard from './UsageCard';
 
 const useStyles = createUseStyles({
   noScrollbar: {
@@ -102,9 +101,6 @@ const useStyles = createUseStyles({
     minHeight: 0,
     overflowY: 'auto'
   },
-  usageWrap: {
-    padding: '0.75rem 1.25rem 1.25rem 1.25rem'
-  },
   footer: {
     padding: '1.25rem',
     borderTop: `1px solid ${tokens.colors.slate100}`,
@@ -189,12 +185,6 @@ export default function Sidebar({ nav, isNavActive, expandedNav, toggleNav, curr
           collapsed={collapsed}
         />
       </div>
-
-      {!collapsed && (
-        <div className={classes.usageWrap}>
-          <UsageCard />
-        </div>
-      )}
 
       <div className={classes.footer}>
         {!collapsed ? (
