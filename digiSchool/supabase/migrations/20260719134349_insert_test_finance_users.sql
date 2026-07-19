@@ -14,5 +14,5 @@ BEGIN
     SELECT id, split_part(email, '@', 1), raw_user_meta_data->>'name', (raw_user_meta_data->>'role')::public.app_role, id, (SELECT id FROM public.schools LIMIT 1)
     FROM auth.users
     WHERE email IN ('bursar@digischool.com', 'accountant@digischool.com')
-    ON CONFLICT (id) DO NOTHING;
+    ON CONFLICT (id, school_id, role) DO NOTHING;
 END $$;
