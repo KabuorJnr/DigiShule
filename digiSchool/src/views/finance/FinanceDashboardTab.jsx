@@ -82,7 +82,7 @@ export default function FinanceDashboardTab() {
   
   const totalOutstanding = Math.max(0, totalInvoiced - totalCollected);
   const cashFlow = totalCollected - totalExpenses;
-  const collectionRate = totalInvoiced > 0 ? ((totalCollected / totalInvoiced) * 100).toFixed(1) : 0;
+  const collectionRate = totalInvoiced > 0 ? Math.min(100, (totalCollected / totalInvoiced) * 100).toFixed(1) : 0;
 
   // --- VISUALIZATION DATA ---
 
