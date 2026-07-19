@@ -1021,11 +1021,3 @@ textarea.input {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* Force standard font in Finance Portal and Recharts */
-.finance-dashboard {
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif !important;
-}
-.finance-dashboard .recharts-text {
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif !important;
-}

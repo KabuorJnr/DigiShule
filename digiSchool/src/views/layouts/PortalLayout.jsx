@@ -471,9 +471,9 @@ export default function PortalLayout() {
             {settings.logo ? <img src={settings.logo} alt="logo" /> : <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
           </div>
           {!collapsed && (
-            <div className="brand-text">
-              <strong><img src="/eduone-logo.png" alt="EduOne" style={{ height: 28, background: 'white', borderRadius: 4, padding: '4px 6px' }} /></strong>
-              <span className="muted">{role.portal}</span>
+            <div className="brand-text" style={{ flex: 1 }}>
+              <strong>{settings.name || <img src="/eduone-logo.png" alt="EduOne" style={{ height: 28, background: 'transparent', borderRadius: 4, padding: '4px 6px' }} />}</strong>
+              <div className="muted">{role.portal}</div>
             </div>
           )}
         </div>
@@ -481,7 +481,7 @@ export default function PortalLayout() {
           {nav.map((section, sIdx) => (
             <div key={sIdx} style={{ marginBottom: section.section === 'CORE' ? 8 : 16 }}>
               {!collapsed && section.section !== 'CORE' && (
-                <div style={{ padding: '0 20px', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                <div style={{ padding: '0 16px', fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
                   {section.section}
                 </div>
               )}
@@ -504,17 +504,17 @@ export default function PortalLayout() {
                       }}
                       title={item.label}
                     >
-                      <span className="nav-icon"><Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={16} fallback={item.icon} /></span>
+                      <span className="nav-icon"><Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={18} fallback={item.icon} /></span>
                       {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
                       {!collapsed && hasSub && (isExpanded ? <ChevronDown size={14} style={{ opacity: 0.5 }} /> : <ChevronRight size={14} style={{ opacity: 0.5 }} />)}
                     </button>
                     {!collapsed && hasSub && isExpanded && (
-                      <div style={{ background: 'rgba(0,0,0,0.15)', padding: '4px 0', borderLeft: '2px solid rgba(255,255,255,0.1)', marginLeft: 30, marginTop: 2, marginBottom: 4 }}>
+                      <div style={{ background: '#f8fafc', padding: '6px 0', borderLeft: '2px solid #e2e8f0', marginLeft: 24, marginTop: 4, marginBottom: 4, borderRadius: '0 8px 8px 0' }}>
                         {item.sub.map(subItem => (
                           <button
                             key={subItem.id}
                             className={`nav-item${isNavActive(subItem) ? ' active' : ''}`}
-                            style={{ padding: '6px 20px 6px 16px', minHeight: 32, fontSize: 13, opacity: isNavActive(subItem) ? 1 : 0.7 }}
+                            style={{ padding: '8px 16px 8px 16px', minHeight: 36, fontSize: 13, background: 'transparent', boxShadow: 'none', color: isNavActive(subItem) ? '#6366f1' : '#6b7280' }}
                             onClick={() => {
                               if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
                               else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
@@ -523,7 +523,8 @@ export default function PortalLayout() {
                               }
                             }}
                           >
-                            {subItem.label}
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isNavActive(subItem) ? '#6366f1' : '#cbd5e1', marginRight: 12, flexShrink: 0 }}></span>
+                            <span style={{ fontWeight: isNavActive(subItem) ? 600 : 500, textAlign: 'left', flex: 1 }}>{subItem.label}</span>
                           </button>
                         ))}
                       </div>
@@ -535,31 +536,31 @@ export default function PortalLayout() {
           ))}
         </nav>
 
-        <div className="sidebar-profile-setting" style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="sidebar-profile-setting" style={{ padding: '16px', borderTop: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {!collapsed ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '0 4px' }}>
                 <div className="avatar" title={currentUser.name} style={{ width: 36, height: 36, fontSize: 14 }}>{initials}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{currentUser.name}</strong>
-                  <span style={{ fontSize: 11, opacity: 0.7 }}>{role.label}</span>
+                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#111827' }}>{currentUser.name}</strong>
+                  <span style={{ fontSize: 11, color: '#6b7280' }}>{role.label}</span>
                 </div>
               </div>
               <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '8px 12px', fontSize: 13, minHeight: 'auto' }}>
-                <Key size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
+                <Key size={14} style={{ marginRight: 12, color: '#6b7280' }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
               </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '8px 12px', fontSize: 13, color: '#f87171', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
+              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '8px 12px', fontSize: 13, color: '#ef4444', minHeight: 'auto' }}>
+                <LogOut size={14} style={{ marginRight: 12, color: '#ef4444' }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
               </button>
             </>
           ) : (
             <>
               <div className="avatar" title={currentUser.name} style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 12px auto' }}>{initials}</div>
               <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ justifyContent: 'center', padding: '8px', minHeight: 'auto' }}>
-                <Key size={14} style={{ margin: 0, opacity: 0.7 }} />
+                <Key size={14} style={{ margin: 0, color: '#6b7280' }} />
               </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#f87171', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ margin: 0, opacity: 0.7 }} />
+              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#ef4444', minHeight: 'auto' }}>
+                <LogOut size={14} style={{ margin: 0, color: '#ef4444' }} />
               </button>
             </>
           )}
