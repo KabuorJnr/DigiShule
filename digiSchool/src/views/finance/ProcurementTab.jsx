@@ -3,36 +3,79 @@ import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
-import { Package, Truck } from 'lucide-react';
+import { upsertRow } from '../../lib/api';
+import { Package, Truck, FileText, Send, Plus } from 'lucide-react';
 
 export default function ProcurementTab() {
   const { store, user } = useOutletContext();
   const notify = store?.notify || (() => {});
   const addAuditLog = store?.addAuditLog || (() => {});
 
-  const [procurements, setProcurements] = useState([
-    { id: 'po_001', date: '2026-07-10', vendor: 'TextBook Centre', items: 'Term 3 Textbooks', amount: 450000, status: 'Pending Approval', requested_by: 'Library Dept' },
-    { id: 'po_002', date: '2026-07-12', vendor: 'Kensalt', items: 'Kitchen Supplies (Salt, Spices)', amount: 15000, status: 'Approved', requested_by: 'Kitchen Dept' },
-    { id: 'po_003', date: '2026-07-15', vendor: 'Simba Coach', items: 'Transport for Academic Trip', amount: 80000, status: 'Pending Approval', requested_by: 'Deputy Academics' },
-  ]);
+  const purchaseOrders = store?.purchaseOrders || [];
+  const tenders = store?.tenders || [];
+  const setPurchaseOrders = store?.setPurchaseOrders || (() => {});
+  const setTenders = store?.setTenders || (() => {});
 
   const [selectedPO, setSelectedPO] = useState(null);
+  
+  // Tender Form State
+  const [showTenderForm, setShowTenderForm] = useState(false);
+  const [tenderForm, setTenderForm] = useState({ title: '', description: '', deadline: '' });
 
-  const handleApprove = (id) => {
+  const handleApprove = async (id) => {
     if (!confirm('Approve this Purchase Order?')) return;
-    const po = procurements.find(p => p.id === id);
-    setProcurements(prev => prev.map(p => p.id === id ? { ...p, status: 'Approved' } : p));
-    notify('Purchase Order Approved', 'success');
-    addAuditLog('PO Approved', `Approved PO to ${po.vendor}`, po.amount);
+    try {
+      const po = purchaseOrders.find(p => p.id === id);
+      const updatedPo = { ...po, status: 'Approved' };
+      await upsertRow('purchase_orders', updatedPo);
+
+      setPurchaseOrders(prev => prev.map(p => p.id === id ? updatedPo : p));
+      notify('Purchase Order Approved', 'success');
+      addAuditLog('PO Approved', `Approved PO to ${po.vendor}`, po.amount);
+    } catch(e) {
+      notify(e.message, 'error');
+    }
   };
 
-  const handleReject = (id) => {
+  const handleReject = async (id) => {
     const reason = prompt('Reason for rejection:');
     if (!reason) return;
-    const po = procurements.find(p => p.id === id);
-    setProcurements(prev => prev.map(p => p.id === id ? { ...p, status: 'Rejected' } : p));
-    notify('Purchase Order Rejected', 'error');
-    addAuditLog('PO Rejected', `Rejected PO to ${po.vendor}. Reason: ${reason}`);
+    try {
+      const po = purchaseOrders.find(p => p.id === id);
+      const updatedPo = { ...po, status: 'Rejected' };
+      await upsertRow('purchase_orders', updatedPo);
+
+      setPurchaseOrders(prev => prev.map(p => p.id === id ? updatedPo : p));
+      notify('Purchase Order Rejected', 'error');
+      addAuditLog('PO Rejected', `Rejected PO to ${po.vendor}. Reason: ${reason}`);
+    } catch(e) {
+      notify(e.message, 'error');
+    }
+  };
+
+  const handlePublishTender = async (e) => {
+    e.preventDefault();
+    if(!tenderForm.title || !tenderForm.deadline) return notify('Title and deadline are required.', 'error');
+
+    try {
+      const newTender = {
+        id: `tnd_${Date.now()}`,
+        title: tenderForm.title,
+        description: tenderForm.description,
+        deadline: tenderForm.deadline,
+        status: 'Open',
+        published: true
+      };
+
+      await upsertRow('tenders', newTender);
+      setTenders([newTender, ...tenders]);
+      notify('Tender Published Successfully', 'success');
+      addAuditLog('Tender Published', `Published tender: ${newTender.title}`);
+      setShowTenderForm(false);
+      setTenderForm({ title: '', description: '', deadline: '' });
+    } catch(e) {
+      notify(e.message, 'error');
+    }
   };
 
   return (
@@ -43,9 +86,9 @@ export default function ProcurementTab() {
             <Package size={24} />
           </div>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Pending Approvals</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Pending PO Approvals</div>
             <div style={{ fontSize: 24, fontWeight: 'bold' }}>
-              {procurements.filter(p => p.status === 'Pending Approval').length}
+              {purchaseOrders.filter(p => p.status === 'Pending Approval').length}
             </div>
           </div>
         </div>
@@ -54,26 +97,26 @@ export default function ProcurementTab() {
             <Truck size={24} />
           </div>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Approved POs (This Month)</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Approved POs</div>
             <div style={{ fontSize: 24, fontWeight: 'bold' }}>
-              {procurements.filter(p => p.status === 'Approved').length}
+              {purchaseOrders.filter(p => p.status === 'Approved').length}
             </div>
           </div>
         </div>
         <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ background: '#FEF2F2', color: '#EF4444', padding: 12, borderRadius: 8 }}>
-            <span style={{ fontWeight: 'bold', fontSize: 20 }}>KES</span>
+            <FileText size={24} />
           </div>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Pending Value</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Active Tenders</div>
             <div style={{ fontSize: 24, fontWeight: 'bold' }}>
-              {fmtKES(procurements.filter(p => p.status === 'Pending Approval').reduce((s, p) => s + p.amount, 0))}
+              {tenders.filter(t => t.status === 'Open').length}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="card card-pad">
+      <div className="card card-pad" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div className="section-title" style={{ margin: 0 }}>Purchase Orders</div>
           <button className="btn btn-primary" onClick={() => notify('Create PO form would open here')}>New PO</button>
@@ -94,7 +137,10 @@ export default function ProcurementTab() {
               </tr>
             </thead>
             <tbody>
-              {procurements.map(po => (
+              {purchaseOrders.length === 0 && (
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No Purchase Orders found.</td></tr>
+              )}
+              {purchaseOrders.map(po => (
                 <tr key={po.id}>
                   <td>{po.date}</td>
                   <td className="muted">{po.id}</td>
@@ -125,6 +171,47 @@ export default function ProcurementTab() {
         </div>
       </div>
 
+      <div className="card card-pad">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div className="section-title" style={{ margin: 0 }}>Tenders & Procurement Bids</div>
+          <button className="btn btn-primary" onClick={() => setShowTenderForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Send size={16} /> Publish Tender
+          </button>
+        </div>
+
+        <div className="scroll-x">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Tender ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Deadline</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tenders.length === 0 && (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No Tenders published yet.</td></tr>
+              )}
+              {tenders.map(tnd => (
+                <tr key={tnd.id}>
+                  <td className="muted">{tnd.id}</td>
+                  <td style={{ fontWeight: 600 }}>{tnd.title}</td>
+                  <td>{tnd.description}</td>
+                  <td>{tnd.deadline}</td>
+                  <td>
+                    <Badge color={tnd.status === 'Open' ? 'green' : 'gray'}>
+                      {tnd.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {selectedPO && (
         <Modal title={`PO Details - ${selectedPO.id}`} onClose={() => setSelectedPO(null)} footer={
           <button className="btn" onClick={() => setSelectedPO(null)}>Close</button>
@@ -136,6 +223,29 @@ export default function ProcurementTab() {
             <p><strong>Requested By:</strong> {selectedPO.requested_by}</p>
             <p><strong>Status:</strong> {selectedPO.status}</p>
           </div>
+        </Modal>
+      )}
+
+      {showTenderForm && (
+        <Modal title="Publish New Tender" onClose={() => setShowTenderForm(false)}>
+          <form onSubmit={handlePublishTender}>
+            <div style={{ marginBottom: 16 }}>
+              <label className="field-label">Tender Title</label>
+              <input className="input" required value={tenderForm.title} onChange={e => setTenderForm({...tenderForm, title: e.target.value})} placeholder="e.g. Supply of Term 3 Textbooks" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label className="field-label">Description / Requirements</label>
+              <textarea className="input" rows="4" value={tenderForm.description} onChange={e => setTenderForm({...tenderForm, description: e.target.value})} placeholder="Detailed requirements..." />
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <label className="field-label">Submission Deadline</label>
+              <input type="date" className="input" required value={tenderForm.deadline} onChange={e => setTenderForm({...tenderForm, deadline: e.target.value})} />
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button type="button" className="btn" onClick={() => setShowTenderForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">Publish Tender</button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>

@@ -16,6 +16,11 @@ export default function FinanceLayout() {
   const [paymentPlans, setPaymentPlans] = useState([]);
   const [scholarships, setScholarships] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [payrolls, setPayrolls] = useState([]);
+  const [payrollEntries, setPayrollEntries] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [tenders, setTenders] = useState([]);
 
   useEffect(() => {
     Promise.all([
@@ -25,8 +30,13 @@ export default function FinanceLayout() {
       import('../../lib/api').then(({ fetchStudents }) => fetchStudents(0, 1000).then(r => r.data || [])).catch(() => []),
       fetchTable('payment_plans').catch(() => []),
       fetchTable('scholarships').catch(() => []),
-      fetchTable('finance_audit_log').catch(() => [])
-    ]).then(([invs, pays, exps, stus, plans, schs, logs]) => {
+      fetchTable('finance_audit_log').catch(() => []),
+      fetchTable('payrolls').catch(() => []),
+      fetchTable('payroll_entries').catch(() => []),
+      fetchTable('staff').catch(() => []),
+      fetchTable('purchase_orders').catch(() => []),
+      fetchTable('tenders').catch(() => [])
+    ]).then(([invs, pays, exps, stus, plans, schs, logs, prs, prents, stf, pos, tnds]) => {
       setInvoices(invs);
       setPayments(pays);
       setExpenses(exps);
@@ -34,6 +44,11 @@ export default function FinanceLayout() {
       setPaymentPlans(plans || []);
       setScholarships(schs || []);
       setAuditLogs(logs || []);
+      setPayrolls(prs || []);
+      setPayrollEntries(prents || []);
+      setStaff(stf || []);
+      setPurchaseOrders(pos || []);
+      setTenders(tnds || []);
     });
   }, []);
 
@@ -70,7 +85,7 @@ export default function FinanceLayout() {
       )}
 
       <Outlet context={{ 
-        store: { ...store, addAuditLog, paymentPlans, setPaymentPlans, scholarships, setScholarships, auditLogs, setAuditLogs },
+        store: { ...store, addAuditLog, paymentPlans, setPaymentPlans, scholarships, setScholarships, auditLogs, setAuditLogs, payrolls, setPayrolls, payrollEntries, setPayrollEntries, staff, purchaseOrders, setPurchaseOrders, tenders, setTenders },
         user, params, 
         invoices, setInvoices, 
         payments, setPayments, 
@@ -79,6 +94,11 @@ export default function FinanceLayout() {
         paymentPlans, setPaymentPlans,
         scholarships, setScholarships,
         auditLogs, setAuditLogs,
+        payrolls, setPayrolls,
+        payrollEntries, setPayrollEntries,
+        staff,
+        purchaseOrders, setPurchaseOrders,
+        tenders, setTenders,
         addAuditLog
       }} />
     </div>
