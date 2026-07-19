@@ -83,7 +83,7 @@ const useStyles = createUseStyles({
     fontSize: '0.8125rem',
     background: 'transparent',
     border: 'none',
-    color: tokens.colors.slate900,
+    color: '#7C3AED',
     fontWeight: 600,
     display: 'flex',
     alignItems: 'center',
@@ -95,7 +95,7 @@ const useStyles = createUseStyles({
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    backgroundColor: tokens.colors.slate900,
+    backgroundColor: '#7C3AED',
     marginRight: '0.75rem',
     flexShrink: 0
   },

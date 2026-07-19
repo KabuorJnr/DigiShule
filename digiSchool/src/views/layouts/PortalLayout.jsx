@@ -62,7 +62,8 @@ const useStyles = createUseStyles({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    position: 'relative'
   },
   contentScroll: {
     flex: 1,
