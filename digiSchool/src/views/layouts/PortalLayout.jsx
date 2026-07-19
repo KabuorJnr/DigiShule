@@ -514,7 +514,7 @@ export default function PortalLayout() {
                           <button
                             key={subItem.id}
                             className={`nav-item${isNavActive(subItem) ? ' active' : ''}`}
-                            style={{ padding: '8px 16px 8px 16px', minHeight: 36, fontSize: 13, background: 'transparent', boxShadow: 'none', color: isNavActive(subItem) ? '#6366f1' : '#6b7280' }}
+                            style={{ padding: '8px 16px 8px 16px', minHeight: 36, fontSize: 13, background: 'transparent', boxShadow: 'none', color: isNavActive(subItem) ? '#111827' : '#6b7280' }}
                             onClick={() => {
                               if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
                               else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
@@ -523,7 +523,7 @@ export default function PortalLayout() {
                               }
                             }}
                           >
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isNavActive(subItem) ? '#6366f1' : '#cbd5e1', marginRight: 12, flexShrink: 0 }}></span>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isNavActive(subItem) ? '#111827' : '#cbd5e1', marginRight: 12, flexShrink: 0 }}></span>
                             <span style={{ fontWeight: isNavActive(subItem) ? 600 : 500, textAlign: 'left', flex: 1 }}>{subItem.label}</span>
                           </button>
                         ))}

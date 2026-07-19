@@ -48,6 +48,7 @@ export default function DefaultersTab() {
 
     invoices.forEach(i => {
       if (studentMap[i.student_id]) {
+        if (i.status === 'Draft' || i.status === 'Canceled') return;
         studentMap[i.student_id].totalBilled += Number(i.amount);
         const dueDate = i.due_date || i.created_at?.slice(0, 10);
         if (dueDate && i.status !== 'Paid') {
