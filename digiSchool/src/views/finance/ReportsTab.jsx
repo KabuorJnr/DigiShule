@@ -7,7 +7,10 @@ import { fmtKES } from '../../data/modules';
 import { useOutletContext } from 'react-router-dom';
 
 export default function ReportsTab() {
-  const { invoices, payments, expenses, students } = useOutletContext();
+  const { invoices, payments, expenses, students, store } = useOutletContext();
+  const budgets = store?.budgets || [];
+  const budgetItems = store?.budgetItems || [];
+
   const [agingDrilldown, setAgingDrilldown] = useState(null);
   
   const totalBilled = invoices.reduce((acc, i) => acc + Number(i.amount), 0);
@@ -109,6 +112,44 @@ export default function ReportsTab() {
   }));
 
   const AGING_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'];
+
+  // --- BUDGET VS EXPENSE REPORT ---
+  const budgetVsExpenseData = useMemo(() => {
+    // We will just aggregate the latest approved budget items
+    if (!budgetItems.length) return [];
+    
+    // Group by category
+    const categories = {};
+    budgetItems.forEach(item => {
+      if (!categories[item.category]) categories[item.category] = { category: item.category, Budgeted: 0, Spent: 0 };
+      categories[item.category].Budgeted += Number(item.allocated_amount || 0);
+      categories[item.category].Spent += Number(item.spent_amount || 0);
+    });
+
+    // Also include expenses that might not be formally tracked in budgetItems but match the category
+    expenses.filter(e => e.status === 'Approved').forEach(e => {
+      if (!categories[e.category]) categories[e.category] = { category: e.category, Budgeted: 0, Spent: 0 };
+      // Note: we don't double count if spent_amount is already updated via triggers, 
+      // but if triggers aren't running, we'll map them here as a fallback or override:
+      // Actually, since we don't know if triggers are active, let's strictly use budgetItems for Budgeted
+      // and sum up from actual expenses for Spent to ensure accuracy.
+    });
+
+    const finalCategories = {};
+    budgetItems.forEach(item => {
+      if (!finalCategories[item.category]) finalCategories[item.category] = { category: item.category, Budgeted: 0, Spent: 0 };
+      finalCategories[item.category].Budgeted += Number(item.allocated_amount || 0);
+    });
+    expenses.filter(e => e.status === 'Approved').forEach(e => {
+      if (finalCategories[e.category]) {
+        finalCategories[e.category].Spent += Number(e.amount || 0);
+      } else {
+        finalCategories[e.category] = { category: e.category, Budgeted: 0, Spent: Number(e.amount || 0) };
+      }
+    });
+
+    return Object.values(finalCategories);
+  }, [budgetItems, expenses]);
 
   return (
     <div>
@@ -262,6 +303,26 @@ export default function ReportsTab() {
               </table>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* --- BUDGET VS EXPENSES SECTION --- */}
+      <div className="card card-pad" style={{ marginTop: 24 }}>
+        <div className="section-title">Budget vs Actual Expenses</div>
+        {budgetVsExpenseData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={budgetVsExpenseData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="category" />
+              <YAxis tickFormatter={(value) => `${value / 1000}k`} />
+              <Tooltip formatter={(value) => fmtKES(value)} />
+              <Legend />
+              <Bar dataKey="Budgeted" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Spent" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ textAlign: 'center', padding: 40 }} className="muted">No budget items found.</div>
         )}
       </div>
     </div>

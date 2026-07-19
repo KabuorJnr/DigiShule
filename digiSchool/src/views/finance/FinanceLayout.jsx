@@ -21,6 +21,9 @@ export default function FinanceLayout() {
   const [staff, setStaff] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [tenders, setTenders] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [budgetItems, setBudgetItems] = useState([]);
 
   useEffect(() => {
     Promise.all([
@@ -35,8 +38,11 @@ export default function FinanceLayout() {
       fetchTable('payroll_entries').catch(() => []),
       fetchTable('staff').catch(() => []),
       fetchTable('purchase_orders').catch(() => []),
-      fetchTable('tenders').catch(() => [])
-    ]).then(([invs, pays, exps, stus, plans, schs, logs, prs, prents, stf, pos, tnds]) => {
+      fetchTable('tenders').catch(() => []),
+      fetchTable('fixed_assets').catch(() => []),
+      fetchTable('budgets').catch(() => []),
+      fetchTable('budget_items').catch(() => [])
+    ]).then(([invs, pays, exps, stus, plans, schs, logs, prs, prents, stf, pos, tnds, asts, bdgs, bitems]) => {
       setInvoices(invs);
       setPayments(pays);
       setExpenses(exps);
@@ -49,6 +55,9 @@ export default function FinanceLayout() {
       setStaff(stf || []);
       setPurchaseOrders(pos || []);
       setTenders(tnds || []);
+      setAssets(asts || []);
+      setBudgets(bdgs || []);
+      setBudgetItems(bitems || []);
     });
   }, []);
 
@@ -85,7 +94,7 @@ export default function FinanceLayout() {
       )}
 
       <Outlet context={{ 
-        store: { ...store, addAuditLog, paymentPlans, setPaymentPlans, scholarships, setScholarships, auditLogs, setAuditLogs, payrolls, setPayrolls, payrollEntries, setPayrollEntries, staff, purchaseOrders, setPurchaseOrders, tenders, setTenders },
+        store: { ...store, addAuditLog, paymentPlans, setPaymentPlans, scholarships, setScholarships, auditLogs, setAuditLogs, payrolls, setPayrolls, payrollEntries, setPayrollEntries, staff, purchaseOrders, setPurchaseOrders, tenders, setTenders, assets, setAssets, budgets, setBudgets, budgetItems, setBudgetItems },
         user, params, 
         invoices, setInvoices, 
         payments, setPayments, 
@@ -99,6 +108,9 @@ export default function FinanceLayout() {
         staff,
         purchaseOrders, setPurchaseOrders,
         tenders, setTenders,
+        assets, setAssets,
+        budgets, setBudgets,
+        budgetItems, setBudgetItems,
         addAuditLog
       }} />
     </div>
