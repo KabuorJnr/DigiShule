@@ -1,4 +1,12 @@
 -- Insert missing staff records for test users created via JS script
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'app_role' AND e.enumlabel = 'accountant') THEN
+    ALTER TYPE app_role ADD VALUE 'accountant';
+  END IF;
+END $$;
+
 -- Using DO block to safely bypass RLS as the postgres user
 DO $$
 BEGIN
