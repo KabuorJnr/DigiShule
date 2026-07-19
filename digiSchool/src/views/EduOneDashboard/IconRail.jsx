@@ -1,6 +1,8 @@
 import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
+import { Icon, NAV_ICON_MAP } from '../../components/icons';
+import { PanelLeftClose, Settings } from 'lucide-react';
 
 const useStyles = createUseStyles({
   iconRail: {
@@ -53,11 +55,15 @@ const useStyles = createUseStyles({
     cursor: 'pointer',
   },
   tooltipContainer: {
-    position: 'relative'
+    position: 'relative',
+    '&:hover $tooltip': {
+      display: 'block'
+    }
   },
   tooltip: {
+    display: 'none',
     position: 'absolute',
-    left: '2.75rem',
+    left: '3rem',
     top: '0.375rem',
     whiteSpace: 'nowrap',
     backgroundColor: tokens.colors.slate900,
@@ -65,41 +71,54 @@ const useStyles = createUseStyles({
     fontSize: '0.75rem',
     fontWeight: 500,
     padding: '0.25rem 0.625rem',
-    borderRadius: tokens.borderRadius.lg
+    borderRadius: tokens.borderRadius.lg,
+    zIndex: 50
   }
 });
 
-export default function IconRail() {
+export default function IconRail({ nav, isNavActive, store, collapsed, setCollapsed }) {
   const classes = useStyles();
+
+  // Extract top-level items to show in the rail (max 6 to avoid overflow)
+  const topItems = [];
+  nav?.forEach(section => {
+    section.items.forEach(item => {
+      if (topItems.length < 6 && item.icon) {
+        topItems.push(item);
+      }
+    });
+  });
 
   return (
     <div className={classes.iconRail}>
       <div className={classes.iconGroup}>
-        <button className={classes.btn} title="Collapse">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-        </button>
-        <button className={classes.btn} title="Search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
         <div className={classes.tooltipContainer}>
-          <button className={classes.btnActive} title="Dashboard">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <button className={classes.btn} onClick={() => setCollapsed(!collapsed)}>
+            <PanelLeftClose size={16} />
           </button>
-          <span className={classes.tooltip}>Dashboard</span>
+          <span className={classes.tooltip}>Toggle Sidebar</span>
         </div>
-        <button className={classes.btn} title="Students">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </button>
-        <button className={classes.btn} title="Fees">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </button>
-        <button className={classes.btn} title="Report Cards">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        </button>
+        
+        {topItems.map(item => {
+          const active = isNavActive(item);
+          return (
+            <div key={item.id} className={classes.tooltipContainer}>
+              <button 
+                className={active ? classes.btnActive : classes.btn} 
+                onClick={() => {
+                  if (item.view) store.navigate(item.view, { tab: item.tab, action: item.action, filter: item.filter });
+                }}
+              >
+                <Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={16} fallback={item.icon} />
+              </button>
+              <span className={classes.tooltip}>{item.label}</span>
+            </div>
+          );
+        })}
       </div>
       <div className={classes.iconGroup} style={{ gap: '1rem' }}>
         <button className={classes.btn}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <Settings size={16} />
         </button>
       </div>
     </div>

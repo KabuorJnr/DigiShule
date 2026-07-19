@@ -1,6 +1,8 @@
 import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
+import { Icon, NAV_ICON_MAP } from '../../components/icons';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const useStyles = createUseStyles({
   container: {
@@ -15,6 +17,7 @@ const useStyles = createUseStyles({
     letterSpacing: '0.05em',
     color: tokens.colors.slate400,
     marginBottom: '0.5rem',
+    textTransform: 'uppercase',
     margin: 0
   },
   navItem: {
@@ -25,7 +28,11 @@ const useStyles = createUseStyles({
     borderRadius: tokens.borderRadius.xl,
     color: tokens.colors.slate500,
     fontSize: '0.875rem',
-    textDecoration: 'none',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    width: '100%',
+    textAlign: 'left',
     '&:hover': {
       backgroundColor: tokens.colors.slate50
     }
@@ -40,69 +47,132 @@ const useStyles = createUseStyles({
     color: tokens.colors.white,
     fontSize: '0.875rem',
     fontWeight: 500,
-    textDecoration: 'none'
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    width: '100%',
+    textAlign: 'left'
   },
-  integrationIcon: {
-    width: '1rem',
-    height: '1rem',
-    borderRadius: '4px',
+  subContainer: {
+    background: tokens.colors.slate50,
+    padding: '0.375rem 0',
+    borderLeft: `2px solid ${tokens.colors.slate200}`,
+    marginLeft: '1.5rem',
+    marginTop: '0.25rem',
+    marginBottom: '0.25rem',
+    borderRadius: '0 0.5rem 0.5rem 0',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  subItem: {
+    padding: '0.5rem 1rem',
+    minHeight: '2.25rem',
+    fontSize: '0.8125rem',
+    background: 'transparent',
+    border: 'none',
+    color: tokens.colors.slate500,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    color: tokens.colors.white,
-    fontSize: '9px',
-    fontWeight: 'bold'
+    cursor: 'pointer',
+    textAlign: 'left',
+    width: '100%'
+  },
+  subItemActive: {
+    padding: '0.5rem 1rem',
+    minHeight: '2.25rem',
+    fontSize: '0.8125rem',
+    background: 'transparent',
+    border: 'none',
+    color: tokens.colors.slate900,
+    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    textAlign: 'left',
+    width: '100%'
+  },
+  dotActive: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: tokens.colors.slate900,
+    marginRight: '0.75rem',
+    flexShrink: 0
+  },
+  dotInactive: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: tokens.colors.slate300,
+    marginRight: '0.75rem',
+    flexShrink: 0
   }
 });
 
-export default function NavSection() {
+export default function NavSection({ nav, isNavActive, expandedNav, toggleNav, store, collapsed }) {
   const classes = useStyles();
 
   return (
     <>
-      <p className={classes.heading}>SCHOOL</p>
-      <nav className={classes.container}>
-        <a href="#" className={classes.navItemActive}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-          Dashboard
-        </a>
-        <a href="#" className={classes.navItem}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Students
-        </a>
-        <a href="#" className={classes.navItem}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Fees
-        </a>
-        <a href="#" className={classes.navItem}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Attendance
-        </a>
-        <a href="#" className={classes.navItem}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Report Cards
-        </a>
-        <a href="#" className={classes.navItem}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          SMS Broadcast
-        </a>
-      </nav>
+      {nav?.map((section, sIdx) => (
+        <div key={sIdx} style={{ marginBottom: section.section === 'CORE' ? '0.5rem' : '1.5rem' }}>
+          {!collapsed && section.section !== 'CORE' && (
+            <p className={classes.heading}>{section.section}</p>
+          )}
+          <nav className={classes.container} style={{ marginBottom: 0 }}>
+            {section.items.map((item) => {
+              const hasSub = item.sub && item.sub.length > 0;
+              const isExpanded = expandedNav[item.id];
+              const active = isNavActive(item);
 
-      <p className={classes.heading}>INTEGRATIONS</p>
-      <nav className={classes.container} style={{ marginBottom: 0 }}>
-        <a href="#" className={classes.navItem}>
-          <span className={classes.integrationIcon} style={{ backgroundColor: tokens.colors.emerald500 }}>M</span>
-          M-Pesa
-        </a>
-        <a href="#" className={classes.navItem}>
-          <span className={classes.integrationIcon} style={{ backgroundColor: tokens.colors.blue600 }}>N</span>
-          NEMIS
-        </a>
-        <a href="#" className={classes.navItem}>
-          <span className={classes.integrationIcon} style={{ backgroundColor: tokens.colors.slate900 }}>K</span>
-          KNEC
-        </a>
-      </nav>
+              return (
+                <div key={item.id}>
+                  <button
+                    className={active ? classes.navItemActive : classes.navItem}
+                    onClick={() => {
+                      if (hasSub) toggleNav(item.id);
+                      else if (item.action === 'logout') { /* Handled elsewhere typically */ }
+                      else if (item.view) {
+                        store.navigate(item.view, { tab: item.tab, action: item.action, filter: item.filter });
+                      }
+                    }}
+                    title={item.label}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.25rem' }}>
+                      <Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={18} fallback={item.icon} />
+                    </span>
+                    {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+                    {!collapsed && hasSub && (
+                      isExpanded ? <ChevronDown size={14} style={{ opacity: 0.5 }} /> : <ChevronRight size={14} style={{ opacity: 0.5 }} />
+                    )}
+                  </button>
+                  {!collapsed && hasSub && isExpanded && (
+                    <div className={classes.subContainer}>
+                      {item.sub.map(subItem => {
+                        const subActive = isNavActive(subItem);
+                        return (
+                          <button
+                            key={subItem.id}
+                            className={subActive ? classes.subItemActive : classes.subItem}
+                            onClick={() => {
+                              if (subItem.view) {
+                                store.navigate(subItem.view, { tab: subItem.tab, action: subItem.action, filter: subItem.filter });
+                              }
+                            }}
+                          >
+                            <span className={subActive ? classes.dotActive : classes.dotInactive}></span>
+                            <span style={{ flex: 1 }}>{subItem.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </div>
+      ))}
     </>
   );
 }

@@ -1,6 +1,8 @@
 import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
+import { Icon, NAV_ICON_MAP } from '../../components/icons';
+import { ChevronDown, ChevronRight, Key, LogOut, PanelLeft, PanelLeftClose } from 'lucide-react';
 import NavSection from './NavSection';
 import UsageCard from './UsageCard';
 
@@ -20,8 +22,12 @@ const useStyles = createUseStyles({
       borderRadius: tokens.borderRadius['2xl'],
       marginRight: '1rem',
       boxShadow: tokens.shadows.sm,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      transition: 'width 0.2s ease',
     }
+  },
+  sidebarCollapsed: {
+    width: '4rem',
   },
   header: {
     display: 'flex',
@@ -32,7 +38,8 @@ const useStyles = createUseStyles({
   brandWrap: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '0.5rem',
+    overflow: 'hidden'
   },
   logoBox: {
     width: '1.75rem',
@@ -41,13 +48,15 @@ const useStyles = createUseStyles({
     background: `linear-gradient(135deg, ${tokens.colors.brandPrimary} 0%, ${tokens.colors.brandSecondary} 100%)`,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    flexShrink: 0
   },
   brandText: {
     fontWeight: 'bold',
     fontSize: '17px',
     color: tokens.colors.slate900,
-    letterSpacing: '-0.025em'
+    letterSpacing: '-0.025em',
+    whiteSpace: 'nowrap'
   },
   iconBtn: {
     width: '2rem',
@@ -60,6 +69,7 @@ const useStyles = createUseStyles({
     background: 'none',
     border: 'none',
     cursor: 'pointer',
+    flexShrink: 0,
     '&:hover': {
       backgroundColor: tokens.colors.slate100
     }
@@ -76,7 +86,8 @@ const useStyles = createUseStyles({
     borderRadius: tokens.borderRadius.xl,
     padding: '0.625rem 0.75rem',
     fontSize: '0.875rem',
-    color: tokens.colors.slate400
+    color: tokens.colors.slate400,
+    overflow: 'hidden'
   },
   searchSlash: {
     fontSize: '0.75rem',
@@ -94,74 +105,124 @@ const useStyles = createUseStyles({
     padding: '0.75rem 1.25rem 1.25rem 1.25rem'
   },
   footer: {
-    padding: '0 1.25rem 1.25rem 1.25rem',
+    padding: '1.25rem',
+    borderTop: `1px solid ${tokens.colors.slate100}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem'
+  },
+  userProfileRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '0.75rem'
+  },
+  avatar: {
+    width: '2.25rem',
+    height: '2.25rem',
+    borderRadius: tokens.borderRadius.full,
+    backgroundColor: tokens.colors.brandPrimary,
+    color: tokens.colors.white,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.75rem'
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    flexShrink: 0
   },
-  switchTrack: {
-    width: '2.75rem',
-    height: '1.5rem',
-    borderRadius: tokens.borderRadius.full,
-    backgroundColor: tokens.colors.amber400,
-    position: 'relative',
+  footerBtn: {
     display: 'flex',
     alignItems: 'center',
-    padding: '0 0.125rem',
+    gap: '0.75rem',
+    padding: '0.5rem 0.75rem',
+    borderRadius: tokens.borderRadius.lg,
+    color: tokens.colors.slate500,
+    fontSize: '0.875rem',
+    background: 'none',
     border: 'none',
-    cursor: 'pointer'
-  },
-  switchDot: {
-    width: '1.25rem',
-    height: '1.25rem',
-    borderRadius: tokens.borderRadius.full,
-    backgroundColor: tokens.colors.white,
-    boxShadow: tokens.shadows.sm,
-    transition: 'transform .18s ease',
-    transform: 'translateX(1.25rem)'
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: tokens.colors.slate50
+    }
   }
 });
 
-export default function Sidebar() {
+export default function Sidebar({ nav, isNavActive, expandedNav, toggleNav, currentUser, role, settings, handleLogout, store, setChangePasswordOpen, collapsed, setCollapsed }) {
   const classes = useStyles();
 
+  const initials = currentUser?.name
+    ? currentUser.name.split(' ').map((p) => p[0]).slice(0, 2).join('')
+    : 'U';
+
   return (
-    <aside className={classes.sidebar}>
+    <aside className={`${classes.sidebar} ${collapsed ? classes.sidebarCollapsed : ''}`}>
       <div className={classes.header}>
         <div className={classes.brandWrap}>
           <div className={classes.logoBox}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" fill="none" stroke="white" strokeWidth="1.6"/></svg>
           </div>
-          <span className={classes.brandText}>EduOne</span>
+          {!collapsed && <span className={classes.brandText}>{settings?.name || 'EduOne'}</span>}
         </div>
-        <button className={classes.iconBtn}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        <button className={classes.iconBtn} onClick={() => setCollapsed(!collapsed)} title="Toggle Sidebar">
+          {collapsed ? <PanelLeft size={15} /> : <PanelLeftClose size={15} />}
         </button>
       </div>
 
-      <div className={classes.searchWrap}>
-        <div className={classes.searchBox}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span style={{ flex: 1 }}>Search</span>
-          <span className={classes.searchSlash}>/</span>
+      {!collapsed && (
+        <div className={classes.searchWrap}>
+          <div className={classes.searchBox}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span style={{ flex: 1 }}>Search</span>
+            <span className={classes.searchSlash}>/</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={`${classes.scrollArea} ${classes.noScrollbar}`}>
-        <NavSection />
+        <NavSection 
+          nav={nav} 
+          isNavActive={isNavActive} 
+          expandedNav={expandedNav} 
+          toggleNav={toggleNav} 
+          store={store} 
+          collapsed={collapsed}
+        />
       </div>
 
-      <div className={classes.usageWrap}>
-        <UsageCard />
-      </div>
+      {!collapsed && (
+        <div className={classes.usageWrap}>
+          <UsageCard />
+        </div>
+      )}
 
       <div className={classes.footer}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
-        <button className={classes.switchTrack}>
-          <span className={classes.switchDot}></span>
-        </button>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        {!collapsed ? (
+          <>
+            <div className={classes.userProfileRow}>
+              <div className={classes.avatar}>{initials}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <strong style={{ fontSize: '13px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: tokens.colors.slate900 }}>{currentUser?.name}</strong>
+                <span style={{ fontSize: '11px', color: tokens.colors.slate500 }}>{role?.label}</span>
+              </div>
+            </div>
+            <button className={classes.footerBtn} onClick={() => setChangePasswordOpen(true)}>
+              <Key size={14} /> <span>Change Password</span>
+            </button>
+            <button className={classes.footerBtn} onClick={handleLogout} style={{ color: '#ef4444' }}>
+              <LogOut size={14} /> <span>Logout</span>
+            </button>
+          </>
+        ) : (
+          <>
+             <div className={classes.avatar} style={{ margin: '0 auto 0.5rem auto' }}>{initials}</div>
+             <button className={classes.footerBtn} onClick={() => setChangePasswordOpen(true)} style={{ padding: '0.5rem', justifyContent: 'center' }}>
+              <Key size={14} />
+            </button>
+            <button className={classes.footerBtn} onClick={handleLogout} style={{ color: '#ef4444', padding: '0.5rem', justifyContent: 'center' }}>
+              <LogOut size={14} />
+            </button>
+          </>
+        )}
       </div>
     </aside>
   );

@@ -11,10 +11,44 @@ import { Icon, NAV_ICON_MAP } from '../../components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
+import { createUseStyles } from 'react-jss';
+import { tokens } from '../EduOneDashboard/theme';
+import Sidebar from '../EduOneDashboard/Sidebar';
+import IconRail from '../EduOneDashboard/IconRail';
+import TopBar from '../EduOneDashboard/TopBar';
+
+const useStyles = createUseStyles({
+  layout: {
+    display: 'flex',
+    height: '100vh',
+    width: '100%',
+    padding: '1.5rem',
+    gap: '0',
+    backgroundColor: '#EDEDF0',
+    fontFamily: '"Inter", sans-serif',
+    boxSizing: 'border-box'
+  },
+  mainContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    overflow: 'hidden'
+  },
+  contentScroll: {
+    flex: 1,
+    overflowY: 'auto',
+    borderRadius: tokens.borderRadius['2xl'],
+    '&::-webkit-scrollbar': { display: 'none' },
+    msOverflowStyle: 'none',
+    scrollbarWidth: 'none',
+  }
+});
+
 
 let toastId = 0;
 
 export default function PortalLayout() {
+  const classes = useStyles();
   const navigateRouter = useNavigate();
   const location = useLocation();
   const [authChecked, setAuthChecked] = useState(false);
@@ -463,230 +497,64 @@ export default function PortalLayout() {
   };
 
   return (
-    <div className="layout">
-      {/* Sidebar */}
-      <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileMenuOpen ? ' mobile-open' : ''}`}>
-        <div className="sidebar-brand">
-          <div className="logo-box">
-            {settings.logo ? <img src={settings.logo} alt="logo" /> : <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
-          </div>
-          {!collapsed && (
-            <div className="brand-text" style={{ flex: 1 }}>
-              <strong>{settings.name || <img src="/eduone-logo.png" alt="EduOne" style={{ height: 28, background: 'transparent', borderRadius: 4, padding: '4px 6px' }} />}</strong>
-              <div className="muted">{role.portal}</div>
-            </div>
-          )}
-        </div>
-        <nav className="sidebar-nav">
-          {nav.map((section, sIdx) => (
-            <div key={sIdx} style={{ marginBottom: section.section === 'CORE' ? 8 : 16 }}>
-              {!collapsed && section.section !== 'CORE' && (
-                <div style={{ padding: '0 16px', fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                  {section.section}
-                </div>
-              )}
-              {section.items.map((item) => {
-                const hasSub = item.sub && item.sub.length > 0;
-                const isExpanded = expandedNav[item.id];
-                return (
-                  <div key={item.id}>
-                    <button
-                      className={`nav-item${isNavActive(item) ? ' active' : ''}`}
-                      onClick={() => {
-                        if (hasSub) toggleNav(item.id);
-                        else if (item.action === 'logout') handleLogout();
-                        else if (item.action === 'notif') setNotifOpen(true);
-                        else if (item.action === 'visit_academics') setOfficeVisitWarning('academics');
-                        else if (item.action === 'visit_admin') setOfficeVisitWarning('admin');
-                        else if (item.view) {
-                          store.navigate(item.view, { tab: item.tab, action: item.action, filter: item.filter });
-                        }
-                      }}
-                      title={item.label}
-                    >
-                      <span className="nav-icon"><Icon name={NAV_ICON_MAP[item.icon] || item.icon} size={18} fallback={item.icon} /></span>
-                      {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
-                      {!collapsed && hasSub && (isExpanded ? <ChevronDown size={14} style={{ opacity: 0.5 }} /> : <ChevronRight size={14} style={{ opacity: 0.5 }} />)}
-                    </button>
-                    {!collapsed && hasSub && isExpanded && (
-                      <div style={{ background: '#f8fafc', padding: '6px 0', borderLeft: '2px solid #e2e8f0', marginLeft: 24, marginTop: 4, marginBottom: 4, borderRadius: '0 8px 8px 0' }}>
-                        {item.sub.map(subItem => (
-                          <button
-                            key={subItem.id}
-                            className={`nav-item${isNavActive(subItem) ? ' active' : ''}`}
-                            style={{ padding: '8px 16px 8px 16px', minHeight: 36, fontSize: 13, background: 'transparent', boxShadow: 'none', color: isNavActive(subItem) ? '#111827' : '#6b7280' }}
-                            onClick={() => {
-                              if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
-                              else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
-                              else if (subItem.view) {
-                                store.navigate(subItem.view, { tab: subItem.tab, action: subItem.action, filter: subItem.filter });
-                              }
-                            }}
-                          >
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isNavActive(subItem) ? '#111827' : '#cbd5e1', marginRight: 12, flexShrink: 0 }}></span>
-                            <span style={{ fontWeight: isNavActive(subItem) ? 600 : 500, textAlign: 'left', flex: 1 }}>{subItem.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+    <div className={classes.layout}>
+      <IconRail 
+        nav={nav} 
+        isNavActive={isNavActive} 
+        store={store} 
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+      />
+      <Sidebar 
+        nav={nav} 
+        isNavActive={isNavActive} 
+        expandedNav={expandedNav} 
+        toggleNav={toggleNav} 
+        currentUser={currentUser} 
+        role={role} 
+        settings={settings}
+        handleLogout={handleLogout}
+        store={store}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        setChangePasswordOpen={setChangePasswordOpen}
+      />
 
-        <div className="sidebar-profile-setting" style={{ padding: '16px', borderTop: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {!collapsed ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '0 4px' }}>
-                <div className="avatar" title={currentUser.name} style={{ width: 36, height: 36, fontSize: 14 }}>{initials}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#111827' }}>{currentUser.name}</strong>
-                  <span style={{ fontSize: 11, color: '#6b7280' }}>{role.label}</span>
-                </div>
-              </div>
-              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '8px 12px', fontSize: 13, minHeight: 'auto' }}>
-                <Key size={14} style={{ marginRight: 12, color: '#6b7280' }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
-              </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '8px 12px', fontSize: 13, color: '#ef4444', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ marginRight: 12, color: '#ef4444' }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="avatar" title={currentUser.name} style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 12px auto' }}>{initials}</div>
-              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ justifyContent: 'center', padding: '8px', minHeight: 'auto' }}>
-                <Key size={14} style={{ margin: 0, color: '#6b7280' }} />
-              </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#ef4444', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ margin: 0, color: '#ef4444' }} />
-              </button>
-            </>
-          )}
-        </div>
-
-        <button className="collapse-btn" onClick={() => setCollapsed((c) => !c)}>
-          {collapsed ? <PanelLeft size={16} /> : <><PanelLeftClose size={16} /> Collapse</>}
-        </button>
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
         <div className="mobile-overlay hide-desktop" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      {/* Main */}
-      <div className="main">
-        <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-            <button 
-              className="hide-desktop btn btn-icon" 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ padding: '0', marginLeft: '4px' }}
-            >
-              <Menu size={20} color="#1e293b" />
-            </button>
-            <div className="topbar-title">{settings.name}</div>
-            <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '400px', width: '100%', marginLeft: '8px' }} ref={searchInputRef}>
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666666' }} />
-              <input 
-                type="text" 
-                placeholder="Search" 
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
-                onFocus={() => setShowSearchResults(true)}
-                style={{ 
-                  width: '100%', 
-                  padding: '6px 8px 6px 32px', 
-                  background: '#eef3f8', 
-                  border: 'none', 
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  color: '#000'
-                }} 
-              />
-              {showSearchResults && searchQuery.trim() && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden' }}>
-                  {searchResults.students.length > 0 && (
-                    <div style={{ padding: '8px 12px', borderBottom: searchResults.staff.length > 0 ? '1px solid var(--border)' : 'none' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Students</div>
-                      {searchResults.students.map(s => (
-                        <div key={s.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderRadius: 4 }} 
-                             onClick={() => {
-                               setSearchQuery('');
-                               setShowSearchResults(false);
-                               // Navigate to a student view available to the current role
-                               const role = currentUser?.role;
-                               if (role === 'student' || role === 'parent') {
-                                 // Students/parents stay in their portal
-                                 store.navigate(ROLES[role]?.home || 'overview');
-                               } else if (role === 'nurse' || role === 'clinic') {
-                                 store.navigate('clinic');
-                               } else {
-                                 // Admin, principal, deputy, registrar, academics go to registry
-                                 store.navigate('registrar', { search: s.name });
-                               }
-                             }}
-                             onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} · {s.class || ''}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.staff.length > 0 && (
-                    <div style={{ padding: '8px 12px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Staff</div>
-                      {searchResults.staff.map(t => (
-                        <div key={t.id} style={{ padding: '6px 4px', fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderRadius: 4 }} 
-                             onClick={() => { setSearchQuery(''); setShowSearchResults(false); store.navigate('staff_attendance', { search: t.name }); }}
-                             onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{t.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{t.dept || t.role || ''}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.students.length === 0 && searchResults.staff.length === 0 && (
-                    <div style={{ padding: '16px', fontSize: '13px', color: 'var(--muted)', textAlign: 'center' }}>No results found for "{searchQuery}"</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="topbar-actions">
-            {activeRoleOverride && (
-              <button 
-                className="btn btn-primary" 
-                style={{ background: '#D13438', borderColor: '#D13438', marginRight: 16, height: 32, fontSize: 13 }}
-                onClick={() => {
-                  setActiveRoleOverride(null);
-                  const home = ROLES[currentUser.role].home || 'overview';
-                  setView(home);
-                  setViewParams({});
-                  navigateRouter(`/portal/${home}`);
-                  notify('Returned to Principal Office', 'info', 'Office Visit');
-                }}
-              >
-                Return to Principal Office
-              </button>
-            )}
-            <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
-              <Bell size={18} />{unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
-            </button>
-          </div>
-        </header>
-
-        <main className="content">
+      <div className={classes.mainContent}>
+        <TopBar 
+           settings={settings}
+           currentUser={currentUser}
+           unreadCount={unreadCount}
+           setNotifOpen={setNotifOpen}
+           searchQuery={searchQuery}
+           setSearchQuery={setSearchQuery}
+           showSearchResults={showSearchResults}
+           setShowSearchResults={setShowSearchResults}
+           searchResults={searchResults}
+           searchInputRef={searchInputRef}
+           store={store}
+           activeRoleOverride={activeRoleOverride}
+           setActiveRoleOverride={setActiveRoleOverride}
+           setView={setView}
+           setViewParams={setViewParams}
+           navigateRouter={navigateRouter}
+           notify={notify}
+           setMobileMenuOpen={setMobileMenuOpen}
+           mobileMenuOpen={mobileMenuOpen}
+        />
+        <main className={classes.contentScroll}>
           {dataLoading ? (
-            <p className="muted">Loading…</p>
+            <p className="muted" style={{ padding: '2rem' }}>Loading…</p>
           ) : (
             <Outlet context={{ store, user: currentUser, params: viewParams }} />
           )}
         </main>
       </div>
+
 
       {/* Toasts */}
       <div className="toast-wrap">
