@@ -8,6 +8,7 @@ import StaffSignupWizard from './views/StaffSignupWizard';
 import ResetPassword from './views/ResetPassword';
 import PortalLayout, { PortalIndex } from './views/layouts/PortalLayout';
 import LegacyViewLoader from './views/layouts/LegacyViewLoader';
+import EduOneDashboard from './views/EduOneDashboard';
 
 import RegistrarLayout from './views/registrar/RegistrarLayout';
 import StudentList from './views/registrar/StudentList';
@@ -68,6 +69,7 @@ export default function App() {
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
       <Route path="/staff-signup" element={<StaffSignupWizard />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/eduone" element={<EduOneDashboard />} />
 
 
       {/* Portal Routes with Layout, Sidebar, and Auth Guard */}
