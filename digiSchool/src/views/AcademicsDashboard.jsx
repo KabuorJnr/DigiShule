@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
@@ -20,13 +21,33 @@ export default function AcademicsDashboard({ store, user }) {
   const { navigate, notify, settings, teachers = [], examSchedules = [] } = store;
   const [students, setStudents] = useState([]);
   const [analytics, setAnalytics] = useState({ top_subjects: [] });
+  const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
   
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents, fetchAcademicAnalytics }) => {
       fetchStudents(0, 1000).then(r => setStudents(r.data || [])).catch(() => {});
       fetchAcademicAnalytics().then(r => setAnalytics(r || { top_subjects: [] })).catch(() => {});
     });
-  }, []);
+
+    const fetchApprovals = async () => {
+      try {
+        const { count: approvalCount } = await supabase.from('approval_queue')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .eq('school_id', store.schoolId);
+          
+        const { count: paperCount } = await supabase.from('exam_papers')
+          .select('*', { count: 'exact', head: true })
+          .eq('moderation_status', 'pending')
+          .eq('school_id', store.schoolId);
+          
+        setAwaitingApprovalCount((approvalCount || 0) + (paperCount || 0));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (store.schoolId) fetchApprovals();
+  }, [store.schoolId]);
   
   const classesCount = settings.levels?.length || 0;
   const activeTeacherList = teachers.filter(t => t.status !== 'Inactive');
@@ -99,7 +120,7 @@ export default function AcademicsDashboard({ store, user }) {
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 24 }}>
         <Stat label="Total Exams" value={examSchedules.length} sub={`${examSchedules.length} published`} />
         <Stat label="Pending Marks Entry" value="0" sub="All marks entered" color="#107C10" />
-        <Stat label="Awaiting Approval" value="0" sub="Results to approve" color="#D13438" />
+        <Stat label="Awaiting Approval" value={awaitingApprovalCount} sub="Results & plans to approve" color="#D13438" />
         <Stat label="Avg Performance" value="0.0%" sub="Overall average score" color="#107C10" />
       </div>
 

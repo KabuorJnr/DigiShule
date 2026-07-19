@@ -236,7 +236,7 @@ export default function AdminDashboard({ store, user }) {
       setDbStaff(prev => [...prev, newStaff]);
       
       // 4.5 Create Teacher Record if applicable
-      if (commissionForm.role === 'teacher' || commissionForm.role === 'class teacher') {
+      if (commissionForm.role === 'teacher' || commissionForm.role === 'class teacher' || commissionForm.role === 'dos') {
         const teacherObj = {
           id: finalUserId,
           name: commissionForm.name,

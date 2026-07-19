@@ -176,6 +176,39 @@ export const ROLES = {
     ],
   },
 
+  dos: {
+    label: 'Director of Studies',
+    portal: 'DoS Portal',
+    accent: '#000000',
+    home: 'dos_dashboard',
+    nav: [
+      {
+        section: 'CORE',
+        items: [
+          { id: 'dos_dash', icon: 'dashboard', label: 'Overview', view: 'dos_dashboard' },
+          { id: 'timetable', icon: 'calendar', label: 'Timetable', view: 'timetable' },
+          { id: 'exams', icon: 'exam', label: 'Exams', view: 'exams' },
+          { id: 'gradebook', icon: 'dashboard', label: 'Gradebook', view: 'gradebook' },
+          { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' }
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ],
+  },
+
   deputy_admin: {
     label: 'Deputy Admin',
     portal: 'Administration Portal',

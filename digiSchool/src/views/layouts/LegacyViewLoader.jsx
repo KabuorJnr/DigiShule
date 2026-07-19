@@ -22,6 +22,7 @@ import LessonPlans from '../LessonPlans';
 import StaffAttendance from '../StaffAttendance';
 import TeacherManagement from '../TeacherManagement';
 import MyProfile from '../MyProfile';
+import DosDashboard from '../DosDashboard';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -47,6 +48,7 @@ const VIEW_MAP = {
   staff_attendance: StaffAttendance,
   teacher_management: TeacherManagement,
   my_profile: MyProfile,
+  dos_dashboard: DosDashboard,
 };
 
 export default function LegacyViewLoader() {

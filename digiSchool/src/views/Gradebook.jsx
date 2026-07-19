@@ -107,6 +107,16 @@ export default function Gradebook({ store }) {
     notify('Student flagged for support', 'success', 'Gradebook');
   }
 
+  const handleApproveResults = () => {
+    setSettings({ results_approved: !settings.results_approved });
+    notify(settings.results_approved ? 'Results approval revoked' : 'Results approved', 'success');
+  };
+
+  const handlePublishResults = () => {
+    setSettings({ results_published: !settings.results_published });
+    notify(settings.results_published ? 'Results unpublished' : 'Results published', 'success');
+  };
+
   function exportPDF() {
     const head = ['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]);
@@ -191,13 +201,22 @@ export default function Gradebook({ store }) {
         subtitle="Inspect, edit and analyse student performance"
         actions={
           <div style={{ display: 'flex', gap: 10 }}>
-            {(store.user?.role?.includes('Admin') || store.user?.role?.includes('Principal') || store.user?.role?.includes('Deputy')) && (
+            {(store.user?.role === 'deputy_academic' || store.user?.role === 'principal') && (
+              <button 
+                className={`btn ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
+                onClick={handleApproveResults}
+              >
+                <Icon name={settings?.results_approved ? "close" : "check"} size={16} /> 
+                {settings?.results_approved ? 'Revoke Approval' : 'Approve Results'}
+              </button>
+            )}
+            {(store.user?.role === 'dos' || store.user?.role === 'principal') && settings?.results_approved && (
               <button 
                 className={`btn ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
-                onClick={togglePublishResults}
+                onClick={handlePublishResults}
               >
                 <Icon name={settings?.results_published ? "close" : "check"} size={16} /> 
-                {settings?.results_published ? 'Unpublish Results' : 'Publish Results'}
+                {settings?.results_published ? 'Unpublish Results' : 'Publish Results (DoS)'}
               </button>
             )}
             <button className="btn" onClick={exportExcel}><Icon name="file" size={16} /> Export Excel</button>

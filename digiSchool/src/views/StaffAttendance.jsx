@@ -343,7 +343,7 @@ export default function StaffAttendance({ store, user }) {
       await upsertRow('staff', staffPayload);
       setStaff(prev => [...prev, { ...newStaff, checkIn: '' }]);
       
-      if (addForm.role === 'teacher') {
+      if (addForm.role === 'teacher' || addForm.role === 'dos') {
         const teacherObj = {
           id: newStaff.id,
           name: newStaff.name,
@@ -708,6 +708,7 @@ export default function StaffAttendance({ store, user }) {
                   <option value="teacher">Teacher</option>
                   <option value="principal">Principal / Admin</option>
                   <option value="deputy_academic">Deputy Principal (Academics)</option>
+                  <option value="dos">Director of Studies (DoS)</option>
                   <option value="deputy_admin">Deputy Principal (Admin)</option>
                   <option value="clinic">Clinic / Nurse</option>
                   <option value="librarian">Librarian</option>
