@@ -99,6 +99,7 @@ const useStyles = createUseStyles({
     padding: '0 1.25rem',
     marginTop: '1.5rem',
     flex: 1,
+    minHeight: 0,
     overflowY: 'auto'
   },
   usageWrap: {
