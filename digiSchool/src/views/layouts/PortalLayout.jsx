@@ -55,6 +55,7 @@ const useStyles = createUseStyles({
     backgroundColor: tokens.colors.bg,
     color: tokens.colors.slate900,
     fontFamily: '"Inter", sans-serif',
+    fontSize: '14px',
     boxSizing: 'border-box'
   },
   mainContent: {
@@ -65,6 +66,7 @@ const useStyles = createUseStyles({
   },
   contentScroll: {
     flex: 1,
+    padding: '1.5rem',
     overflowY: 'auto',
     borderRadius: tokens.borderRadius['2xl'],
     '&::-webkit-scrollbar': { display: 'none' },
@@ -252,7 +254,8 @@ export default function PortalLayout() {
           teacher: ['classes', 'attendance', 'gradebook'],
           student: ['academics', 'records', 'resources', 'finance', 'settings'],
           staff: ['leave', 'classes', 'recruitment'],
-          finance: ['billing', 'payments', 'statements', 'fee_structure', 'expenses', 'reports']
+          finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
+          registrar: ['enroll', 'transfers']
         };
         const validSubs = nestedSubRoutes[v];
         if (p.tab && validSubs && validSubs.includes(p.tab)) {
