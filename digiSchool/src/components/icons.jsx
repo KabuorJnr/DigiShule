@@ -75,6 +75,7 @@ const ICON_MAP = {
   facilities: Landmark,
   maintenance: Wrench,
   discipline: Shield,
+  shield: Shield,
 
   // Status & Actions
   check: CheckCircle2,
