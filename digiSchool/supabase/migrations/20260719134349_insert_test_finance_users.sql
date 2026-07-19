@@ -3,7 +3,7 @@
 DO $$
 BEGIN
     INSERT INTO public.staff (id, name, role, dept, status, school_id)
-    SELECT id, raw_user_meta_data->>'name', raw_user_meta_data->>'role', 'Finance Office', 'Present', 'demo'
+    SELECT id, raw_user_meta_data->>'name', raw_user_meta_data->>'role', 'Finance Office', 'Present', (SELECT id FROM public.schools LIMIT 1)
     FROM auth.users 
     WHERE email IN ('bursar@digischool.com', 'accountant@digischool.com')
     ON CONFLICT (id) DO UPDATE SET 
@@ -12,7 +12,7 @@ BEGIN
 
     -- Also ensure they exist in profiles table
     INSERT INTO public.profiles (id, username, full_name, email, role, teacher_id, school_id)
-    SELECT id, split_part(email, '@', 1), raw_user_meta_data->>'name', email, raw_user_meta_data->>'role', id, 'demo'
+    SELECT id, split_part(email, '@', 1), raw_user_meta_data->>'name', email, raw_user_meta_data->>'role', id, (SELECT id FROM public.schools LIMIT 1)
     FROM auth.users
     WHERE email IN ('bursar@digischool.com', 'accountant@digischool.com')
     ON CONFLICT (id) DO NOTHING;
