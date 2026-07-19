@@ -164,25 +164,17 @@ textarea.input {
   margin-bottom: 4px;
 }
 
-/* ---------- Cards & Claymorphism ---------- */
+/* ---------- Cards ---------- */
 .card {
-  background: #fdfdfd;
+  background: #ffffff;
   border-radius: 16px;
-  box-shadow: 
-    6px 6px 12px #e2e8f0, 
-    -6px -6px 12px #ffffff, 
-    inset 2px 2px 4px rgba(255,255,255,0.9),
-    inset -2px -2px 4px rgba(0,0,0,0.03);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    8px 8px 16px #cbd5e1, 
-    -8px -8px 16px #ffffff, 
-    inset 2px 2px 4px rgba(255,255,255,0.9),
-    inset -2px -2px 4px rgba(0,0,0,0.03);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 .card-pad {
   padding: 20px;
@@ -1030,3 +1022,10 @@ textarea.input {
   text-overflow: ellipsis;
 }
 
+/* Force standard font in Finance Portal and Recharts */
+.finance-dashboard {
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+.finance-dashboard .recharts-text {
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif !important;
+}
