@@ -1,7 +1,7 @@
 -- Create mpesa_transactions table
 CREATE TABLE IF NOT EXISTS public.mpesa_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    school_id UUID REFERENCES public.app_config(id) ON DELETE CASCADE,
+    school_id UUID REFERENCES public.schools(id) ON DELETE CASCADE,
     checkout_request_id TEXT NOT NULL UNIQUE,
     merchant_request_id TEXT NOT NULL,
     amount NUMERIC NOT NULL,
