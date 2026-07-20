@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
@@ -62,7 +62,7 @@ export default function AcademicsDashboard({ store, user }) {
     exportTablePDF({
       school: settings,
       title: 'Class Performance Summary',
-      subtitle: `Term 2 · Academic Year 2026`,
+      subtitle: `Term 2 Â· Academic Year 2026`,
       head, body,
       filename: 'Class_Performance_Summary.pdf'
     });
@@ -106,7 +106,7 @@ export default function AcademicsDashboard({ store, user }) {
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 4 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>Term 2 · Academic Year 2026</div>
+          <div>Term 2 Â· Academic Year 2026</div>
         </div>
       </div>
 
@@ -177,7 +177,7 @@ export default function AcademicsDashboard({ store, user }) {
                 <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
                   {analytics.top_subjects.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index < 3 ? '#3b82f6' : '#94a3b8'} />
+                    <Cell key={`cell-${index}`} fill={index < 3 ? '#047857' : '#94a3b8'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -221,3 +221,6 @@ export default function AcademicsDashboard({ store, user }) {
     </div>
   );
 }
+
+
+

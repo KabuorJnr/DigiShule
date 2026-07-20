@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Download, FileText, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -69,7 +69,7 @@ export default function ExportMenu({
       pdf.setTextColor(107, 114, 128); // #6b7280
       const filterSummary = `Filters: Term: ${activeFilters.term} | Class: ${activeFilters.className}`;
       const timestamp = `Generated: ${new Date().toLocaleString()}`;
-      pdf.text(`${filterSummary}  •  ${timestamp}`, margin, margin + 10);
+      pdf.text(`${filterSummary}  â€¢  ${timestamp}`, margin, margin + 10);
 
       // Add Image
       // Ensure the snapshot doesn't bleed off the bottom of the page
@@ -240,7 +240,7 @@ export default function ExportMenu({
               onClick={handleExportExcel}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'none', border: 'none', borderRadius: 4, cursor: 'pointer', textAlign: 'left', color: 'var(--text)' }}
             >
-              <div style={{ color: '#10B981', background: '#10B98115', padding: 6, borderRadius: 6 }}><FileSpreadsheet size={18} /></div>
+              <div style={{ color: '#047857', background: '#04785715', padding: 6, borderRadius: 6 }}><FileSpreadsheet size={18} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>Export as Excel</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Raw transaction data (.xlsx)</div>
@@ -252,3 +252,6 @@ export default function ExportMenu({
     </div>
   );
 }
+
+
+

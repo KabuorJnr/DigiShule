@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+﻿import { useOutletContext } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { computeRow, gradeFor } from '../../utils/grading';
 import { BarChart3 } from 'lucide-react';
@@ -39,7 +39,7 @@ export default function GradebookTab() {
       return (
         <td>
           <input
-            style={{ width: field === 'remarks' ? '120px' : '48px', height: '28px', padding: '0 4px', border: '1px solid #2563eb', borderRadius: '4px', outline: 'none' }}
+            style={{ width: field === 'remarks' ? '120px' : '48px', height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none' }}
             type={field === 'remarks' ? "text" : "number"}
             autoFocus
             defaultValue={r[field]}
@@ -63,7 +63,7 @@ export default function GradebookTab() {
   return (
     <div className="card card-pad">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div className="section-title" style={{ margin: 0 }}>{subject} — Student Results</div>
+        <div className="section-title" style={{ margin: 0 }}>{subject} â€” Student Results</div>
         {topPerformer && (
           <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
             Top: {topPerformer.name} ({topPerformer.average}%)
@@ -114,3 +114,6 @@ export default function GradebookTab() {
     </div>
   );
 }
+
+
+

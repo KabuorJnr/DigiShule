@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
 
@@ -132,3 +132,6 @@ export default function TrendChart() {
     </div>
   );
 }
+
+
+

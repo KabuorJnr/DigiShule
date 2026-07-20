@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import Modal from './Modal';
 import { supabase } from '../lib/supabaseClient';
 import { Lock } from 'lucide-react';
@@ -80,3 +80,6 @@ export default function ChangePasswordModal({ onClose, notify }) {
     </Modal>
   );
 }
+
+
+

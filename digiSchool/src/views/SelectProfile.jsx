@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Building2, UserCircle2, ArrowRight } from 'lucide-react';
 import { ROLES } from '../data/users';
 
@@ -37,7 +37,7 @@ export default function SelectProfile({ profiles, onSelect, onLogout }) {
                   position: 'relative'
                 }}
                 className="profile-select-btn"
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59,130,246,0.1)'; }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = '#047857'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59,130,246,0.1)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <div style={{ background: '#f1f5f9', padding: 10, borderRadius: 8, marginRight: 16 }}>
@@ -46,7 +46,7 @@ export default function SelectProfile({ profiles, onSelect, onLogout }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 15, marginBottom: 2 }}>{profile.schoolName}</div>
                   <div style={{ fontSize: 13, color: '#64748b', display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#10b981' }}></span>
+                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#047857' }}></span>
                     {roleDetails.label}
                   </div>
                 </div>
@@ -66,3 +66,6 @@ export default function SelectProfile({ profiles, onSelect, onLogout }) {
     </div>
   );
 }
+
+
+

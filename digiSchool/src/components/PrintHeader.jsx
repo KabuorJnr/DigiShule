@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { MapPin, Phone, Mail } from 'lucide-react';
 
 export default function PrintHeader({ settings = {} }) {
@@ -54,3 +54,6 @@ export default function PrintHeader({ settings = {} }) {
     </div>
   );
 }
+
+
+

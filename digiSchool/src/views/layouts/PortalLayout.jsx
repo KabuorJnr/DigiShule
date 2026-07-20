@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+﻿import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import '../../App.css';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
@@ -291,7 +291,7 @@ export default function PortalLayout() {
         setView('select_profile');
       }
     } catch {
-      // No profile row — silently sign out and show login.
+      // No profile row â€” silently sign out and show login.
       await supabase.auth.signOut();
     } finally {
       setAuthChecked(true);
@@ -368,7 +368,7 @@ export default function PortalLayout() {
   // ---- Splash while we check the session ----
   if (!authChecked) {
     return (
-      <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh', background: '#0a0a0a', color: '#10B981' }}>
+      <div className="layout" style={{ placeItems: 'center', display: 'grid', minHeight: '100vh', background: '#0a0a0a', color: '#047857' }}>
         <div className="muted" style={{ fontFamily: 'monospace' }}>[SYS] Booting EduOne...</div>
       </div>
     );
@@ -415,7 +415,7 @@ export default function PortalLayout() {
 
     return (
       <div className="layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f1f5f9' }}>
-        <div className="card card-pad" style={{ maxWidth: 400, width: '100%', textAlign: 'center', borderTop: '4px solid #10B981', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+        <div className="card card-pad" style={{ maxWidth: 400, width: '100%', textAlign: 'center', borderTop: '4px solid #047857', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
           <h2 style={{ marginBottom: 8, color: '#0f172a' }}>Account Activation</h2>
           <p className="muted" style={{ marginBottom: 24, fontSize: 14 }}>
             Welcome! Please enter the 6-digit Activation PIN sent to your email to commission your account.
@@ -647,7 +647,7 @@ export default function PortalLayout() {
                              }}
                              onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} · {s.class || ''}</span>
+                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} Â· {s.class || ''}</span>
                         </div>
                       ))}
                     </div>
@@ -695,7 +695,7 @@ export default function PortalLayout() {
 
         <main className="content">
           {dataLoading ? (
-            <p className="muted">Loading…</p>
+            <p className="muted">Loadingâ€¦</p>
           ) : (
             <Outlet context={{ store, user: currentUser, params: viewParams }} />
           )}
@@ -730,7 +730,7 @@ export default function PortalLayout() {
           <div className="notif-panel">
             <div className="modal-header">
               <h3>Notifications {unreadCount > 0 && <span className="badge badge-red">{unreadCount} new</span>}</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>âœ•</button>
             </div>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
@@ -759,7 +759,7 @@ export default function PortalLayout() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
                 <Building2 size={20} /> Deputy Academics Office
               </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
+              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>âœ•</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Building2 size={40} style={{ color: '#9333ea' }} /></div>
@@ -788,14 +788,14 @@ export default function PortalLayout() {
       {officeVisitWarning === 'admin' && (
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
-            <div style={{ background: '#0f766e', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ background: '#065f46', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
                 <Landmark size={20} /> Deputy Administration Office
               </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
+              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>âœ•</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Landmark size={40} style={{ color: '#0f766e' }} /></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Landmark size={40} style={{ color: '#065f46' }} /></div>
               <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
                 You are about to visit the Deputy Administration Office. This will open the Admin dashboard where you can manage student affairs, facilities, and staff welfare.
               </p>
@@ -805,7 +805,7 @@ export default function PortalLayout() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                 <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
-                <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e' }} onClick={() => {
+                <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46' }} onClick={() => {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_admin');
                   setView('admin_dashboard');
@@ -833,3 +833,6 @@ export function PortalIndex() {
   const role = ROLES[user.role] || ROLES.principal;
   return <Navigate to={`/portal/${role.home || 'overview'}`} replace />;
 }
+
+
+

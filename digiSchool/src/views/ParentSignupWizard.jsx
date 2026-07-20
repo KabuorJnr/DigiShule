@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Users, Search, CheckCircle2, User, CreditCard, Loader, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -154,7 +154,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
             Cancel
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <Users size={32} color="#10B981" />
+            <Users size={32} color="#047857" />
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Parent Portal Activation</h1>
           </div>
           <p style={{ margin: 0, opacity: 0.8, fontSize: 14 }}>Link your account to your child to track their academic journey.</p>
@@ -164,11 +164,11 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
           {/* Progress Indicator */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, position: 'relative' }}>
             <div style={{ position: 'absolute', top: 12, left: 20, right: 20, height: 2, background: '#e2e8f0', zIndex: 0 }} />
-            <div style={{ position: 'absolute', top: 12, left: 20, width: `${(step - 1) * 33}%`, height: 2, background: '#10B981', zIndex: 0, transition: '0.3s' }} />
+            <div style={{ position: 'absolute', top: 12, left: 20, width: `${(step - 1) * 33}%`, height: 2, background: '#047857', zIndex: 0, transition: '0.3s' }} />
             
             {[1, 2, 3, 4].map(s => (
               <div key={s} style={{ 
-                width: 26, height: 26, borderRadius: '50%', background: step >= s ? '#10B981' : '#e2e8f0', 
+                width: 26, height: 26, borderRadius: '50%', background: step >= s ? '#047857' : '#e2e8f0', 
                 color: step >= s ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 zIndex: 1, fontSize: 12, fontWeight: 600, transition: '0.3s'
               }}>
@@ -186,7 +186,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Search size={20} color="#10B981" /> Find Your Child
+                <Search size={20} color="#047857" /> Find Your Child
               </h3>
               <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>Enter your child's official Admission Number as provided by the school.</p>
               
@@ -213,7 +213,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
               
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-primary" onClick={handleLookupStudent} disabled={saving} style={{ background: '#0f172a', padding: '12px 24px' }}>
-                  {saving ? 'Searching...' : 'Search →'}
+                  {saving ? 'Searching...' : 'Search â†’'}
                 </button>
               </div>
             </div>
@@ -222,7 +222,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <User size={20} color="#10B981" /> Parent Details
+                <User size={20} color="#047857" /> Parent Details
               </h3>
               <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>
                 Student Found: <strong>{foundStudent?.name} ({foundStudent?.adm})</strong>
@@ -245,8 +245,8 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment →</button>
+                <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>â† Back</button>
+                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment â†’</button>
               </div>
             </div>
           )}
@@ -254,7 +254,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CreditCard size={20} color="#10B981" /> Account Activation
+                <CreditCard size={20} color="#047857" /> Account Activation
               </h3>
               
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center' }}>
@@ -263,7 +263,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534' }}>
                   <div>1. Go to M-Pesa on your phone</div>
-                  <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
+                  <div>2. Select <strong>Lipa na M-Pesa</strong> â†’ <strong>Paybill</strong></div>
                   <div>3. Enter Business Number: <strong style={{ fontSize: 18, color: '#000' }}>123456</strong></div>
                   <div>4. Enter Account Number: <strong style={{ fontSize: 18, color: '#000' }}>{foundStudent?.adm || 'EDUONE'}</strong></div>
                   <div>5. Enter Amount: <strong>250</strong></div>
@@ -283,8 +283,8 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={handleVerifyPayment} disabled={saving} style={{ background: '#10B981', borderColor: '#10B981', padding: '12px 24px', color: '#fff' }}>
+                <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>â† Back</button>
+                <button type="button" className="btn btn-primary" onClick={handleVerifyPayment} disabled={saving} style={{ background: '#047857', borderColor: '#047857', padding: '12px 24px', color: '#fff' }}>
                   {saving ? 'Verifying...' : 'Verify & Activate'}
                 </button>
               </div>
@@ -295,13 +295,13 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', justifyContent: 'center', padding: '40px 0', animation: 'fadeIn 0.3s ease', textAlign: 'center' }}>
               {saving ? (
                 <>
-                  <Loader size={48} color="#10B981" className="spin" style={{ margin: '20px 0' }} />
+                  <Loader size={48} color="#047857" className="spin" style={{ margin: '20px 0' }} />
                   <h3 style={{ margin: 0 }}>Activating Account...</h3>
                   <p className="muted">Please wait while we link your account to {foundStudent?.name}.</p>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={64} color="#10B981" style={{ margin: '20px 0' }} />
+                  <CheckCircle2 size={64} color="#047857" style={{ margin: '20px 0' }} />
                   <h2 style={{ margin: 0, color: '#0f172a' }}>Activation Successful!</h2>
                   <p className="muted" style={{ marginBottom: 20 }}>Your Parent Portal has been securely linked and activated.</p>
                   <p className="muted" style={{ fontSize: 14 }}>Redirecting to your dashboard...</p>
@@ -319,3 +319,6 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     </div>
   );
 }
+
+
+

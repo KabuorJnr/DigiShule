@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -253,7 +253,7 @@ export default function LessonPlans({ store, user, readOnly = false }) {
                     key={c} 
                     className="badge" 
                     style={{ 
-                      background: form.core_competencies?.includes(c) ? '#3b82f6' : 'rgba(255,255,255,0.1)', 
+                      background: form.core_competencies?.includes(c) ? '#047857' : 'rgba(255,255,255,0.1)', 
                       cursor: readOnly ? 'default' : 'pointer',
                       border: 'none', color: '#fff'
                     }}
@@ -397,3 +397,6 @@ export default function LessonPlans({ store, user, readOnly = false }) {
     </div>
   );
 }
+
+
+

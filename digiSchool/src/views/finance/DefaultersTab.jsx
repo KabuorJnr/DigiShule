@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -112,7 +112,7 @@ export default function DefaultersTab() {
   const getAgingColor = (days) => {
     if (days >= 90) return '#EF4444';
     if (days >= 30) return '#F59E0B';
-    return '#10B981';
+    return '#047857';
   };
 
   const getAgingLabel = (days) => {
@@ -204,11 +204,11 @@ export default function DefaultersTab() {
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Outstanding</div>
           <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8, color: '#EF4444' }}>{fmtKES(totalOutstanding)}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Critical (90+ days)</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#EF4444' }}>{filtered.filter(d => d.daysOverdue >= 90).length}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Average Balance</div>
           <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8 }}>{fmtKES(filtered.length > 0 ? totalOutstanding / filtered.length : 0)}</div>
         </div>
@@ -294,9 +294,9 @@ export default function DefaultersTab() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
           </div>
         )}
       </div>
@@ -347,3 +347,6 @@ export default function DefaultersTab() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell,
@@ -10,12 +10,12 @@ import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, Us
 
 
 const ALERT_ICON_MAP = {
-  '👨‍🏫': Users,
-  '📝': FileText,
-  '📚': GraduationCap,
-  '⚠️': AlertCircle,
-  '🔧': Building,
-  '💰': DollarSign,
+  'ðŸ‘¨â€ðŸ«': Users,
+  'ðŸ“': FileText,
+  'ðŸ“š': GraduationCap,
+  'âš ï¸': AlertCircle,
+  'ðŸ”§': Building,
+  'ðŸ’°': DollarSign,
 };
 
 const QUICK_ACTIONS = [
@@ -117,10 +117,10 @@ export default function Overview({ store }) {
       {/* KPI Row 1 */}
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
         <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value={totalStudents.toString()} sub="Enrolled">
-          <Sparkline data={sparkData} color="#10B981" />
+          <Sparkline data={sparkData} color="#047857" />
         </KpiCard>
         <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value={totalTeachers.toString()} sub={`${activeTeachers} active, ${onLeave} on leave`} />
-        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#10B981" sub="Pending Logs" />
+        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#047857" sub="Pending Logs" />
         <KpiCard iconComponent={<DollarSign size={20} />} label="Total Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Recorded Payments" />
       </div>
 
@@ -207,7 +207,7 @@ export default function Overview({ store }) {
               <div className="alert-icon" style={{ background: '#e8f0fe', color: '#0078D4' }}><CalendarDays size={16} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{e.title}</div>
-                <div className="muted" style={{ fontSize: 11 }}>{e.date} • {e.desc}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{e.date} â€¢ {e.desc}</div>
               </div>
             </div>
           )) : (
@@ -324,3 +324,6 @@ export default function Overview({ store }) {
     </div>
   );
 }
+
+
+

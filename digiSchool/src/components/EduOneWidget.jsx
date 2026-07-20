@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
 
@@ -88,16 +88,16 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         lat = pos.coords.latitude;
         lng = pos.coords.longitude;
       } catch (_) {
-        // Location unavailable — proceed without it
+        // Location unavailable â€” proceed without it
       }
 
       // Geofence check: if school coordinates are configured AND we got a location
       if (lat && lng && _settings?.latitude && _settings?.longitude) {
         const R = 6371e3;
-        const φ1 = lat * Math.PI / 180, φ2 = _settings.latitude * Math.PI / 180;
-        const Δφ = (_settings.latitude - lat) * Math.PI / 180;
-        const Δλ = (_settings.longitude - lng) * Math.PI / 180;
-        const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+        const Ï†1 = lat * Math.PI / 180, Ï†2 = _settings.latitude * Math.PI / 180;
+        const Î”Ï† = (_settings.latitude - lat) * Math.PI / 180;
+        const Î”Î» = (_settings.longitude - lng) * Math.PI / 180;
+        const a = Math.sin(Î”Ï†/2)**2 + Math.cos(Ï†1) * Math.cos(Ï†2) * Math.sin(Î”Î»/2)**2;
         const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const radius = _settings.geofenceRadius || 50;
         if (dist > radius) {
@@ -128,7 +128,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       gap: 12, padding: '10px 16px',
-      background: 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+      background: 'linear-gradient(135deg, #0ea5e9, #065f46)',
       borderRadius: 10, color: 'white', fontSize: 13, flexWrap: 'wrap',
     }}>
       {/* Left: label + time */}
@@ -155,7 +155,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         {hasCheckedIn && (
           <span style={{ fontSize: 11, opacity: 0.75 }}>
             (In: {new Date(todayLog.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            {hasCheckedOut && ` · Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`})
+            {hasCheckedOut && ` Â· Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`})
           </span>
         )}
       </div>
@@ -190,9 +190,12 @@ export default function EduOneWidget({ user, notify, settings, store }) {
             <LogOut size={13} /> Check Out
           </button>
         ) : (
-          <span style={{ fontSize: 11, opacity: 0.7 }}>✓ Complete</span>
+          <span style={{ fontSize: 11, opacity: 0.7 }}>âœ“ Complete</span>
         )}
       </div>
     </div>
   );
 }
+
+
+

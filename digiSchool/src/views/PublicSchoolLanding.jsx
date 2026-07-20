@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { createUseStyles } from 'react-jss';
@@ -12,7 +12,7 @@ const useStyles = createUseStyles({
     fontFamily: '"Inter", sans-serif'
   },
   hero: {
-    background: 'linear-gradient(to right, #0F766E, #115E59)',
+    background: 'linear-gradient(to right, #065f46, #064e3b)',
     color: '#fff',
     padding: '3rem 1.5rem',
   },
@@ -62,7 +62,7 @@ const useStyles = createUseStyles({
     '@media (min-width: 768px)': { width: 'auto' }
   },
   btnPrimary: {
-    padding: '0.75rem 2rem', background: '#fff', color: '#0F766E', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '100%',
+    padding: '0.75rem 2rem', background: '#fff', color: '#065f46', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '100%',
     '&:hover': { transform: 'translateY(-2px)' }
   },
   btnSecondary: {
@@ -87,7 +87,7 @@ const useStyles = createUseStyles({
   badge: { display: 'inline-flex', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, background: '#dcfce7', color: '#166534' },
   btnSmall: { padding: '0.5rem 1rem', background: '#0f172a', color: '#fff', fontSize: '0.875rem', fontWeight: 600, borderRadius: '6px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', '&:hover': { background: '#334155' } },
   linkList: { display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1.5rem' },
-  linkItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', color: '#334155', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', border: 'none', width: '100%', transition: 'all 0.2s', '&:hover': { background: '#f0fdfa', color: '#0F766E' } }
+  linkItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', color: '#334155', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', border: 'none', width: '100%', transition: 'all 0.2s', '&:hover': { background: '#ecfdf5', color: '#065f46' } }
 });
 
 export default function PublicSchoolLanding() {
@@ -128,7 +128,7 @@ export default function PublicSchoolLanding() {
     <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
       <h1 style={{ fontSize: '2rem', color: '#0f172a', marginBottom: '0.5rem' }}>School Not Found</h1>
       <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>We couldn't find a public profile for this school.</p>
-      <button onClick={() => navigate('/')} style={{ padding: '0.75rem 1.5rem', background: '#0F766E', color: '#fff', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>Return to EduOne</button>
+      <button onClick={() => navigate('/')} style={{ padding: '0.75rem 1.5rem', background: '#065f46', color: '#fff', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>Return to EduOne</button>
     </div>
   );
 
@@ -137,7 +137,7 @@ export default function PublicSchoolLanding() {
       <div className={classes.hero}>
         <div className={classes.heroInner}>
           <div className={classes.logoBox}>
-            {school.logo ? <img src={school.logo} alt="Logo" className={classes.logoImg} /> : <Building2 size={48} color="#0F766E" />}
+            {school.logo ? <img src={school.logo} alt="Logo" className={classes.logoImg} /> : <Building2 size={48} color="#065f46" />}
           </div>
           <div className={classes.heroText}>
             <h1 className={classes.title}>{school.name}</h1>
@@ -161,7 +161,7 @@ export default function PublicSchoolLanding() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div className={classes.card}>
               <div className={classes.cardHeader}>
-                <div style={{ padding: '8px', background: '#f0fdfa', borderRadius: '8px' }}><FileText size={20} color="#0F766E" /></div>
+                <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '8px' }}><FileText size={20} color="#065f46" /></div>
                 <h2 className={classes.cardTitle}>Open Tenders</h2>
               </div>
               <div style={{ overflowX: 'auto' }}>
@@ -203,7 +203,7 @@ export default function PublicSchoolLanding() {
             </div>
             
             <div className={classes.card} style={{ padding: '2rem' }}>
-              <h2 className={classes.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}><Award color="#0F766E" /> School Excellence</h2>
+              <h2 className={classes.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}><Award color="#065f46" /> School Excellence</h2>
               <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>Welcome to {school.name}. We are dedicated to providing the highest quality education and nurturing the potential of every student. Our modern facilities, experienced faculty, and rigorous curriculum ensure that our students are well-prepared for their future endeavors.</p>
               <p style={{ color: '#475569', lineHeight: 1.6 }}>For 2026 Admissions, please ensure you have downloaded the required medical forms and have your previous academic transcripts ready before applying through the online portal.</p>
             </div>
@@ -213,10 +213,10 @@ export default function PublicSchoolLanding() {
             <div className={classes.card}>
               <div className={classes.cardHeader}><h3 className={classes.cardTitle}>Quick Links</h3></div>
               <div className={classes.linkList}>
-                <button onClick={() => navigate('/apply')} className={classes.linkItem}>Online Admission Form <span>→</span></button>
-                <button className={classes.linkItem}>Fee Structure 2026 <span>→</span></button>
-                <button className={classes.linkItem}>Academic Calendar <span>→</span></button>
-                <button className={classes.linkItem}>Download Prospectus <span>→</span></button>
+                <button onClick={() => navigate('/apply')} className={classes.linkItem}>Online Admission Form <span>â†’</span></button>
+                <button className={classes.linkItem}>Fee Structure 2026 <span>â†’</span></button>
+                <button className={classes.linkItem}>Academic Calendar <span>â†’</span></button>
+                <button className={classes.linkItem}>Download Prospectus <span>â†’</span></button>
               </div>
             </div>
           </div>
@@ -225,8 +225,11 @@ export default function PublicSchoolLanding() {
       </div>
       
       <footer style={{ background: '#0f172a', color: '#94a3b8', padding: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <p>© {new Date().getFullYear()} {school.name}. All rights reserved.</p>
+        <p>Â© {new Date().getFullYear()} {school.name}. All rights reserved.</p>
       </footer>
     </div>
   );
 }
+
+
+

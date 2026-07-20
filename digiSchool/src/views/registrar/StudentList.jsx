@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download, Mail } from 'lucide-react';
@@ -96,7 +96,7 @@ export default function StudentList() {
   };
 
   const exportCSV = () => {
-    const rows = [['Adm No.', 'Name', 'Class', 'Gender'], ...filtered.map(s => [s.adm, s.name, s.class, s.gender || '—'])];
+    const rows = [['Adm No.', 'Name', 'Class', 'Gender'], ...filtered.map(s => [s.adm, s.name, s.class, s.gender || 'â€”'])];
     const csv = rows.map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -108,7 +108,7 @@ export default function StudentList() {
   const exportContactsCSV = () => {
     const rows = [
       ['Adm No.', 'Student Name', 'Class', 'Guardian Name', 'Guardian Phone', 'Guardian Email'],
-      ...filtered.map(s => [s.adm, s.name, s.class, s.guardianName || '—', s.guardianPhone || '—', s.guardianEmail || '—']),
+      ...filtered.map(s => [s.adm, s.name, s.class, s.guardianName || 'â€”', s.guardianPhone || 'â€”', s.guardianEmail || 'â€”']),
     ];
     const csv = rows.map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
@@ -181,7 +181,7 @@ export default function StudentList() {
       <div className="toolbar" style={{ marginBottom: 14 }}>
         <div style={{ position: 'relative' }}>
           <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input className="input" style={{ paddingLeft: 32, width: 220 }} placeholder="Search name or adm no…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="input" style={{ paddingLeft: 32, width: 220 }} placeholder="Search name or adm noâ€¦" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="select" style={{ width: 160 }} value={classFilter} onChange={e => setClassFilter(e.target.value)}>
           <option value="All">All Classes</option>
@@ -218,7 +218,7 @@ export default function StudentList() {
                     <tr key={s.id}>
                       <td className="muted">{s.adm}</td>
                       <td style={{ fontWeight: 600 }}>{s.name}</td>
-                      <td>{s.gender || '—'}</td>
+                      <td>{s.gender || 'â€”'}</td>
                       <td>
                         <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, color: '#334155', fontWeight: 600, letterSpacing: 1 }}>
                           {s.parent_pin || 'Pending'}
@@ -229,7 +229,7 @@ export default function StudentList() {
                           style={{ background: 'transparent', border: 'none', cursor: s.guardianEmail ? 'pointer' : 'not-allowed', marginLeft: 8, padding: 4, opacity: s.guardianEmail ? 1 : 0.3 }} 
                           title={s.guardianEmail ? `Email PIN to ${s.guardianEmail}` : 'No guardian email'}
                         >
-                          {sendingPin === s.id ? <Loader size={14} className="spin" color="#10B981" /> : <Mail size={14} color="#10B981" />}
+                          {sendingPin === s.id ? <Loader size={14} className="spin" color="#047857" /> : <Mail size={14} color="#047857" />}
                         </button>
                       </td>
                       <td>
@@ -263,7 +263,7 @@ export default function StudentList() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setEditModal(false)}>Cancel</button>
             <button className="btn btn-primary" disabled={updateMutation.isLoading} onClick={handleSaveEdit}>
-              {updateMutation.isLoading ? 'Saving…' : 'Save Changes'}
+              {updateMutation.isLoading ? 'Savingâ€¦' : 'Save Changes'}
             </button>
           </div>
         }>
@@ -340,14 +340,14 @@ export default function StudentList() {
               </div>
               <div>
                 <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{selectedStudent.name}</h3>
-                <div className="muted">{selectedStudent.adm} • {selectedStudent.class}</div>
+                <div className="muted">{selectedStudent.adm} â€¢ {selectedStudent.class}</div>
               </div>
             </div>
             <div className="grid grid-2">
-              <div><label className="field-label">Gender</label><div className="font-semibold">{selectedStudent.gender || '—'}</div></div>
-              <div><label className="field-label">Date of Birth</label><div className="font-semibold">{selectedStudent.dob || '—'}</div></div>
-              <div><label className="field-label">Parent/Guardian</label><div className="font-semibold">{selectedStudent.guardianName || '—'}</div></div>
-              <div><label className="field-label">Contact Phone</label><div className="font-semibold">{selectedStudent.guardianPhone || '—'}</div></div>
+              <div><label className="field-label">Gender</label><div className="font-semibold">{selectedStudent.gender || 'â€”'}</div></div>
+              <div><label className="field-label">Date of Birth</label><div className="font-semibold">{selectedStudent.dob || 'â€”'}</div></div>
+              <div><label className="field-label">Parent/Guardian</label><div className="font-semibold">{selectedStudent.guardianName || 'â€”'}</div></div>
+              <div><label className="field-label">Contact Phone</label><div className="font-semibold">{selectedStudent.guardianPhone || 'â€”'}</div></div>
             </div>
           </div>
         </Modal>
@@ -359,7 +359,7 @@ export default function StudentList() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setDeleteConfirmModal(false)}>Cancel</button>
             <button className="btn" style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }} disabled={deleteMutation.isLoading} onClick={handleDeregister}>
-              {deleteMutation.isLoading ? 'Deleting…' : 'Confirm Deletion'}
+              {deleteMutation.isLoading ? 'Deletingâ€¦' : 'Confirm Deletion'}
             </button>
           </div>
         }>
@@ -381,3 +381,6 @@ export default function StudentList() {
     </>
   );
 }
+
+
+

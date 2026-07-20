@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge, KpiCard, ProgressBar } from '../../components/widgets';
 import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
@@ -98,7 +98,7 @@ export default function RecordsTab() {
                       <td style={{ fontWeight: 600 }}>{v.date}</td>
                       <td>{v.complaint}</td>
                       <td>{v.treatment}</td>
-                      <td className="muted">{v.notes || '—'}</td>
+                      <td className="muted">{v.notes || 'â€”'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -110,3 +110,6 @@ export default function RecordsTab() {
     </>
   );
 }
+
+
+

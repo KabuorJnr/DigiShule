@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge, KpiCard, ProgressBar } from '../../components/widgets';
 import { Calendar, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
@@ -85,7 +85,7 @@ export default function StudentFinanceTab() {
 
       <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <div className="card card-pad">
-          <h3 className="section-title">Fee Structure — Term 2</h3>
+          <h3 className="section-title">Fee Structure â€” Term 2</h3>
           <table className="table">
             <thead><tr><th>Item</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
             <tbody>
@@ -118,7 +118,7 @@ export default function StudentFinanceTab() {
                   <td style={{ textAlign: 'right' }}>
                     {p.status === 'Verified' && (
                       <button className="btn btn-sm" onClick={() => printReceipt(p, me, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
-                        🖨️ Print Receipt
+                        ðŸ–¨ï¸ Print Receipt
                       </button>
                     )}
                   </td>
@@ -164,3 +164,6 @@ export default function StudentFinanceTab() {
     </>
   );
 }
+
+
+

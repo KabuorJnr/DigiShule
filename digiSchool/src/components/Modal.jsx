@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 export default function Modal({ title, onClose, children, footer, wide, hideClose }) {
@@ -20,7 +20,7 @@ export default function Modal({ title, onClose, children, footer, wide, hideClos
           <h3>{title}</h3>
           {!hideClose && (
             <button className="btn btn-icon btn-sm" onClick={onClose} aria-label="Close">
-              ✕
+              âœ•
             </button>
           )}
         </div>
@@ -32,3 +32,6 @@ export default function Modal({ title, onClose, children, footer, wide, hideClos
 
   return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
 }
+
+
+

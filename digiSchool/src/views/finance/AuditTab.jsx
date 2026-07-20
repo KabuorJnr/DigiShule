@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import { fmtKES } from '../../data/modules';
@@ -6,16 +6,16 @@ import { Search, Shield, FileText, CreditCard, AlertTriangle, CheckCircle } from
 
 const PAGE_SIZE = 25;
 const ACTION_COLORS = {
-  'Payment Recorded': '#10B981',
-  'Invoice Generated': '#3B82F6',
-  'Bulk Invoices': '#3B82F6',
+  'Payment Recorded': '#047857',
+  'Invoice Generated': '#047857',
+  'Bulk Invoices': '#047857',
   'Expense Submitted': '#F59E0B',
-  'Expense Approved': '#10B981',
+  'Expense Approved': '#047857',
   'Expense Rejected': '#EF4444',
-  'Budget Modified': '#8B5CF6',
+  'Budget Modified': '#047857',
   'Scholarship Added': '#EC4899',
-  'Payment Plan Created': '#0D9488',
-  'Payment Verified': '#10B981'
+  'Payment Plan Created': '#047857',
+  'Payment Verified': '#047857'
 };
 
 export default function AuditTab() {
@@ -71,15 +71,15 @@ export default function AuditTab() {
     <div>
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Events</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{auditLogs.length}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Today's Activity</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{todayCount}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #8B5CF6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unique Users</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{uniqueUsers}</div>
         </div>
@@ -150,7 +150,7 @@ export default function AuditTab() {
               {pageData.map((log, idx) => (
                 <tr key={log.id || idx}>
                   <td style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
-                    <div>{log.timestamp ? new Date(log.timestamp).toLocaleDateString() : '—'}</div>
+                    <div>{log.timestamp ? new Date(log.timestamp).toLocaleDateString() : 'â€”'}</div>
                     <div className="muted" style={{ fontSize: 11 }}>{log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}</div>
                   </td>
                   <td style={{ fontWeight: 500 }}>{log.user || 'System'}</td>
@@ -167,7 +167,7 @@ export default function AuditTab() {
                   </td>
                   <td style={{ maxWidth: 300, fontSize: 13, color: 'var(--text-muted)' }}>{log.details}</td>
                   <td style={{ textAlign: 'right', fontWeight: log.amount ? 600 : 400 }}>
-                    {log.amount ? fmtKES(log.amount) : '—'}
+                    {log.amount ? fmtKES(log.amount) : 'â€”'}
                   </td>
                 </tr>
               ))}
@@ -177,12 +177,15 @@ export default function AuditTab() {
 
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+
+

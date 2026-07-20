@@ -1,4 +1,4 @@
-import { Icon } from '../../components/icons';
+﻿import { Icon } from '../../components/icons';
 import PrintHeader from '../../components/PrintHeader';
 import { fmtKES } from '../../data/modules';
 import { getActiveSchoolId } from '../../lib/api';
@@ -131,3 +131,6 @@ export default function FeeStructureTab() {
     </div>
   );
 }
+
+
+

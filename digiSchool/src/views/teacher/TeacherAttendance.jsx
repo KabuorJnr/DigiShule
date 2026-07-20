@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Users, CheckCircle2, XCircle, Clock, Calendar } from 'lucide-react';
 import { upsertRow, fetchTable } from '../../lib/api';
@@ -130,7 +130,7 @@ export default function TeacherAttendance() {
             {selectedClass} Students ({studentsInClass.length})
           </h3>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-sm" onClick={() => markAll('Present')} style={{ color: '#10B981', borderColor: '#10B981' }}>Mark All Present</button>
+            <button className="btn btn-sm" onClick={() => markAll('Present')} style={{ color: '#047857', borderColor: '#047857' }}>Mark All Present</button>
             <button className="btn btn-sm" onClick={() => markAll('Absent')} style={{ color: '#EF4444', borderColor: '#EF4444' }}>Mark All Absent</button>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function TeacherAttendance() {
                           <div style={{ display: 'flex', gap: 6 }}>
                             <button 
                               className={`btn btn-sm ${status === 'Present' ? 'btn-primary' : ''}`}
-                              style={status === 'Present' ? { background: '#10B981', borderColor: '#10B981', color: '#fff' } : {}}
+                              style={status === 'Present' ? { background: '#047857', borderColor: '#047857', color: '#fff' } : {}}
                               onClick={() => handleMark(s.adm, 'Present')}
                             >
                               <CheckCircle2 size={14} /> Present
@@ -209,3 +209,6 @@ export default function TeacherAttendance() {
     </div>
   );
 }
+
+
+

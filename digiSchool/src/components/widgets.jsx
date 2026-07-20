@@ -1,4 +1,4 @@
-// Small reusable presentational widgets.
+﻿// Small reusable presentational widgets.
 
 export function KpiCard({ icon, iconComponent, label, value, sub, accent, children }) {
   return (
@@ -64,3 +64,6 @@ export function PageHeader({ title, subtitle, actions }) {
     </div>
   );
 }
+
+
+

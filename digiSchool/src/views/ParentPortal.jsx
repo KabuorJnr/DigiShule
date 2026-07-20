@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
@@ -293,7 +293,7 @@ export default function ParentPortal({ store, user }) {
         </div>
       )}
 
-      <PageHeader title={children.length > 1 ? "Student Portal" : "My Child"} subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
+      <PageHeader title={children.length > 1 ? "Student Portal" : "My Child"} subtitle={`${child.name} Â· ${child.adm} Â· Grade ${child.class}`} />
 
       {/* Disciplinary Notice */}
       {disciplinary.filter(c => c.status !== 'Resolved').length > 0 && (
@@ -308,8 +308,8 @@ export default function ParentPortal({ store, user }) {
 
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Overall Average" value={`${overallAvg}%`} accent="#BE185D" />
-        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 0}%`} accent="#10B981" />
-        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#10B981'} />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Attendance Rate" value={`${latestAtt?.rate || 0}%`} accent="#047857" />
+        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Fees Balance" value={`KES ${balance.toLocaleString()}`} accent={balance > 0 ? '#EF4444' : '#047857'} />
         <KpiCard iconComponent={<Icon name="exam" size={24} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />
       </div>
 
@@ -346,7 +346,7 @@ export default function ParentPortal({ store, user }) {
         <div className="card card-pad">
           {store.settings?.results_published ? (
             <>
-              <div className="section-title">Academic Performance — Term 2</div>
+              <div className="section-title">Academic Performance â€” Term 2</div>
               <div className="scroll-x">
                 <table className="table">
                   <thead>
@@ -367,7 +367,7 @@ export default function ParentPortal({ store, user }) {
             </>
           ) : (
             <>
-              <div className="section-title">Academic Performance — Term 2</div>
+              <div className="section-title">Academic Performance â€” Term 2</div>
               <p className="muted">Current term exam results are undergoing review and have not yet been published by the Academic Office.</p>
             </>
           )}
@@ -381,11 +381,11 @@ export default function ParentPortal({ store, user }) {
             <table className="table">
               <tbody>
                 <tr><td className="muted">Term Total</td><td style={{ fontWeight: 700 }}>KES {termFees.toLocaleString()}</td></tr>
-                <tr><td className="muted">Amount Paid</td><td style={{ fontWeight: 700, color: '#10B981' }}>KES {paid.toLocaleString()}</td></tr>
+                <tr><td className="muted">Amount Paid</td><td style={{ fontWeight: 700, color: '#047857' }}>KES {paid.toLocaleString()}</td></tr>
                 <tr><td className="muted">Balance</td><td style={{ fontWeight: 700, color: '#EF4444' }}>KES {balance.toLocaleString()}</td></tr>
               </tbody>
             </table>
-            <div style={{ marginTop: 8 }}><ProgressBar value={termFees > 0 ? Math.min(100, Math.round((paid / termFees) * 100)) : 0} color="#10B981" /></div>
+            <div style={{ marginTop: 8 }}><ProgressBar value={termFees > 0 ? Math.min(100, Math.round((paid / termFees) * 100)) : 0} color="#047857" /></div>
           </div>
 
           {upcomingExams.length > 0 && (
@@ -421,7 +421,7 @@ export default function ParentPortal({ store, user }) {
                           )}
                         </div>
                       </div>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Due: {a.due_date} · {a.subject}</div>
+                      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Due: {a.due_date} Â· {a.subject}</div>
                       {sub?.grade && <div style={{ fontSize: 12, marginTop: 4 }}><strong>Grade:</strong> <Badge color="green">{sub.grade}</Badge></div>}
                     </div>
                   )
@@ -449,7 +449,7 @@ export default function ParentPortal({ store, user }) {
                             {log.status}
                           </Badge>
                         </td>
-                        <td className="muted">{log.notes || '—'}</td>
+                        <td className="muted">{log.notes || 'â€”'}</td>
                       </tr>
                     ))
                   )}
@@ -536,7 +536,7 @@ export default function ParentPortal({ store, user }) {
                     <td style={{ fontWeight: 600 }}>{m.teacher_name}</td>
                     <td>{m.reason}</td>
                     <td><Badge color={m.status === 'Scheduled' ? 'green' : m.status === 'Rejected' ? 'red' : 'amber'}>{m.status}</Badge></td>
-                    <td>{m.scheduled_date ? new Date(m.scheduled_date).toLocaleString() : '—'}</td>
+                    <td>{m.scheduled_date ? new Date(m.scheduled_date).toLocaleString() : 'â€”'}</td>
                   </tr>
                 ))
               )}
@@ -548,7 +548,7 @@ export default function ParentPortal({ store, user }) {
       {payModalOpen && (
         <Modal title="Secure Fee Payment" onClose={() => setPayModalOpen(false)} footer={null}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <CreditCard size={40} color="#10B981" style={{ marginBottom: 12 }} />
+            <CreditCard size={40} color="#047857" style={{ marginBottom: 12 }} />
             <h3 style={{ margin: '0 0 8px 0' }}>Pay School Fees</h3>
             <p className="muted" style={{ fontSize: 14 }}>Secure Checkout via M-Pesa</p>
           </div>
@@ -556,7 +556,7 @@ export default function ParentPortal({ store, user }) {
           <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#334155' }}>
               <div>1. Open M-Pesa on your phone</div>
-              <div>2. Select <strong>Lipa na M-Pesa → Paybill</strong></div>
+              <div>2. Select <strong>Lipa na M-Pesa â†’ Paybill</strong></div>
               <div>3. Enter Business No: <strong>123456</strong></div>
               <div>4. Enter Account No: <strong>{child?.adm || 'EDUONE'}</strong></div>
               <div>5. Enter the amount you wish to pay</div>
@@ -582,7 +582,7 @@ export default function ParentPortal({ store, user }) {
 
           <div style={{ display: 'flex', gap: 12 }}>
             <button className="btn" style={{ flex: 1, padding: '12px' }} onClick={() => setPayModalOpen(false)}>Cancel</button>
-            <button className="btn btn-primary" style={{ flex: 2, padding: '12px', background: '#10B981', borderColor: '#10B981' }} onClick={handlePayFees} disabled={paywallSaving}>
+            <button className="btn btn-primary" style={{ flex: 2, padding: '12px', background: '#047857', borderColor: '#047857' }} onClick={handlePayFees} disabled={paywallSaving}>
               {paywallSaving ? 'Verifying Code...' : 'Verify & Complete Payment'}
             </button>
           </div>
@@ -678,3 +678,6 @@ export default function ParentPortal({ store, user }) {
     </div>
   );
 }
+
+
+

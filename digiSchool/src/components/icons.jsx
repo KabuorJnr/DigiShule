@@ -1,4 +1,4 @@
-// Central icon mapping — replaces all emojis with professional Lucide SVG icons.
+﻿// Central icon mapping â€” replaces all emojis with professional Lucide SVG icons.
 // Usage: import { Icon } from '../components/icons';  then <Icon name="dashboard" />
 
 import {
@@ -114,37 +114,40 @@ export function Icon({ name, size = 18, className = '', style = {}, fallback, ..
   return <Comp size={size} className={className} style={style} strokeWidth={1.75} {...props} />;
 }
 
-// Nav icon lookup — maps the emoji-based nav icon strings to Lucide icon names
+// Nav icon lookup â€” maps the emoji-based nav icon strings to Lucide icon names
 export const NAV_ICON_MAP = {
-  '📊': 'dashboard',
-  '🏠': 'home',
-  '🏢': 'building',
-  '👥': 'users',
-  '🎓': 'graduation',
-  '📚': 'academic',
-  '📅': 'calendar',
-  '📝': 'exam',
-  '⊕': 'plus',
-  '📈': 'analytics',
-  '💰': 'finance',
-  '📥': 'download',
-  '🏥': 'clinic',
-  '🔔': 'notification',
-  '📢': 'notice',
-  '👪': 'message',
-  '➕': 'admission',
-  '🗓️': 'schedule',
-  '📋': 'clipboard',
-  '👤': 'profile',
-  '⚙️': 'settings',
-  '🚪': 'logout',
-  '🏛️': 'facility',
-  '🧾': 'file',
-  '🧑‍🏫': 'users',
-  '🏫': 'school',
-  '✅': 'check',
-  '📖': 'book',
-  '💬': 'message',
+  'ðŸ“Š': 'dashboard',
+  'ðŸ ': 'home',
+  'ðŸ¢': 'building',
+  'ðŸ‘¥': 'users',
+  'ðŸŽ“': 'graduation',
+  'ðŸ“š': 'academic',
+  'ðŸ“…': 'calendar',
+  'ðŸ“': 'exam',
+  'âŠ•': 'plus',
+  'ðŸ“ˆ': 'analytics',
+  'ðŸ’°': 'finance',
+  'ðŸ“¥': 'download',
+  'ðŸ¥': 'clinic',
+  'ðŸ””': 'notification',
+  'ðŸ“¢': 'notice',
+  'ðŸ‘ª': 'message',
+  'âž•': 'admission',
+  'ðŸ—“ï¸': 'schedule',
+  'ðŸ“‹': 'clipboard',
+  'ðŸ‘¤': 'profile',
+  'âš™ï¸': 'settings',
+  'ðŸšª': 'logout',
+  'ðŸ›ï¸': 'facility',
+  'ðŸ§¾': 'file',
+  'ðŸ§‘â€ðŸ«': 'users',
+  'ðŸ«': 'school',
+  'âœ…': 'check',
+  'ðŸ“–': 'book',
+  'ðŸ’¬': 'message',
 };
 
 export default Icon;
+
+
+

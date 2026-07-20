@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
 import PublicSchoolLanding from './views/PublicSchoolLanding';
 import Login from './views/Login';
@@ -153,3 +153,6 @@ export default function App() {
     </Routes>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS } from '../data/seed';
 
@@ -66,7 +66,7 @@ export default function Settings({ store, user }) {
   }
   function saveBounds() {
     setGradeBoundaries(bounds);
-    notify('Grade boundaries updated — gradebook recalculated', 'success', 'Settings');
+    notify('Grade boundaries updated â€” gradebook recalculated', 'success', 'Settings');
   }
 
   return (
@@ -101,7 +101,7 @@ export default function Settings({ store, user }) {
 
           {/* School Location & Geofencing */}
           <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-            <h3 className="section-title" style={{ marginTop: 0 }}>📍 School Location & Geofencing</h3>
+            <h3 className="section-title" style={{ marginTop: 0 }}>ðŸ“ School Location & Geofencing</h3>
             <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 16 }}>
               Set your school's GPS coordinates. Teachers can only check in/out within the geofence radius.
             </p>
@@ -141,16 +141,16 @@ export default function Settings({ store, user }) {
                   );
                 }}
               >
-                📍 Detect My Location
+                ðŸ“ Detect My Location
               </button>
             </div>
 
             {form.latitude && form.longitude ? (
               <div style={{ padding: 12, background: '#ecfdf5', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, marginBottom: 12 }}>
                 <div style={{ marginBottom: 12 }}>
-                  <strong style={{ color: '#065f46' }}>✓ Location set:</strong>{' '}
+                  <strong style={{ color: '#065f46' }}>âœ“ Location set:</strong>{' '}
                   <span style={{ fontFamily: 'monospace' }}>{form.latitude}, {form.longitude}</span>
-                  {' · '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
+                  {' Â· '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
                 </div>
                 
                 {/* Embedded Map */}
@@ -172,13 +172,13 @@ export default function Settings({ store, user }) {
                     target="_blank" rel="noopener noreferrer"
                     className="btn btn-sm"
                     style={{ background: 'white', color: '#065f46', border: '1px solid #065f46', display: 'inline-block' }}>
-                    Get Directions ↗
+                    Get Directions â†—
                   </a>
                 </div>
               </div>
             ) : (
               <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
-                ⚠ No location set — teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
+                âš  No location set â€” teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
               </div>
             )}
           </div>
@@ -356,8 +356,8 @@ export default function Settings({ store, user }) {
           </p>
           <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13 }}>
             <strong>How to get the embed URL:</strong><br />
-            1. Open Google Calendar → select your calendar → <em>Settings</em><br />
-            2. Scroll to <em>"Integrate calendar"</em> → copy the <em>"Embed code"</em> src URL<br />
+            1. Open Google Calendar â†’ select your calendar â†’ <em>Settings</em><br />
+            2. Scroll to <em>"Integrate calendar"</em> â†’ copy the <em>"Embed code"</em> src URL<br />
             3. Paste the URL below (it should start with <code>https://calendar.google.com/calendar/embed?...</code>)
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -394,3 +394,6 @@ export default function Settings({ store, user }) {
     </div>
   );
 }
+
+
+

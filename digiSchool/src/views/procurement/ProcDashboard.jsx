@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { createUseStyles } from 'react-jss';
 import { Package, Truck, FileText, Activity } from 'lucide-react';
@@ -25,7 +25,7 @@ const useStyles = createUseStyles({
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
   },
-  statCardGreen: { '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#0D9488', borderRadius: '0 4px 4px 0' } },
+  statCardGreen: { '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#047857', borderRadius: '0 4px 4px 0' } },
   statCardBlue: { '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#0056b3', borderRadius: '0 4px 4px 0' } },
   statCardRed: { '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#BB0000', borderRadius: '0 4px 4px 0' } },
   statCardOrange: { '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#f0ad4e', borderRadius: '0 4px 4px 0' } },
@@ -112,3 +112,6 @@ export default function ProcDashboard() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
@@ -99,7 +99,7 @@ export default function Transfers() {
             <div>
               <label className="field-label">Student</label>
               <select className="select" value={transferForm.studentId} onChange={e => setTransferForm(f => ({ ...f, studentId: e.target.value }))}>
-                <option value="">Select student…</option>
+                <option value="">Select studentâ€¦</option>
                 {localStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated').map(s => <option key={s.id} value={s.id}>{s.name} ({s.class})</option>)}
               </select>
             </div>
@@ -128,3 +128,6 @@ export default function Transfers() {
     </>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Shield, Key, ArrowRight } from 'lucide-react';
@@ -68,7 +68,7 @@ export default function ResetPassword() {
         )}
         
         {msg && (
-          <div style={{ background: '#D1FAE5', color: '#065F46', padding: 12, borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
+          <div style={{ background: '#d1fae5', color: '#065F46', padding: 12, borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
             {msg}
           </div>
         )}
@@ -79,7 +79,7 @@ export default function ResetPassword() {
             <input 
               type="password" 
               className="input" 
-              placeholder="••••••••" 
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" 
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -90,7 +90,7 @@ export default function ResetPassword() {
             <input 
               type="password" 
               className="input" 
-              placeholder="••••••••" 
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" 
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               required
@@ -105,3 +105,6 @@ export default function ResetPassword() {
     </div>
   );
 }
+
+
+

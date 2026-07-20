@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
@@ -58,7 +58,7 @@ export default function TeacherPortal({ store, user }) {
   const [replyText, setReplyText] = useState({});
   const [editing, setEditing] = useState(null);
 
-  // ── Leave Application State ──
+  // â”€â”€ Leave Application State â”€â”€
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
@@ -85,7 +85,7 @@ export default function TeacherPortal({ store, user }) {
     return () => { active = false; };
   }, [assignedClass, subject]);
 
-  // ── Load Leave Requests ──
+  // â”€â”€ Load Leave Requests â”€â”€
   useEffect(() => {
     let active = true;
     fetchTable('leave_requests').then(rows => {
@@ -113,7 +113,7 @@ export default function TeacherPortal({ store, user }) {
     setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
   };
 
-  // ── Submit Leave Request ──
+  // â”€â”€ Submit Leave Request â”€â”€
   const submitLeaveRequest = async () => {
     if (!leaveForm.start || !leaveForm.end || !leaveForm.reason.trim()) {
       store.notify('Please fill in all leave fields', 'warning', 'Leave');
@@ -217,7 +217,7 @@ export default function TeacherPortal({ store, user }) {
           <input
             style={{ 
               width: field === 'remarks' ? '120px' : '48px', 
-              height: '28px', padding: '0 4px', border: '1px solid #2563eb', borderRadius: '4px', outline: 'none' 
+              height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none' 
             }}
             type={field === 'remarks' ? "text" : "number"}
             autoFocus
@@ -260,7 +260,7 @@ export default function TeacherPortal({ store, user }) {
   const approvedLeaves = leaveRequests.filter(l => l.status === 'Approved').length;
 
   const quickLinks = [
-    { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#059669', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
+    { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#065f46', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
     { label: 'Parent Messages', icon: MessageSquare, action: 'open_inbox', color: '#EAB308', desc: `${messages.filter(m => m.status === 'Unread').length} unread messages` },
     { label: 'Assignments & Materials', icon: FolderOpen, view: 'teacher_resources', color: '#0078D4', desc: 'Upload PDFs for students' },
     { label: 'Notices Board', icon: Bell, view: 'notices', color: '#7C3AED', desc: 'Post & read announcements' },
@@ -295,7 +295,7 @@ export default function TeacherPortal({ store, user }) {
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>Welcome, {teacherName}</div>
           <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>
-            {subject} Teacher · {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}
+            {subject} Teacher Â· {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}
           </div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 18px', textAlign: 'center' }}>
@@ -306,17 +306,17 @@ export default function TeacherPortal({ store, user }) {
 
       {/* Class Teacher Banner */}
       {assignedClass && (
-        <div style={{ background: '#f0fdfa', border: '1px solid #ccfbf1', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: '#ecfdf5', border: '1px solid #ccfbf1', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontWeight: 700, fontSize: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#065f46', fontWeight: 700, fontSize: 16 }}>
               <Users size={18} /> Class Teacher: {assignedClass}
             </div>
-            <div style={{ color: '#0f766e', opacity: 0.8, fontSize: 13, marginTop: 4 }}>
+            <div style={{ color: '#065f46', opacity: 0.8, fontSize: 13, marginTop: 4 }}>
               You are assigned to manage {assignedClass}.
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
+            <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
               <Award size={16} /> Log Behavior
             </button>
             <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportAttendanceSummary}>
@@ -402,7 +402,7 @@ export default function TeacherPortal({ store, user }) {
       {/* Gradebook Table */}
       <div className="card card-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div className="section-title" style={{ margin: 0 }}>{subject} — Student Results</div>
+          <div className="section-title" style={{ margin: 0 }}>{subject} â€” Student Results</div>
           {topPerformer && (
             <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
               Top: {topPerformer.name} ({topPerformer.average}%)
@@ -458,16 +458,16 @@ export default function TeacherPortal({ store, user }) {
           <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)} />
           <div className="modal" style={{ maxWidth: 800 }}>
             <div className="modal-header">
-              <h3>{assignedClass} — Class List</h3>
+              <h3>{assignedClass} â€” Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print / Save PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
               <PrintHeader settings={store.settings} />
               <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
-                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h2>
+                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List â€” {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
               </div>
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -550,7 +550,7 @@ export default function TeacherPortal({ store, user }) {
           <div className="modal" style={{ maxWidth: 650, padding: 0, overflow: 'hidden' }}>
             <div className="modal-header">
               <h3>Parent Messages Inbox</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>âœ•</button>
             </div>
             <div style={{ padding: 24, maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }}>
               {messages.length === 0 ? (
@@ -561,7 +561,7 @@ export default function TeacherPortal({ store, user }) {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {messages.map(m => (
-                    <div key={m.id} className="card card-pad" style={{ background: m.status === 'Unread' ? '#fff' : '#f1f5f9', borderLeft: m.status === 'Unread' ? '4px solid #3b82f6' : '4px solid transparent' }}>
+                    <div key={m.id} className="card card-pad" style={{ background: m.status === 'Unread' ? '#fff' : '#f1f5f9', borderLeft: m.status === 'Unread' ? '4px solid #047857' : '4px solid transparent' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                         <div>
                           <strong style={{ fontSize: 15 }}>{m.sender_name}</strong>
@@ -603,7 +603,7 @@ export default function TeacherPortal({ store, user }) {
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <PlaneTakeoff size={20} /> Leave Application
               </h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>âœ•</button>
             </div>
 
             {/* Tab Navigation */}
@@ -613,8 +613,8 @@ export default function TeacherPortal({ store, user }) {
                 style={{
                   flex: 1, padding: '12px 16px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
                   background: leaveTab === 'apply' ? '#fff' : 'transparent',
-                  borderBottom: leaveTab === 'apply' ? '3px solid #059669' : '3px solid transparent',
-                  color: leaveTab === 'apply' ? '#059669' : '#64748b'
+                  borderBottom: leaveTab === 'apply' ? '3px solid #065f46' : '3px solid transparent',
+                  color: leaveTab === 'apply' ? '#065f46' : '#64748b'
                 }}
               >
                 <PlaneTakeoff size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Apply for Leave
@@ -642,7 +642,7 @@ export default function TeacherPortal({ store, user }) {
                       <div style={{ fontSize: 11, color: '#92400E', fontWeight: 600 }}>Pending</div>
                     </div>
                     <div style={{ background: '#d1fae5', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: '#059669' }}>{approvedLeaves}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#065f46' }}>{approvedLeaves}</div>
                       <div style={{ fontSize: 11, color: '#065F46', fontWeight: 600 }}>Approved</div>
                     </div>
                     <div style={{ background: '#e0e7ff', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
@@ -694,7 +694,7 @@ export default function TeacherPortal({ store, user }) {
                   <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                     <button className="btn" onClick={() => setShowLeaveModal(false)}>Cancel</button>
                     <button className="btn btn-primary" disabled={leaveSaving} onClick={submitLeaveRequest}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#059669', borderColor: '#059669' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#065f46', borderColor: '#065f46' }}>
                       <PlaneTakeoff size={16} /> {leaveSaving ? 'Submitting...' : 'Submit Leave Request'}
                     </button>
                   </div>
@@ -713,11 +713,11 @@ export default function TeacherPortal({ store, user }) {
                       {leaveRequests.map(lr => (
                         <div key={lr.id} style={{
                           background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 18px',
-                          borderLeft: `4px solid ${lr.status === 'Approved' ? '#10b981' : lr.status === 'Rejected' ? '#ef4444' : '#f59e0b'}`
+                          borderLeft: `4px solid ${lr.status === 'Approved' ? '#047857' : lr.status === 'Rejected' ? '#ef4444' : '#f59e0b'}`
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              {lr.status === 'Approved' ? <CheckCircle2 size={16} color="#10b981" /> :
+                              {lr.status === 'Approved' ? <CheckCircle2 size={16} color="#047857" /> :
                                lr.status === 'Rejected' ? <XCircle size={16} color="#ef4444" /> :
                                <Clock size={16} color="#f59e0b" />}
                               <span style={{ fontWeight: 700, fontSize: 14 }}>{lr.type} Leave</span>
@@ -747,3 +747,6 @@ export default function TeacherPortal({ store, user }) {
     </div>
   );
 }
+
+
+

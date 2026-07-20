@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -32,7 +32,7 @@ export default function FinanceUsersTab() {
       <div className="card card-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Shield size={20} color="#3B82F6" />
+            <Shield size={20} color="#047857" />
             Finance Team Permissions
           </div>
           <button className="btn btn-primary" onClick={() => notify('Add user modal would open here')}>Add Finance User</button>
@@ -74,7 +74,7 @@ export default function FinanceUsersTab() {
                       <button className="btn btn-sm" onClick={() => notify('Edit limits functionality')}>Edit Limits</button>
                       <button 
                         className="btn btn-sm" 
-                        style={{ color: u.status === 'Active' ? '#EF4444' : '#10B981' }} 
+                        style={{ color: u.status === 'Active' ? '#EF4444' : '#047857' }} 
                         onClick={() => handleToggleStatus(u.id)}
                       >
                         {u.status === 'Active' ? 'Suspend' : 'Activate'}
@@ -90,3 +90,6 @@ export default function FinanceUsersTab() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudents } from '../lib/api';
@@ -74,7 +74,7 @@ export default function Clinic({ store }) {
       date: new Date().toISOString().slice(0, 10),
       student: form.student,
       student_id: form.student_id,
-      adm: form.adm || '—',
+      adm: form.adm || 'â€”',
       complaint: form.complaint,
       treatment: form.treatment,
       outcome: form.outcome,
@@ -153,7 +153,7 @@ export default function Clinic({ store }) {
           <KpiCard iconComponent={<Icon name="clinic" size={24} />} label="Total Visits" value={totals.total} />
           <KpiCard iconComponent={<Icon name="calendar" size={24} />} label="Today" value={totals.today} accent="#0369A1" />
           <KpiCard iconComponent={<Icon name="warning" size={24} />} label="Referrals" value={totals.referred} accent="#EF4444" sub="To hospital" />
-          <KpiCard iconComponent={<Icon name="check" size={24} />} label="Supplies Status" value="Adequate" accent="#10B981" />
+          <KpiCard iconComponent={<Icon name="check" size={24} />} label="Supplies Status" value="Adequate" accent="#047857" />
         </div>
 
         <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid var(--border)', marginBottom: 20 }}>
@@ -200,7 +200,7 @@ export default function Clinic({ store }) {
           <div className="card card-pad fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 className="section-title" style={{ margin: 0 }}>
-                {searchQuery.trim() ? 'Search Results' : `${selectedClass} — Medical Directory`}
+                {searchQuery.trim() ? 'Search Results' : `${selectedClass} â€” Medical Directory`}
               </h3>
               <div style={{ position: 'relative', width: 250 }}>
                 <Icon name="search" size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
@@ -345,3 +345,6 @@ export default function Clinic({ store }) {
     </div>
   );
 }
+
+
+

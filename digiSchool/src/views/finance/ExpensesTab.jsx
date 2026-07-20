@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
@@ -126,7 +126,7 @@ export default function ExpensesTab() {
     );
     setExpenses(updated);
     notify(`Expense "${expense.description}" rejected.`, 'info');
-    addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} — Reason: ${rejectReason}`, expense.amount);
+    addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} â€” Reason: ${rejectReason}`, expense.amount);
     setRejectModalOpen(null);
     setRejectReason('');
 
@@ -226,7 +226,7 @@ export default function ExpensesTab() {
                   <td>
                     <div>{e.description}</div>
                     {e.status === 'Approved' && e.approved_by && (
-                      <div className="muted" style={{ fontSize: 11 }}>Approved by {e.approved_by} on {e.approved_at ? new Date(e.approved_at).toLocaleDateString() : '—'}</div>
+                      <div className="muted" style={{ fontSize: 11 }}>Approved by {e.approved_by} on {e.approved_at ? new Date(e.approved_at).toLocaleDateString() : 'â€”'}</div>
                     )}
                     {e.status === 'Rejected' && e.rejection_reason && (
                       <div style={{ fontSize: 11, color: '#EF4444' }}>Rejected: {e.rejection_reason}</div>
@@ -241,7 +241,7 @@ export default function ExpensesTab() {
                     <td>
                       {e.status === 'Pending' && (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-sm" onClick={() => handleApprove(e.id)} style={{ color: '#10B981', borderColor: '#86efac', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                          <button className="btn btn-sm" onClick={() => handleApprove(e.id)} style={{ color: '#047857', borderColor: '#86efac', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                             <CheckCircle size={14} /> Approve
                           </button>
                           <button className="btn btn-sm" onClick={() => { setRejectModalOpen(e.id); setRejectReason(''); }} style={{ color: '#EF4444', borderColor: '#fca5a5', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
@@ -260,9 +260,9 @@ export default function ExpensesTab() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
           </div>
         )}
       </div>
@@ -340,3 +340,6 @@ export default function ExpensesTab() {
     </div>
   );
 }
+
+
+

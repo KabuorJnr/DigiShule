@@ -1,4 +1,4 @@
-﻿.layout {
+.layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -76,8 +76,8 @@
   color: #e4e4e7;
 }
 .nav-item.active {
-  background: rgba(13, 148, 136, 0.15); /* Teal overlay to match primary */
-  color: #2dd4bf;
+  background: rgba(4, 120, 87, 0.15); /* Emerald overlay to match primary */
+  color: #34d399;
 }
 .nav-item.active::before {
   content: '';
@@ -554,7 +554,7 @@
   margin-top: 32px;
 }
 .spotify-link:hover {
-  color: #10B981;
+  color: #047857;
 }
 
 /* Add media queries to tighten up on small screens */
@@ -627,4 +627,5 @@
     z-index: 999;
   }
 }
+
 

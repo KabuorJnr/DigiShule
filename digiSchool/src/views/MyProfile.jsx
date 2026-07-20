@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { PageHeader } from '../components/widgets';
 import {
@@ -73,7 +73,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     }
   }, [store.teachers, user?.id, isStaff]);
 
-  // ── Save profile details ──────────────────────────────────────
+  // â”€â”€ Save profile details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Name is required.'); return; }
     setError('');
@@ -129,7 +129,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     }
   };
 
-  // ── Change password ───────────────────────────────────────────
+  // â”€â”€ Change password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleChangePassword = async () => {
     setPwError('');
     setPwOk(false);
@@ -149,7 +149,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         }
         setPwOk(true);
         setPwForm({ current: '', next: '', confirm: '' });
-        notify('Password updated (local only — link a Supabase account for full security)', 'info', 'My Profile');
+        notify('Password updated (local only â€” link a Supabase account for full security)', 'info', 'My Profile');
       } else {
         const { error } = await supabase.auth.updateUser({ password: pwForm.next });
         if (error) throw error;
@@ -182,7 +182,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         </div>
       )}
 
-      {/* ── Personal Details ── */}
+      {/* â”€â”€ Personal Details â”€â”€ */}
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
           <User size={17} color="#0078D4" /> Personal Details
@@ -232,7 +232,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
         <div style={{ marginTop: 14 }}>
           <Field label="Short Bio (optional)" icon={null}>
-            <textarea className="input" rows={3} value={form.bio} onChange={e => upForm({ bio: e.target.value })} placeholder="A short description about yourself…" />
+            <textarea className="input" rows={3} value={form.bio} onChange={e => upForm({ bio: e.target.value })} placeholder="A short description about yourselfâ€¦" />
           </Field>
         </div>
 
@@ -244,7 +244,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
         <div style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="btn btn-primary" style={{ gap: 6 }} disabled={saving} onClick={handleSave}>
-            <Save size={15} /> {saving ? 'Saving…' : 'Save Profile'}
+            <Save size={15} /> {saving ? 'Savingâ€¦' : 'Save Profile'}
           </button>
           {saved && (
             <span style={{ color: '#107C10', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -254,7 +254,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         </div>
       </div>
 
-      {/* ── Change Password ── */}
+      {/* â”€â”€ Change Password â”€â”€ */}
       <div className="card card-pad">
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Lock size={17} color="#0078D4" /> Change Password
@@ -272,7 +272,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
                   className="input"
                   type={showPw[key] ? 'text' : 'password'}
                   value={pwForm[key]}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                   style={{ paddingRight: 40 }}
                 />
@@ -301,7 +301,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
 
         <div style={{ marginTop: 14 }}>
           <button className="btn btn-primary" style={{ gap: 6 }} disabled={pwSaving} onClick={handleChangePassword}>
-            <Lock size={15} /> {pwSaving ? 'Updating…' : 'Update Password'}
+            <Lock size={15} /> {pwSaving ? 'Updatingâ€¦' : 'Update Password'}
           </button>
         </div>
 
@@ -314,3 +314,6 @@ export default function MyProfile({ store, user, onUserUpdate }) {
     </div>
   );
 }
+
+
+

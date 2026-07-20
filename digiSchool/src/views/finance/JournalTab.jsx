@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -38,7 +38,7 @@ export default function JournalTab() {
       <div className="card card-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BookOpen size={20} color="#8B5CF6" />
+            <BookOpen size={20} color="#047857" />
             General Journal Entries
           </div>
           <button className="btn btn-primary" onClick={() => notify('New Journal Entry form would open here')}>New Entry</button>
@@ -64,7 +64,7 @@ export default function JournalTab() {
                   <td>{entry.date}</td>
                   <td className="muted">{entry.id}</td>
                   <td style={{ fontWeight: 600 }}>{entry.description}</td>
-                  <td style={{ color: '#10B981' }}>{entry.debit_account}</td>
+                  <td style={{ color: '#047857' }}>{entry.debit_account}</td>
                   <td style={{ color: '#EF4444' }}>{entry.credit_account}</td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtKES(entry.amount)}</td>
                   <td>
@@ -91,3 +91,6 @@ export default function JournalTab() {
     </div>
   );
 }
+
+
+

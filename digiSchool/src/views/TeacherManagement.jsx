@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { fetchTable, upsertRow } from '../lib/api';
 import { expandClassesWithStreams, SUBJECTS, DEPARTMENTS, DEPT_COLORS } from '../data/seed';
@@ -9,13 +9,13 @@ import {
   Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X
 } from 'lucide-react';
 
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPER COMPONENTS
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const AVATAR_COLORS = [
-  '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+  '#047857', '#047857', '#F59E0B', '#EF4444', '#047857',
+  '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#047857'
 ];
 
 function hashCode(str) {
@@ -40,7 +40,7 @@ function TeacherAvatar({ name, id, size = 40 }) {
 
 function WorkloadBadge({ periods, max = 40 }) {
   const p = periods || 0;
-  const color = p < 20 ? '#10B981' : p < 30 ? '#F59E0B' : '#EF4444';
+  const color = p < 20 ? '#047857' : p < 30 ? '#F59E0B' : '#EF4444';
   const bg = p < 20 ? '#dcfce7' : p < 30 ? '#fef3c7' : '#fee2e2';
   return (
     <span style={{
@@ -60,7 +60,7 @@ function QualificationBadge({ level, name }) {
       display: 'inline-flex', alignItems: 'center', gap: 3,
       fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
       background: isP ? '#dbeafe' : '#dcfce7',
-      color: isP ? '#1d4ed8' : '#166534', marginRight: 4, marginBottom: 4
+      color: isP ? '#064e3b' : '#166534', marginRight: 4, marginBottom: 4
     }}>
       {name}
     </span>
@@ -76,7 +76,7 @@ function StatusPill({ status }) {
       background: assigned ? '#dcfce7' : '#f1f5f9',
       color: assigned ? '#166534' : '#475569'
     }}>
-      {assigned ? '✓ Assigned' : '○ Unassigned'}
+      {assigned ? 'âœ“ Assigned' : 'â—‹ Unassigned'}
     </span>
   );
 }
@@ -91,7 +91,7 @@ function InfoCallout({ children, onDismiss }) {
       <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
       <div style={{ flex: 1 }}>{children}</div>
       {onDismiss && (
-        <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 0 }}>
+        <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#047857', padding: 0 }}>
           <X size={16} />
         </button>
       )}
@@ -111,19 +111,19 @@ function QuickAction({ icon, label, subtitle, onClick, disabled }) {
         transition: 'all 0.15s', flex: 1, minWidth: 120, textAlign: 'center',
         opacity: disabled ? 0.5 : 1
       }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.borderColor = '#3b82f6'; }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.borderColor = '#047857'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
     >
-      <div style={{ color: '#3b82f6' }}>{icon}</div>
+      <div style={{ color: '#047857' }}>{icon}</div>
       <div style={{ fontWeight: 600, fontSize: 13, color: '#0f172a' }}>{label}</div>
       <div style={{ fontSize: 11, color: '#64748b' }}>{subtitle}</div>
     </button>
   );
 }
 
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DEFAULT SUBJECTS (seeded on first load if table is empty)
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const DEFAULT_SUBJECTS = [
   { code: 'MAT', name: 'Mathematics', is_core: true, department: 'Mathematics', periods_per_week: 5 },
   { code: 'ENG', name: 'English', is_core: true, department: 'Languages', periods_per_week: 5 },
@@ -137,9 +137,9 @@ const DEFAULT_SUBJECTS = [
 
 const DEFAULT_DEPARTMENTS = ['Mathematics', 'Languages', 'Sciences', 'Humanities'];
 
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN COMPONENT
-// ══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 export default function TeacherManagement({ store, user, params = {} }) {
   const { teachers = [], settings = {}, notify, navigate } = store;
   const activeTab = params.tab || 'directory';
@@ -281,9 +281,9 @@ export default function TeacherManagement({ store, user, params = {} }) {
     return [...depts].sort();
   }, [activeTeachers, subjects]);
 
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DIRECTORY TAB
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const filteredTeachers = useMemo(() => {
     return activeTeachers.filter(t => {
       if (search) {
@@ -309,9 +309,9 @@ export default function TeacherManagement({ store, user, params = {} }) {
     departments: departments.length
   }), [activeTeachers, teacherAssignMap, departments]);
 
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // ASSIGNMENT TAB
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const currentClassObj = allClasses.find(c => c.name === selectedClass);
   const streams = currentClassObj?.streams || [];
 
@@ -437,9 +437,9 @@ export default function TeacherManagement({ store, user, params = {} }) {
     notify(`Auto-assigned ${assigned} of ${unassigned.length} subjects`, assigned > 0 ? 'success' : 'warning');
   };
 
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // QUALIFICATIONS TAB
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const selectedTeacherQuals = qualTeacher ? (teacherQualMap[qualTeacher] || []) : [];
 
   const handleAddQualification = async (subjectId, level = 'qualified') => {
@@ -471,14 +471,14 @@ export default function TeacherManagement({ store, user, params = {} }) {
     }
   };
 
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // RENDER
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center' }} className="muted">Loading teacher management data...</div>;
   }
 
-  // ── TAB NAVIGATION ──
+  // â”€â”€ TAB NAVIGATION â”€â”€
   const tabs = [
     { key: 'directory', label: 'Teaching Staff', icon: <Users size={16} /> },
     { key: 'assign', label: 'Assign to Class', icon: <ClipboardList size={16} /> },
@@ -500,8 +500,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, opacity: 0.9 }}>
-          <span>📅 {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          <span>📚 Term 2, 2026</span>
+          <span>ðŸ“… {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span>ðŸ“š Term 2, 2026</span>
         </div>
       </div>
 
@@ -525,17 +525,17 @@ export default function TeacherManagement({ store, user, params = {} }) {
         ))}
       </div>
 
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {/* DIRECTORY TAB */}
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'directory' && (
         <div>
           {/* Stats */}
           <div className="grid grid-4" style={{ marginBottom: 24 }}>
             <KpiCard iconComponent={<Users size={20} />} label="Total Teachers" value={dirStats.total} />
-            <KpiCard iconComponent={<Plus size={20} />} label="New This Year" value={dirStats.newThisYear} accent="#10B981" />
-            <KpiCard iconComponent={<UserCheck size={20} />} label="With Assignments" value={dirStats.withAssignments} accent="#3B82F6" />
-            <KpiCard iconComponent={<Building2 size={20} />} label="Departments" value={dirStats.departments} accent="#8B5CF6" />
+            <KpiCard iconComponent={<Plus size={20} />} label="New This Year" value={dirStats.newThisYear} accent="#047857" />
+            <KpiCard iconComponent={<UserCheck size={20} />} label="With Assignments" value={dirStats.withAssignments} accent="#047857" />
+            <KpiCard iconComponent={<Building2 size={20} />} label="Departments" value={dirStats.departments} accent="#047857" />
           </div>
 
           {/* Search & Filter */}
@@ -606,10 +606,10 @@ export default function TeacherManagement({ store, user, params = {} }) {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#1e3a5f' }}>{teacher.name}</div>
                       <div style={{ fontSize: 12, color: '#64748b' }}>
-                        {teacher.emp_id || 'No ID'} · {teacher.phone || 'No phone'}
+                        {teacher.emp_id || 'No ID'} Â· {teacher.phone || 'No phone'}
                       </div>
                       {teacher.department && (
-                        <div style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 600, marginTop: 2 }}>{teacher.department}</div>
+                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 600, marginTop: 2 }}>{teacher.department}</div>
                       )}
                     </div>
                   </div>
@@ -639,7 +639,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {assigns.slice(0, 3).map((a, i) => (
                           <div key={i} style={{ fontSize: 12, color: '#334155' }}>
-                            {a.class_name}{a.stream_name ? ` ${a.stream_name}` : ''} — {a.subject_name}
+                            {a.class_name}{a.stream_name ? ` ${a.stream_name}` : ''} â€” {a.subject_name}
                           </div>
                         ))}
                         {assigns.length > 3 && <div style={{ fontSize: 11, color: '#94a3b8' }}>+{assigns.length - 3} more</div>}
@@ -665,9 +665,9 @@ export default function TeacherManagement({ store, user, params = {} }) {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {/* ASSIGN TAB */}
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'assign' && (
         <div>
           {/* Selectors */}
@@ -724,7 +724,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>GRADE</div><div style={{ fontSize: 18, fontWeight: 700 }}>{selectedClass}</div></div>
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>STREAM</div><div style={{ fontSize: 18, fontWeight: 700 }}>{selectedStream || 'All'}</div></div>
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>SUBJECTS</div><div style={{ fontSize: 18, fontWeight: 700 }}>{totalSubjects}</div></div>
-                <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>ASSIGNED</div><div style={{ fontSize: 18, fontWeight: 700 }}>{assignedCount}/{totalSubjects} — {assignPct}%</div></div>
+                <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>ASSIGNED</div><div style={{ fontSize: 18, fontWeight: 700 }}>{assignedCount}/{totalSubjects} â€” {assignPct}%</div></div>
               </div>
 
               {/* Quick Actions */}
@@ -744,7 +744,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                   <span>Assignment Progress</span>
                   <span>{assignedCount}/{totalSubjects} assigned</span>
                 </div>
-                <ProgressBar value={assignPct} color={assignPct === 100 ? '#10B981' : '#3B82F6'} />
+                <ProgressBar value={assignPct} color={assignPct === 100 ? '#047857' : '#047857'} />
               </div>
 
               {/* Subject Cards */}
@@ -764,7 +764,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
                   return (
                     <div key={assignment.id} className="card card-pad" style={{
-                      borderLeft: `4px solid ${assignment.status === 'assigned' ? '#10B981' : '#94A3B8'}`
+                      borderLeft: `4px solid ${assignment.status === 'assigned' ? '#047857' : '#94A3B8'}`
                     }}>
                       {/* Subject Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -775,7 +775,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           </div>
                           <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748b' }}>
                             <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{subj.code}</span>
-                            <span>·</span>
+                            <span>Â·</span>
                             <span>{assignment.periods_per_week || 5} periods/week</span>
                           </div>
                         </div>
@@ -791,11 +791,11 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           onChange={e => handleAssignTeacher(assignment.id, e.target.value)}
                           style={{ width: '100%' }}
                         >
-                          <option value="">— Select Teacher —</option>
+                          <option value="">â€” Select Teacher â€”</option>
                           {qualifiedForSubject.length > 0 ? (
                             qualifiedForSubject.map(t => (
                               <option key={t.id} value={t.id}>
-                                {t.name} ({t.emp_id || 'N/A'}) — {t.department || 'General'} | Workload: {teacherWorkloads[t.id] || 0}/40
+                                {t.name} ({t.emp_id || 'N/A'}) â€” {t.department || 'General'} | Workload: {teacherWorkloads[t.id] || 0}/40
                               </option>
                             ))
                           ) : (
@@ -810,14 +810,14 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
                       {/* Qualified teachers line */}
                       {qualifiedForSubject.length > 0 && (
-                        <div style={{ fontSize: 11, color: '#10B981', fontWeight: 500 }}>
-                          ✓ Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
+                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 500 }}>
+                          âœ“ Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
                           {qualifiedForSubject.length > 3 && ` +${qualifiedForSubject.length - 3} more`}
                         </div>
                       )}
                       {qualifiedForSubject.length === 0 && (
                         <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>
-                          ⚠ No qualified teachers — showing all teachers. Add qualifications first.
+                          âš  No qualified teachers â€” showing all teachers. Add qualifications first.
                         </div>
                       )}
                     </div>
@@ -829,9 +829,9 @@ export default function TeacherManagement({ store, user, params = {} }) {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {/* QUALIFICATIONS TAB */}
-      {/* ════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'qualifications' && (
         <div>
           <InfoCallout>
@@ -846,7 +846,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 <select className="select" style={{ width: '100%' }} value={qualTeacher} onChange={e => setQualTeacher(e.target.value)}>
                   <option value="">Choose a teacher...</option>
                   {activeTeachers.map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.emp_id || t.id}) — {t.department || 'General'}</option>
+                    <option key={t.id} value={t.id}>{t.name} ({t.emp_id || t.id}) â€” {t.department || 'General'}</option>
                   ))}
                 </select>
               </div>
@@ -857,7 +857,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 {/* Current qualifications */}
                 <div style={{ marginBottom: 20 }}>
                   <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
-                    Current Qualifications — {teachers.find(t => t.id === qualTeacher)?.name}
+                    Current Qualifications â€” {teachers.find(t => t.id === qualTeacher)?.name}
                   </h3>
                   {selectedTeacherQuals.length === 0 ? (
                     <div className="muted" style={{ fontSize: 13, padding: 16, background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
@@ -872,7 +872,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           background: q.qualification_level === 'primary' ? '#dbeafe' : '#dcfce7',
                           border: `1px solid ${q.qualification_level === 'primary' ? '#93c5fd' : '#86efac'}`
                         }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: q.qualification_level === 'primary' ? '#1d4ed8' : '#166534' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: q.qualification_level === 'primary' ? '#064e3b' : '#166534' }}>
                             {q.subjectName}
                           </span>
                           <Badge color={q.qualification_level === 'primary' ? 'blue' : 'green'}>
@@ -900,7 +900,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       }}>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 13 }}>{subj.name}</div>
-                          <div style={{ fontSize: 11, color: '#64748b' }}>{subj.code} · {subj.department}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{subj.code} Â· {subj.department}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button className="btn btn-sm" onClick={() => handleAddQualification(subj.id, 'qualified')}
@@ -908,7 +908,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                             + Qualified
                           </button>
                           <button className="btn btn-sm" onClick={() => handleAddQualification(subj.id, 'primary')}
-                            style={{ padding: '3px 8px', fontSize: 11, background: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd' }}>
+                            style={{ padding: '3px 8px', fontSize: 11, background: '#dbeafe', color: '#064e3b', border: '1px solid #93c5fd' }}>
                             + Primary
                           </button>
                         </div>
@@ -929,3 +929,6 @@ export default function TeacherManagement({ store, user, params = {} }) {
     </div>
   );
 }
+
+
+

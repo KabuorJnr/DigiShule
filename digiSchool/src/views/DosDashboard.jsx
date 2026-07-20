@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Badge, ProgressBar } from '../components/widgets';
 import { jsPDF } from 'jspdf';
@@ -156,21 +156,21 @@ export default function DosDashboard({ store, user }) {
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 4 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>Term 2 · Academic Year 2026</div>
+          <div>Term 2 Â· Academic Year 2026</div>
         </div>
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 24 }}>
-        <Stat label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lessons" color={pendingApprovalsCount > 0 ? "#F59E0B" : "#10B981"} />
-        <Stat label="Exams to Moderate" value={pendingPapersCount} sub="Pending papers" color={pendingPapersCount > 0 ? "#F59E0B" : "#10B981"} />
-        <Stat label="Pending Releases" value={pendingReleaseExamsCount} sub="Exams ready for release" color="#3B82F6" />
+        <Stat label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lessons" color={pendingApprovalsCount > 0 ? "#F59E0B" : "#047857"} />
+        <Stat label="Exams to Moderate" value={pendingPapersCount} sub="Pending papers" color={pendingPapersCount > 0 ? "#F59E0B" : "#047857"} />
+        <Stat label="Pending Releases" value={pendingReleaseExamsCount} sub="Exams ready for release" color="#047857" />
         <Stat label="Overloaded Teachers" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 periods/week" color="#EF4444" />
       </div>
 
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         <div className="card card-pad">
           <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ShieldCheck size={18} color="#3b82f6"/> Scheme & Lesson Approvals
+            <ShieldCheck size={18} color="#047857"/> Scheme & Lesson Approvals
           </h3>
           <div className="list-flex">
             {approvals.filter(a => a.status === 'pending').map(a => (
@@ -190,7 +190,7 @@ export default function DosDashboard({ store, user }) {
 
         <div className="card card-pad">
           <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FileText size={18} color="#3b82f6"/> Exam Paper Moderation
+            <FileText size={18} color="#047857"/> Exam Paper Moderation
           </h3>
           <div className="list-flex">
             {examPapers.filter(p => p.moderation_status === 'pending').map(p => (
@@ -250,7 +250,7 @@ export default function DosDashboard({ store, user }) {
                     <strong>{c.subject} ({c.class})</strong>
                     <span>{pct}%</span>
                   </div>
-                  <ProgressBar value={pct} color={pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'} />
+                  <ProgressBar value={pct} color={pct >= 80 ? '#047857' : pct >= 50 ? '#F59E0B' : '#EF4444'} />
                   <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Teacher: {c.profiles?.full_name || 'Unknown'}</div>
                 </div>
               );
@@ -263,3 +263,6 @@ export default function DosDashboard({ store, user }) {
     </div>
   );
 }
+
+
+

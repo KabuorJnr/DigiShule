@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
@@ -8,7 +8,7 @@ export default function LandingPage() {
   const [feeTab, setFeeTab] = useState('pro');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeCell, setActiveCell] = useState(-1);
-  const [ttNow, setTtNow] = useState('—');
+  const [ttNow, setTtNow] = useState('â€”');
   const [ttLabel, setTtLabel] = useState('System active');
 
   const contactPhone = "+254 701 402265";
@@ -44,14 +44,14 @@ export default function LandingPage() {
       const targetIndex = (randomPeriod + 1) * rowOffset + (randomDay + 1);
       
       setActiveCell(targetIndex);
-      setTtNow(days[randomDay] + ' · ' + periods[randomPeriod].t);
-      setTtLabel(periods[randomPeriod].subs[randomDay] + ' — syncing live');
+      setTtNow(days[randomDay] + ' Â· ' + periods[randomPeriod].t);
+      setTtLabel(periods[randomPeriod].subs[randomDay] + ' â€” syncing live');
     }, 3000);
     
     // Initial set
     setActiveCell(13);
-    setTtNow('ACADEMIC · Module 2');
-    setTtLabel('Assessments — syncing live');
+    setTtNow('ACADEMIC Â· Module 2');
+    setTtLabel('Assessments â€” syncing live');
 
     return () => clearInterval(interval);
   }, []);
@@ -60,7 +60,7 @@ export default function LandingPage() {
     e.preventDefault();
     const input = e.target.querySelector('input');
     if(input) {
-      input.value = 'Subscribed ✓';
+      input.value = 'Subscribed âœ“';
       input.disabled = true;
     }
   };
@@ -98,9 +98,9 @@ export default function LandingPage() {
         <div className="announce" id="announceBar">
           <div className="wrap announce-inner">
             <span className="badge">SPECIAL</span>
-            <span>Transform your school administration today — get a 14-day zero-risk trial.</span>
-            <a href="#enroll" className="link">Claim your trial →</a>
-            <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">✕</button>
+            <span>Transform your school administration today â€” get a 14-day zero-risk trial.</span>
+            <a href="#enroll" className="link">Claim your trial â†’</a>
+            <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">âœ•</button>
           </div>
         </div>
       )}
@@ -157,9 +157,9 @@ export default function LandingPage() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div>
-              <div className="eyebrow">B2B SaaS · Offline-First · CBC Compliant</div>
+              <div className="eyebrow">B2B SaaS Â· Offline-First Â· CBC Compliant</div>
               <h1>Run your entire school<br />like a <em>masterpiece.</em></h1>
-              <p className="lede">Ditch the spreadsheets and paper trails. EduOne is the all-in-one system that automates fee collection, simplifies CBC grading, and keeps parents engaged—even when your internet is down.</p>
+              <p className="lede">Ditch the spreadsheets and paper trails. EduOne is the all-in-one system that automates fee collection, simplifies CBC grading, and keeps parents engagedâ€”even when your internet is down.</p>
               <div className="hero-actions">
                 <button onClick={() => navigate('/signup')} className="btn btn-primary">Start your 14-Day Free Trial</button>
                 <a href="#why" className="btn btn-ghost">Explore Features</a>
@@ -284,12 +284,12 @@ export default function LandingPage() {
               <h2>Why top-tier schools run on EduOne.</h2>
             </div>
             <div className="features">
-              <div className="feat"><span className="mark">◆</span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Everything syncs perfectly the moment they reconnect.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements. Keep them in the loop automatically.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Automated CBC Reporting</h3><p>Say goodbye to weekend grading. Generate fully compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Automated Billing</h3><p>Generate bulk invoices, track mobile money payments, and auto-issue digital receipts without touching a single spreadsheet.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes, parents only see their specific children, and your data is locked down tight.</p></div>
-              <div className="feat"><span className="mark">◆</span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources directly to their phones.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Everything syncs perfectly the moment they reconnect.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements. Keep them in the loop automatically.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Automated CBC Reporting</h3><p>Say goodbye to weekend grading. Generate fully compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Automated Billing</h3><p>Generate bulk invoices, track mobile money payments, and auto-issue digital receipts without touching a single spreadsheet.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes, parents only see their specific children, and your data is locked down tight.</p></div>
+              <div className="feat"><span className="mark">â—†</span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources directly to their phones.</p></div>
             </div>
           </div>
         </section>
@@ -434,8 +434,8 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="foot-bottom">
-            <span>© 2026 EduOne SaaS. All rights reserved.</span>
-            <span>Offline-First · CBC Compliant · Secure</span>
+            <span>Â© 2026 EduOne SaaS. All rights reserved.</span>
+            <span>Offline-First Â· CBC Compliant Â· Secure</span>
           </div>
         </div>
       </footer>
@@ -446,3 +446,6 @@ export default function LandingPage() {
     </>
   );
 }
+
+
+

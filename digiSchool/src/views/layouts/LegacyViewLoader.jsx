@@ -1,4 +1,4 @@
-import { useOutletContext, useParams, Navigate } from 'react-router-dom';
+﻿import { useOutletContext, useParams, Navigate } from 'react-router-dom';
 import Overview from '../Overview';
 import Timetable from '../Timetable';
 import ExamSchedules from '../ExamSchedules';
@@ -65,3 +65,6 @@ export default function LegacyViewLoader() {
 
   return <ViewComponent store={store} user={user} params={outletParams || {}} readOnly={isReadOnlyView} />;
 }
+
+
+

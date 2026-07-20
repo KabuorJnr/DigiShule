@@ -1,11 +1,11 @@
 ﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #0D9488;
-  --primary-700: #0F766E;
-  --primary-900: #115E59;
-  --accent: #0D9488;
-  --success: #107C10;
+  --primary: #047857;
+  --primary-700: #065f46;
+  --primary-900: #064e3b;
+  --accent: #047857;
+  --success: #047857;
   --warning: #FFB900;
   --danger: #D13438;
   --surface: #F8FAFC;
@@ -1029,4 +1029,5 @@ textarea.input {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 

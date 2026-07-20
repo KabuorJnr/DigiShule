@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { KpiCard, Badge } from '../../components/widgets';
 import { Icon } from '../../components/icons';
@@ -62,7 +62,7 @@ export default function LeaveRequests() {
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="clipboard" size={24} />} label="Total Requests" value={leaveTotals.total} />
         <KpiCard iconComponent={<Icon name="clock" size={24} />} label="Pending" value={leaveTotals.pending} accent="#F59E0B" />
-        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Approved" value={leaveTotals.approved} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Approved" value={leaveTotals.approved} accent="#047857" />
         <KpiCard iconComponent={<Icon name="x" size={24} />} label="Rejected" value={leaveTotals.rejected} accent="#EF4444" />
       </div>
 
@@ -79,7 +79,7 @@ export default function LeaveRequests() {
                 <tr key={l.id}>
                   <td><div style={{ fontWeight: 600 }}>{l.staff_name || l.staff}</div><div className="muted" style={{ fontSize: 11 }}>{l.dept}</div></td>
                   <td><Badge color={l.type === 'Sick' ? 'red' : l.type === 'Emergency' ? 'amber' : 'blue'}>{l.type}</Badge></td>
-                  <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} → {l.end_date || l.end}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} â†’ {l.end_date || l.end}</td>
                   <td style={{ fontWeight: 600 }}>{l.days}</td>
                   <td style={{ maxWidth: 200, fontSize: 12 }}>{l.reason}</td>
                   <td><Badge color={LEAVE_COLOR[l.status]}>{l.status}</Badge></td>
@@ -119,7 +119,7 @@ export default function LeaveRequests() {
             </div>
             <div><label className="field-label">Reason *</label><textarea className="input" rows={3} placeholder="Describe the reason for leave..." value={leaveForm.reason} onChange={e => setLeaveForm(p => ({ ...p, reason: e.target.value }))} /></div>
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 12, fontSize: 13, color: '#0369a1' }}>
-              ℹ️ Leave requests are reviewed by the Deputy Admin or Principal. You will be notified once a decision is made.
+              â„¹ï¸ Leave requests are reviewed by the Deputy Admin or Principal. You will be notified once a decision is made.
             </div>
           </div>
         </Modal>
@@ -127,3 +127,6 @@ export default function LeaveRequests() {
     </>
   );
 }
+
+
+

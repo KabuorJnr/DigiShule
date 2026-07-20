@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
 
@@ -76,7 +76,7 @@ export default function StatCard() {
       <div className={classes.card}>
         <div className={classes.topSection}>
           <div className={classes.iconBox} style={{ backgroundColor: tokens.colors.emerald100 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#065f46" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div>
             <p className={classes.value}>KES 3.4M</p>
@@ -89,7 +89,7 @@ export default function StatCard() {
       <div className={classes.card}>
         <div className={classes.topSection}>
           <div className={classes.iconBox} style={{ backgroundColor: tokens.colors.blue100 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#065f46" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <div>
             <p className={classes.value}>1,206</p>
@@ -101,3 +101,6 @@ export default function StatCard() {
     </div>
   );
 }
+
+
+

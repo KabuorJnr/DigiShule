@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { BarChart3, Trophy, Wallet, ClipboardList, Calendar, Mail, Award } from 'lucide-react';
@@ -87,7 +87,7 @@ export default function StudentDashboard() {
               <XAxis dataKey="term" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Line type="monotone" dataKey="avg" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} name="Average %" />
+              <Line type="monotone" dataKey="avg" stroke="#047857" strokeWidth={3} dot={{ r: 4, fill: '#047857', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} name="Average %" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -97,7 +97,7 @@ export default function StudentDashboard() {
           {(notifications || []).filter(n => (n.audience || []).includes('all') || (n.audience || []).includes('students')).slice(0, 3).map(n => (
             <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-              <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by || 'Admin'} ({n.role || 'Staff'})</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} â€” {n.posted_by || 'Admin'} ({n.role || 'Staff'})</div>
             </div>
           ))}
           {(notifications || []).length === 0 && <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No recent notices.</div>}
@@ -121,3 +121,6 @@ export default function StudentDashboard() {
     </>
   );
 }
+
+
+

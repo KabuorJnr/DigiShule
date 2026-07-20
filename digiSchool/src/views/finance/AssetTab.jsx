@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -53,7 +53,7 @@ export default function AssetTab() {
         </div>
         <div className="card card-pad">
           <div style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Asset Value</div>
-          <div style={{ fontSize: 24, fontWeight: 'bold', marginTop: 8, color: '#3B82F6' }}>{fmtKES(totalValue)}</div>
+          <div style={{ fontSize: 24, fontWeight: 'bold', marginTop: 8, color: '#047857' }}>{fmtKES(totalValue)}</div>
         </div>
         <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ background: '#F3F4F6', padding: 8, borderRadius: 8 }}><Car size={20} color="#4B5563" /></div>
@@ -164,3 +164,6 @@ export default function AssetTab() {
     </div>
   );
 }
+
+
+

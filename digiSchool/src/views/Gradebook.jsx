@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { fetchStudents } from '../lib/api';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
@@ -11,7 +11,7 @@ import { CLASSES, SUBJECTS, getDynamicClasses, expandClassesWithStreams } from '
 import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 
-const GRADE_COLORS = { EE: '#10B981', ME: '#3B82F6', AE: '#F59E0B', BE: '#EF4444', '-': '#9CA3AF' };
+const GRADE_COLORS = { EE: '#047857', ME: '#047857', AE: '#F59E0B', BE: '#EF4444', '-': '#9CA3AF' };
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
@@ -120,7 +120,7 @@ export default function Gradebook({ store }) {
   function exportPDF() {
     const head = ['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]);
-    exportTablePDF({ school: settings, title: `Gradebook — Grade ${cls} • ${subject}`, subtitle: `${term} • ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
+    exportTablePDF({ school: settings, title: `Gradebook â€” Grade ${cls} â€¢ ${subject}`, subtitle: `${term} â€¢ ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
   function exportExcel() {
@@ -243,7 +243,7 @@ export default function Gradebook({ store }) {
             {ASSESS_OPTIONS.map((a) => <option key={a}>{a}</option>)}
           </select></div>
         <div style={{ flex: 1, minWidth: 180 }}><label className="field-label">Search student</label>
-          <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Type a name…" /></div>
+          <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Type a nameâ€¦" /></div>
       </div>
 
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
@@ -361,3 +361,6 @@ export default function Gradebook({ store }) {
     </div>
   );
 }
+
+
+

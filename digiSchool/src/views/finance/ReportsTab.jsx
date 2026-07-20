@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { ResponsiveContainer, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 import { KpiCard } from '../../components/widgets';
 import { Badge } from '../../components/widgets';
@@ -27,7 +27,7 @@ export default function ReportsTab() {
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
   }, [expenses]);
   
-  const COLORS = ['#0D9488', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const COLORS = ['#047857', '#047857', '#F59E0B', '#EF4444', '#047857'];
 
   const trendData = useMemo(() => {
     const timeline = {};
@@ -95,8 +95,8 @@ export default function ReportsTab() {
       buckets[bucket].amount += data.amount;
       buckets[bucket].students.push({
         name: student?.name || studentId,
-        adm_no: student?.adm_no || '—',
-        class: student?.class || '—',
+        adm_no: student?.adm_no || 'â€”',
+        class: student?.class || 'â€”',
         balance: data.amount,
         daysOverdue
       });
@@ -111,7 +111,7 @@ export default function ReportsTab() {
     Count: data.count
   }));
 
-  const AGING_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#F97316', '#EF4444'];
+  const AGING_COLORS = ['#047857', '#047857', '#F59E0B', '#F97316', '#EF4444'];
 
   // --- BUDGET VS EXPENSE REPORT ---
   const budgetVsExpenseData = useMemo(() => {
@@ -155,9 +155,9 @@ export default function ReportsTab() {
     <div>
       <div className="stat-tiles" style={{ marginBottom: 24 }}>
         <KpiCard iconComponent={<Icon name="file" size={24} />} label="Total Billed" value={fmtKES(totalBilled)} accent="#0078D4" />
-        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Total Collected" value={fmtKES(totalCollected)} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="finance" size={24} />} label="Total Collected" value={fmtKES(totalCollected)} accent="#047857" />
         <KpiCard iconComponent={<Icon name="payment" size={24} />} label="Approved Expenses" value={fmtKES(totalExpenses)} accent="#EF4444" />
-        <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Net Cash Flow" value={fmtKES(cashFlow)} accent={cashFlow >= 0 ? '#10B981' : '#EF4444'} />
+        <KpiCard iconComponent={<Icon name="analytics" size={24} />} label="Net Cash Flow" value={fmtKES(cashFlow)} accent={cashFlow >= 0 ? '#047857' : '#EF4444'} />
       </div>
 
       <div className="grid grid-2">
@@ -187,7 +187,7 @@ export default function ReportsTab() {
                 <YAxis tickFormatter={(value) => `${value / 1000}k`} />
                 <Tooltip formatter={(value) => fmtKES(value)} />
                 <Legend />
-                <Bar dataKey="Income" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Income" fill="#047857" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Expenses" fill="#EF4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -202,7 +202,7 @@ export default function ReportsTab() {
         <div className="grid grid-2" style={{ gap: 24 }}>
           {/* Aging Chart */}
           <div className="card card-pad">
-            <div className="section-title">Outstanding Fees — Aging Analysis</div>
+            <div className="section-title">Outstanding Fees â€” Aging Analysis</div>
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={agingChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -250,7 +250,7 @@ export default function ReportsTab() {
                       {fmtKES(data.amount)}
                     </td>
                     <td style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-                      {data.count > 0 ? '→' : ''}
+                      {data.count > 0 ? 'â†’' : ''}
                     </td>
                   </tr>
                 ))}
@@ -317,7 +317,7 @@ export default function ReportsTab() {
               <YAxis tickFormatter={(value) => `${value / 1000}k`} />
               <Tooltip formatter={(value) => fmtKES(value)} />
               <Legend />
-              <Bar dataKey="Budgeted" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Budgeted" fill="#047857" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Spent" fill="#F59E0B" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -328,3 +328,6 @@ export default function ReportsTab() {
     </div>
   );
 }
+
+
+

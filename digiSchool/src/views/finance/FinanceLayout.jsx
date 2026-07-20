@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
@@ -67,7 +67,7 @@ export default function FinanceLayout() {
     });
   }, []);
 
-  // Audit log helper — passed to child tabs via context
+  // Audit log helper â€” passed to child tabs via context
   const addAuditLog = useCallback((action, details, amount) => {
     const log = {
       id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -114,3 +114,6 @@ export default function FinanceLayout() {
     </div>
   );
 }
+
+
+

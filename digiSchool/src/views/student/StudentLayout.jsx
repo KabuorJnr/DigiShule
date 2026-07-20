@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchClassRank, fetchStudentByQuery, fetchTable } from '../../lib/api';
@@ -136,7 +136,7 @@ export default function StudentLayout() {
 
   return (
     <div>
-      <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Grade ${me.class}`} />
+      <PageHeader title="Student Portal" subtitle={`${me.name} Â· ${me.adm} Â· Grade ${me.class}`} />
 
       {user?.role === 'parent' && (
         <div style={{ background: '#e0e7ff', color: '#3730a3', padding: '12px 16px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -169,3 +169,6 @@ export default function StudentLayout() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -124,7 +124,7 @@ export default function PaymentPlansTab() {
     <div>
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Plans</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{activeCount}</div>
         </div>
@@ -132,11 +132,11 @@ export default function PaymentPlansTab() {
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Overdue</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#EF4444' }}>{overdueCount}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Completed</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#10B981' }}>{completedCount}</div>
+          <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#047857' }}>{completedCount}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #8B5CF6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Plan Value</div>
           <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8 }}>{fmtKES(totalPlanValue)}</div>
         </div>
@@ -189,7 +189,7 @@ export default function PaymentPlansTab() {
                           <div style={{
                             width: `${plan.progress}%`,
                             height: '100%',
-                            background: plan.isCompleted ? '#10B981' : plan.isOverdue ? '#EF4444' : '#3B82F6',
+                            background: plan.isCompleted ? '#047857' : plan.isOverdue ? '#EF4444' : '#047857',
                             borderRadius: 4,
                             transition: 'width 0.5s ease'
                           }} />
@@ -199,8 +199,8 @@ export default function PaymentPlansTab() {
                     </td>
                     <td>
                       {plan.nextDue
-                        ? <span style={{ fontSize: 13 }}>{plan.nextDue.due_date} — {fmtKES(plan.nextDue.amount)}</span>
-                        : <span className="muted">—</span>
+                        ? <span style={{ fontSize: 13 }}>{plan.nextDue.due_date} â€” {fmtKES(plan.nextDue.amount)}</span>
+                        : <span className="muted">â€”</span>
                       }
                     </td>
                     <td>{getStatusBadge(plan)}</td>
@@ -312,3 +312,6 @@ export default function PaymentPlansTab() {
     </div>
   );
 }
+
+
+

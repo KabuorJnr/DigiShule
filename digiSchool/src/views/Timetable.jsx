@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
@@ -261,8 +261,8 @@ export default function Timetable({ store, user }) {
 
     exportTablePDF({
       school: settings,
-      title: tab === 'teacher' ? `Teacher Timetable — ${teacherSel}` : `Class Timetable — Grade ${cls}`,
-      subtitle: `${term} • Generated ${new Date().toLocaleDateString()}`,
+      title: tab === 'teacher' ? `Teacher Timetable â€” ${teacherSel}` : `Class Timetable â€” Grade ${cls}`,
+      subtitle: `${term} â€¢ Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
       filename: tab === 'teacher' ? `timetable-teacher-${teacherSel}.pdf` : `timetable-${cls}-${term}.pdf`,
@@ -383,7 +383,7 @@ export default function Timetable({ store, user }) {
           <div className="card card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 className="section-title" style={{ margin: 0 }}>Timetable Generator</h3>
-              {generating && <div className="muted" style={{ fontSize: 13 }}>Generating… {Math.round(progress)}%</div>}
+              {generating && <div className="muted" style={{ fontSize: 13 }}>Generatingâ€¦ {Math.round(progress)}%</div>}
             </div>
 
             <div style={{ marginBottom: 20 }}>
@@ -398,7 +398,7 @@ export default function Timetable({ store, user }) {
               </div>
             </div>
 
-            <label className="field-label">Subject — Teacher Assignments</label>
+            <label className="field-label">Subject â€” Teacher Assignments</label>
             <div className="scroll-x" style={{ border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>
               <table className="table" style={{ margin: 0 }}>
                 <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
@@ -520,7 +520,7 @@ export default function Timetable({ store, user }) {
                             <div className="tt-cell-sub">{cell.subject}</div>
                             <div className="tt-cell-teacher">Grade {cell.cls}</div>
                           </td>
-                        ) : <td key={d} className="tt-empty">—</td>
+                        ) : <td key={d} className="tt-empty">â€”</td>
                       ))}
                     </tr>
                   ))}
@@ -761,3 +761,6 @@ function ImportModal({ onClose, notify }) {
     </Modal>
   );
 }
+
+
+

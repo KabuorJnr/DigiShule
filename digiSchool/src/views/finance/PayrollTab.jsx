@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -144,19 +144,19 @@ export default function PayrollTab() {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Month Gross</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{fmtKES(payrolls[0]?.total_gross || 0)}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Net Payout</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#10B981' }}>{fmtKES(payrolls[0]?.total_net || 0)}</div>
+          <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8, color: '#047857' }}>{fmtKES(payrolls[0]?.total_net || 0)}</div>
         </div>
         <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #F59E0B' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Staff on Payroll</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{payrolls[0]?.staff_count || 0}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #8B5CF6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</div>
           <div style={{ marginTop: 8 }}>
             <Badge color={pendingPayroll ? 'amber' : 'green'}>
@@ -196,7 +196,7 @@ export default function PayrollTab() {
                   <td>{pr.staff_count}</td>
                   <td style={{ textAlign: 'right' }}>{fmtKES(pr.total_gross)}</td>
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>{fmtKES(pr.total_deductions)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#10B981' }}>{fmtKES(pr.total_net)}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#047857' }}>{fmtKES(pr.total_net)}</td>
                   <td>
                     <Badge color={pr.status === 'Paid' ? 'green' : pr.status === 'Approved' ? 'blue' : 'amber'}>
                       {pr.status}
@@ -208,7 +208,7 @@ export default function PayrollTab() {
                         <button className="btn btn-sm btn-primary" onClick={() => handleApprove(pr.id)}>Approve</button>
                       )}
                       {pr.status === 'Approved' && user?.role === 'finance' && (
-                        <button className="btn btn-sm" style={{ background: '#10B981', color: 'white', borderColor: '#10B981' }} onClick={() => handlePay(pr.id)}>Mark Paid</button>
+                        <button className="btn btn-sm" style={{ background: '#047857', color: 'white', borderColor: '#047857' }} onClick={() => handlePay(pr.id)}>Mark Paid</button>
                       )}
                       <button className="btn btn-sm" onClick={() => setSelectedPayroll(pr)}>View Details</button>
                     </div>
@@ -228,7 +228,7 @@ export default function PayrollTab() {
             <div style={{ display: 'flex', gap: 32, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border-light)' }}>
               <div>Total Gross: <strong style={{ fontSize: 16 }}>{fmtKES(selectedPayroll.total_gross)}</strong></div>
               <div>Total Deductions: <strong style={{ fontSize: 16, color: '#EF4444' }}>{fmtKES(selectedPayroll.total_deductions)}</strong></div>
-              <div>Total Net: <strong style={{ fontSize: 16, color: '#10B981' }}>{fmtKES(selectedPayroll.total_net)}</strong></div>
+              <div>Total Net: <strong style={{ fontSize: 16, color: '#047857' }}>{fmtKES(selectedPayroll.total_net)}</strong></div>
             </div>
             
             <div className="section-title">Staff Breakdown</div>
@@ -260,3 +260,6 @@ export default function PayrollTab() {
     </div>
   );
 }
+
+
+

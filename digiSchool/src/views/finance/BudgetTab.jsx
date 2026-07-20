@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 import Modal from '../../components/Modal';
@@ -47,7 +47,7 @@ export default function BudgetTab() {
 
   // Chart data
   const chartData = budgetData.map(b => ({
-    name: b.category.length > 15 ? b.category.slice(0, 15) + '…' : b.category,
+    name: b.category.length > 15 ? b.category.slice(0, 15) + 'â€¦' : b.category,
     Budget: b.amount,
     Actual: b.actual
   }));
@@ -58,7 +58,7 @@ export default function BudgetTab() {
   const overBudgetCount = budgetData.filter(b => b.pct > 100).length;
   const warningCount = budgetData.filter(b => b.pct >= 80 && b.pct <= 100).length;
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const COLORS = ['#047857', '#047857', '#F59E0B', '#EF4444', '#047857', '#EC4899'];
 
   const handleSave = () => {
     if (!form.category || !form.amount) {
@@ -111,18 +111,18 @@ export default function BudgetTab() {
   const getBarColor = (pct) => {
     if (pct > 100) return '#EF4444';
     if (pct >= 80) return '#F59E0B';
-    return '#10B981';
+    return '#047857';
   };
 
   return (
     <div>
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Budget</div>
           <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8 }}>{fmtKES(totalBudget)}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Spent</div>
           <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8 }}>{fmtKES(totalActual)}</div>
         </div>
@@ -149,8 +149,8 @@ export default function BudgetTab() {
                   <YAxis tickFormatter={v => `${v / 1000}k`} stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip formatter={v => fmtKES(v)} contentStyle={{ backgroundColor: 'var(--surface-raised)', borderRadius: 8, border: '1px solid var(--border)' }} />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-                  <Bar dataKey="Budget" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Bar dataKey="Actual" fill="#10B981" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar dataKey="Budget" fill="#047857" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar dataKey="Actual" fill="#047857" radius={[4, 4, 0, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -246,7 +246,7 @@ export default function BudgetTab() {
                         <button className="btn btn-sm btn-primary" onClick={() => handleApprove(i)}>Approve</button>
                       )}
                       <button className="btn btn-sm" onClick={() => handleEdit(i)}><Edit2 size={14} /></button>
-                      <button className="btn btn-sm" onClick={() => handleDelete(i)} style={{ color: '#EF4444', borderColor: '#fca5a5' }}>×</button>
+                      <button className="btn btn-sm" onClick={() => handleDelete(i)} style={{ color: '#EF4444', borderColor: '#fca5a5' }}>Ã—</button>
                     </div>
                   </td>
                 </tr>
@@ -303,3 +303,6 @@ export default function BudgetTab() {
     </div>
   );
 }
+
+
+

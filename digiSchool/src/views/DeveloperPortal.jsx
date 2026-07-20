@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Shield, Building2, Users, DollarSign, Activity, AlertTriangle, Key } from 'lucide-react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
@@ -81,13 +81,13 @@ export default function DeveloperPortal({ store }) {
           trend="+ Active Tenants"
         />
         <KpiCard 
-          icon={<Users size={24} style={{ color: '#10b981' }} />}
+          icon={<Users size={24} style={{ color: '#047857' }} />}
           title="Total Students"
           value={students.length}
           trend="Platform Wide"
         />
         <KpiCard 
-          icon={<Activity size={24} style={{ color: '#8b5cf6' }} />}
+          icon={<Activity size={24} style={{ color: '#047857' }} />}
           title="Total Users"
           value={profiles.length}
           trend="Staff & Parents"
@@ -136,7 +136,7 @@ export default function DeveloperPortal({ store }) {
                     <td>
                       <button 
                         className="btn btn-sm" 
-                        style={{ color: isSuspended ? '#10b981' : '#ef4444', borderColor: isSuspended ? '#10b981' : '#ef4444' }}
+                        style={{ color: isSuspended ? '#047857' : '#ef4444', borderColor: isSuspended ? '#047857' : '#ef4444' }}
                         onClick={() => toggleSchoolSuspension(school)}
                       >
                         {isSuspended ? 'Reactivate' : 'Suspend'}
@@ -162,3 +162,6 @@ export default function DeveloperPortal({ store }) {
     </div>
   );
 }
+
+
+

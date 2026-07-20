@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+﻿import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { UserPlus, FileText, Upload } from 'lucide-react';
 import { fetchTable, upsertStudent } from '../../lib/api';
@@ -321,12 +321,12 @@ export default function EnrollStudent() {
           </div>
           <div>
             <label className="field-label">Medical Notes (optional)</label>
-            <textarea className="input" rows={2} placeholder="Any medical conditions or special needs…" value={form.medicalNotes} onChange={e => upForm({ medicalNotes: e.target.value })} />
+            <textarea className="input" rows={2} placeholder="Any medical conditions or special needsâ€¦" value={form.medicalNotes} onChange={e => upForm({ medicalNotes: e.target.value })} />
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <button className="btn" onClick={() => navigate('..')}>Cancel</button>
             <button className="btn btn-primary" disabled={saving} style={{ gap: 6 }} onClick={handleEnroll}>
-              <UserPlus size={15} /> {saving ? 'Saving…' : 'Enrol Student'}
+              <UserPlus size={15} /> {saving ? 'Savingâ€¦' : 'Enrol Student'}
             </button>
           </div>
         </div>
@@ -343,3 +343,6 @@ export default function EnrollStudent() {
     </>
   );
 }
+
+
+

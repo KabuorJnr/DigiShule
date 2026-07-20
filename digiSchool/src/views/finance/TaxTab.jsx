@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import { fmtKES } from '../../data/modules';
@@ -36,11 +36,11 @@ export default function TaxTab() {
           <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Approaching Deadlines</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{taxes.filter(t => t.status === 'Pending').length}</div>
         </div>
-        <div className="card card-pad" style={{ borderLeft: '4px solid #10B981' }}>
+        <div className="card card-pad" style={{ borderLeft: '4px solid #047857' }}>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Compliance Status</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-            <CheckCircle size={28} color="#10B981" />
-            <span style={{ fontSize: 18, fontWeight: 'bold', color: '#10B981' }}>Good</span>
+            <CheckCircle size={28} color="#047857" />
+            <span style={{ fontSize: 18, fontWeight: 'bold', color: '#047857' }}>Good</span>
           </div>
         </div>
       </div>
@@ -70,12 +70,12 @@ export default function TaxTab() {
                 <td>
                   <Badge color={tax.status === 'Filed' ? 'green' : 'red'}>{tax.status}</Badge>
                 </td>
-                <td className="muted" style={{ fontFamily: 'monospace' }}>{tax.kra_receipt || '—'}</td>
+                <td className="muted" style={{ fontFamily: 'monospace' }}>{tax.kra_receipt || 'â€”'}</td>
                 <td>
                   {tax.status === 'Pending' ? (
                     <button className="btn btn-sm btn-primary" onClick={() => handleMarkFiled(tax.id)}>Mark as Filed</button>
                   ) : (
-                    <span className="muted" style={{ fontSize: 12 }}>✓ Complete</span>
+                    <span className="muted" style={{ fontSize: 12 }}>âœ“ Complete</span>
                   )}
                 </td>
               </tr>
@@ -86,3 +86,6 @@ export default function TaxTab() {
     </div>
   );
 }
+
+
+

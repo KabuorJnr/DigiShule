@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
 import Modal from '../components/Modal';
@@ -69,7 +69,7 @@ export default function Facilities({ store }) {
 
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="building" size={24} />} label="Total Spaces" value={totals.total} />
-        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Available" value={totals.operational} accent="#10B981" />
+        <KpiCard iconComponent={<Icon name="check" size={24} />} label="Available" value={totals.operational} accent="#047857" />
         <KpiCard iconComponent={<Icon name="tool" size={24} />} label="Maintenance" value={totals.maintenance} accent="#F59E0B" />
         <KpiCard iconComponent={<Icon name="users" size={24} />} label="Total Capacity" value={totals.cap} />
       </div>
@@ -85,9 +85,9 @@ export default function Facilities({ store }) {
                 <tr key={f.id}>
                   <td style={{ fontWeight: 600 }}>{f.name}</td>
                   <td>{f.type}</td>
-                  <td>{f.capacity || '—'}</td>
+                  <td>{f.capacity || 'â€”'}</td>
                   <td><Badge color={STATUS_COLOR[f.status] || 'gray'}>{f.status}</Badge></td>
-                  <td className="muted">{f.note || '—'}</td>
+                  <td className="muted">{f.note || 'â€”'}</td>
                   <td><button className="btn btn-sm" onClick={() => cycleStatus(f.id)}>Change Status</button></td>
                 </tr>
               ))}
@@ -121,3 +121,6 @@ export default function Facilities({ store }) {
     </div>
   );
 }
+
+
+

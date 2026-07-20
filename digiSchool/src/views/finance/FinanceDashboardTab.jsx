@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
@@ -142,8 +142,8 @@ export default function FinanceDashboardTab() {
     return Object.entries(methods).map(([name, value]) => ({ name, value }));
   }, [filteredPayments]);
 
-  const COLORS = ['#0D9488', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#64748B'];
-  const EXPENSE_COLORS = ['#EF4444', '#F97316', '#EAB308', '#84CC16', '#06B6D4', '#6366F1'];
+  const COLORS = ['#047857', '#047857', '#F59E0B', '#047857', '#EC4899', '#64748B'];
+  const EXPENSE_COLORS = ['#EF4444', '#F97316', '#EAB308', '#84CC16', '#06B6D4', '#047857'];
 
   return (
     <div className="finance-dashboard" style={{ animation: 'fade-in 0.4s ease-out' }}>
@@ -202,15 +202,15 @@ export default function FinanceDashboardTab() {
       <div ref={dashboardRef} style={{ background: 'var(--bg)', padding: '4px' }}>
       {/* --- KPI ROW --- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
-        <DashboardMetric title="Expected Revenue" value={totalInvoiced} icon={<Briefcase size={20} />} color="#3B82F6" />
-        <DashboardMetric title="Total Collected" value={totalCollected} icon={<TrendingUp size={20} />} color="#10B981" />
+        <DashboardMetric title="Expected Revenue" value={totalInvoiced} icon={<Briefcase size={20} />} color="#047857" />
+        <DashboardMetric title="Total Collected" value={totalCollected} icon={<TrendingUp size={20} />} color="#047857" />
         <DashboardMetric title="Deficit (Outstanding)" value={totalOutstanding} icon={<Activity size={20} />} color="#F59E0B" />
         <DashboardMetric title="Total Expenses" value={totalExpenses} icon={<TrendingDown size={20} />} color="#EF4444" />
         <DashboardMetric 
           title="Net Cash Flow" 
           value={cashFlow} 
           icon={<DollarSign size={20} />} 
-          color={cashFlow >= 0 ? '#10B981' : '#EF4444'} 
+          color={cashFlow >= 0 ? '#047857' : '#EF4444'} 
           isCurrency={true}
         />
       </div>
@@ -229,8 +229,8 @@ export default function FinanceDashboardTab() {
               <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#047857" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#047857" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
@@ -242,8 +242,8 @@ export default function FinanceDashboardTab() {
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
                 <Bar dataKey="Expenses" barSize={20} fill="#EF4444" radius={[4, 4, 0, 0]} />
-                <Area type="monotone" dataKey="Income" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-                <Line type="stepAfter" dataKey="Target" stroke="#3B82F6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                <Area type="monotone" dataKey="Income" stroke="#047857" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+                <Line type="stepAfter" dataKey="Target" stroke="#047857" strokeWidth={2} strokeDasharray="5 5" dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -265,7 +265,7 @@ export default function FinanceDashboardTab() {
                     cursor={{fill: 'rgba(0,0,0,0.05)'}}
                     contentStyle={{ backgroundColor: 'var(--surface-raised)', borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
-                  <Bar dataKey="value" fill="#0D9488" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="value" fill="#047857" radius={[0, 4, 4, 0]} barSize={16}>
                     {revenueByClass.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -297,7 +297,7 @@ export default function FinanceDashboardTab() {
                <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                  <svg width="120" height="120" viewBox="0 0 120 120">
                    <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" strokeWidth="10" />
-                   <circle cx="60" cy="60" r="50" fill="none" stroke="#10B981" strokeWidth="10" strokeDasharray="314" strokeDashoffset={314 - (314 * collectionRate) / 100} strokeLinecap="round" transform="rotate(-90 60 60)" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
+                   <circle cx="60" cy="60" r="50" fill="none" stroke="#047857" strokeWidth="10" strokeDasharray="314" strokeDashoffset={314 - (314 * collectionRate) / 100} strokeLinecap="round" transform="rotate(-90 60 60)" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
                  </svg>
                  <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                    <span style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--text)' }}>{collectionRate}%</span>
@@ -329,3 +329,6 @@ function DashboardMetric({ title, value, icon, color, isCurrency = true }) {
     </div>
   );
 }
+
+
+

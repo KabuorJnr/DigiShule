@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+﻿import { useOutletContext } from 'react-router-dom';
 import { useState } from 'react';
 import { Printer, Users, Award } from 'lucide-react';
 import Modal from '../../components/Modal';
@@ -44,17 +44,17 @@ export default function MyClasses() {
 
   return (
     <div>
-      <div style={{ background: '#f0fdfa', border: '1px solid #ccfbf1', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: '#ecfdf5', border: '1px solid #ccfbf1', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontWeight: 700, fontSize: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#065f46', fontWeight: 700, fontSize: 16 }}>
             <Users size={18} /> Class Teacher: {assignedClass}
           </div>
-          <div style={{ color: '#0f766e', opacity: 0.8, fontSize: 13, marginTop: 4 }}>
+          <div style={{ color: '#065f46', opacity: 0.8, fontSize: 13, marginTop: 4 }}>
             You are assigned to manage {assignedClass}.
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-primary" style={{ background: '#0f766e', borderColor: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
+          <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
             <Award size={16} /> Log Behavior
           </button>
           <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setPrintModalOpen(true)}>
@@ -90,16 +90,16 @@ export default function MyClasses() {
         <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)}>
           <div className="modal" style={{ maxWidth: 800 }}>
             <div className="modal-header">
-              <h3>{assignedClass} — Class List</h3>
+              <h3>{assignedClass} â€” Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
               <PrintHeader settings={store.settings} />
               <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
-                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List — {assignedClass}</h2>
+                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List â€” {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
               </div>
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -155,3 +155,6 @@ export default function MyClasses() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 
 import Modal from '../components/Modal';
@@ -72,7 +72,7 @@ export default function Notices({ store, user }) {
   const canPost = user && CAN_POST.includes(user.role);
   const myAudience = audienceMap[user?.role] || 'all';
 
-  // ── Load notices: Supabase first, fall back to seed ──────────
+  // â”€â”€ Load notices: Supabase first, fall back to seed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const loadNotices = useCallback(async () => {
     setLoading(true);
     try {
@@ -126,7 +126,7 @@ export default function Notices({ store, user }) {
     return matchUser && matchFilter;
   });
 
-  // ── Post notice ───────────────────────────────────────────────
+  // â”€â”€ Post notice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handlePost = async () => {
     if (!form.title.trim() || !form.body.trim()) {
       notify('Title and body are required', 'warning'); return;
@@ -292,7 +292,7 @@ export default function Notices({ store, user }) {
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn" disabled={posting} onClick={() => setShowPost(false)}>Cancel</button>
               <button className="btn btn-primary" disabled={posting} style={{ gap: 6 }} onClick={handlePost}>
-                {posting ? <><Loader size={14} /> Posting…</> : <><Bell size={14} /> Publish Notice</>}
+                {posting ? <><Loader size={14} /> Postingâ€¦</> : <><Bell size={14} /> Publish Notice</>}
               </button>
             </div>
           }
@@ -300,11 +300,11 @@ export default function Notices({ store, user }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label className="field-label">Title *</label>
-              <input className="input" placeholder="Notice title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+              <input className="input" placeholder="Notice titleâ€¦" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Body *</label>
-              <textarea className="input" rows={6} placeholder="Write the notice content…" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
+              <textarea className="input" rows={6} placeholder="Write the notice contentâ€¦" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
             </div>
             <div>
               <label className="field-label">Audience</label>
@@ -348,3 +348,6 @@ export default function Notices({ store, user }) {
     </div>
   );
 }
+
+
+

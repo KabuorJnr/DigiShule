@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { fetchTable, upsertRow } from '../../lib/api';
 import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
@@ -95,3 +95,6 @@ export default function StaffLayout() {
     </div>
   );
 }
+
+
+

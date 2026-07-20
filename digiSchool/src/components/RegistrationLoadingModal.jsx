@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { ShieldCheck, Mail, Database, Loader2 } from 'lucide-react';
 
@@ -66,3 +66,6 @@ export default function RegistrationLoadingModal({ step }) {
     </Modal>
   );
 }
+
+
+

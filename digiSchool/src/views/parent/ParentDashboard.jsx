@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell, 
   BarChart3, Trophy, Wallet, Calendar, Mail, Heart, ClipboardList, 
@@ -41,7 +41,7 @@ export default function ParentDashboard() {
   // Active tab from sidebar params
   const activeTab = params?.tab || 'dashboard';
 
-  // ── Set default selected child ──
+  // â”€â”€ Set default selected child â”€â”€
   useEffect(() => {
     if (!selectedChildId && currentUser) {
       const linked = currentUser.linked_students || [];
@@ -50,7 +50,7 @@ export default function ParentDashboard() {
     }
   }, [currentUser, selectedChildId]);
 
-  // ── Fetch child profile ──
+  // â”€â”€ Fetch child profile â”€â”€
   useEffect(() => {
     async function fetchChild() {
       if (!selectedChildId) { setLoading(false); return; }
@@ -65,7 +65,7 @@ export default function ParentDashboard() {
     fetchChild();
   }, [selectedChildId]);
 
-  // ── Fetch all supporting data once child is loaded ──
+  // â”€â”€ Fetch all supporting data once child is loaded â”€â”€
   useEffect(() => {
     if (!child) return;
     let active = true;
@@ -96,7 +96,7 @@ export default function ParentDashboard() {
     return () => { active = false; };
   }, [child?.id, child?.adm]);
 
-  // ── Computed values ──
+  // â”€â”€ Computed values â”€â”€
   const subjects = useMemo(() => {
     if (!child) return [];
     return SUBJECTS.map(sub => {
@@ -126,7 +126,7 @@ export default function ParentDashboard() {
   const presentCount = attendance.filter(a => a.status === 'Present' || a.status === 'present').length;
   const absentCount = attendance.filter(a => a.status === 'Absent' || a.status === 'absent').length;
   const lateCount = attendance.filter(a => a.status === 'Late' || a.status === 'late').length;
-  const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : '—';
+  const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : 'â€”';
 
   const unresolvedDisc = disciplinary.filter(d => d.status !== 'Resolved');
   const parentNotices = (notifications || []).filter(n => 
@@ -135,7 +135,7 @@ export default function ParentDashboard() {
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-  // ── Contact teacher handler ──
+  // â”€â”€ Contact teacher handler â”€â”€
   const handleSendMessage = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
     try {
@@ -198,7 +198,7 @@ export default function ParentDashboard() {
     }
   };
 
-  // ── Link student handler ──
+  // â”€â”€ Link student handler â”€â”€
   const handleLinkStudent = async (e) => {
     e.preventDefault();
     if (!linkAdm.trim()) return;
@@ -236,12 +236,12 @@ export default function ParentDashboard() {
     }
   };
 
-  // ── Loading state ──
+  // â”€â”€ Loading state â”€â”€
   if (loading) {
     return <div style={{ padding: '24px', textAlign: 'center' }}>Loading child data...</div>;
   }
 
-  // ── Linking screen (no child linked yet) ──
+  // â”€â”€ Linking screen (no child linked yet) â”€â”€
   if (!child) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', maxWidth: 500, margin: '0 auto' }}>
@@ -267,7 +267,7 @@ export default function ParentDashboard() {
             </div>
           )}
           <button type="submit" disabled={linking || !linkAdm.trim() || linkPin.trim().length < 6}
-            style={{ width: '100%', padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: linking ? 'not-allowed' : 'pointer', opacity: linking ? 0.7 : 1 }}>
+            style={{ width: '100%', padding: '10px', background: '#047857', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: linking ? 'not-allowed' : 'pointer', opacity: linking ? 0.7 : 1 }}>
             {linking ? 'Linking Account...' : 'Link Child Profile'}
           </button>
         </form>
@@ -275,9 +275,9 @@ export default function ParentDashboard() {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ── DASHBOARD TAB (default) ──
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â”€â”€ DASHBOARD TAB (default) â”€â”€
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'dashboard' || !activeTab) {
     const linkedStudents = currentUser?.linked_students || [];
     
@@ -304,7 +304,7 @@ export default function ParentDashboard() {
               )}
             </div>
             <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-              Grade: {child.class || 'N/A'} • Admission: {child.adm || 'Pending'} • Gender: {child.gender || 'N/A'}
+              Grade: {child.class || 'N/A'} â€¢ Admission: {child.adm || 'Pending'} â€¢ Gender: {child.gender || 'N/A'}
             </p>
           </div>
           {linkedStudents.length > 0 && (
@@ -327,12 +327,12 @@ export default function ParentDashboard() {
 
         {/* KPI Summary Cards */}
         <div className="stat-tiles">
-          <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#3b82f6" />
-          <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== '—' ? `${attendanceRate}%` : '—'} accent={Number(attendanceRate) >= 80 ? '#10B981' : '#F59E0B'} />
+          <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#047857" />
+          <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== 'â€”' ? `${attendanceRate}%` : 'â€”'} accent={Number(attendanceRate) >= 80 ? '#047857' : '#F59E0B'} />
           <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(outstanding)} accent={outstanding > 0 ? '#D13438' : '#107C10'}>
             <div style={{ marginTop: 6 }}><ProgressBar value={feePercent} color="#107C10" /></div>
           </KpiCard>
-          <KpiCard iconComponent={<Heart size={20} />} label="Health Visits" value={healthRecords.length} accent="#8B5CF6" />
+          <KpiCard iconComponent={<Heart size={20} />} label="Health Visits" value={healthRecords.length} accent="#047857" />
         </div>
 
         {/* Quick Actions */}
@@ -378,7 +378,7 @@ export default function ParentDashboard() {
 
           {/* Fee Summary */}
           <div className="card card-pad">
-            <h3 className="section-title">Fee Summary — Term 2</h3>
+            <h3 className="section-title">Fee Summary â€” Term 2</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div style={{ background: '#f0fdf4', padding: 12, borderRadius: 8, textAlign: 'center' }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{fmtKES(totalPaid)}</div>
@@ -448,7 +448,7 @@ export default function ParentDashboard() {
               parentNotices.slice(0, 4).map(n => (
                 <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} — {n.posted_by || 'Admin'} ({n.role || 'School Office'})</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} â€” {n.posted_by || 'Admin'} ({n.role || 'School Office'})</div>
                 </div>
               ))
             )}
@@ -486,13 +486,13 @@ export default function ParentDashboard() {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ── ATTENDANCE TAB ──
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â”€â”€ ATTENDANCE TAB â”€â”€
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'attendance') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Attendance Records — {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Attendance Records â€” {child.name}</h2>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
           <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #e2e8f0' }}>
@@ -529,7 +529,7 @@ export default function ParentDashboard() {
                         {a.status}
                       </Badge>
                     </td>
-                    <td className="muted">{a.notes || '—'}</td>
+                    <td className="muted">{a.notes || 'â€”'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -540,9 +540,9 @@ export default function ParentDashboard() {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ── CONTACT TEACHER TAB ──
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â”€â”€ CONTACT TEACHER TAB â”€â”€
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'contact') {
     return (
       <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
@@ -632,13 +632,13 @@ export default function ParentDashboard() {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ── HEALTH RECORDS TAB ──
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â”€â”€ HEALTH RECORDS TAB â”€â”€
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'health') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records — {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records â€” {child.name}</h2>
         
         {child.medicalInfo && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 16, borderRadius: 8, marginBottom: 20 }}>
@@ -660,9 +660,9 @@ export default function ParentDashboard() {
                 {healthRecords.map((h, i) => (
                   <tr key={h.id || i}>
                     <td>{h.date || (h.created_at || '').slice(0, 10)}</td>
-                    <td>{h.complaint || h.symptoms || '—'}</td>
-                    <td>{h.diagnosis || '—'}</td>
-                    <td>{h.treatment || h.action_taken || '—'}</td>
+                    <td>{h.complaint || h.symptoms || 'â€”'}</td>
+                    <td>{h.diagnosis || 'â€”'}</td>
+                    <td>{h.treatment || h.action_taken || 'â€”'}</td>
                     <td><Badge color={h.status === 'Resolved' ? 'green' : 'amber'}>{h.status || 'Visited'}</Badge></td>
                   </tr>
                 ))}
@@ -685,14 +685,14 @@ export default function ParentDashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {inboxMessages.map((m, i) => (
-                <div key={m.id || i} style={{ padding: '14px 16px', background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderRadius: 8, borderLeft: `4px solid ${m.sender_role === 'nurse' || m.sender_role === 'clinic' ? '#8b5cf6' : '#3b82f6'}` }}>
+                <div key={m.id || i} style={{ padding: '14px 16px', background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderRadius: 8, borderLeft: `4px solid ${m.sender_role === 'nurse' || m.sender_role === 'clinic' ? '#047857' : '#047857'}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject || 'Message from School'}</div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       {m.status === 'Unread' && (
                         <>
-                          <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>
-                          <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: 11, cursor: 'pointer', padding: 0, fontWeight: 600, textDecoration: 'underline' }}>Mark Read</button>
+                          <span style={{ background: '#047857', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>
+                          <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#047857', fontSize: 11, cursor: 'pointer', padding: 0, fontWeight: 600, textDecoration: 'underline' }}>Mark Read</button>
                         </>
                       )}
                       <span style={{ fontSize: 11, color: '#64748b', marginLeft: m.status === 'Unread' ? 4 : 0 }}>{(m.created_at || '').slice(0, 10)}</span>
@@ -700,7 +700,7 @@ export default function ParentDashboard() {
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
                     From: <strong>{m.sender_name || m.sender_role || 'School'}</strong>
-                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' 🏥'}
+                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' ðŸ¥'}
                   </div>
                   <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
                 </div>
@@ -712,13 +712,13 @@ export default function ParentDashboard() {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ── DISCIPLINARY RECORDS TAB ──
-  // ══════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â”€â”€ DISCIPLINARY RECORDS TAB â”€â”€
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'disciplinary') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Disciplinary Records — {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Disciplinary Records â€” {child.name}</h2>
         
         {unresolvedDisc.length > 0 && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -732,7 +732,7 @@ export default function ParentDashboard() {
         <div className="card card-pad">
           {disciplinary.length === 0 ? (
             <div className="muted" style={{ padding: 30, textAlign: 'center' }}>
-              <CheckCircle2 size={32} style={{ color: '#10B981', marginBottom: 8 }} />
+              <CheckCircle2 size={32} style={{ color: '#047857', marginBottom: 8 }} />
               <div>No disciplinary records. Great behavior!</div>
             </div>
           ) : (
@@ -742,8 +742,8 @@ export default function ParentDashboard() {
                 {disciplinary.map((d, i) => (
                   <tr key={d.id || i}>
                     <td>{d.date || (d.created_at || '').slice(0, 10)}</td>
-                    <td>{d.incident || d.offense || '—'}</td>
-                    <td>{d.action_taken || d.punishment || '—'}</td>
+                    <td>{d.incident || d.offense || 'â€”'}</td>
+                    <td>{d.action_taken || d.punishment || 'â€”'}</td>
                     <td><Badge color={d.status === 'Resolved' ? 'green' : 'red'}>{d.status || 'Open'}</Badge></td>
                   </tr>
                 ))}
@@ -755,10 +755,13 @@ export default function ParentDashboard() {
     );
   }
 
-  // ── Fallback for unknown tabs ──
+  // â”€â”€ Fallback for unknown tabs â”€â”€
   return (
     <div style={{ padding: '24px', textAlign: 'center' }}>
       <div className="muted">Select a section from the sidebar menu.</div>
     </div>
   );
 }
+
+
+

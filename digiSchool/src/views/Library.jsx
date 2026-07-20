@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
@@ -164,7 +164,7 @@ export default function Library({ store, user }) {
             <input
               className="input"
               style={{ maxWidth: 320 }}
-              placeholder="Search title or author…"
+              placeholder="Search title or authorâ€¦"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -211,7 +211,7 @@ export default function Library({ store, user }) {
             <input
               className="input"
               style={{ maxWidth: 320 }}
-              placeholder="Search past papers…"
+              placeholder="Search past papersâ€¦"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -281,7 +281,7 @@ export default function Library({ store, user }) {
         }>
           <label className="field-label">Asset / Book</label>
           <select className="select" value={form.book} onChange={(e) => setForm((f) => ({ ...f, book: e.target.value }))}>
-            <option value="">Select an item…</option>
+            <option value="">Select an itemâ€¦</option>
             {books.map((b) => (
               <option key={b.id} value={b.id} disabled={b.available <= 0}>
                 {b.title} ({b.available} available)
@@ -343,3 +343,6 @@ export default function Library({ store, user }) {
     </div>
   );
 }
+
+
+

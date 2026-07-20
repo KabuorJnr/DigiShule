@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
@@ -104,7 +104,7 @@ export default function PaymentsTab() {
       student_id: form.student_id,
       amount: Number(form.amount),
       method: form.method,
-      ref: form.ref || '—',
+      ref: form.ref || 'â€”',
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
@@ -156,10 +156,10 @@ export default function PaymentsTab() {
       {/* Reconciliation Summary */}
       {(unmatchedCount > 0 || partialInvoices > 0) && (
         <div style={{ padding: '12px 20px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 8, marginBottom: 16, display: 'flex', gap: 24, alignItems: 'center' }}>
-          <Link2 size={18} style={{ color: '#3B82F6' }} />
+          <Link2 size={18} style={{ color: '#047857' }} />
           <span style={{ fontSize: 13 }}>
             <strong>{unmatchedCount}</strong> payment{unmatchedCount !== 1 ? 's' : ''} unmatched to invoices
-            {partialInvoices > 0 && <> · <strong>{partialInvoices}</strong> invoice{partialInvoices !== 1 ? 's' : ''} partially paid</>}
+            {partialInvoices > 0 && <> Â· <strong>{partialInvoices}</strong> invoice{partialInvoices !== 1 ? 's' : ''} partially paid</>}
           </span>
         </div>
       )}
@@ -209,7 +209,7 @@ export default function PaymentsTab() {
                     <td>
                       {p.status === 'Pending Bursar Approval' ? (
                         user?.role === 'finance' ? (
-                          <button className="btn btn-sm" style={{ background: '#8B5CF6', color: 'white', borderColor: '#8B5CF6' }} onClick={() => handleConfirm(p.id, true)}>Bursar Approve</button>
+                          <button className="btn btn-sm" style={{ background: '#047857', color: 'white', borderColor: '#047857' }} onClick={() => handleConfirm(p.id, true)}>Bursar Approve</button>
                         ) : (
                           <span className="muted" style={{ fontSize: 12 }}>Pending Approval</span>
                         )
@@ -219,7 +219,7 @@ export default function PaymentsTab() {
                         </button>
                       ) : (
                         <button className="btn btn-sm" onClick={() => printReceipt(p, student, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
-                          🖨️ Receipt
+                          ðŸ–¨ï¸ Receipt
                         </button>
                       )}
                     </td>
@@ -234,9 +234,9 @@ export default function PaymentsTab() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
           </div>
         )}
       </div>
@@ -259,10 +259,10 @@ export default function PaymentsTab() {
             <div>
               <label className="field-label">Link to Invoice (optional)</label>
               <select className="select" value={form.invoice_id} onChange={e => setForm(f => ({ ...f, invoice_id: e.target.value }))}>
-                <option value="">— No invoice (unmatched) —</option>
+                <option value="">â€” No invoice (unmatched) â€”</option>
                 {studentInvoices.map(inv => (
                   <option key={inv.id} value={inv.id}>
-                    {inv.id} — {fmtKES(inv.amount)} (due {inv.due_date})
+                    {inv.id} â€” {fmtKES(inv.amount)} (due {inv.due_date})
                   </option>
                 ))}
               </select>
@@ -292,3 +292,6 @@ export default function PaymentsTab() {
     </div>
   );
 }
+
+
+

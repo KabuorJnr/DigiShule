@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
 import { Search, Bell, Menu, Sun, Moon } from 'lucide-react';
@@ -227,7 +227,7 @@ export default function TopBar({
                               store.navigate('registrar', { search: s.name });
                             }
                           }}>
-                      <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} · {s.class || ''}</span>
+                      <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} Â· {s.class || ''}</span>
                     </div>
                   ))}
                 </div>
@@ -282,3 +282,6 @@ export default function TopBar({
     </header>
   );
 }
+
+
+

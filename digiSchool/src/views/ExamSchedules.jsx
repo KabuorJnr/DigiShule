@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
@@ -84,7 +84,7 @@ export default function ExamSchedules({ store }) {
   function exportPDF() {
     const head = ['Date', 'Class', 'Subject', 'Start', 'End', 'Venue', 'Invigilator', 'Status'];
     const body = sorted.map((s) => [s.date, s.classes, s.subject, s.start, s.end, s.venue, s.invigilator, s.status]);
-    exportTablePDF({ school: settings, title: 'Examination Timetable', subtitle: `${examType} • ${term} ${year}`, head, body, filename: `exam-schedule-${year}.pdf` });
+    exportTablePDF({ school: settings, title: 'Examination Timetable', subtitle: `${examType} â€¢ ${term} ${year}`, head, body, filename: `exam-schedule-${year}.pdf` });
     notify('Exam timetable exported as PDF', 'success', 'Export');
   }
   function exportExcel() {
@@ -169,7 +169,7 @@ export default function ExamSchedules({ store }) {
                       {['date', 'classes', 'subject', 'start', 'end', 'venue', 'invigilator', 'status'].map((k) => (
                         <th key={k} style={{ cursor: 'pointer' }} onClick={() => toggleSort(k)}>
                           {k === 'classes' ? 'Class' : k.charAt(0).toUpperCase() + k.slice(1)}
-                          {sortKey === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                          {sortKey === k ? (sortDir === 'asc' ? ' â–²' : ' â–¼') : ''}
                         </th>
                       ))}
                       <th>Actions</th>
@@ -267,8 +267,8 @@ export default function ExamSchedules({ store }) {
 
       {chipDetail && (
         <Modal title="Session Details" onClose={() => setChipDetail(null)} footer={<button className="btn btn-primary" onClick={() => setChipDetail(null)}>Close</button>}>
-          <p><strong>{chipDetail.subject}</strong> — {chipDetail.classes}</p>
-          <p className="muted">{chipDetail.date} • {chipDetail.start}–{chipDetail.end}</p>
+          <p><strong>{chipDetail.subject}</strong> â€” {chipDetail.classes}</p>
+          <p className="muted">{chipDetail.date} â€¢ {chipDetail.start}â€“{chipDetail.end}</p>
           <p>Venue: {chipDetail.venue}</p>
           <p>Invigilator: {chipDetail.invigilator}</p>
           <Badge color={statusColor[chipDetail.status]}>{chipDetail.status}</Badge>
@@ -464,3 +464,6 @@ function AddVenueModal({ onClose, onSave }) {
     </Modal>
   );
 }
+
+
+

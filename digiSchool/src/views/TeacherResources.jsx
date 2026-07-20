@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { saveFile, listFiles, deleteFile, openFilePDF, downloadFilePDF } from '../lib/fileStore';
@@ -133,14 +133,14 @@ export default function TeacherResources({ store, user }) {
           <option value="All">All Subjects</option>
           {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <span className="muted" style={{ fontSize: 13 }}>{loading ? 'Loading…' : `${files.length} file${files.length !== 1 ? 's' : ''} on cloud`}</span>
+        <span className="muted" style={{ fontSize: 13 }}>{loading ? 'Loadingâ€¦' : `${files.length} file${files.length !== 1 ? 's' : ''} on cloud`}</span>
       </div>
 
       {/* File List */}
       {loading ? (
         <div className="card card-pad" style={{ textAlign: 'center', padding: 48 }}>
           <Loader size={32} color="#0078D4" style={{ margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
-          <div className="muted">Loading files from Supabase…</div>
+          <div className="muted">Loading files from Supabaseâ€¦</div>
         </div>
       ) : files.length === 0 ? (
         <div className="card card-pad" style={{ textAlign: 'center', padding: 48 }}>
@@ -178,7 +178,7 @@ export default function TeacherResources({ store, user }) {
                   <td className="muted">{f.target_class}</td>
                   {tab === 'assignments' && (
                     <td style={{ color: f.due_date && new Date(f.due_date) < new Date() ? '#D13438' : '#107C10', fontWeight: 600, fontSize: 12 }}>
-                      {f.due_date || '—'}
+                      {f.due_date || 'â€”'}
                     </td>
                   )}
                   <td className="muted">{f.uploaded_by}</td>
@@ -209,7 +209,7 @@ export default function TeacherResources({ store, user }) {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" disabled={uploading} onClick={() => setUploadModal(false)}>Cancel</button>
             <button className="btn btn-primary" disabled={uploading} onClick={handleUpload} style={{ gap: 6 }}>
-              {uploading ? <><Loader size={14} /> Uploading to Supabase…</> : <><Upload size={14} /> Upload</>}
+              {uploading ? <><Loader size={14} /> Uploading to Supabaseâ€¦</> : <><Upload size={14} /> Upload</>}
             </button>
           </div>
         }>
@@ -265,7 +265,7 @@ export default function TeacherResources({ store, user }) {
             </div>
             {uploading && (
               <div style={{ background: '#e8f0fe', borderRadius: 6, padding: 10, fontSize: 13, color: '#0078D4', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Loader size={14} /> Uploading to Supabase Storage — please wait…
+                <Loader size={14} /> Uploading to Supabase Storage â€” please waitâ€¦
               </div>
             )}
           </div>
@@ -274,3 +274,6 @@ export default function TeacherResources({ store, user }) {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate, useOutletContext, useLocation } from 'react-router-dom';
+﻿import { Outlet, NavLink, useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { Users, UserPlus, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -70,3 +70,6 @@ export default function RegistrarLayout() {
     </div>
   );
 }
+
+
+

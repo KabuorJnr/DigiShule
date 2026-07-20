@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Building, Settings, CheckCircle2 } from 'lucide-react';
 
 import * as api from '../lib/api';
@@ -63,7 +63,7 @@ export default function SetupWizard({ onComplete }) {
     <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="card" style={{ maxWidth: 600, width: '100%', background: '#fff', overflow: 'hidden' }}>
         
-        <div style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', padding: '30px 40px' }}>
+        <div style={{ background: 'linear-gradient(135deg, #047857, #065f46)', color: '#fff', padding: '30px 40px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <Building size={32} />
             <h1 style={{ margin: 0, fontSize: 24 }}>System Initialization</h1>
@@ -74,7 +74,7 @@ export default function SetupWizard({ onComplete }) {
         <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#059669', fontWeight: 600, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#065f46', fontWeight: 600, marginBottom: 10 }}>
                 <Settings size={20} /> Step 1: Institutional Profile
               </div>
               
@@ -100,14 +100,14 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step →</button>
+                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step â†’</button>
               </div>
             </div>
           )}
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#059669', fontWeight: 600, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#065f46', fontWeight: 600, marginBottom: 10 }}>
                 <Settings size={20} /> Step 2: Academic Levels
               </div>
 
@@ -137,9 +137,9 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => setStep(1)}>← Back</button>
+                <button type="button" className="btn" onClick={() => setStep(1)}>â† Back</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Initializing System...' : 'Complete Setup ✓'}
+                  {saving ? 'Initializing System...' : 'Complete Setup âœ“'}
                 </button>
               </div>
             </div>
@@ -149,3 +149,6 @@ export default function SetupWizard({ onComplete }) {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { getDynamicClasses } from '../data/seed';
@@ -67,7 +67,7 @@ export default function Admissions({ store }) {
         await upsertStudent(newStudent);
         setStudents(prev => [...prev, newStudent]);
         
-        // ── 1. Create Student Portal Account ──
+        // â”€â”€ 1. Create Student Portal Account â”€â”€
         const studentPassword = newStudent.adm;
         const studentAuthEmail = `${newStudent.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}.${(store.schoolId || 'demo').split('-')[0]}@edu1app.tech`;
         
@@ -89,7 +89,7 @@ export default function Admissions({ store }) {
           });
         }
         
-        // ── 2. Create Parent Portal Account (If email provided) ──
+        // â”€â”€ 2. Create Parent Portal Account (If email provided) â”€â”€
         if (newStudent.guardianEmail) {
           const tempPassword = generateSecurePassword(10);
           const username = await generateSequentialUsername('PRN');
@@ -330,3 +330,6 @@ export default function Admissions({ store }) {
     </div>
   );
 }
+
+
+

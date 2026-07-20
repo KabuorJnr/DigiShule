@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -115,15 +115,15 @@ export default function ScholarshipsTab() {
     <div>
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #8B5CF6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Aid Disbursed</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8, color: '#8B5CF6' }}>{fmtKES(totalDisbursed)}</div>
+          <div style={{ fontSize: 22, fontWeight: 'bold', marginTop: 8, color: '#047857' }}>{fmtKES(totalDisbursed)}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #3B82F6' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Students Supported</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{studentsSupported}</div>
         </div>
-        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #10B981' }}>
+        <div className="card" style={{ padding: '20px 16px', borderTop: '3px solid #047857' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sponsors</div>
           <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 8 }}>{sponsorCount}</div>
         </div>
@@ -198,7 +198,7 @@ export default function ScholarshipsTab() {
                 <tr key={s.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{s.student?.name || s.student_id}</div>
-                    <div className="muted" style={{ fontSize: 11 }}>{s.student?.adm_no} · {s.student?.class}</div>
+                    <div className="muted" style={{ fontSize: 11 }}>{s.student?.adm_no} Â· {s.student?.class}</div>
                   </td>
                   <td style={{ fontWeight: 500 }}>{s.sponsor}</td>
                   <td>
@@ -227,9 +227,9 @@ export default function ScholarshipsTab() {
 
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Previous</button>
+            <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
           </div>
         )}
       </div>
@@ -293,3 +293,6 @@ export default function ScholarshipsTab() {
     </div>
   );
 }
+
+
+

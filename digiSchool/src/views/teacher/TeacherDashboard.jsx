@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+﻿import { useOutletContext } from 'react-router-dom';
 import { KpiCard, Badge } from '../../components/widgets';
 import { computeRow, gradeFor } from '../../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react';
@@ -49,7 +49,7 @@ export default function TeacherDashboard() {
   const approvedLeaves = leaveRequests.filter(l => l.status === 'Approved').length;
 
   const quickLinks = [
-    { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#059669', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
+    { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#065f46', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
     { label: 'Parent Messages', icon: MessageSquare, action: 'open_inbox', color: '#EAB308', desc: `${messages.filter(m => m.status === 'Unread').length} unread messages` },
     { label: 'Assignments & Materials', icon: FolderOpen, view: 'teacher_resources', color: '#0078D4', desc: 'Upload PDFs for students' },
     { label: 'Notices Board', icon: Bell, view: 'notices', color: '#7C3AED', desc: 'Post & read announcements' },
@@ -112,7 +112,7 @@ export default function TeacherDashboard() {
       <div style={{ background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)', color: '#fff', borderRadius: 12, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>Welcome, {teacherName}</div>
-          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{displaySubject} Teacher — {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
+          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{displaySubject} Teacher â€” {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 18px', textAlign: 'center' }}>
           <div style={{ fontSize: 22, fontWeight: 800 }}>{avgOverall}%</div>
@@ -216,7 +216,7 @@ export default function TeacherDashboard() {
         <Modal title="Parent Messages Inbox" onClose={() => setInboxModalOpen(false)}>
           <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             {messages.length === 0 ? <div className="muted" style={{textAlign:'center', padding:20}}>No messages.</div> : messages.map(m => (
-              <div key={m.id} className="card card-pad" style={{ marginBottom: 16, background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderLeft: `4px solid ${m.status === 'Unread' ? '#3b82f6' : '#94a3b8'}` }}>
+              <div key={m.id} className="card card-pad" style={{ marginBottom: 16, background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderLeft: `4px solid ${m.status === 'Unread' ? '#047857' : '#94a3b8'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
                     <strong style={{ fontSize: 15 }}>{m.sender_name}</strong>
@@ -251,3 +251,6 @@ export default function TeacherDashboard() {
     </div>
   );
 }
+
+
+

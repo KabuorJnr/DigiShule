@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { PlaneTakeoff, MessageSquare, FolderOpen, Bell, Calendar, ClipboardList, BarChart3 } from 'lucide-react';
 import { fetchTable } from '../../lib/api';
@@ -121,3 +121,6 @@ export default function TeacherLayout() {
     </div>
   );
 }
+
+
+

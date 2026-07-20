@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { signInWithUsername, supabase } from '../lib/supabaseClient';
 import { Eye, EyeOff, Shield, GraduationCap, CheckCircle2, Mail, Phone, User } from 'lucide-react';
 import Modal from '../components/Modal';
@@ -167,7 +167,7 @@ export default function Login() {
         <Modal title="Reset Password" onClose={() => setForgotModalOpen(false)} footer={null}>
           {forgotSuccess ? (
             <div style={{ textAlign: 'center', padding: '30px 10px' }}>
-              <CheckCircle2 size={50} color="#10B981" style={{ marginBottom: 16 }} />
+              <CheckCircle2 size={50} color="#047857" style={{ marginBottom: 16 }} />
               <h3 style={{ margin: '0 0 10px' }}>Reset Link Sent!</h3>
               <p style={{ color: '#576871' }}>We have sent a secure password reset link to <strong>{forgotEmail}</strong>. Please check your inbox.</p>
               <button className="hr-btn" style={{ marginTop: 24 }} onClick={() => setForgotModalOpen(false)}>Back to Login</button>
@@ -387,3 +387,6 @@ export default function Login() {
     </div>
   );
 }
+
+
+

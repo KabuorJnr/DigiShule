@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Bot, Send, User } from 'lucide-react';
 import { fmtKES } from '../../data/modules';
@@ -59,7 +59,7 @@ export default function AIFinanceTab() {
     <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
       <div className="card card-pad" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, borderBottom: '1px solid var(--border)', padding: '20px 24px', background: '#f8fafc' }}>
-          <div style={{ background: '#6366f1', padding: 10, borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }}><Bot size={24} /></div>
+          <div style={{ background: '#047857', padding: 10, borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }}><Bot size={24} /></div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>EduOne Finance Copilot</div>
             <div style={{ fontSize: 13, color: '#6b7280' }}>Real-time insights from your school's local database</div>
@@ -69,9 +69,9 @@ export default function AIFinanceTab() {
         <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {messages.map(msg => (
             <div key={msg.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
-              {msg.sender === 'ai' && <div style={{ background: '#eef2ff', color: '#6366f1', padding: 10, borderRadius: '12px' }}><Bot size={18} /></div>}
+              {msg.sender === 'ai' && <div style={{ background: '#eef2ff', color: '#047857', padding: 10, borderRadius: '12px' }}><Bot size={18} /></div>}
               <div style={{ 
-                background: msg.sender === 'user' ? '#6366f1' : '#f8fafc', 
+                background: msg.sender === 'user' ? '#047857' : '#f8fafc', 
                 color: msg.sender === 'user' ? 'white' : '#374151',
                 padding: '14px 18px', 
                 border: msg.sender === 'user' ? 'none' : '1px solid #e5e7eb',
@@ -87,7 +87,7 @@ export default function AIFinanceTab() {
           ))}
           {isTyping && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', maxWidth: '85%' }}>
-              <div style={{ background: '#eef2ff', color: '#6366f1', padding: 10, borderRadius: '12px' }}><Bot size={18} /></div>
+              <div style={{ background: '#eef2ff', color: '#047857', padding: 10, borderRadius: '12px' }}><Bot size={18} /></div>
               <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', padding: '14px 18px', borderRadius: '16px 16px 16px 4px', color: '#9ca3af', fontStyle: 'italic', fontSize: 13 }}>
                 Analyzing data...
               </div>
@@ -109,7 +109,7 @@ export default function AIFinanceTab() {
             />
             <button 
               className="btn" 
-              style={{ background: input.trim() ? '#6366f1' : '#cbd5e1', color: 'white', borderRadius: 20, width: 40, height: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', transition: 'background 0.2s' }}
+              style={{ background: input.trim() ? '#047857' : '#cbd5e1', color: 'white', borderRadius: 20, width: 40, height: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', transition: 'background 0.2s' }}
               onClick={handleSend}
               disabled={isTyping || !input.trim()}
             >
@@ -121,3 +121,6 @@ export default function AIFinanceTab() {
     </div>
   );
 }
+
+
+
