@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS public.mpesa_transactions (
     merchant_request_id TEXT NOT NULL,
     amount NUMERIC NOT NULL,
     phone_number TEXT NOT NULL,
-    invoice_id UUID REFERENCES public.invoices(id) ON DELETE SET NULL,
-    student_id UUID REFERENCES public.students(id) ON DELETE SET NULL,
+    invoice_id TEXT REFERENCES public.invoices(id) ON DELETE SET NULL,
+    student_id TEXT REFERENCES public.students(id) ON DELETE SET NULL,
     status TEXT NOT NULL DEFAULT 'Pending', -- Pending, Completed, Failed, Cancelled
     mpesa_receipt_number TEXT,
     result_desc TEXT,
