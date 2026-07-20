@@ -129,9 +129,10 @@ export default function ParentDashboard() {
   const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : '-';
 
   const unresolvedDisc = disciplinary.filter(d => d.status !== 'Resolved');
-  const parentNotices = (notifications || []).filter(n => 
-    (n.audience || []).includes('all') || (n.audience || []).includes('parents') || (n.audience || []).includes('students')
-  );
+  const parentNotices = (notifications || []).filter(n => {
+    const aud = n.audience || [];
+    return aud.includes('all') || aud.includes('parents') || aud.includes('students') || (child && aud.includes(child.id)) || (child && aud.includes(child.adm));
+  });
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 

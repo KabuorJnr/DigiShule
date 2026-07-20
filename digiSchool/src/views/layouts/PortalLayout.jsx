@@ -157,6 +157,21 @@ export default function PortalLayout() {
     api.upsertTeacher(teacher).catch(onSaveError);
   }, [onSaveError]);
 
+  const visibleNotifications = useMemo(() => {
+    if (!currentUser) return [];
+    return notifications.filter((n) => {
+      const aud = n.audience || [];
+      if (aud.includes('all')) return true;
+      if (aud.includes(currentUser.role)) return true;
+      if (aud.includes(currentUser.id)) return true;
+      if (currentUser.role === 'parent' && students.length > 0) {
+        // students state for parents contains only their own children due to RLS
+        if (students.some(s => aud.includes(s.id) || aud.includes(s.adm))) return true;
+      }
+      return false;
+    });
+  }, [notifications, currentUser, students]);
+
   const markRead = (id) => {
     setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
     api.setNotificationRead(id, true).catch(onSaveError);
@@ -165,7 +180,7 @@ export default function PortalLayout() {
     setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
     api.markAllNotificationsRead().catch(onSaveError);
   };
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = visibleNotifications.filter((n) => !n.read).length;
 
   const store = useMemo(
     () => ({
@@ -739,7 +754,7 @@ export default function PortalLayout() {
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
-              {notifications.map((n) => (
+              {visibleNotifications.map((n) => (
                 <div key={n.id} className="notif-item" style={{ background: n.read ? '#fff' : '#f0f6ff' }} onClick={() => markRead(n.id)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                     <strong style={{ fontSize: 13 }}>{n.title}</strong>
