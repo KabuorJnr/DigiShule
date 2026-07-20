@@ -47,7 +47,7 @@ export default function StudentFinanceTab() {
       try {
         const { supabase } = await import('../../lib/supabaseClient');
         const { error } = await supabase.functions.invoke('mpesa-stk', {
-          body: { phone, amount: amt, invoiceId: null } // We don't have invoiceId in this simplified view yet
+          body: { phone, amount: amt, invoiceId: null, studentId: me?.id || null }
         });
         
         if (error) throw error;

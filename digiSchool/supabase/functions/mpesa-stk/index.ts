@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, amount, invoiceId } = await req.json()
+    const { phone, amount, invoiceId, studentId } = await req.json()
     if (!phone || !amount) {
       throw new Error('Phone and amount are required')
     }
@@ -100,6 +100,7 @@ serve(async (req) => {
           amount: stkPayload.Amount,
           phone_number: formattedPhone,
           invoice_id: invoiceId || null,
+          student_id: studentId || null,
           school_id: schoolId,
           status: 'Pending'
         })

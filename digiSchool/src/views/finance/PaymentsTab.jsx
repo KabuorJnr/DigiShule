@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
@@ -143,6 +143,25 @@ export default function PaymentsTab() {
       } else {
         notify('Payment verified successfully.');
         addAuditLog('Payment Verified', `Verified payment ${payment.ref} of ${fmtKES(payment.amount)}`, payment.amount);
+
+        // Trigger receipt + SMS/Email notification to parent
+        try {
+          const { supabase } = await import('../../lib/supabaseClient');
+          await supabase.functions.invoke('send-receipt', {
+            body: {
+              payment_id: payment.id,
+              receipt_number: payment.ref,
+              amount: payment.amount,
+              phone_number: null, // Will be looked up from parent profile
+              student_id: payment.student_id,
+              invoice_id: payment.invoice_id || null,
+              school_id: store?.schoolId || null,
+              date: payment.date || payment.created_at
+            }
+          });
+        } catch (receiptErr) {
+          console.warn('Receipt notification failed (non-fatal):', receiptErr);
+        }
       }
     } catch (e) {
       notify(`Failed to verify payment: ${e.message}`, 'error');
