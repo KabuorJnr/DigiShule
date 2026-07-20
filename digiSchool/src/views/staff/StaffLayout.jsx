@@ -5,10 +5,19 @@ import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../../utils/auth';
 
 export default function StaffLayout() {
-  const { store, user } = useOutletContext();
+  const { store, user, params } = useOutletContext();
   const { notify } = store;
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'staff_dashboard' ? '/portal/staff' : `/portal/staff/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
 
   const [staff, setStaff] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);

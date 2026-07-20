@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate, useOutletContext } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { Users, UserPlus, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -13,7 +13,18 @@ const TABS = [
 export default function RegistrarLayout() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const context = useOutletContext();
+  const params = context?.params;
+
+  useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'registrar_dashboard' ? '/portal/registrar' : `/portal/registrar/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
 
   useEffect(() => {
     let active = true;

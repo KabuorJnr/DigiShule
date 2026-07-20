@@ -20,6 +20,15 @@ export default function ProcurementLayout() {
   const [tenders, setTenders] = useState([]);
 
   useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'procurement_dashboard' ? '/portal/procurement' : `/portal/procurement/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
+
+  useEffect(() => {
     Promise.all([
       fetchTable('finance_audit_log').catch(() => []),
       fetchTable('purchase_orders').catch(() => []),

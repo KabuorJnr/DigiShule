@@ -4,9 +4,18 @@ import { PlaneTakeoff, MessageSquare, FolderOpen, Bell, Calendar, ClipboardList,
 import { fetchTable } from '../../lib/api';
 
 export default function TeacherLayout() {
-  const { store, user } = useOutletContext();
+  const { store, user, params } = useOutletContext();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'teacher_dashboard' ? '/portal/teacher' : `/portal/teacher/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
 
   const teacherName = user?.name || 'Teacher';
 

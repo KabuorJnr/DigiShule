@@ -39,6 +39,15 @@ export default function FinanceLayout() {
   const [auditLogs, setAuditLogs] = useState([]);
 
   useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'finance_dashboard' ? '/portal/finance' : `/portal/finance/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
+
+  useEffect(() => {
     Promise.all([
       fetchTable('invoices').catch(() => []),
       fetchTable('financePayments').catch(() => []),

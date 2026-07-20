@@ -28,6 +28,16 @@ export default function StudentLayout() {
   
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [libraryLoans, setLibraryLoans] = useState([]);
+
+  useEffect(() => {
+    if (params?.tab) {
+      const targetPath = params.tab === 'student_dashboard' ? '/portal/student' : `/portal/student/${params.tab}`;
+      if (location.pathname !== targetPath && location.pathname !== targetPath + '/') {
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [params?.tab, location.pathname, navigate]);
+
   const [schoolEvents, setSchoolEvents] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [submissions, setSubmissions] = useState([]);
