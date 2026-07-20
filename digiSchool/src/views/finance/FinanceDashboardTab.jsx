@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
@@ -201,10 +201,9 @@ export default function FinanceDashboardTab() {
 
       <div ref={dashboardRef} style={{ background: 'var(--bg)', padding: '4px' }}>
       {/* --- KPI ROW --- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         <DashboardMetric title="Expected Revenue" value={totalInvoiced} icon={<Briefcase size={20} />} color="#047857" />
         <DashboardMetric title="Total Collected" value={totalCollected} icon={<TrendingUp size={20} />} color="#047857" />
-        <DashboardMetric title="Deficit (Outstanding)" value={totalOutstanding} icon={<Activity size={20} />} color="#F59E0B" />
         <DashboardMetric title="Total Expenses" value={totalExpenses} icon={<TrendingDown size={20} />} color="#EF4444" />
         <DashboardMetric 
           title="Net Cash Flow" 
@@ -215,8 +214,8 @@ export default function FinanceDashboardTab() {
         />
       </div>
 
-      {/* --- CHARTS GRID --- */}
-      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
+      {/* --- TREND & HEALTH ROW --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 24 }}>
         
         {/* MAIN CHART: Income vs Target vs Expenses */}
         <div className="card card-pad" style={{ boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
@@ -249,64 +248,65 @@ export default function FinanceDashboardTab() {
           </div>
         </div>
 
-        {/* DONUT CHARTS PANEL */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
-          <div className="card card-pad" style={{ flex: 1, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-             <div className="section-title">Revenue by Class (Top 6)</div>
-             <div style={{ height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueByClass} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--border)" opacity={0.4} />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                  <Tooltip 
-                    formatter={(value) => [fmtKES(value), 'Revenue']}
-                    cursor={{fill: 'rgba(0,0,0,0.05)'}}
-                    contentStyle={{ backgroundColor: 'var(--surface-raised)', borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="value" fill="#047857" radius={[0, 4, 4, 0]} barSize={16}>
-                    {revenueByClass.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Collection Rate Gauge */}
+        <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, rgba(4, 120, 87, 0.05) 0%, rgba(4, 120, 87, 0.0) 100%)` }}>
+           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 24 }}>COLLECTION RATE</div>
+           <div style={{ position: 'relative', width: 160, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <svg width="160" height="160" viewBox="0 0 160 160">
+               <circle cx="80" cy="80" r="70" fill="none" stroke="var(--border)" strokeWidth="12" />
+               <circle cx="80" cy="80" r="70" fill="none" stroke="#047857" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * collectionRate) / 100} strokeLinecap="round" transform="rotate(-90 80 80)" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
+             </svg>
+             <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+               <span style={{ fontSize: 32, fontWeight: 'bold', color: 'var(--text)' }}>{collectionRate}%</span>
              </div>
-          </div>
+           </div>
+           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 16 }}>Expected Target vs Total Collected</div>
+        </div>
+      </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {/* Expense Breakdown */}
-            <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>EXPENSE ALLOCATION</div>
-              <div style={{ width: '100%', height: 140 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2}>
-                      {expenseBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip formatter={(value) => fmtKES(value)} contentStyle={{ fontSize: 12, borderRadius: 8, padding: 8 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+      {/* --- BREAKDOWN ROW --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        
+        {/* Revenue by Class */}
+        <div className="card card-pad" style={{ boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+           <div className="section-title">Revenue by Class (Top 6)</div>
+           <div style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueByClass} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--border)" opacity={0.4} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                <Tooltip 
+                  formatter={(value) => [fmtKES(value), 'Revenue']}
+                  cursor={{fill: 'rgba(0,0,0,0.05)'}}
+                  contentStyle={{ backgroundColor: 'var(--surface-raised)', borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Bar dataKey="value" fill="#047857" radius={[0, 4, 4, 0]} barSize={16}>
+                  {revenueByClass.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
 
-            {/* Collection Rate Gauge */}
-            <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.0) 100%)` }}>
-               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12 }}>COLLECTION RATE</div>
-               <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <svg width="120" height="120" viewBox="0 0 120 120">
-                   <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" strokeWidth="10" />
-                   <circle cx="60" cy="60" r="50" fill="none" stroke="#047857" strokeWidth="10" strokeDasharray="314" strokeDashoffset={314 - (314 * collectionRate) / 100} strokeLinecap="round" transform="rotate(-90 60 60)" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
-                 </svg>
-                 <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                   <span style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--text)' }}>{collectionRate}%</span>
-                 </div>
-               </div>
-               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Target vs Collected</div>
-            </div>
+        {/* Expense Breakdown */}
+        <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <div className="section-title" style={{ alignSelf: 'flex-start' }}>Expense Allocation</div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={2}>
+                  {expenseBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />)}
+                </Pie>
+                <Tooltip formatter={(value) => fmtKES(value)} contentStyle={{ fontSize: 12, borderRadius: 8, padding: 8 }} />
+                <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
+
       </div>
       </div>
     </div>
