@@ -127,8 +127,8 @@ serve(async (req) => {
     ].filter(Boolean).join('\n')
 
     // ── 6. Send SMS via Africa's Talking ──
-    const atUsername = Deno.env.get('AT_USERNAME') || ''
-    const atApiKey = Deno.env.get('AT_API_KEY') || ''
+    const atUsername = Deno.env.get('AT_USERNAME') || Deno.env.get('africas_talking_username') || ''
+    const atApiKey = Deno.env.get('AT_API_KEY') || Deno.env.get('afrcas_talking_api') || Deno.env.get('africas_talking_api') || ''
 
     if (parentPhone && atUsername && atApiKey) {
       // Format phone for AT: ensure it starts with +254
