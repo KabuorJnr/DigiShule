@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell, 
   BarChart3, Trophy, Wallet, Calendar, Mail, Heart, ClipboardList, 
@@ -339,10 +339,10 @@ export default function ParentDashboard() {
         <div className="card card-pad" style={{ marginBottom: 16 }}>
           <h3 className="section-title">Quick Actions</h3>
           <div className="grid grid-4" style={{ gap: 10 }}>
-            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/academics'}>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => store.navigate('student', { tab: 'academics', childId: child?.id })}>
               <BarChart3 size={16} /> View Report Card
             </button>
-            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => window.location.href = '/portal/student/finance'}>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => store.navigate('student', { tab: 'finance', childId: child?.id })}>
               <DollarSign size={16} /> Pay Fees
             </button>
             <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}>
