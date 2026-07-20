@@ -114,6 +114,7 @@ export default function App() {
         </Route>
 
         <Route path="procurement" element={<ProcurementLayout />}>
+          <Route index element={<ProcDashboard />} />
           <Route path="procurement_dashboard" element={<ProcDashboard />} />
           <Route path="tenders_manager" element={<TendersManager />} />
           <Route path="purchase_orders" element={<PurchaseOrders />} />

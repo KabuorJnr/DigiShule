@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import '../../App.css';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
@@ -184,7 +184,38 @@ export default function PortalLayout() {
       navigate: (v, p = {}) => { 
         setViewParams(p); 
         setView(v); 
-        navigateRouter(`/portal/${v}`);
+        // Map view names that live inside nested layout routes
+        const nestedSubRoutes = {
+          // Finance sub-routes
+          finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
+          // Registrar sub-routes
+          registrar: ['enroll', 'transfers'],
+          // Student sub-routes
+          student: ['academics', 'records', 'resources', 'finance', 'settings'],
+          // Teacher sub-routes
+          teacher: ['classes', 'attendance', 'gradebook'],
+          // Staff sub-routes
+          staff: ['leave', 'classes', 'recruitment'],
+          // Procurement sub-routes (standalone portal)
+          procurement: ['procurement_dashboard', 'tenders_manager', 'purchase_orders'],
+          // Parent sub-routes
+          parent: ['attendance', 'contact', 'health', 'disciplinary'],
+        };
+
+        // Check if this is a top-level view that maps to a nested route
+        let resolvedPath = `/portal/${v}`;
+        for (const [layout, subs] of Object.entries(nestedSubRoutes)) {
+          if (subs.includes(v)) {
+            resolvedPath = `/portal/${layout}/${v}`;
+            break;
+          }
+        }
+        // If there's a tab param and the view matches a layout, navigate to layout then let Layout redirect
+        if (p.tab) {
+          // The Layout's useEffect will handle the tab redirect
+          resolvedPath = `/portal/${v}`;
+        }
+        navigateRouter(resolvedPath);
       },
       removeToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
     }),
