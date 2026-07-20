@@ -191,7 +191,7 @@ export default function PortalLayout() {
           // Registrar sub-routes
           registrar: ['enroll', 'transfers'],
           // Student sub-routes
-          student: ['academics', 'records', 'resources', 'finance', 'settings'],
+          student: ['academics', 'records', 'resources', 'finance'],
           // Teacher sub-routes
           teacher: ['classes', 'attendance', 'gradebook'],
           // Staff sub-routes
