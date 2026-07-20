@@ -101,17 +101,6 @@ export default function TeacherLayout() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid var(--border)' }}>
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            className={`tab${currentTab === t.id ? ' active' : ''}`}
-            onClick={() => navigate(t.path)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
       <Outlet context={{
         store, user, teacherName, subject, teacherProfile, assignedClass,
         loadedStudents, setLoadedStudents,

@@ -491,6 +491,29 @@ export const ROLES = {
 
 
 
+  procurement: {
+    label: 'Procurement Officer',
+    portal: 'Procurement & Tenders',
+    accent: '#006233',
+    home: 'procurement_dashboard',
+    nav: [
+      {
+        section: 'PROCUREMENT',
+        items: [
+          { id: 'proc_dashboard', icon: 'home', label: 'Dashboard', view: 'procurement_dashboard' },
+          { id: 'tenders', icon: 'file', label: 'Tenders & Bids', view: 'tenders_manager' },
+          { id: 'purchase_orders', icon: 'clipboard', label: 'Purchase Orders', view: 'purchase_orders' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ],
+  },
+
   clinic: {
     label: 'Nurse',
     portal: 'Health & Nursing',

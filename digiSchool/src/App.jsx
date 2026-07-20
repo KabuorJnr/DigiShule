@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
+import PublicSchoolLanding from './views/PublicSchoolLanding';
 import Login from './views/Login';
 import PublicApplication from './views/PublicApplication';
 import SignupWizard from './views/SignupWizard';
@@ -36,6 +37,11 @@ import AIFinanceTab from './views/finance/AIFinanceTab';
 import FinanceUsersTab from './views/finance/FinanceUsersTab';
 import JournalTab from './views/finance/JournalTab';
 
+import ProcurementLayout from './views/procurement/ProcurementLayout';
+import ProcDashboard from './views/procurement/ProcDashboard';
+import TendersManager from './views/procurement/TendersManager';
+import PurchaseOrders from './views/procurement/PurchaseOrders';
+
 import StudentLayout from './views/student/StudentLayout';
 import StudentDashboard from './views/student/StudentDashboard';
 import AcademicsTab from './views/student/AcademicsTab';
@@ -63,6 +69,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
       <Route path="/login" element={<Login />} />
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
@@ -104,6 +111,12 @@ export default function App() {
           <Route path="ai" element={<AIFinanceTab />} />
           <Route path="permissions" element={<FinanceUsersTab />} />
           <Route path="journal" element={<JournalTab />} />
+        </Route>
+
+        <Route path="procurement" element={<ProcurementLayout />}>
+          <Route path="procurement_dashboard" element={<ProcDashboard />} />
+          <Route path="tenders_manager" element={<TendersManager />} />
+          <Route path="purchase_orders" element={<PurchaseOrders />} />
         </Route>
 
         <Route path="student" element={<StudentLayout />}>

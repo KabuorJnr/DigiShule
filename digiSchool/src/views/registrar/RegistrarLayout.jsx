@@ -54,21 +54,6 @@ export default function RegistrarLayout() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: 20 }}>
-        {TABS.map(t => (
-          <NavLink 
-            key={t.label} 
-            to={t.id}
-            end={t.id === ''}
-            className={({ isActive }) => `tab${isActive ? ' active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
-          >
-            <t.icon size={15} /> {t.label}
-          </NavLink>
-        ))}
-      </div>
-
       {/* Tab Content Area */}
       <Outlet context={context} />
     </div>

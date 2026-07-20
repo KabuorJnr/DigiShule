@@ -128,33 +128,6 @@ export default function StudentLayout() {
     <div>
       <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Grade ${me.class}`} />
 
-      {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border)', marginBottom: 20, overflowX: 'auto' }}>
-        {TABS.map(t => {
-          const isActive = t.id === '' 
-            ? location.pathname.endsWith('/student') || location.pathname.endsWith('/student/')
-            : location.pathname.includes(`/student/${t.id}`);
-            
-          return (
-            <NavLink
-              key={t.id}
-              to={t.path}
-              end={t.id === ''}
-              className="tab"
-              style={{
-                background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--text)' : 'var(--text-muted)',
-                borderBottom: isActive ? '2px solid var(--text)' : '2px solid transparent',
-                textDecoration: 'none', whiteSpace: 'nowrap'
-              }}
-            >
-              {t.label}
-            </NavLink>
-          );
-        })}
-      </div>
-      
       {user?.role === 'parent' && (
         <div style={{ background: '#e0e7ff', color: '#3730a3', padding: '12px 16px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ background: '#4f46e5', color: '#fff', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
