@@ -262,7 +262,7 @@ export default function Timetable({ store, user }) {
     exportTablePDF({
       school: settings,
       title: tab === 'teacher' ? `Teacher Timetable - ${teacherSel}` : `Class Timetable - Grade ${cls}`,
-      subtitle: `${term} • Generated ${new Date().toLocaleDateString()}`,
+      subtitle: `${term}  |  Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
       filename: tab === 'teacher' ? `timetable-teacher-${teacherSel}.pdf` : `timetable-${cls}-${term}.pdf`,

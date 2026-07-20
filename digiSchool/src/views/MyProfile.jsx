@@ -272,7 +272,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
                   className="input"
                   type={showPw[key] ? 'text' : 'password'}
                   value={pwForm[key]}
-                  placeholder="••••••••"
+                  placeholder=" |  |  |  |  |  |  |  | "
                   onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                   style={{ paddingRight: 40 }}
                 />

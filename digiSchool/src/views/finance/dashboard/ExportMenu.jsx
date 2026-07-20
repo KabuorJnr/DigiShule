@@ -69,7 +69,7 @@ export default function ExportMenu({
       pdf.setTextColor(107, 114, 128); // #6b7280
       const filterSummary = `Filters: Term: ${activeFilters.term} | Class: ${activeFilters.className}`;
       const timestamp = `Generated: ${new Date().toLocaleString()}`;
-      pdf.text(`${filterSummary}  •  ${timestamp}`, margin, margin + 10);
+      pdf.text(`${filterSummary}   |   ${timestamp}`, margin, margin + 10);
 
       // Add Image
       // Ensure the snapshot doesn't bleed off the bottom of the page

@@ -207,7 +207,7 @@ export default function Overview({ store }) {
               <div className="alert-icon" style={{ background: '#e8f0fe', color: '#0078D4' }}><CalendarDays size={16} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{e.title}</div>
-                <div className="muted" style={{ fontSize: 11 }}>{e.date} • {e.desc}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{e.date}  |  {e.desc}</div>
               </div>
             </div>
           )) : (

@@ -340,7 +340,7 @@ export default function StudentList() {
               </div>
               <div>
                 <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{selectedStudent.name}</h3>
-                <div className="muted">{selectedStudent.adm} • {selectedStudent.class}</div>
+                <div className="muted">{selectedStudent.adm}  |  {selectedStudent.class}</div>
               </div>
             </div>
             <div className="grid grid-2">
