@@ -698,7 +698,7 @@ export default function PortalLayout() {
 
         <main className="content">
           {dataLoading ? (
-            <p className="muted">Loadingâ€¦</p>
+            <p className="muted">Loading…</p>
           ) : (
             <Outlet context={{ store, user: currentUser, params: viewParams }} />
           )}
@@ -733,7 +733,7 @@ export default function PortalLayout() {
           <div className="notif-panel">
             <div className="modal-header">
               <h3>Notifications {unreadCount > 0 && <span className="badge badge-red">{unreadCount} new</span>}</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>âœ•</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
@@ -762,7 +762,7 @@ export default function PortalLayout() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
                 <Building2 size={20} /> Deputy Academics Office
               </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>âœ•</button>
+              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Building2 size={40} style={{ color: '#9333ea' }} /></div>
@@ -795,7 +795,7 @@ export default function PortalLayout() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
                 <Landmark size={20} /> Deputy Administration Office
               </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>âœ•</button>
+              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
             </div>
             <div style={{ padding: 24, textAlign: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Landmark size={40} style={{ color: '#065f46' }} /></div>

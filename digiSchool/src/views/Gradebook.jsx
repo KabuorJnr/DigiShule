@@ -120,7 +120,7 @@ export default function Gradebook({ store }) {
   function exportPDF() {
     const head = ['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]);
-    exportTablePDF({ school: settings, title: `Gradebook - Grade ${cls} â€¢ ${subject}`, subtitle: `${term} â€¢ ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
+    exportTablePDF({ school: settings, title: `Gradebook - Grade ${cls} • ${subject}`, subtitle: `${term} • ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
   function exportExcel() {
@@ -243,7 +243,7 @@ export default function Gradebook({ store }) {
             {ASSESS_OPTIONS.map((a) => <option key={a}>{a}</option>)}
           </select></div>
         <div style={{ flex: 1, minWidth: 180 }}><label className="field-label">Search student</label>
-          <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Type a nameâ€¦" /></div>
+          <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Type a name…" /></div>
       </div>
 
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>

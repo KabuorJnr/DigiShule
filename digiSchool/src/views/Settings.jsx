@@ -356,8 +356,8 @@ export default function Settings({ store, user }) {
           </p>
           <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13 }}>
             <strong>How to get the embed URL:</strong><br />
-            1. Open Google Calendar \u2192 select your calendar \u2192 <em>Settings</em><br />
-            2. Scroll to <em>"Integrate calendar"</em> \u2192 copy the <em>"Embed code"</em> src URL<br />
+            1. Open Google Calendar → select your calendar → <em>Settings</em><br />
+            2. Scroll to <em>"Integrate calendar"</em> → copy the <em>"Embed code"</em> src URL<br />
             3. Paste the URL below (it should start with <code>https://calendar.google.com/calendar/embed?...</code>)
           </div>
           <div style={{ marginBottom: 14 }}>

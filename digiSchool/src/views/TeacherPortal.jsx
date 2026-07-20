@@ -58,7 +58,7 @@ export default function TeacherPortal({ store, user }) {
   const [replyText, setReplyText] = useState({});
   const [editing, setEditing] = useState(null);
 
-  // â”€â”€ Leave Application State â”€â”€
+  // ── Leave Application State ──
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
@@ -85,7 +85,7 @@ export default function TeacherPortal({ store, user }) {
     return () => { active = false; };
   }, [assignedClass, subject]);
 
-  // â”€â”€ Load Leave Requests â”€â”€
+  // ── Load Leave Requests ──
   useEffect(() => {
     let active = true;
     fetchTable('leave_requests').then(rows => {
@@ -113,7 +113,7 @@ export default function TeacherPortal({ store, user }) {
     setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
   };
 
-  // â”€â”€ Submit Leave Request â”€â”€
+  // ── Submit Leave Request ──
   const submitLeaveRequest = async () => {
     if (!leaveForm.start || !leaveForm.end || !leaveForm.reason.trim()) {
       store.notify('Please fill in all leave fields', 'warning', 'Leave');
@@ -461,7 +461,7 @@ export default function TeacherPortal({ store, user }) {
               <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print / Save PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
@@ -550,7 +550,7 @@ export default function TeacherPortal({ store, user }) {
           <div className="modal" style={{ maxWidth: 650, padding: 0, overflow: 'hidden' }}>
             <div className="modal-header">
               <h3>Parent Messages Inbox</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>âœ•</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>✕</button>
             </div>
             <div style={{ padding: 24, maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }}>
               {messages.length === 0 ? (
@@ -603,7 +603,7 @@ export default function TeacherPortal({ store, user }) {
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <PlaneTakeoff size={20} /> Leave Application
               </h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>âœ•</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>✕</button>
             </div>
 
             {/* Tab Navigation */}

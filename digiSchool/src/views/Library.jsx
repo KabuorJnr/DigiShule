@@ -164,7 +164,7 @@ export default function Library({ store, user }) {
             <input
               className="input"
               style={{ maxWidth: 320 }}
-              placeholder="Search title or authorâ€¦"
+              placeholder="Search title or author…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -211,7 +211,7 @@ export default function Library({ store, user }) {
             <input
               className="input"
               style={{ maxWidth: 320 }}
-              placeholder="Search past papersâ€¦"
+              placeholder="Search past papers…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -281,7 +281,7 @@ export default function Library({ store, user }) {
         }>
           <label className="field-label">Asset / Book</label>
           <select className="select" value={form.book} onChange={(e) => setForm((f) => ({ ...f, book: e.target.value }))}>
-            <option value="">Select an itemâ€¦</option>
+            <option value="">Select an item…</option>
             {books.map((b) => (
               <option key={b.id} value={b.id} disabled={b.available <= 0}>
                 {b.title} ({b.available} available)

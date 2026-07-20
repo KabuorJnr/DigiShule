@@ -181,7 +181,7 @@ export default function StudentList() {
       <div className="toolbar" style={{ marginBottom: 14 }}>
         <div style={{ position: 'relative' }}>
           <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input className="input" style={{ paddingLeft: 32, width: 220 }} placeholder="Search name or adm noâ€¦" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="input" style={{ paddingLeft: 32, width: 220 }} placeholder="Search name or adm no…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="select" style={{ width: 160 }} value={classFilter} onChange={e => setClassFilter(e.target.value)}>
           <option value="All">All Classes</option>
@@ -263,7 +263,7 @@ export default function StudentList() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setEditModal(false)}>Cancel</button>
             <button className="btn btn-primary" disabled={updateMutation.isLoading} onClick={handleSaveEdit}>
-              {updateMutation.isLoading ? 'Savingâ€¦' : 'Save Changes'}
+              {updateMutation.isLoading ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
         }>
@@ -340,7 +340,7 @@ export default function StudentList() {
               </div>
               <div>
                 <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{selectedStudent.name}</h3>
-                <div className="muted">{selectedStudent.adm} â€¢ {selectedStudent.class}</div>
+                <div className="muted">{selectedStudent.adm} • {selectedStudent.class}</div>
               </div>
             </div>
             <div className="grid grid-2">
@@ -359,7 +359,7 @@ export default function StudentList() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setDeleteConfirmModal(false)}>Cancel</button>
             <button className="btn" style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }} disabled={deleteMutation.isLoading} onClick={handleDeregister}>
-              {deleteMutation.isLoading ? 'Deletingâ€¦' : 'Confirm Deletion'}
+              {deleteMutation.isLoading ? 'Deleting…' : 'Confirm Deletion'}
             </button>
           </div>
         }>

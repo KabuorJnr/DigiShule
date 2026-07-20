@@ -478,7 +478,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
     return <div style={{ padding: 40, textAlign: 'center' }} className="muted">Loading teacher management data...</div>;
   }
 
-  // â”€â”€ TAB NAVIGATION â”€â”€
+  // ── TAB NAVIGATION ──
   const tabs = [
     { key: 'directory', label: 'Teaching Staff', icon: <Users size={16} /> },
     { key: 'assign', label: 'Assign to Class', icon: <ClipboardList size={16} /> },

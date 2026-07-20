@@ -213,10 +213,10 @@ export default function PublicSchoolLanding() {
             <div className={classes.card}>
               <div className={classes.cardHeader}><h3 className={classes.cardTitle}>Quick Links</h3></div>
               <div className={classes.linkList}>
-                <button onClick={() => navigate('/apply')} className={classes.linkItem}>Online Admission Form <span>\u2192</span></button>
-                <button className={classes.linkItem}>Fee Structure 2026 <span>\u2192</span></button>
-                <button className={classes.linkItem}>Academic Calendar <span>\u2192</span></button>
-                <button className={classes.linkItem}>Download Prospectus <span>\u2192</span></button>
+                <button onClick={() => navigate('/apply')} className={classes.linkItem}>Online Admission Form <span>→</span></button>
+                <button className={classes.linkItem}>Fee Structure 2026 <span>→</span></button>
+                <button className={classes.linkItem}>Academic Calendar <span>→</span></button>
+                <button className={classes.linkItem}>Download Prospectus <span>→</span></button>
               </div>
             </div>
           </div>

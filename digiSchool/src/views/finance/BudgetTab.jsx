@@ -47,7 +47,7 @@ export default function BudgetTab() {
 
   // Chart data
   const chartData = budgetData.map(b => ({
-    name: b.category.length > 15 ? b.category.slice(0, 15) + 'â€¦' : b.category,
+    name: b.category.length > 15 ? b.category.slice(0, 15) + '…' : b.category,
     Budget: b.amount,
     Actual: b.actual
   }));

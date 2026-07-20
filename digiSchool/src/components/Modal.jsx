@@ -20,7 +20,7 @@ export default function Modal({ title, onClose, children, footer, wide, hideClos
           <h3>{title}</h3>
           {!hideClose && (
             <button className="btn btn-icon btn-sm" onClick={onClose} aria-label="Close">
-              âœ•
+              ✕
             </button>
           )}
         </div>

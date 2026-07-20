@@ -133,7 +133,7 @@ export default function PublicApplication({ onBack }) {
                   <textarea className="input" placeholder="List any allergies, ongoing conditions, or medical history the school nurse should know about..." value={form.medicalInfo} onChange={e => setForm({...form, medicalInfo: e.target.value})} rows={3}></textarea>
                 </div>
                 <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 30px', fontSize: 16 }}>Next: Parent Details \u2192</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 30px', fontSize: 16 }}>Next: Parent Details →</button>
                 </div>
               </div>
             )}

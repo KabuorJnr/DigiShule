@@ -99,7 +99,7 @@ export default function Transfers() {
             <div>
               <label className="field-label">Student</label>
               <select className="select" value={transferForm.studentId} onChange={e => setTransferForm(f => ({ ...f, studentId: e.target.value }))}>
-                <option value="">Select studentâ€¦</option>
+                <option value="">Select student…</option>
                 {localStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated').map(s => <option key={s.id} value={s.id}>{s.name} ({s.class})</option>)}
               </select>
             </div>

@@ -262,7 +262,7 @@ export default function Timetable({ store, user }) {
     exportTablePDF({
       school: settings,
       title: tab === 'teacher' ? `Teacher Timetable - ${teacherSel}` : `Class Timetable - Grade ${cls}`,
-      subtitle: `${term} â€¢ Generated ${new Date().toLocaleDateString()}`,
+      subtitle: `${term} • Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
       filename: tab === 'teacher' ? `timetable-teacher-${teacherSel}.pdf` : `timetable-${cls}-${term}.pdf`,
@@ -383,7 +383,7 @@ export default function Timetable({ store, user }) {
           <div className="card card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 className="section-title" style={{ margin: 0 }}>Timetable Generator</h3>
-              {generating && <div className="muted" style={{ fontSize: 13 }}>Generatingâ€¦ {Math.round(progress)}%</div>}
+              {generating && <div className="muted" style={{ fontSize: 13 }}>Generating… {Math.round(progress)}%</div>}
             </div>
 
             <div style={{ marginBottom: 20 }}>

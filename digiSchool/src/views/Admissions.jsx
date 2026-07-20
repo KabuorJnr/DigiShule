@@ -67,7 +67,7 @@ export default function Admissions({ store }) {
         await upsertStudent(newStudent);
         setStudents(prev => [...prev, newStudent]);
         
-        // â”€â”€ 1. Create Student Portal Account â”€â”€
+        // ── 1. Create Student Portal Account ──
         const studentPassword = newStudent.adm;
         const studentAuthEmail = `${newStudent.adm.toLowerCase().replace(/[^a-z0-9]/g, '')}.${(store.schoolId || 'demo').split('-')[0]}@edu1app.tech`;
         
@@ -89,7 +89,7 @@ export default function Admissions({ store }) {
           });
         }
         
-        // â”€â”€ 2. Create Parent Portal Account (If email provided) â”€â”€
+        // ── 2. Create Parent Portal Account (If email provided) ──
         if (newStudent.guardianEmail) {
           const tempPassword = generateSecurePassword(10);
           const username = await generateSequentialUsername('PRN');

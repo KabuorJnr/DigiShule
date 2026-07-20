@@ -100,7 +100,7 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step \u2192</button>
+                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step →</button>
               </div>
             </div>
           )}

@@ -194,7 +194,7 @@ export default function StaffSignupWizard() {
               
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-primary" onClick={handleVerify} disabled={saving} style={{ background: '#0f172a', padding: '12px 24px' }}>
-                  {saving ? 'Verifying...' : 'Verify & Continue \u2192'}
+                  {saving ? 'Verifying...' : 'Verify & Continue →'}
                 </button>
               </div>
             </div>

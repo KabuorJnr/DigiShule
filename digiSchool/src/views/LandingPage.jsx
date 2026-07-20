@@ -99,8 +99,8 @@ export default function LandingPage() {
           <div className="wrap announce-inner">
             <span className="badge">SPECIAL</span>
             <span>Transform your school administration today - get a 14-day zero-risk trial.</span>
-            <a href="#enroll" className="link">Claim your trial \u2192</a>
-            <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">âœ•</button>
+            <a href="#enroll" className="link">Claim your trial →</a>
+            <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">✕</button>
           </div>
         </div>
       )}

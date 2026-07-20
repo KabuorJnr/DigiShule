@@ -41,7 +41,7 @@ export default function ParentDashboard() {
   // Active tab from sidebar params
   const activeTab = params?.tab || 'dashboard';
 
-  // â”€â”€ Set default selected child â”€â”€
+  // ── Set default selected child ──
   useEffect(() => {
     if (!selectedChildId && currentUser) {
       const linked = currentUser.linked_students || [];
@@ -50,7 +50,7 @@ export default function ParentDashboard() {
     }
   }, [currentUser, selectedChildId]);
 
-  // â”€â”€ Fetch child profile â”€â”€
+  // ── Fetch child profile ──
   useEffect(() => {
     async function fetchChild() {
       if (!selectedChildId) { setLoading(false); return; }
@@ -65,7 +65,7 @@ export default function ParentDashboard() {
     fetchChild();
   }, [selectedChildId]);
 
-  // â”€â”€ Fetch all supporting data once child is loaded â”€â”€
+  // ── Fetch all supporting data once child is loaded ──
   useEffect(() => {
     if (!child) return;
     let active = true;
@@ -96,7 +96,7 @@ export default function ParentDashboard() {
     return () => { active = false; };
   }, [child?.id, child?.adm]);
 
-  // â”€â”€ Computed values â”€â”€
+  // ── Computed values ──
   const subjects = useMemo(() => {
     if (!child) return [];
     return SUBJECTS.map(sub => {
@@ -135,7 +135,7 @@ export default function ParentDashboard() {
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-  // â”€â”€ Contact teacher handler â”€â”€
+  // ── Contact teacher handler ──
   const handleSendMessage = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) { notify('Please fill all fields', 'warning'); return; }
     try {
@@ -198,7 +198,7 @@ export default function ParentDashboard() {
     }
   };
 
-  // â”€â”€ Link student handler â”€â”€
+  // ── Link student handler ──
   const handleLinkStudent = async (e) => {
     e.preventDefault();
     if (!linkAdm.trim()) return;
@@ -236,12 +236,12 @@ export default function ParentDashboard() {
     }
   };
 
-  // â”€â”€ Loading state â”€â”€
+  // ── Loading state ──
   if (loading) {
     return <div style={{ padding: '24px', textAlign: 'center' }}>Loading child data...</div>;
   }
 
-  // â”€â”€ Linking screen (no child linked yet) â”€â”€
+  // ── Linking screen (no child linked yet) ──
   if (!child) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', maxWidth: 500, margin: '0 auto' }}>
@@ -276,7 +276,7 @@ export default function ParentDashboard() {
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // â”€â”€ DASHBOARD TAB (default) â”€â”€
+  // ── DASHBOARD TAB (default) ──
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'dashboard' || !activeTab) {
     const linkedStudents = currentUser?.linked_students || [];
@@ -304,7 +304,7 @@ export default function ParentDashboard() {
               )}
             </div>
             <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-              Grade: {child.class || 'N/A'} â€¢ Admission: {child.adm || 'Pending'} â€¢ Gender: {child.gender || 'N/A'}
+              Grade: {child.class || 'N/A'} • Admission: {child.adm || 'Pending'} • Gender: {child.gender || 'N/A'}
             </p>
           </div>
           {linkedStudents.length > 0 && (
@@ -487,7 +487,7 @@ export default function ParentDashboard() {
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // â”€â”€ ATTENDANCE TAB â”€â”€
+  // ── ATTENDANCE TAB ──
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'attendance') {
     return (
@@ -541,7 +541,7 @@ export default function ParentDashboard() {
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // â”€â”€ CONTACT TEACHER TAB â”€â”€
+  // ── CONTACT TEACHER TAB ──
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'contact') {
     return (
@@ -633,7 +633,7 @@ export default function ParentDashboard() {
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // â”€â”€ HEALTH RECORDS TAB â”€â”€
+  // ── HEALTH RECORDS TAB ──
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'health') {
     return (
@@ -713,7 +713,7 @@ export default function ParentDashboard() {
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // â”€â”€ DISCIPLINARY RECORDS TAB â”€â”€
+  // ── DISCIPLINARY RECORDS TAB ──
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (activeTab === 'disciplinary') {
     return (
@@ -755,7 +755,7 @@ export default function ParentDashboard() {
     );
   }
 
-  // â”€â”€ Fallback for unknown tabs â”€â”€
+  // ── Fallback for unknown tabs ──
   return (
     <div style={{ padding: '24px', textAlign: 'center' }}>
       <div className="muted">Select a section from the sidebar menu.</div>

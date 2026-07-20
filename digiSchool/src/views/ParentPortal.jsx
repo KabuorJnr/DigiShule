@@ -556,7 +556,7 @@ export default function ParentPortal({ store, user }) {
           <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#334155' }}>
               <div>1. Open M-Pesa on your phone</div>
-              <div>2. Select <strong>Lipa na M-Pesa \u2192 Paybill</strong></div>
+              <div>2. Select <strong>Lipa na M-Pesa → Paybill</strong></div>
               <div>3. Enter Business No: <strong>123456</strong></div>
               <div>4. Enter Account No: <strong>{child?.adm || 'EDUONE'}</strong></div>
               <div>5. Enter the amount you wish to pay</div>

@@ -93,7 +93,7 @@ export default function MyClasses() {
               <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>

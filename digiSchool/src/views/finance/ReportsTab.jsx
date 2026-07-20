@@ -250,7 +250,7 @@ export default function ReportsTab() {
                       {fmtKES(data.amount)}
                     </td>
                     <td style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-                      {data.count > 0 ? '\u2192' : ''}
+                      {data.count > 0 ? '→' : ''}
                     </td>
                   </tr>
                 ))}

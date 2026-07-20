@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { ShieldCheck, Mail, Database, Loader2 } from 'lucide-react';
 
@@ -18,10 +18,10 @@ export default function RegistrationLoadingModal({ step }) {
         
         {step !== 'done' ? (
           <div style={{ marginBottom: 24, animation: 'spin 2s linear infinite' }}>
-            <Loader2 size={48} color="#0078D4" />
+            <Loader2 size={48} color="#047857" />
           </div>
         ) : (
-          <div style={{ marginBottom: 24, color: '#107C10' }}>
+          <div style={{ marginBottom: 24, color: '#047857' }}>
             <ShieldCheck size={48} />
           </div>
         )}
@@ -38,7 +38,7 @@ export default function RegistrationLoadingModal({ step }) {
                 alignItems: 'center', 
                 gap: 12, 
                 marginBottom: 16,
-                color: isPast ? '#107C10' : isActive ? '#0e141e' : '#94a3b8',
+                color: isPast ? '#047857' : isActive ? '#0e141e' : '#94a3b8',
                 opacity: isPast || isActive ? 1 : 0.5,
                 transition: 'all 0.3s ease'
               }}>
@@ -47,7 +47,7 @@ export default function RegistrationLoadingModal({ step }) {
                   {s.label}
                 </span>
                 {isActive && (
-                  <Loader2 size={14} color="#0078D4" style={{ animation: 'spin 1s linear infinite', marginLeft: 'auto' }} />
+                  <Loader2 size={14} color="#047857" style={{ animation: 'spin 1s linear infinite', marginLeft: 'auto' }} />
                 )}
               </div>
             );
@@ -55,7 +55,7 @@ export default function RegistrationLoadingModal({ step }) {
         </div>
 
         {step === 'done' && (
-          <div style={{ marginTop: 16, fontSize: 16, fontWeight: 600, color: '#107C10' }}>
+          <div style={{ marginTop: 16, fontSize: 16, fontWeight: 600, color: '#047857' }}>
             Registration Complete!
           </div>
         )}

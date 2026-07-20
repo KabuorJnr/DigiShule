@@ -40,7 +40,7 @@ export default function StaffAttendance({ store, user }) {
 
   const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
-  // Reverse lookup: auth user UUID \u2192 staff record (for resolving log staff_id to names)
+  // Reverse lookup: auth user UUID → staff record (for resolving log staff_id to names)
   const [uidToStaffMap, setUidToStaffMap] = useState({});
 
   // Fetch staff + logs (reusable for polling)
@@ -50,9 +50,9 @@ export default function StaffAttendance({ store, user }) {
       fetchTable('staff_attendance_logs'),
       supabase.from('profiles').select('id, teacher_id, full_name')
     ]).then(([staffRows, logRows, { data: profs }]) => {
-      // profMap: staff.id (teacher_id) \u2192 auth user UUID
+      // profMap: staff.id (teacher_id) → auth user UUID
       const profMap = {};
-      // uidStaffMap: auth user UUID \u2192 staff record (for log lookups)
+      // uidStaffMap: auth user UUID → staff record (for log lookups)
       const uidStaffMap = {};
       if (profs && staffRows) {
         profs.forEach(p => {
@@ -614,7 +614,7 @@ export default function StaffAttendance({ store, user }) {
                         <div className="muted" style={{ fontSize: 11 }}>{l.dept}</div>
                       </td>
                       <td><Badge color={l.type === 'Sick' ? 'red' : l.type === 'Emergency' ? 'amber' : 'blue'}>{l.type}</Badge></td>
-                      <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} \u2192 {l.end_date || l.end}</td>
+                      <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} → {l.end_date || l.end}</td>
                       <td style={{ fontWeight: 600 }}>{l.days}</td>
                       <td style={{ maxWidth: 200, fontSize: 12 }}>{l.reason}</td>
                       <td><Badge color={LEAVE_COLOR[l.status]}>{l.status}</Badge></td>

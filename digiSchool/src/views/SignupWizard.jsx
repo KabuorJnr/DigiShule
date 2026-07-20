@@ -201,7 +201,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue \u2192</button>
+                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue →</button>
               </div>
             </div>
           )}
@@ -230,7 +230,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
                 <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>â† Back</button>
-                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment \u2192</button>
+                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment →</button>
               </div>
             </div>
           )}
@@ -247,7 +247,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534' }}>
                   <div>1. Go to M-Pesa on your phone</div>
-                  <div>2. Select <strong>Lipa na M-Pesa</strong> \u2192 <strong>Paybill</strong></div>
+                  <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
                   <div>3. Enter Business Number: <strong style={{ fontSize: 18, color: '#000' }}>123456</strong></div>
                   <div>4. Enter Account Number: <strong style={{ fontSize: 18, color: '#000' }}>EDUONE</strong></div>
                   <div>5. Enter Amount: <strong>5000</strong></div>
