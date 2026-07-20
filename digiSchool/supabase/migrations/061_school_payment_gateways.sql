@@ -26,11 +26,11 @@ CREATE POLICY "Admins can manage their school gateways"
 ON public.school_payment_gateways FOR ALL
 USING (
     school_id = (SELECT school_id FROM profiles WHERE id = auth.uid()) 
-    AND (SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin', 'bursar', 'principal')
+    AND (SELECT role::text FROM profiles WHERE id = auth.uid()) IN ('admin', 'super_admin', 'bursar', 'principal', 'finance')
 )
 WITH CHECK (
     school_id = (SELECT school_id FROM profiles WHERE id = auth.uid()) 
-    AND (SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin', 'bursar', 'principal')
+    AND (SELECT role::text FROM profiles WHERE id = auth.uid()) IN ('admin', 'super_admin', 'bursar', 'principal', 'finance')
 );
 
 -- 3. Service role can manage all
