@@ -17,25 +17,38 @@ serve(async (req) => {
       throw new Error('Phone and amount are required')
     }
 
-    // Initialize Supabase Client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || process?.env?.SUPABASE_URL || ''
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || process?.env?.SUPABASE_ANON_KEY || ''
+    // Initialize Supabase Client for the user (to verify token)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
     
-    // We use the service role key to insert into mpesa_transactions securely if needed, but anon works if RLS allows
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: req.headers.get('Authorization')! } }
     })
 
     // Fetch school config for the shortcode/phone if needed
-    // The user requested to extract the number from finance settings.
-    const { data: config } = await supabase.from('app_config').select('phone, id').single()
-    const schoolId = config?.id
+    const { data: config } = await supabase.from('app_config').select('phone, school_id').single()
+    const schoolId = config?.school_id
     
-    // Sandbox Credentials
-    const consumerKey = Deno.env.get('consumer_key') || Deno.env.get('MPESA_CONSUMER_KEY')
-    const consumerSecret = Deno.env.get('consumer_secret') || Deno.env.get('MPESA_CONSUMER_SECRET')
-    const shortcode = "174379" // Sandbox Paybill
-    const passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+    if (!schoolId) throw new Error('Could not identify your school')
+
+    // Initialize Service Role client to bypass RLS and read the highly secure payment gateways table
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const adminSupabase = createClient(supabaseUrl, serviceRoleKey)
+
+    const { data: gateway, error: gatewayErr } = await adminSupabase
+      .from('school_payment_gateways')
+      .select('mpesa_consumer_key, mpesa_consumer_secret, mpesa_shortcode, mpesa_passkey')
+      .eq('school_id', schoolId)
+      .single()
+
+    if (gatewayErr || !gateway) {
+      throw new Error('This school has not configured an M-Pesa payment gateway.')
+    }
+
+    const consumerKey = gateway.mpesa_consumer_key
+    const consumerSecret = gateway.mpesa_consumer_secret
+    const shortcode = gateway.mpesa_shortcode
+    const passkey = gateway.mpesa_passkey
     
     // Format phone: 07XXXXXXXX -> 2547XXXXXXXX
     let formattedPhone = phone.replace(/[^0-9]/g, '')

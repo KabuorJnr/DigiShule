@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS } from '../data/seed';
 
-const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar'];
+const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
 
 export default function Settings({ store, user }) {
@@ -15,6 +15,31 @@ export default function Settings({ store, user }) {
     ...settings,
     principal: settings.principal || user?.name || ''
   });
+  
+  // Payment Gateway State
+  const [gatewayConfigured, setGatewayConfigured] = useState(false);
+  const [gatewayForm, setGatewayForm] = useState({
+    shortcode: '',
+    passkey: '',
+    consumer_key: '',
+    consumer_secret: ''
+  });
+
+  useEffect(() => {
+    // Check if gateway is configured
+    if (tab === 'Payment Gateways' && store.schoolId) {
+      import('../lib/supabaseClient').then(({ supabase }) => {
+        supabase.from('vw_school_payment_status').select('*').eq('school_id', store.schoolId).single()
+          .then(({ data }) => {
+            if (data) {
+              setGatewayConfigured(data.is_configured);
+              setGatewayForm(f => ({ ...f, shortcode: data.mpesa_shortcode || '' }));
+            }
+          });
+      });
+    }
+  }, [tab, store.schoolId]);
+
   const [classList, setClassList] = useState(settings.classes || []);
   const savedClasses = settings.classes || [];
   const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
@@ -389,6 +414,72 @@ export default function Settings({ store, user }) {
             </div>
           )}
           <button className="btn btn-primary" onClick={saveGeneral}>Save Calendar Settings</button>
+        </div>
+      )}
+      {tab === 'Payment Gateways' && (
+        <div className="card card-pad" style={{ maxWidth: 600 }}>
+          <h3 className="section-title" style={{ marginTop: 0 }}>M-Pesa Gateway Settings</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 20 }}>
+            Configure your school's M-Pesa Till or Paybill credentials. These are stored securely and never exposed back to the UI.
+          </p>
+
+          {gatewayConfigured && (
+            <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #10b981', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#065f46' }}>M-Pesa API is Configured</div>
+                <div style={{ fontSize: 12, color: '#047857' }}>Shortcode: {gatewayForm.shortcode}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+            <div>
+              <label className="field-label">Shortcode (Paybill/Till)</label>
+              <input className="input" placeholder={gatewayConfigured ? gatewayForm.shortcode : 'e.g. 174379'} value={gatewayForm.shortcode} onChange={(e) => setGatewayForm(f => ({ ...f, shortcode: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Passkey</label>
+              <input type="password" className="input" placeholder={gatewayConfigured ? '••••••••••••••••' : 'Enter Passkey'} value={gatewayForm.passkey} onChange={(e) => setGatewayForm(f => ({ ...f, passkey: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Consumer Key</label>
+              <input type="password" className="input" placeholder={gatewayConfigured ? '••••••••••••••••' : 'Enter Consumer Key'} value={gatewayForm.consumer_key} onChange={(e) => setGatewayForm(f => ({ ...f, consumer_key: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Consumer Secret</label>
+              <input type="password" className="input" placeholder={gatewayConfigured ? '••••••••••••••••' : 'Enter Consumer Secret'} value={gatewayForm.consumer_secret} onChange={(e) => setGatewayForm(f => ({ ...f, consumer_secret: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <button className="btn btn-primary" onClick={async () => {
+              if (!gatewayForm.shortcode || !gatewayForm.passkey || !gatewayForm.consumer_key || !gatewayForm.consumer_secret) {
+                notify('Please fill in all M-Pesa API fields', 'error');
+                return;
+              }
+              try {
+                const { supabase } = await import('../lib/supabaseClient');
+                const payload = {
+                  school_id: store.schoolId,
+                  mpesa_shortcode: gatewayForm.shortcode,
+                  mpesa_passkey: gatewayForm.passkey,
+                  mpesa_consumer_key: gatewayForm.consumer_key,
+                  mpesa_consumer_secret: gatewayForm.consumer_secret,
+                  updated_at: new Date().toISOString()
+                };
+                
+                const { error } = await supabase.from('school_payment_gateways').upsert(payload, { onConflict: 'school_id' });
+                if (error) throw error;
+                
+                notify('M-Pesa credentials saved securely.', 'success');
+                setGatewayConfigured(true);
+                setGatewayForm(f => ({ ...f, passkey: '', consumer_key: '', consumer_secret: '' }));
+              } catch (e) {
+                notify(`Error saving credentials: ${e.message}`, 'error');
+              }
+            }}>Save Credentials Securely</button>
+          </div>
         </div>
       )}
     </div>
