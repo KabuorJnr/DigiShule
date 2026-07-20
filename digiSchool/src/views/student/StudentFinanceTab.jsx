@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge, KpiCard, ProgressBar } from '../../components/widgets';
 import { Calendar, CheckCircle2, DollarSign, AlertTriangle } from 'lucide-react';
@@ -34,9 +34,33 @@ export default function StudentFinanceTab() {
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
+  const [phone, setPhone] = useState(store?.settings?.phone || '');
+
   const handlePay = async () => {
     const ref = payForm.reference?.trim();
     const amt = Number(payForm.amount);
+    
+    if (payForm.method === 'M-Pesa STK Push') {
+      if (!phone) { notify('Enter a valid phone number', 'warning'); return; }
+      if (!amt || amt <= 0) { notify('Enter a valid amount', 'warning'); return; }
+      
+      try {
+        const { supabase } = await import('../../lib/supabaseClient');
+        const { error } = await supabase.functions.invoke('mpesa-stk', {
+          body: { phone, amount: amt, invoiceId: null } // We don't have invoiceId in this simplified view yet
+        });
+        
+        if (error) throw error;
+        
+        setPayModal(false);
+        setPayForm({ reference: '', method: 'M-Pesa STK Push', amount: '' });
+        notify('Check your phone for the M-Pesa PIN prompt. The system will update automatically.', 'success', 'Payment Initiated');
+      } catch (e) {
+        notify(`Payment error: ${e.message}`, 'error', 'Payment');
+      }
+      return;
+    }
+
     if (!ref) { notify('Enter a valid reference code', 'warning'); return; }
     if (!amt || amt <= 0) { notify('Enter a valid amount', 'warning'); return; }
     
@@ -58,7 +82,7 @@ export default function StudentFinanceTab() {
       await upsertRow('financePayments', newPayment);
       setPayments(prev => [newPayment, ...prev]);
       setPayModal(false);
-      setPayForm({ reference: '', method: 'M-Pesa', amount: '' });
+      setPayForm({ reference: '', method: 'M-Pesa STK Push', amount: '' });
       notify(`Payment of KES ${amt} submitted for verification`, 'success', 'Payment');
     } catch (e) {
       notify(`Payment error: ${e.message}`, 'error', 'Payment');
@@ -118,7 +142,7 @@ export default function StudentFinanceTab() {
                   <td style={{ textAlign: 'right' }}>
                     {p.status === 'Verified' && (
                       <button className="btn btn-sm" onClick={() => printReceipt(p, me, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
-                        ðŸ–¨ï¸ Print Receipt
+                        🖨️ Print Receipt
                       </button>
                     )}
                   </td>
@@ -135,19 +159,16 @@ export default function StudentFinanceTab() {
           <button className="btn btn-primary" onClick={handlePay}>Submit Payment</button>
         }>
           <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginBottom: 16, fontSize: 14, lineHeight: 1.5, color: '#334155', border: '1px solid #cbd5e1' }}>
-            <strong style={{ display: 'block', marginBottom: 8, color: '#0f172a' }}>Payment Instructions:</strong>
-            1. Go to M-Pesa Menu &gt; Lipa na M-Pesa &gt; Paybill.<br/>
-            2. Enter Business Number: <strong>123456</strong><br/>
-            3. Enter Account Number: <strong>{me.adm}</strong><br/>
-            4. Enter the amount you wish to pay.<br/>
-            5. Enter your M-Pesa PIN and confirm.<br/>
-            6. Wait for the confirmation SMS and enter the M-Pesa Reference Code below.
+            <strong style={{ display: 'block', marginBottom: 8, color: '#0f172a' }}>Direct M-Pesa Payment</strong>
+            By selecting <strong>M-Pesa STK Push</strong>, you will receive a prompt on your phone to enter your M-Pesa PIN. The payment will be automatically verified and credited to your account.
           </div>
           <div className="grid grid-2" style={{ marginBottom: 12 }}>
             <div>
               <label className="field-label">Payment Method</label>
               <select className="select" value={payForm.method} onChange={e => setPayForm({ ...payForm, method: e.target.value })}>
-                <option>M-Pesa</option><option>Bank Transfer</option>
+                <option>M-Pesa STK Push</option>
+                <option>Manual M-Pesa Entry</option>
+                <option>Bank Transfer</option>
               </select>
             </div>
             <div>
@@ -155,15 +176,24 @@ export default function StudentFinanceTab() {
               <input className="input" type="number" placeholder="e.g. 5000" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} />
             </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label className="field-label">Transaction Reference Code</label>
-            <input className="input" placeholder="e.g. QKZ1B2C3D4" value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} />
-          </div>
+          
+          {payForm.method === 'M-Pesa STK Push' ? (
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">M-Pesa Phone Number</label>
+              <input className="input" placeholder="e.g. 07XXXXXXXX" value={phone} onChange={e => setPhone(e.target.value)} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>The phone number that will receive the PIN prompt.</div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 12 }}>
+              <label className="field-label">Transaction Reference Code</label>
+              <input className="input" placeholder="e.g. QKZ1B2C3D4" value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Enter the reference code you received after making the payment manually.</div>
+            </div>
+          )}
         </Modal>
       )}
     </>
   );
+}>
+  );
 }
-
-
-
