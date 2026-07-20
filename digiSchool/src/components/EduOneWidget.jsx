@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
 
@@ -94,10 +94,10 @@ export default function EduOneWidget({ user, notify, settings, store }) {
       // Geofence check: if school coordinates are configured AND we got a location
       if (lat && lng && _settings?.latitude && _settings?.longitude) {
         const R = 6371e3;
-        const Ï†1 = lat * Math.PI / 180, Ï†2 = _settings.latitude * Math.PI / 180;
-        const Î”Ï† = (_settings.latitude - lat) * Math.PI / 180;
-        const Î”Î» = (_settings.longitude - lng) * Math.PI / 180;
-        const a = Math.sin(Î”Ï†/2)**2 + Math.cos(Ï†1) * Math.cos(Ï†2) * Math.sin(Î”Î»/2)**2;
+        const phi1 = lat * Math.PI / 180, phi2 = _settings.latitude * Math.PI / 180;
+        const deltaPhi = (_settings.latitude - lat) * Math.PI / 180;
+        const deltaLambda = (_settings.longitude - lng) * Math.PI / 180;
+        const a = Math.sin(deltaPhi/2)**2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda/2)**2;
         const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const radius = _settings.geofenceRadius || 50;
         if (dist > radius) {
