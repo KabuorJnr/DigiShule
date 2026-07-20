@@ -194,6 +194,4 @@ export default function StudentFinanceTab() {
       )}
     </>
   );
-}>
-  );
 }
