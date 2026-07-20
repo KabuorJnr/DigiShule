@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import '../../App.css';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
@@ -267,7 +267,10 @@ export default function PortalLayout() {
       localStorage.setItem('eduone_school_id', sid);
     }
     setCurrentUser(profile);
-    setView(ROLES[profile.role]?.home || 'overview');
+    const newHome = ROLES[profile.role]?.home || 'overview';
+    setView(newHome);
+    // Explicitly navigate so the URL updates and triggers the correct layout
+    navigateRouter(`/portal/${newHome}`);
     if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
     await loadAllData();
   }, [loadAllData, notify]);
