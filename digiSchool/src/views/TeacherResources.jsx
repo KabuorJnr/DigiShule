@@ -178,7 +178,7 @@ export default function TeacherResources({ store, user }) {
                   <td className="muted">{f.target_class}</td>
                   {tab === 'assignments' && (
                     <td style={{ color: f.due_date && new Date(f.due_date) < new Date() ? '#D13438' : '#107C10', fontWeight: 600, fontSize: 12 }}>
-                      {f.due_date || 'â€”'}
+                      {f.due_date || '-'}
                     </td>
                   )}
                   <td className="muted">{f.uploaded_by}</td>
@@ -265,7 +265,7 @@ export default function TeacherResources({ store, user }) {
             </div>
             {uploading && (
               <div style={{ background: '#e8f0fe', borderRadius: 6, padding: 10, fontSize: 13, color: '#0078D4', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Loader size={14} /> Uploading to Supabase Storage â€” please waitâ€¦
+                <Loader size={14} /> Uploading to Supabase Storage - please waitâ€¦
               </div>
             )}
           </div>

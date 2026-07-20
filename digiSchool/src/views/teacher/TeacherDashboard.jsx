@@ -112,7 +112,7 @@ export default function TeacherDashboard() {
       <div style={{ background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)', color: '#fff', borderRadius: 12, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>Welcome, {teacherName}</div>
-          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{displaySubject} Teacher â€” {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
+          <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>{displaySubject} Teacher - {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}</div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 18px', textAlign: 'center' }}>
           <div style={{ fontSize: 22, fontWeight: 800 }}>{avgOverall}%</div>

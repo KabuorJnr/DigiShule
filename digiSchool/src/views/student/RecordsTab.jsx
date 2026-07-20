@@ -98,7 +98,7 @@ export default function RecordsTab() {
                       <td style={{ fontWeight: 600 }}>{v.date}</td>
                       <td>{v.complaint}</td>
                       <td>{v.treatment}</td>
-                      <td className="muted">{v.notes || 'â€”'}</td>
+                      <td className="muted">{v.notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

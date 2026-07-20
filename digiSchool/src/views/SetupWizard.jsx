@@ -100,7 +100,7 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step â†’</button>
+                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step \u2192</button>
               </div>
             </div>
           )}
@@ -139,7 +139,7 @@ export default function SetupWizard({ onComplete }) {
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
                 <button type="button" className="btn" onClick={() => setStep(1)}>â† Back</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Initializing System...' : 'Complete Setup âœ“'}
+                  {saving ? 'Initializing System...' : 'Complete Setup ✓'}
                 </button>
               </div>
             </div>

@@ -67,7 +67,7 @@ export default function FinanceLayout() {
     });
   }, []);
 
-  // Audit log helper â€” passed to child tabs via context
+  // Audit log helper - passed to child tabs via context
   const addAuditLog = useCallback((action, details, amount) => {
     const log = {
       id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,

@@ -96,7 +96,7 @@ export default function AcademicsTab() {
                   return (
                     <tr key={r.subject}>
                       <td style={{ fontWeight: 600 }}>{r.subject}</td>
-                      <td className="muted">{teacher?.name || 'â€”'}</td>
+                      <td className="muted">{teacher?.name || '-'}</td>
                       <td>{r.cat1}</td><td>{r.cat2}</td><td>{r.midterm}</td><td>{r.endterm}</td>
                       <td style={{ fontWeight: 700 }}>{r.average}</td>
                       <td><Badge color={r.grade === 'A' ? 'green' : r.grade === 'E' ? 'red' : r.grade === 'D' ? 'amber' : 'blue'}>{r.grade}</Badge></td>

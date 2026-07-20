@@ -62,7 +62,7 @@ export default function AcademicsDashboard({ store, user }) {
     exportTablePDF({
       school: settings,
       title: 'Class Performance Summary',
-      subtitle: `Term 2 Â· Academic Year 2026`,
+      subtitle: `Term 2 · Academic Year 2026`,
       head, body,
       filename: 'Class_Performance_Summary.pdf'
     });
@@ -106,7 +106,7 @@ export default function AcademicsDashboard({ store, user }) {
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 4 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>Term 2 Â· Academic Year 2026</div>
+          <div>Term 2 · Academic Year 2026</div>
         </div>
       </div>
 

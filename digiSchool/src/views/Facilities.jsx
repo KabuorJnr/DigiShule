@@ -85,9 +85,9 @@ export default function Facilities({ store }) {
                 <tr key={f.id}>
                   <td style={{ fontWeight: 600 }}>{f.name}</td>
                   <td>{f.type}</td>
-                  <td>{f.capacity || 'â€”'}</td>
+                  <td>{f.capacity || '-'}</td>
                   <td><Badge color={STATUS_COLOR[f.status] || 'gray'}>{f.status}</Badge></td>
-                  <td className="muted">{f.note || 'â€”'}</td>
+                  <td className="muted">{f.note || '-'}</td>
                   <td><button className="btn btn-sm" onClick={() => cycleStatus(f.id)}>Change Status</button></td>
                 </tr>
               ))}

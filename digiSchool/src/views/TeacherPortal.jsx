@@ -295,7 +295,7 @@ export default function TeacherPortal({ store, user }) {
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>Welcome, {teacherName}</div>
           <div style={{ opacity: 0.85, fontSize: 14, marginTop: 4 }}>
-            {subject} Teacher Â· {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}
+            {subject} Teacher · {classes.length} class{classes.length !== 1 ? 'es' : ''}: {classes.join(', ')}
           </div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 18px', textAlign: 'center' }}>
@@ -402,7 +402,7 @@ export default function TeacherPortal({ store, user }) {
       {/* Gradebook Table */}
       <div className="card card-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div className="section-title" style={{ margin: 0 }}>{subject} â€” Student Results</div>
+          <div className="section-title" style={{ margin: 0 }}>{subject} - Student Results</div>
           {topPerformer && (
             <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
               Top: {topPerformer.name} ({topPerformer.average}%)
@@ -458,7 +458,7 @@ export default function TeacherPortal({ store, user }) {
           <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)} />
           <div className="modal" style={{ maxWidth: 800 }}>
             <div className="modal-header">
-              <h3>{assignedClass} â€” Class List</h3>
+              <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print / Save PDF</button>
                 <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
@@ -467,7 +467,7 @@ export default function TeacherPortal({ store, user }) {
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
               <PrintHeader settings={store.settings} />
               <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
-                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List â€” {assignedClass}</h2>
+                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List - {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
               </div>
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>

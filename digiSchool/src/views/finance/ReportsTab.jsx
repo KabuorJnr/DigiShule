@@ -95,8 +95,8 @@ export default function ReportsTab() {
       buckets[bucket].amount += data.amount;
       buckets[bucket].students.push({
         name: student?.name || studentId,
-        adm_no: student?.adm_no || 'â€”',
-        class: student?.class || 'â€”',
+        adm_no: student?.adm_no || '-',
+        class: student?.class || '-',
         balance: data.amount,
         daysOverdue
       });
@@ -202,7 +202,7 @@ export default function ReportsTab() {
         <div className="grid grid-2" style={{ gap: 24 }}>
           {/* Aging Chart */}
           <div className="card card-pad">
-            <div className="section-title">Outstanding Fees â€” Aging Analysis</div>
+            <div className="section-title">Outstanding Fees - Aging Analysis</div>
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={agingChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -250,7 +250,7 @@ export default function ReportsTab() {
                       {fmtKES(data.amount)}
                     </td>
                     <td style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-                      {data.count > 0 ? 'â†’' : ''}
+                      {data.count > 0 ? '\u2192' : ''}
                     </td>
                   </tr>
                 ))}

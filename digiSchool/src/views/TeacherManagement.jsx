@@ -76,7 +76,7 @@ function StatusPill({ status }) {
       background: assigned ? '#dcfce7' : '#f1f5f9',
       color: assigned ? '#166534' : '#475569'
     }}>
-      {assigned ? 'âœ“ Assigned' : 'â—‹ Unassigned'}
+      {assigned ? '✓ Assigned' : 'â—‹ Unassigned'}
     </span>
   );
 }
@@ -606,7 +606,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#1e3a5f' }}>{teacher.name}</div>
                       <div style={{ fontSize: 12, color: '#64748b' }}>
-                        {teacher.emp_id || 'No ID'} Â· {teacher.phone || 'No phone'}
+                        {teacher.emp_id || 'No ID'} · {teacher.phone || 'No phone'}
                       </div>
                       {teacher.department && (
                         <div style={{ fontSize: 11, color: '#047857', fontWeight: 600, marginTop: 2 }}>{teacher.department}</div>
@@ -639,7 +639,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {assigns.slice(0, 3).map((a, i) => (
                           <div key={i} style={{ fontSize: 12, color: '#334155' }}>
-                            {a.class_name}{a.stream_name ? ` ${a.stream_name}` : ''} â€” {a.subject_name}
+                            {a.class_name}{a.stream_name ? ` ${a.stream_name}` : ''} - {a.subject_name}
                           </div>
                         ))}
                         {assigns.length > 3 && <div style={{ fontSize: 11, color: '#94a3b8' }}>+{assigns.length - 3} more</div>}
@@ -724,7 +724,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>GRADE</div><div style={{ fontSize: 18, fontWeight: 700 }}>{selectedClass}</div></div>
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>STREAM</div><div style={{ fontSize: 18, fontWeight: 700 }}>{selectedStream || 'All'}</div></div>
                 <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>SUBJECTS</div><div style={{ fontSize: 18, fontWeight: 700 }}>{totalSubjects}</div></div>
-                <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>ASSIGNED</div><div style={{ fontSize: 18, fontWeight: 700 }}>{assignedCount}/{totalSubjects} â€” {assignPct}%</div></div>
+                <div><div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>ASSIGNED</div><div style={{ fontSize: 18, fontWeight: 700 }}>{assignedCount}/{totalSubjects} - {assignPct}%</div></div>
               </div>
 
               {/* Quick Actions */}
@@ -775,7 +775,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           </div>
                           <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748b' }}>
                             <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{subj.code}</span>
-                            <span>Â·</span>
+                            <span>·</span>
                             <span>{assignment.periods_per_week || 5} periods/week</span>
                           </div>
                         </div>
@@ -791,11 +791,11 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           onChange={e => handleAssignTeacher(assignment.id, e.target.value)}
                           style={{ width: '100%' }}
                         >
-                          <option value="">â€” Select Teacher â€”</option>
+                          <option value="">- Select Teacher -</option>
                           {qualifiedForSubject.length > 0 ? (
                             qualifiedForSubject.map(t => (
                               <option key={t.id} value={t.id}>
-                                {t.name} ({t.emp_id || 'N/A'}) â€” {t.department || 'General'} | Workload: {teacherWorkloads[t.id] || 0}/40
+                                {t.name} ({t.emp_id || 'N/A'}) - {t.department || 'General'} | Workload: {teacherWorkloads[t.id] || 0}/40
                               </option>
                             ))
                           ) : (
@@ -811,13 +811,13 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       {/* Qualified teachers line */}
                       {qualifiedForSubject.length > 0 && (
                         <div style={{ fontSize: 11, color: '#047857', fontWeight: 500 }}>
-                          âœ“ Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
+                          ✓ Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
                           {qualifiedForSubject.length > 3 && ` +${qualifiedForSubject.length - 3} more`}
                         </div>
                       )}
                       {qualifiedForSubject.length === 0 && (
                         <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>
-                          âš  No qualified teachers â€” showing all teachers. Add qualifications first.
+                          âš  No qualified teachers - showing all teachers. Add qualifications first.
                         </div>
                       )}
                     </div>
@@ -846,7 +846,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 <select className="select" style={{ width: '100%' }} value={qualTeacher} onChange={e => setQualTeacher(e.target.value)}>
                   <option value="">Choose a teacher...</option>
                   {activeTeachers.map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.emp_id || t.id}) â€” {t.department || 'General'}</option>
+                    <option key={t.id} value={t.id}>{t.name} ({t.emp_id || t.id}) - {t.department || 'General'}</option>
                   ))}
                 </select>
               </div>
@@ -857,7 +857,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 {/* Current qualifications */}
                 <div style={{ marginBottom: 20 }}>
                   <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
-                    Current Qualifications â€” {teachers.find(t => t.id === qualTeacher)?.name}
+                    Current Qualifications - {teachers.find(t => t.id === qualTeacher)?.name}
                   </h3>
                   {selectedTeacherQuals.length === 0 ? (
                     <div className="muted" style={{ fontSize: 13, padding: 16, background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
@@ -900,7 +900,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       }}>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 13 }}>{subj.name}</div>
-                          <div style={{ fontSize: 11, color: '#64748b' }}>{subj.code} Â· {subj.department}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{subj.code} · {subj.department}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button className="btn btn-sm" onClick={() => handleAddQualification(subj.id, 'qualified')}

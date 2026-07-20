@@ -90,7 +90,7 @@ export default function MyClasses() {
         <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)}>
           <div className="modal" style={{ maxWidth: 800 }}>
             <div className="modal-header">
-              <h3>{assignedClass} â€” Class List</h3>
+              <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print PDF</button>
                 <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>âœ•</button>
@@ -99,7 +99,7 @@ export default function MyClasses() {
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
               <PrintHeader settings={store.settings} />
               <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
-                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List â€” {assignedClass}</h2>
+                <h2 style={{ margin: '0 0 4px 0', color: '#475569' }}>Official Class List - {assignedClass}</h2>
                 <div className="muted" style={{ fontSize: 13 }}>Class Teacher: {teacherName}</div>
               </div>
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>

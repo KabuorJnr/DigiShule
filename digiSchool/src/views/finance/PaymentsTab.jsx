@@ -104,7 +104,7 @@ export default function PaymentsTab() {
       student_id: form.student_id,
       amount: Number(form.amount),
       method: form.method,
-      ref: form.ref || 'â€”',
+      ref: form.ref || '-',
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
@@ -159,7 +159,7 @@ export default function PaymentsTab() {
           <Link2 size={18} style={{ color: '#047857' }} />
           <span style={{ fontSize: 13 }}>
             <strong>{unmatchedCount}</strong> payment{unmatchedCount !== 1 ? 's' : ''} unmatched to invoices
-            {partialInvoices > 0 && <> Â· <strong>{partialInvoices}</strong> invoice{partialInvoices !== 1 ? 's' : ''} partially paid</>}
+            {partialInvoices > 0 && <> · <strong>{partialInvoices}</strong> invoice{partialInvoices !== 1 ? 's' : ''} partially paid</>}
           </span>
         </div>
       )}
@@ -236,7 +236,7 @@ export default function PaymentsTab() {
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
             <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next \u2192</button>
           </div>
         )}
       </div>
@@ -259,10 +259,10 @@ export default function PaymentsTab() {
             <div>
               <label className="field-label">Link to Invoice (optional)</label>
               <select className="select" value={form.invoice_id} onChange={e => setForm(f => ({ ...f, invoice_id: e.target.value }))}>
-                <option value="">â€” No invoice (unmatched) â€”</option>
+                <option value="">- No invoice (unmatched) -</option>
                 {studentInvoices.map(inv => (
                   <option key={inv.id} value={inv.id}>
-                    {inv.id} â€” {fmtKES(inv.amount)} (due {inv.due_date})
+                    {inv.id} - {fmtKES(inv.amount)} (due {inv.due_date})
                   </option>
                 ))}
               </select>

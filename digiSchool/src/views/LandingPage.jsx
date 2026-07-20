@@ -8,7 +8,7 @@ export default function LandingPage() {
   const [feeTab, setFeeTab] = useState('pro');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeCell, setActiveCell] = useState(-1);
-  const [ttNow, setTtNow] = useState('â€”');
+  const [ttNow, setTtNow] = useState('-');
   const [ttLabel, setTtLabel] = useState('System active');
 
   const contactPhone = "+254 701 402265";
@@ -44,14 +44,14 @@ export default function LandingPage() {
       const targetIndex = (randomPeriod + 1) * rowOffset + (randomDay + 1);
       
       setActiveCell(targetIndex);
-      setTtNow(days[randomDay] + ' Â· ' + periods[randomPeriod].t);
-      setTtLabel(periods[randomPeriod].subs[randomDay] + ' â€” syncing live');
+      setTtNow(days[randomDay] + ' · ' + periods[randomPeriod].t);
+      setTtLabel(periods[randomPeriod].subs[randomDay] + ' - syncing live');
     }, 3000);
     
     // Initial set
     setActiveCell(13);
-    setTtNow('ACADEMIC Â· Module 2');
-    setTtLabel('Assessments â€” syncing live');
+    setTtNow('ACADEMIC · Module 2');
+    setTtLabel('Assessments - syncing live');
 
     return () => clearInterval(interval);
   }, []);
@@ -60,7 +60,7 @@ export default function LandingPage() {
     e.preventDefault();
     const input = e.target.querySelector('input');
     if(input) {
-      input.value = 'Subscribed âœ“';
+      input.value = 'Subscribed ✓';
       input.disabled = true;
     }
   };
@@ -98,8 +98,8 @@ export default function LandingPage() {
         <div className="announce" id="announceBar">
           <div className="wrap announce-inner">
             <span className="badge">SPECIAL</span>
-            <span>Transform your school administration today â€” get a 14-day zero-risk trial.</span>
-            <a href="#enroll" className="link">Claim your trial â†’</a>
+            <span>Transform your school administration today - get a 14-day zero-risk trial.</span>
+            <a href="#enroll" className="link">Claim your trial \u2192</a>
             <button className="close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">âœ•</button>
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function LandingPage() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div>
-              <div className="eyebrow">B2B SaaS Â· Offline-First Â· CBC Compliant</div>
+              <div className="eyebrow">B2B SaaS · Offline-First · CBC Compliant</div>
               <h1>Run your entire school<br />like a <em>masterpiece.</em></h1>
-              <p className="lede">Ditch the spreadsheets and paper trails. EduOne is the all-in-one system that automates fee collection, simplifies CBC grading, and keeps parents engagedâ€”even when your internet is down.</p>
+              <p className="lede">Ditch the spreadsheets and paper trails. EduOne is the all-in-one system that automates fee collection, simplifies CBC grading, and keeps parents engaged-even when your internet is down.</p>
               <div className="hero-actions">
                 <button onClick={() => navigate('/signup')} className="btn btn-primary">Start your 14-Day Free Trial</button>
                 <a href="#why" className="btn btn-ghost">Explore Features</a>
@@ -435,7 +435,7 @@ export default function LandingPage() {
           </div>
           <div className="foot-bottom">
             <span>Â© 2026 EduOne SaaS. All rights reserved.</span>
-            <span>Offline-First Â· CBC Compliant Â· Secure</span>
+            <span>Offline-First · CBC Compliant · Secure</span>
           </div>
         </div>
       </footer>

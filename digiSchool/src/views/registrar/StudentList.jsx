@@ -96,7 +96,7 @@ export default function StudentList() {
   };
 
   const exportCSV = () => {
-    const rows = [['Adm No.', 'Name', 'Class', 'Gender'], ...filtered.map(s => [s.adm, s.name, s.class, s.gender || 'â€”'])];
+    const rows = [['Adm No.', 'Name', 'Class', 'Gender'], ...filtered.map(s => [s.adm, s.name, s.class, s.gender || '-'])];
     const csv = rows.map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -108,7 +108,7 @@ export default function StudentList() {
   const exportContactsCSV = () => {
     const rows = [
       ['Adm No.', 'Student Name', 'Class', 'Guardian Name', 'Guardian Phone', 'Guardian Email'],
-      ...filtered.map(s => [s.adm, s.name, s.class, s.guardianName || 'â€”', s.guardianPhone || 'â€”', s.guardianEmail || 'â€”']),
+      ...filtered.map(s => [s.adm, s.name, s.class, s.guardianName || '-', s.guardianPhone || '-', s.guardianEmail || '-']),
     ];
     const csv = rows.map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
@@ -218,7 +218,7 @@ export default function StudentList() {
                     <tr key={s.id}>
                       <td className="muted">{s.adm}</td>
                       <td style={{ fontWeight: 600 }}>{s.name}</td>
-                      <td>{s.gender || 'â€”'}</td>
+                      <td>{s.gender || '-'}</td>
                       <td>
                         <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, color: '#334155', fontWeight: 600, letterSpacing: 1 }}>
                           {s.parent_pin || 'Pending'}
@@ -344,10 +344,10 @@ export default function StudentList() {
               </div>
             </div>
             <div className="grid grid-2">
-              <div><label className="field-label">Gender</label><div className="font-semibold">{selectedStudent.gender || 'â€”'}</div></div>
-              <div><label className="field-label">Date of Birth</label><div className="font-semibold">{selectedStudent.dob || 'â€”'}</div></div>
-              <div><label className="field-label">Parent/Guardian</label><div className="font-semibold">{selectedStudent.guardianName || 'â€”'}</div></div>
-              <div><label className="field-label">Contact Phone</label><div className="font-semibold">{selectedStudent.guardianPhone || 'â€”'}</div></div>
+              <div><label className="field-label">Gender</label><div className="font-semibold">{selectedStudent.gender || '-'}</div></div>
+              <div><label className="field-label">Date of Birth</label><div className="font-semibold">{selectedStudent.dob || '-'}</div></div>
+              <div><label className="field-label">Parent/Guardian</label><div className="font-semibold">{selectedStudent.guardianName || '-'}</div></div>
+              <div><label className="field-label">Contact Phone</label><div className="font-semibold">{selectedStudent.guardianPhone || '-'}</div></div>
             </div>
           </div>
         </Modal>

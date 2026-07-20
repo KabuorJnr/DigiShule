@@ -126,7 +126,7 @@ export default function ExpensesTab() {
     );
     setExpenses(updated);
     notify(`Expense "${expense.description}" rejected.`, 'info');
-    addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} â€” Reason: ${rejectReason}`, expense.amount);
+    addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} - Reason: ${rejectReason}`, expense.amount);
     setRejectModalOpen(null);
     setRejectReason('');
 
@@ -226,7 +226,7 @@ export default function ExpensesTab() {
                   <td>
                     <div>{e.description}</div>
                     {e.status === 'Approved' && e.approved_by && (
-                      <div className="muted" style={{ fontSize: 11 }}>Approved by {e.approved_by} on {e.approved_at ? new Date(e.approved_at).toLocaleDateString() : 'â€”'}</div>
+                      <div className="muted" style={{ fontSize: 11 }}>Approved by {e.approved_by} on {e.approved_at ? new Date(e.approved_at).toLocaleDateString() : '-'}</div>
                     )}
                     {e.status === 'Rejected' && e.rejection_reason && (
                       <div style={{ fontSize: 11, color: '#EF4444' }}>Rejected: {e.rejection_reason}</div>
@@ -262,7 +262,7 @@ export default function ExpensesTab() {
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
             <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next \u2192</button>
           </div>
         )}
       </div>

@@ -126,7 +126,7 @@ export default function ParentDashboard() {
   const presentCount = attendance.filter(a => a.status === 'Present' || a.status === 'present').length;
   const absentCount = attendance.filter(a => a.status === 'Absent' || a.status === 'absent').length;
   const lateCount = attendance.filter(a => a.status === 'Late' || a.status === 'late').length;
-  const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : 'â€”';
+  const attendanceRate = totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(0) : '-';
 
   const unresolvedDisc = disciplinary.filter(d => d.status !== 'Resolved');
   const parentNotices = (notifications || []).filter(n => 
@@ -328,7 +328,7 @@ export default function ParentDashboard() {
         {/* KPI Summary Cards */}
         <div className="stat-tiles">
           <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#047857" />
-          <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== 'â€”' ? `${attendanceRate}%` : 'â€”'} accent={Number(attendanceRate) >= 80 ? '#047857' : '#F59E0B'} />
+          <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== '-' ? `${attendanceRate}%` : '-'} accent={Number(attendanceRate) >= 80 ? '#047857' : '#F59E0B'} />
           <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(outstanding)} accent={outstanding > 0 ? '#D13438' : '#107C10'}>
             <div style={{ marginTop: 6 }}><ProgressBar value={feePercent} color="#107C10" /></div>
           </KpiCard>
@@ -378,7 +378,7 @@ export default function ParentDashboard() {
 
           {/* Fee Summary */}
           <div className="card card-pad">
-            <h3 className="section-title">Fee Summary â€” Term 2</h3>
+            <h3 className="section-title">Fee Summary - Term 2</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div style={{ background: '#f0fdf4', padding: 12, borderRadius: 8, textAlign: 'center' }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{fmtKES(totalPaid)}</div>
@@ -448,7 +448,7 @@ export default function ParentDashboard() {
               parentNotices.slice(0, 4).map(n => (
                 <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} â€” {n.posted_by || 'Admin'} ({n.role || 'School Office'})</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} - {n.posted_by || 'Admin'} ({n.role || 'School Office'})</div>
                 </div>
               ))
             )}
@@ -492,7 +492,7 @@ export default function ParentDashboard() {
   if (activeTab === 'attendance') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Attendance Records â€” {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Attendance Records - {child.name}</h2>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
           <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, textAlign: 'center', border: '1px solid #e2e8f0' }}>
@@ -529,7 +529,7 @@ export default function ParentDashboard() {
                         {a.status}
                       </Badge>
                     </td>
-                    <td className="muted">{a.notes || 'â€”'}</td>
+                    <td className="muted">{a.notes || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -638,7 +638,7 @@ export default function ParentDashboard() {
   if (activeTab === 'health') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records â€” {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Health Records - {child.name}</h2>
         
         {child.medicalInfo && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 16, borderRadius: 8, marginBottom: 20 }}>
@@ -660,9 +660,9 @@ export default function ParentDashboard() {
                 {healthRecords.map((h, i) => (
                   <tr key={h.id || i}>
                     <td>{h.date || (h.created_at || '').slice(0, 10)}</td>
-                    <td>{h.complaint || h.symptoms || 'â€”'}</td>
-                    <td>{h.diagnosis || 'â€”'}</td>
-                    <td>{h.treatment || h.action_taken || 'â€”'}</td>
+                    <td>{h.complaint || h.symptoms || '-'}</td>
+                    <td>{h.diagnosis || '-'}</td>
+                    <td>{h.treatment || h.action_taken || '-'}</td>
                     <td><Badge color={h.status === 'Resolved' ? 'green' : 'amber'}>{h.status || 'Visited'}</Badge></td>
                   </tr>
                 ))}
@@ -718,7 +718,7 @@ export default function ParentDashboard() {
   if (activeTab === 'disciplinary') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Disciplinary Records â€” {child.name}</h2>
+        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Disciplinary Records - {child.name}</h2>
         
         {unresolvedDisc.length > 0 && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '14px 18px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -742,8 +742,8 @@ export default function ParentDashboard() {
                 {disciplinary.map((d, i) => (
                   <tr key={d.id || i}>
                     <td>{d.date || (d.created_at || '').slice(0, 10)}</td>
-                    <td>{d.incident || d.offense || 'â€”'}</td>
-                    <td>{d.action_taken || d.punishment || 'â€”'}</td>
+                    <td>{d.incident || d.offense || '-'}</td>
+                    <td>{d.action_taken || d.punishment || '-'}</td>
                     <td><Badge color={d.status === 'Resolved' ? 'green' : 'red'}>{d.status || 'Open'}</Badge></td>
                   </tr>
                 ))}

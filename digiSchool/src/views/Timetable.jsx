@@ -261,7 +261,7 @@ export default function Timetable({ store, user }) {
 
     exportTablePDF({
       school: settings,
-      title: tab === 'teacher' ? `Teacher Timetable â€” ${teacherSel}` : `Class Timetable â€” Grade ${cls}`,
+      title: tab === 'teacher' ? `Teacher Timetable - ${teacherSel}` : `Class Timetable - Grade ${cls}`,
       subtitle: `${term} â€¢ Generated ${new Date().toLocaleDateString()}`,
       head,
       body,
@@ -398,7 +398,7 @@ export default function Timetable({ store, user }) {
               </div>
             </div>
 
-            <label className="field-label">Subject â€” Teacher Assignments</label>
+            <label className="field-label">Subject - Teacher Assignments</label>
             <div className="scroll-x" style={{ border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>
               <table className="table" style={{ margin: 0 }}>
                 <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
@@ -520,7 +520,7 @@ export default function Timetable({ store, user }) {
                             <div className="tt-cell-sub">{cell.subject}</div>
                             <div className="tt-cell-teacher">Grade {cell.cls}</div>
                           </td>
-                        ) : <td key={d} className="tt-empty">â€”</td>
+                        ) : <td key={d} className="tt-empty">-</td>
                       ))}
                     </tr>
                   ))}

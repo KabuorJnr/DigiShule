@@ -59,7 +59,7 @@ export default function PublicApplication({ onBack }) {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 20 }}>
         <div className="card card-pad" style={{ maxWidth: 500, textAlign: 'center', padding: '40px 20px' }}>
           <div style={{ width: 80, height: 80, background: '#d1fae5', color: '#047857', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 40 }}>
-            âœ“
+            ✓
           </div>
           <h2>Application Received!</h2>
           <p className="muted" style={{ fontSize: 16, lineHeight: 1.6, marginBottom: 30 }}>
@@ -133,7 +133,7 @@ export default function PublicApplication({ onBack }) {
                   <textarea className="input" placeholder="List any allergies, ongoing conditions, or medical history the school nurse should know about..." value={form.medicalInfo} onChange={e => setForm({...form, medicalInfo: e.target.value})} rows={3}></textarea>
                 </div>
                 <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 30px', fontSize: 16 }}>Next: Parent Details â†’</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 30px', fontSize: 16 }}>Next: Parent Details \u2192</button>
                 </div>
               </div>
             )}
@@ -162,7 +162,7 @@ export default function PublicApplication({ onBack }) {
                 <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
                   <button type="button" className="btn" onClick={() => setStep(1)} style={{ padding: '12px 30px', fontSize: 16 }}>â† Back</button>
                   <button type="submit" className="btn btn-primary" disabled={submitting} style={{ padding: '12px 30px', fontSize: 16, background: '#047857', borderColor: '#047857' }}>
-                    {submitting ? 'Submitting...' : 'Submit Application âœ“'}
+                    {submitting ? 'Submitting...' : 'Submit Application ✓'}
                   </button>
                 </div>
               </div>

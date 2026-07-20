@@ -203,7 +203,7 @@ export default function LogAttendance() {
 
   return (
     <>
-      <PageHeader title="Staff Management" subtitle={`Today â€” ${new Date().toDateString()}`} />
+      <PageHeader title="Staff Management" subtitle={`Today - ${new Date().toDateString()}`} />
       
       <div className="stat-tiles">
         <KpiCard iconComponent={<Icon name="users" size={24} />} label="Total Staff" value={totals.total} />
@@ -284,7 +284,7 @@ export default function LogAttendance() {
         }>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#0078D4', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700 }}>{selectedStaff.name.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-            <div><h2 style={{ margin: '0 0 4px' }}>{selectedStaff.name}</h2><div style={{ color: '#64748b', fontSize: 14 }}>{selectedStaff.role} Â· {selectedStaff.dept}</div><div style={{ marginTop: 6 }}><Badge color={STATUS_COLOR[selectedStaff.status]}>{selectedStaff.status}</Badge></div></div>
+            <div><h2 style={{ margin: '0 0 4px' }}>{selectedStaff.name}</h2><div style={{ color: '#64748b', fontSize: 14 }}>{selectedStaff.role} · {selectedStaff.dept}</div><div style={{ marginTop: 6 }}><Badge color={STATUS_COLOR[selectedStaff.status]}>{selectedStaff.status}</Badge></div></div>
           </div>
         </Modal>
       )}

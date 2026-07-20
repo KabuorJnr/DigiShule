@@ -97,7 +97,7 @@ export default function StudentDashboard() {
           {(notifications || []).filter(n => (n.audience || []).includes('all') || (n.audience || []).includes('students')).slice(0, 3).map(n => (
             <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontWeight: 600, fontSize: 13 }}>{n.title}</div>
-              <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} â€” {n.posted_by || 'Admin'} ({n.role || 'Staff'})</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{(n.created_at || '').slice(0, 10)} - {n.posted_by || 'Admin'} ({n.role || 'Staff'})</div>
             </div>
           ))}
           {(notifications || []).length === 0 && <div className="muted" style={{ padding: 20, textAlign: 'center' }}>No recent notices.</div>}

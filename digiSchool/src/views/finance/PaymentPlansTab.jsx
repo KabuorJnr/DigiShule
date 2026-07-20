@@ -199,8 +199,8 @@ export default function PaymentPlansTab() {
                     </td>
                     <td>
                       {plan.nextDue
-                        ? <span style={{ fontSize: 13 }}>{plan.nextDue.due_date} â€” {fmtKES(plan.nextDue.amount)}</span>
-                        : <span className="muted">â€”</span>
+                        ? <span style={{ fontSize: 13 }}>{plan.nextDue.due_date} - {fmtKES(plan.nextDue.amount)}</span>
+                        : <span className="muted">-</span>
                       }
                     </td>
                     <td>{getStatusBadge(plan)}</td>

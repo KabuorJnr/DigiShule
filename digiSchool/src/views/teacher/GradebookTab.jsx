@@ -63,7 +63,7 @@ export default function GradebookTab() {
   return (
     <div className="card card-pad">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div className="section-title" style={{ margin: 0 }}>{subject} â€” Student Results</div>
+        <div className="section-title" style={{ margin: 0 }}>{subject} - Student Results</div>
         {topPerformer && (
           <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
             Top: {topPerformer.name} ({topPerformer.average}%)

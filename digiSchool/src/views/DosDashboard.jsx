@@ -156,7 +156,7 @@ export default function DosDashboard({ store, user }) {
         </div>
         <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 4 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div>Term 2 Â· Academic Year 2026</div>
+          <div>Term 2 · Academic Year 2026</div>
         </div>
       </div>
 

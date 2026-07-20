@@ -1,4 +1,4 @@
-﻿// Central icon mapping â€” replaces all emojis with professional Lucide SVG icons.
+﻿// Central icon mapping - replaces all emojis with professional Lucide SVG icons.
 // Usage: import { Icon } from '../components/icons';  then <Icon name="dashboard" />
 
 import {
@@ -114,7 +114,7 @@ export function Icon({ name, size = 18, className = '', style = {}, fallback, ..
   return <Comp size={size} className={className} style={style} strokeWidth={1.75} {...props} />;
 }
 
-// Nav icon lookup â€” maps the emoji-based nav icon strings to Lucide icon names
+// Nav icon lookup - maps the emoji-based nav icon strings to Lucide icon names
 export const NAV_ICON_MAP = {
   'ðŸ“Š': 'dashboard',
   'ðŸ ': 'home',

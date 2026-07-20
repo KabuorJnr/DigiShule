@@ -294,7 +294,7 @@ export default function PortalLayout() {
         setView('select_profile');
       }
     } catch {
-      // No profile row â€” silently sign out and show login.
+      // No profile row - silently sign out and show login.
       await supabase.auth.signOut();
     } finally {
       setAuthChecked(true);
@@ -650,7 +650,7 @@ export default function PortalLayout() {
                              }}
                              onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} Â· {s.class || ''}</span>
+                          <strong>{s.name}</strong> <span style={{ opacity: 0.6, fontSize: '12px' }}>{s.adm || ''} · {s.class || ''}</span>
                         </div>
                       ))}
                     </div>

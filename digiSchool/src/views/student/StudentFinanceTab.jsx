@@ -85,7 +85,7 @@ export default function StudentFinanceTab() {
 
       <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <div className="card card-pad">
-          <h3 className="section-title">Fee Structure â€” Term 2</h3>
+          <h3 className="section-title">Fee Structure - Term 2</h3>
           <table className="table">
             <thead><tr><th>Item</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
             <tbody>

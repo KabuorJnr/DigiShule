@@ -150,7 +150,7 @@ export default function AuditTab() {
               {pageData.map((log, idx) => (
                 <tr key={log.id || idx}>
                   <td style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
-                    <div>{log.timestamp ? new Date(log.timestamp).toLocaleDateString() : 'â€”'}</div>
+                    <div>{log.timestamp ? new Date(log.timestamp).toLocaleDateString() : '-'}</div>
                     <div className="muted" style={{ fontSize: 11 }}>{log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}</div>
                   </td>
                   <td style={{ fontWeight: 500 }}>{log.user || 'System'}</td>
@@ -167,7 +167,7 @@ export default function AuditTab() {
                   </td>
                   <td style={{ maxWidth: 300, fontSize: 13, color: 'var(--text-muted)' }}>{log.details}</td>
                   <td style={{ textAlign: 'right', fontWeight: log.amount ? 600 : 400 }}>
-                    {log.amount ? fmtKES(log.amount) : 'â€”'}
+                    {log.amount ? fmtKES(log.amount) : '-'}
                   </td>
                 </tr>
               ))}
@@ -179,7 +179,7 @@ export default function AuditTab() {
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
             <button className="btn btn-sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>â† Previous</button>
             <span className="muted" style={{ fontSize: 13 }}>Page {page + 1} of {totalPages}</span>
-            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next â†’</button>
+            <button className="btn btn-sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next \u2192</button>
           </div>
         )}
       </div>

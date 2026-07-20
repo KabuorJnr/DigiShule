@@ -79,7 +79,7 @@ export default function LeaveRequests() {
                 <tr key={l.id}>
                   <td><div style={{ fontWeight: 600 }}>{l.staff_name || l.staff}</div><div className="muted" style={{ fontSize: 11 }}>{l.dept}</div></td>
                   <td><Badge color={l.type === 'Sick' ? 'red' : l.type === 'Emergency' ? 'amber' : 'blue'}>{l.type}</Badge></td>
-                  <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} â†’ {l.end_date || l.end}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>{l.start_date || l.start} \u2192 {l.end_date || l.end}</td>
                   <td style={{ fontWeight: 600 }}>{l.days}</td>
                   <td style={{ maxWidth: 200, fontSize: 12 }}>{l.reason}</td>
                   <td><Badge color={LEAVE_COLOR[l.status]}>{l.status}</Badge></td>

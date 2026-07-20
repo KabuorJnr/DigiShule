@@ -291,7 +291,7 @@ export default function AdminDashboard({ store, user }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22 }}>Deputy Admin Dashboard</h2>
-          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Administration overview â€” student affairs, facilities, staff welfare</p>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Administration overview - student affairs, facilities, staff welfare</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn" onClick={() => setShowMediaManager(!showMediaManager)}>
@@ -346,7 +346,7 @@ export default function AdminDashboard({ store, user }) {
               </div>
               <div style={{ fontSize: 13, color: '#38bdf8', marginTop: 6, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: 20 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
-                Term 2 Â· Academic Year 2026
+                Term 2 · Academic Year 2026
               </div>
             </div>
           </div>
@@ -402,9 +402,9 @@ export default function AdminDashboard({ store, user }) {
           {dbDiscipline.slice(0, 5).map(d => (
             <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{d.student} â€” {d.category}</div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{d.student} - {d.category}</div>
                 <div className="muted" style={{ fontSize: 12 }}>{d.description}</div>
-                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{d.date} Â· {d.class}</div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{d.date} · {d.class}</div>
               </div>
               <Badge color={d.status === 'Open' ? 'red' : 'green'}>{d.status}</Badge>
             </div>
@@ -418,7 +418,7 @@ export default function AdminDashboard({ store, user }) {
             <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{f.name}</div>
-                <div className="muted" style={{ fontSize: 11 }}>{f.type} Â· Capacity: {f.capacity}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{f.type} · Capacity: {f.capacity}</div>
               </div>
               <Badge color={f.status === 'Operational' ? 'green' : 'amber'}>{f.status}</Badge>
             </div>

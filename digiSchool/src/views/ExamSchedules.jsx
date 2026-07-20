@@ -267,7 +267,7 @@ export default function ExamSchedules({ store }) {
 
       {chipDetail && (
         <Modal title="Session Details" onClose={() => setChipDetail(null)} footer={<button className="btn btn-primary" onClick={() => setChipDetail(null)}>Close</button>}>
-          <p><strong>{chipDetail.subject}</strong> â€” {chipDetail.classes}</p>
+          <p><strong>{chipDetail.subject}</strong> - {chipDetail.classes}</p>
           <p className="muted">{chipDetail.date} â€¢ {chipDetail.start}â€“{chipDetail.end}</p>
           <p>Venue: {chipDetail.venue}</p>
           <p>Invigilator: {chipDetail.invigilator}</p>

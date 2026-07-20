@@ -88,7 +88,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         lat = pos.coords.latitude;
         lng = pos.coords.longitude;
       } catch (_) {
-        // Location unavailable â€” proceed without it
+        // Location unavailable - proceed without it
       }
 
       // Geofence check: if school coordinates are configured AND we got a location
@@ -155,7 +155,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         {hasCheckedIn && (
           <span style={{ fontSize: 11, opacity: 0.75 }}>
             (In: {new Date(todayLog.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            {hasCheckedOut && ` Â· Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`})
+            {hasCheckedOut && ` · Out: ${new Date(todayLog.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`})
           </span>
         )}
       </div>
@@ -190,7 +190,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
             <LogOut size={13} /> Check Out
           </button>
         ) : (
-          <span style={{ fontSize: 11, opacity: 0.7 }}>âœ“ Complete</span>
+          <span style={{ fontSize: 11, opacity: 0.7 }}>✓ Complete</span>
         )}
       </div>
     </div>

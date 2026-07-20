@@ -74,7 +74,7 @@ export default function Clinic({ store }) {
       date: new Date().toISOString().slice(0, 10),
       student: form.student,
       student_id: form.student_id,
-      adm: form.adm || 'â€”',
+      adm: form.adm || '-',
       complaint: form.complaint,
       treatment: form.treatment,
       outcome: form.outcome,
@@ -200,7 +200,7 @@ export default function Clinic({ store }) {
           <div className="card card-pad fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 className="section-title" style={{ margin: 0 }}>
-                {searchQuery.trim() ? 'Search Results' : `${selectedClass} â€” Medical Directory`}
+                {searchQuery.trim() ? 'Search Results' : `${selectedClass} - Medical Directory`}
               </h3>
               <div style={{ position: 'relative', width: 250 }}>
                 <Icon name="search" size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />

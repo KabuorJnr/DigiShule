@@ -99,10 +99,10 @@ export default function ResourcesTab() {
                     <span style={{ fontWeight: 600, fontSize: 13 }}>{m.description || m.name}</span>
                     <Badge color="green">New</Badge>
                   </div>
-                  <div className="muted" style={{ fontSize: 12 }}>{m.subject} Â· {m.uploaded_by} Â· {m.uploaded_at?.slice(0,10)}</div>
+                  <div className="muted" style={{ fontSize: 12 }}>{m.subject} · {m.uploaded_by} · {m.uploaded_at?.slice(0,10)}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span className="muted" style={{ fontSize: 11 }}>PDF Â· Cloud</span>
+                  <span className="muted" style={{ fontSize: 11 }}>PDF · Cloud</span>
                   <button className="btn btn-sm btn-primary" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudOpen(m)}>
                     {actionId === m.id + '_o' ? <Loader size={13} /> : <Eye size={14} />} View
                   </button>
@@ -119,7 +119,7 @@ export default function ResourcesTab() {
           <h3 className="section-title">Assignments & Revision Downloads</h3>
           {cloudAssignments.length > 0 && (
             <>
-              <div style={{ fontWeight: 700, fontSize: 12, color: '#0078D4', marginBottom: 8, letterSpacing: 0.5 }}>TEACHER UPLOADS â€” CLOUD</div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: '#0078D4', marginBottom: 8, letterSpacing: 0.5 }}>TEACHER UPLOADS - CLOUD</div>
               {cloudAssignments.map(d => (
                 <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <div>
@@ -127,7 +127,7 @@ export default function ResourcesTab() {
                       <span style={{ fontWeight: 600, fontSize: 13 }}>{d.description || d.name}</span>
                       <Badge color="green">New</Badge>
                     </div>
-                    <div className="muted" style={{ fontSize: 12 }}>{d.subject} Â· Due: {d.due_date || 'â€”'} Â· by {d.uploaded_by}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>{d.subject} · Due: {d.due_date || '-'} · by {d.uploaded_by}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className="btn btn-sm" disabled={!!actionId} style={{ gap: 4 }} onClick={() => handleCloudOpen(d)}>

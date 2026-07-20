@@ -70,12 +70,12 @@ export default function TaxTab() {
                 <td>
                   <Badge color={tax.status === 'Filed' ? 'green' : 'red'}>{tax.status}</Badge>
                 </td>
-                <td className="muted" style={{ fontFamily: 'monospace' }}>{tax.kra_receipt || 'â€”'}</td>
+                <td className="muted" style={{ fontFamily: 'monospace' }}>{tax.kra_receipt || '-'}</td>
                 <td>
                   {tax.status === 'Pending' ? (
                     <button className="btn btn-sm btn-primary" onClick={() => handleMarkFiled(tax.id)}>Mark as Filed</button>
                   ) : (
-                    <span className="muted" style={{ fontSize: 12 }}>âœ“ Complete</span>
+                    <span className="muted" style={{ fontSize: 12 }}>✓ Complete</span>
                   )}
                 </td>
               </tr>

@@ -149,7 +149,7 @@ export default function MyProfile({ store, user, onUserUpdate }) {
         }
         setPwOk(true);
         setPwForm({ current: '', next: '', confirm: '' });
-        notify('Password updated (local only â€” link a Supabase account for full security)', 'info', 'My Profile');
+        notify('Password updated (local only - link a Supabase account for full security)', 'info', 'My Profile');
       } else {
         const { error } = await supabase.auth.updateUser({ password: pwForm.next });
         if (error) throw error;
