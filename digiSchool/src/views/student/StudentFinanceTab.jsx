@@ -46,17 +46,29 @@ export default function StudentFinanceTab() {
       
       try {
         const { supabase } = await import('../../lib/supabaseClient');
-        const { error } = await supabase.functions.invoke('mpesa-stk', {
+        const { data, error } = await supabase.functions.invoke('mpesa-stk', {
           body: { phone, amount: amt, invoiceId: null, studentId: me?.id || null }
         });
         
-        if (error) throw error;
+        if (error) {
+          // Parse the Edge Function error body for a more descriptive message
+          const msg = data?.error || error.message || 'Unknown error';
+          if (msg.includes('not configured') || msg.includes('payment gateway')) {
+            throw new Error('M-Pesa gateway not configured. Please contact the school Bursar to set up payment credentials.');
+          }
+          throw new Error(msg);
+        }
         
         setPayModal(false);
         setPayForm({ reference: '', method: 'M-Pesa STK Push', amount: '' });
         notify('Check your phone for the M-Pesa PIN prompt. The system will update automatically.', 'success', 'Payment Initiated');
       } catch (e) {
-        notify(`Payment error: ${e.message}`, 'error', 'Payment');
+        const errMsg = e.message || String(e);
+        if (errMsg.includes('non-2xx') || errMsg.includes('FunctionsHttpError')) {
+          notify('M-Pesa is not available right now. Please use a manual payment method (M-Pesa code, Bank) instead, or contact your Bursar.', 'error', 'Payment');
+        } else {
+          notify(`Payment error: ${errMsg}`, 'error', 'Payment');
+        }
       }
       return;
     }
