@@ -28,7 +28,7 @@ export default function StaffAttendance({ store, user }) {
 
   // Add Staff Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: (user?.role === 'finance' || user?.role === 'accountant') ? 'support' : 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
   const [provisionStep, setProvisionStep] = useState(null);
   const [createdCredentials, setCreatedCredentials] = useState(null);
 
@@ -39,6 +39,7 @@ export default function StaffAttendance({ store, user }) {
   const [selectedApp, setSelectedApp] = useState(null);
 
   const canApprove = user && (['principal', 'deputy_admin', 'deputy_academic', 'finance', 'accountant'].includes(user.role));
+  const isFinance = user && (user.role === 'finance' || user.role === 'accountant');
 
   // Reverse lookup: auth user UUID → staff record (for resolving log staff_id to names)
   const [uidToStaffMap, setUidToStaffMap] = useState({});
@@ -400,7 +401,7 @@ export default function StaffAttendance({ store, user }) {
       setTimeout(() => {
         setProvisionStep(null);
         setShowAddModal(false);
-        setAddForm({ name: '', email: '', role: 'teacher', dept: '', subject: '', phone: '', empId: '' });
+        setAddForm({ name: '', email: '', role: isFinance ? 'support' : 'teacher', dept: '', subject: '', phone: '', empId: '', username: '' });
         
         setCreatedCredentials({
           name: newStaff.name,
@@ -731,17 +732,23 @@ export default function StaffAttendance({ store, user }) {
               <div>
                 <label className="field-label">Role *</label>
                 <select className="select" value={addForm.role} onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
-                  <option value="teacher">Teacher</option>
-                  <option value="principal">Principal / Admin</option>
-                  <option value="deputy_academic">Deputy Principal (Academics)</option>
-                  <option value="dos">Director of Studies (DoS)</option>
-                  <option value="deputy_admin">Deputy Principal (Admin)</option>
-                  <option value="clinic">Clinic / Nurse</option>
-                  <option value="librarian">Librarian</option>
-                  <option value="registrar">Registrar</option>
-                  <option value="finance">Bursar / Finance</option>
-                  <option value="accountant">Accountant</option>
-                  <option value="support">Support Staff (ESS)</option>
+                  {isFinance ? (
+                    <option value="support">Support Staff (ESS)</option>
+                  ) : (
+                    <>
+                      <option value="teacher">Teacher</option>
+                      <option value="principal">Principal / Admin</option>
+                      <option value="deputy_academic">Deputy Principal (Academics)</option>
+                      <option value="dos">Director of Studies (DoS)</option>
+                      <option value="deputy_admin">Deputy Principal (Admin)</option>
+                      <option value="clinic">Clinic / Nurse</option>
+                      <option value="librarian">Librarian</option>
+                      <option value="registrar">Registrar</option>
+                      <option value="finance">Bursar / Finance</option>
+                      <option value="accountant">Accountant</option>
+                      <option value="support">Support Staff (ESS)</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div>
