@@ -101,39 +101,7 @@ a:hover {
 .btn:active {
   transform: translateY(1px); /* More reliable than margin-top which causes reflows */
 }
-.btn-primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-.btn-primary:hover {
-  background: var(--primary-700);
-  border-color: var(--primary-700);
-}
-.btn-accent {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.btn-accent:hover {
-  filter: brightness(0.92);
-}
-.btn-danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
-}
-.btn-danger:hover {
-  filter: brightness(0.92);
-}
-.btn-success {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
-}
-.btn-success:hover {
-  filter: brightness(0.92);
-}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;

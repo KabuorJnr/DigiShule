@@ -5,7 +5,7 @@ import { fmtKES } from '../../data/modules';
 import { upsertRow, updateRow, fetchTable } from '../../lib/api';
 import { printReceipt } from '../../lib/printReceipt';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Link2, AlertCircle } from 'lucide-react';
+import { Search, Link2, AlertCircle, Printer } from 'lucide-react';
 
 const PAGE_SIZE = 25;
 
@@ -237,8 +237,9 @@ export default function PaymentsTab() {
                           {p.amount >= 100000 ? 'Req. Approval' : 'Confirm'}
                         </button>
                       ) : (
-                        <button className="btn btn-sm" onClick={() => printReceipt(p, student, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
-                          🖨️ Receipt
+                        <button className="btn btn-sm" onClick={() => printReceipt(p, student, store.settings)}>
+                          <Printer size={16} />
+                          <span>Receipt</span>
                         </button>
                       )}
                     </td>
