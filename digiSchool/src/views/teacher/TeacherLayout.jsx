@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { PlaneTakeoff, MessageSquare, FolderOpen, Bell, Calendar, ClipboardList, BarChart3 } from 'lucide-react';
 import { fetchTable } from '../../lib/api';
@@ -38,10 +38,17 @@ export default function TeacherLayout() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
 
-  const subjectAssignments = useMemo(() => {
-    if (!store.subjectAssignments) return [];
-    return store.subjectAssignments.filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
-  }, [store.subjectAssignments, teacherProfile.id, user?.id]);
+  const [subjectAssignments, setSubjectAssignments] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchTable('subjectAssignments').then(rows => {
+      if (!active) return;
+      const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
+      setSubjectAssignments(myAssignments);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [teacherProfile.id, user?.id]);
 
   const subjectClasses = useMemo(() => {
     return subjectAssignments.map(a => a.stream_name ? `${a.class_name} ${a.stream_name}` : a.class_name);

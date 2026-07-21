@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
@@ -174,7 +174,7 @@ export default function LandingPage() {
               </div>
               
               {/* Dynamic Timetable */}
-              <div className="tt-grid" id="ttGrid">
+              <div className="lp-tt-grid" id="ttGrid">
                 <div className="tt-cell head" style={{ animationDelay: '0ms' }}></div>
                 {days.map((d, i) => (
                   <div key={d} className="tt-cell head" style={{ animationDelay: `${(i + 1) * 12}ms` }}>{d}</div>

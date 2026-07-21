@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   --bg: #f8fafc;
@@ -289,7 +289,7 @@ h1 em { font-style: normal; font-weight: 800; background: linear-gradient(135deg
 .tt-head .status .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); animation: pulse 2s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.6); } 50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); } }
 
-.tt-grid {
+.lp-tt-grid {
   display: grid;
   grid-template-columns: 58px repeat(5, 1fr);
   gap: 8px;

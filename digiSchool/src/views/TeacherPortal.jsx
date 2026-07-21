@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
@@ -27,10 +27,17 @@ export default function TeacherPortal({ store, user }) {
 
   const [loadedStudents, setLoadedStudents] = useState([]);
   
-  const subjectAssignments = useMemo(() => {
-    if (!store.subjectAssignments) return [];
-    return store.subjectAssignments.filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
-  }, [store.subjectAssignments, teacherProfile.id, user?.id]);
+  const [subjectAssignments, setSubjectAssignments] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchTable('subjectAssignments').then(rows => {
+      if (!active) return;
+      const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
+      setSubjectAssignments(myAssignments);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [teacherProfile.id, user?.id]);
 
   const subjectClasses = useMemo(() => {
     return subjectAssignments.map(a => a.stream_name ? `${a.class_name} ${a.stream_name}` : a.class_name);
