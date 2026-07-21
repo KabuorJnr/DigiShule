@@ -546,6 +546,14 @@ export async function upsertRow(key, row) {
   try {
     const { error } = await supabase.from(table).upsert(payload);
     if (error) throw error;
+    
+    // Update local cache so data doesn't disappear on next offline/cached read
+    const cacheKey = `table_${table}`;
+    const cached = await getFromCache(cacheKey) || [];
+    const index = cached.findIndex(item => item.id === payload.id);
+    if (index >= 0) cached[index] = payload;
+    else cached.push(payload);
+    await saveToCache(cacheKey, cached);
   } catch (error) {
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
       console.warn(`[Offline fallback] Queueing upsert for ${table}`);
@@ -570,6 +578,15 @@ export async function updateRow(key, id, row, idColumn = 'id') {
   try {
     const { error } = await supabase.from(table).update(payload).eq(idColumn, id);
     if (error) throw error;
+
+    // Update local cache
+    const cacheKey = `table_${table}`;
+    const cached = await getFromCache(cacheKey) || [];
+    const index = cached.findIndex(item => item[idColumn] === id);
+    if (index >= 0) {
+      cached[index] = { ...cached[index], ...payload };
+      await saveToCache(cacheKey, cached);
+    }
   } catch (error) {
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
       console.warn(`[Offline fallback] Queueing update for ${table}`);
@@ -592,6 +609,12 @@ export async function deleteRow(key, id, idColumn = 'id') {
   try {
     const { error } = await supabase.from(table).delete().eq(idColumn, id);
     if (error) throw error;
+
+    // Update local cache
+    const cacheKey = `table_${table}`;
+    const cached = await getFromCache(cacheKey) || [];
+    const filtered = cached.filter(item => item[idColumn] !== id);
+    await saveToCache(cacheKey, filtered);
   } catch (error) {
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
       console.warn(`[Offline fallback] Queueing delete for ${table}`);

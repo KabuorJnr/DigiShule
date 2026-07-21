@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -7,24 +7,62 @@ import { Shield, ShieldAlert, Key } from 'lucide-react';
 export default function FinanceUsersTab() {
   const { store } = useOutletContext();
   const notify = store?.notify || (() => {});
-
-  const [users, setUsers] = useState([
-    { id: 'usr_1', name: 'John Doe', role: 'Bursar', status: 'Active', limits: 'Unlimited', last_login: '2026-07-19 08:30 AM' },
-    { id: 'usr_2', name: 'Jane Smith', role: 'Accountant', status: 'Active', limits: 'Up to KES 100,000', last_login: '2026-07-19 09:15 AM' },
-    { id: 'usr_3', name: 'Michael Brown', role: 'Accounts Clerk', status: 'Suspended', limits: 'Up to KES 10,000', last_login: '2026-06-15 14:20 PM' },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', role: 'Accountant' });
+
+  useEffect(() => {
+    // Fetch finance staff from DB
+    import('../../lib/api').then(({ fetchTable }) => {
+      fetchTable('staff').then(data => {
+        if (data) {
+          setUsers(data.filter(u => u.dept === 'Finance' || u.role === 'Bursar' || u.role === 'Accountant' || u.role === 'finance'));
+        }
+      }).catch(err => {
+        console.warn('Failed to fetch finance staff', err);
+      });
+    });
+  }, []);
 
   const handleToggleStatus = (id) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === id) {
-        const newStatus = u.status === 'Active' ? 'Suspended' : 'Active';
-        notify(`User ${u.name} is now ${newStatus}`, newStatus === 'Active' ? 'success' : 'warning');
-        return { ...u, status: newStatus };
-      }
-      return u;
-    }));
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
+    import('../../lib/api').then(({ updateRow }) => {
+      updateRow('staff', id, { status: newStatus }).then(() => {
+        setUsers(prev => prev.map(u => (u.id === id ? { ...u, status: newStatus } : u)));
+        notify(`User ${user.name} is now ${newStatus}`, newStatus === 'Active' ? 'success' : 'warning');
+      }).catch(err => notify(`Failed to update status: ${err.message}`, 'error'));
+    });
+  };
+
+  const handleAddUser = async () => {
+    if (!form.name || !form.email) return notify('Name and Email are required', 'warning');
+    setSaving(true);
+    try {
+      const { upsertRow } = await import('../../lib/api');
+      const newUser = {
+        id: `fin_${Date.now()}`,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        role: form.role,
+        dept: 'Finance',
+        status: 'Pending',
+        pin: Math.floor(100000 + Math.random() * 900000).toString(),
+        created_at: new Date().toISOString()
+      };
+      await upsertRow('staff', newUser);
+      setUsers(prev => [...prev, newUser]);
+      notify(`Added ${form.name} as ${form.role}. Activation PIN: ${newUser.pin}`, 'success');
+      setModalOpen(false);
+      setForm({ name: '', email: '', phone: '', role: 'Accountant' });
+    } catch (e) {
+      notify(`Failed to add user: ${e.message}`, 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -35,7 +73,7 @@ export default function FinanceUsersTab() {
             <Shield size={20} color="#047857" />
             Finance Team Permissions
           </div>
-          <button className="btn btn-primary" onClick={() => notify('Add user modal would open here')}>Add Finance User</button>
+          <button className="btn btn-primary" onClick={() => setModalOpen(true)}>Add Finance User</button>
         </div>
         
         <div style={{ background: '#EFF6FF', color: '#1E40AF', padding: 12, borderRadius: 6, fontSize: 13, display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -87,6 +125,37 @@ export default function FinanceUsersTab() {
           </table>
         </div>
       </div>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Finance User">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <label className="label">Full Name</label>
+            <input className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Jane Smith" />
+          </div>
+          <div>
+            <label className="label">Email Address</label>
+            <input className="input" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="jane@example.com" />
+          </div>
+          <div>
+            <label className="label">Phone Number</label>
+            <input className="input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="e.g. 0712345678" />
+          </div>
+          <div>
+            <label className="label">Role</label>
+            <select className="select" value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
+              <option value="Accountant">Accountant</option>
+              <option value="Bursar">Bursar</option>
+              <option value="Accounts Clerk">Accounts Clerk</option>
+            </select>
+          </div>
+          <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, fontSize: 13, color: '#475569' }}>
+            When added, the user will need to sign up using the Staff Signup Wizard with the PIN provided.
+          </div>
+          <button className="btn btn-primary" onClick={handleAddUser} disabled={saving} style={{ marginTop: 8 }}>
+            {saving ? 'Adding...' : 'Add User'}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -74,7 +74,7 @@ export default function JournalTab() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      {entry.status === 'Pending Approval' && user?.role === 'finance' && (
+                      {entry.status === 'Pending Approval' && ['finance', 'principal'].includes(user?.role) && (
                         <>
                           <button className="btn btn-sm btn-primary" onClick={() => handleApprove(entry.id)}>Approve</button>
                           <button className="btn btn-sm" style={{ color: '#EF4444' }} onClick={() => handleReject(entry.id)}>Reject</button>

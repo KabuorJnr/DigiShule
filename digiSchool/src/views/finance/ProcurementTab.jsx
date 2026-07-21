@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { createUseStyles } from 'react-jss';
 import Modal from '../../components/Modal';
@@ -251,7 +251,7 @@ export default function ProcurementTab() {
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: 6 }}>
-                      {po.status === 'Pending Approval' && user?.role === 'finance' && (
+                      {po.status === 'Pending Approval' && ['finance', 'principal'].includes(user?.role) && (
                         <>
                           <button className={classes.btnGhost} style={{ background: '#d4edda', borderColor: '#c3e6cb', color: '#155724' }} onClick={() => handleApprove(po.id)}>
                             <CheckCircle size={14} />

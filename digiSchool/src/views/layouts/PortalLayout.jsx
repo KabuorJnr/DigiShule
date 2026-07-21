@@ -793,7 +793,7 @@ export default function PortalLayout() {
                 <button className="btn btn-primary" style={{ background: '#000000', borderColor: '#000000' }} onClick={() => {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_academic');
-                  setView('academics_dashboard');
+                  store.navigate('academics_dashboard');
                   notify('Entered Deputy Academics Office', 'success', 'Office Visit');
                 }}>Continue to Office</button>
               </div>
@@ -826,7 +826,7 @@ export default function PortalLayout() {
                 <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46' }} onClick={() => {
                   setOfficeVisitWarning(null);
                   setActiveRoleOverride('deputy_admin');
-                  setView('admin_dashboard');
+                  store.navigate('admin_dashboard');
                   notify('Entered Deputy Administration Office', 'success', 'Office Visit');
                 }}>Continue to Office</button>
               </div>

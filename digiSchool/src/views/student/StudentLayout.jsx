@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchClassRank, fetchStudentByQuery, fetchTable } from '../../lib/api';
@@ -159,6 +159,14 @@ export default function StudentLayout() {
           </div>
         </div>
       )}
+
+      <div className="tabs" style={{ marginBottom: 20 }}>
+        {TABS.map(t => (
+          <NavLink key={t.id} to={t.path} end={t.path === '.'} className={({isActive}) => `tab ${isActive ? 'active' : ''}`}>
+            {t.label}
+          </NavLink>
+        ))}
+      </div>
 
       <Outlet context={{
         store, user, params, me, rank, navigate, notify,

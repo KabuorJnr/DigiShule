@@ -227,7 +227,7 @@ export default function PaymentsTab() {
                     </td>
                     <td>
                       {p.status === 'Pending Bursar Approval' ? (
-                        user?.role === 'finance' ? (
+                        ['finance', 'principal'].includes(user?.role) ? (
                           <button className="btn btn-sm" style={{ background: '#047857', color: 'white', borderColor: '#047857' }} onClick={() => handleConfirm(p.id, true)}>Bursar Approve</button>
                         ) : (
                           <span className="muted" style={{ fontSize: 12 }}>Pending Approval</span>

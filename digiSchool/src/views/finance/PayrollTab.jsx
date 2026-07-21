@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -203,11 +203,11 @@ export default function PayrollTab() {
                     </Badge>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {pr.status === 'Pending' && user?.role === 'finance' && (
+                    <div style={{ display: 'inline-flex', gap: 6 }}>
+                      {pr.status === 'Pending' && ['finance', 'principal'].includes(user?.role) && (
                         <button className="btn btn-sm btn-primary" onClick={() => handleApprove(pr.id)}>Approve</button>
                       )}
-                      {pr.status === 'Approved' && user?.role === 'finance' && (
+                      {pr.status === 'Approved' && ['finance', 'principal'].includes(user?.role) && (
                         <button className="btn btn-sm" style={{ background: '#047857', color: 'white', borderColor: '#047857' }} onClick={() => handlePay(pr.id)}>Mark Paid</button>
                       )}
                       <button className="btn btn-sm" onClick={() => setSelectedPayroll(pr)}>View Details</button>
