@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
   --primary: #047857;
@@ -69,24 +69,37 @@ a:hover {
 
 /* ---------- Buttons ---------- */
 .btn {
-  height: 36px;
-  padding: 0 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  padding: 10px 25px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 0.5rem;
+  border: 1px solid #bebebe;
+  gap: 10px;
+  color: #414141;
   background: #fff;
-  color: var(--text);
-  font-weight: 600;
-  font-size: 13px;
+  font-family: inherit; /* keeping inherit so it uses the nice Outfit/Inter fonts */
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
   display: inline-flex;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
+  align-items: center;
   transition: all 0.12s ease;
   white-space: nowrap;
 }
+
+.btn svg {
+  height: 20px; /* Scaled to fit standard buttons nicely while keeping the lucide feel */
+}
+
 .btn:hover {
-  background: #f5f5f5;
-  border-color: #c0c0c0;
+  border: solid 1px #464545;
+}
+
+.btn:active {
+  transform: translateY(1px); /* More reliable than margin-top which causes reflows */
 }
 .btn-primary {
   background: var(--primary);
@@ -122,8 +135,7 @@ a:hover {
   filter: brightness(0.92);
 }
 .btn-sm {
-  height: 30px;
-  padding: 0 10px;
+  padding: 6px 12px;
   font-size: 12px;
 }
 .btn-icon {
@@ -131,8 +143,12 @@ a:hover {
   padding: 0;
 }
 .btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  pointer-events: none;
+  opacity: .65;
+  color: #7e7e7e;
+  background: #dcdcdc;
+  box-shadow: none;
+  text-shadow: none;
 }
 
 /* ---------- Inputs ---------- */
