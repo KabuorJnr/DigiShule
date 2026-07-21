@@ -24,6 +24,10 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization') || ''
     const jwt = authHeader.replace('Bearer ', '').trim()
 
+    if (!jwt) {
+      throw new Error('Authentication failed: Missing Authorization header in request.')
+    }
+
     // 1. Resolve school_id from the authenticated user's profile
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
@@ -32,7 +36,7 @@ serve(async (req) => {
     const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(jwt)
     if (authErr || !authUser) {
       console.error('Auth error:', authErr)
-      throw new Error(`Authentication failed: ${authErr?.message || 'Invalid user session'}.`)
+      throw new Error(`Authentication failed: ${authErr?.message || 'Invalid user session'}. JWT Length: ${jwt.length}`)
     }
 
     // Try profile first (staff/parents)
