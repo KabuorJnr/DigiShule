@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
@@ -24,43 +24,77 @@ function defaultAssignments(teachers = []) {
   }));
 }
 
-// deterministic-ish generator producing timetables for all classes
+// deterministic-ish generator producing timetables for all classes avoiding teacher double-booking
 function generateAll({ classes, days, periods, breaks, assignments, term }) {
   const breakMap = {};
   breaks.forEach((b) => {
     if (b.period) breakMap[Number(b.period)] = b.label || 'Break';
   });
-  const result = {};
-  classes.forEach((cls, classIdx) => {
-    const pool = [];
-    assignments.forEach((a) => {
-      const dept = DEPARTMENTS[a.subject] || 'Humanities';
-      for (let k = 0; k < Number(a.perWeek || 0); k++) {
-        pool.push({ subject: a.subject, teacher: a.teacher, dept });
-      }
-    });
-    // rotate pool per class for variety
-    for (let r = 0; r < classIdx * 3; r++) pool.push(pool.shift());
 
+  const teacherAvailability = {}; // [teacherName][day][period] = true if occupied
+  const result = {};
+
+  // Build grid structure
+  classes.forEach((cls) => {
     const grid = [];
-    let pi = 0;
     for (let p = 1; p <= periods; p++) {
       const row = [];
       for (let d = 0; d < days.length; d++) {
         if (breakMap[p]) {
           row.push({ type: 'break', label: breakMap[p] });
-        } else if (pi < pool.length) {
-          const item = pool[(pi + d) % pool.length];
-          row.push({ type: 'lesson', ...item, notes: '' });
         } else {
           row.push({ type: 'empty' });
         }
       }
-      if (!breakMap[p]) pi += days.length;
       grid.push(row);
     }
     result[cls] = { grid, days, periods, term };
   });
+
+  let allLessons = [];
+  classes.forEach((cls) => {
+    assignments.forEach((a) => {
+      const dept = DEPARTMENTS[a.subject] || 'Humanities';
+      for (let k = 0; k < Number(a.perWeek || 0); k++) {
+        allLessons.push({ cls, subject: a.subject, teacher: a.teacher, dept });
+      }
+    });
+  });
+
+  // Distribute lessons randomly but attempt to balance across days
+  allLessons = allLessons.sort(() => Math.random() - 0.5);
+
+  allLessons.forEach(lesson => {
+    const { cls, subject, teacher, dept } = lesson;
+    if (!teacherAvailability[teacher]) {
+      teacherAvailability[teacher] = Array.from({ length: days.length }, () => ({}));
+    }
+
+    const grid = result[cls].grid;
+    let placed = false;
+
+    // Try to find an empty slot where the teacher is also free
+    // Start searching from a random day/period to spread them out
+    const startDay = Math.floor(Math.random() * days.length);
+    const startPeriod = Math.floor(Math.random() * periods) + 1;
+
+    for (let dd = 0; dd < days.length && !placed; dd++) {
+      const d = (startDay + dd) % days.length;
+      
+      for (let pp = 0; pp < periods && !placed; pp++) {
+        const p = ((startPeriod + pp - 1) % periods) + 1;
+        
+        if (breakMap[p]) continue;
+        
+        if (grid[p - 1][d].type === 'empty' && !teacherAvailability[teacher][d][p]) {
+          grid[p - 1][d] = { type: 'lesson', subject, teacher, dept, notes: '' };
+          teacherAvailability[teacher][d][p] = true;
+          placed = true;
+        }
+      }
+    }
+  });
+
   return result;
 }
 

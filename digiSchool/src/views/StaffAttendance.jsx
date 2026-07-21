@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -168,6 +168,29 @@ export default function StaffAttendance({ store, user }) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportRegister = () => {
+    import('../utils/exporters').then(({ exportTablePDF }) => {
+      const activeStaff = staff.filter(s => s.status !== 'Inactive');
+      const head = ['Name', 'Role', 'Department', 'Check-In', 'Status'];
+      const body = activeStaff.map(s => [
+        s.name || '-',
+        s.role || '-',
+        s.dept || '-',
+        s.checkIn || '-',
+        s.status || '-'
+      ]);
+
+      exportTablePDF({
+        school: store.settings,
+        title: 'Staff Attendance Register',
+        subtitle: `Date: ${new Date().toLocaleDateString()}`,
+        head,
+        body,
+        filename: 'Staff_Attendance_Register.pdf'
+      });
+    });
   };
 
   const leaveTotals = useMemo(() => ({
@@ -506,6 +529,9 @@ export default function StaffAttendance({ store, user }) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportLogs}>
                     Export Logs
+                  </button>
+                  <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportRegister}>
+                    Download Register
                   </button>
                   <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
                     + Add Staff
