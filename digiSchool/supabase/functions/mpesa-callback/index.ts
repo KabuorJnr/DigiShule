@@ -85,7 +85,7 @@ serve(async (req) => {
       }
 
       const { error: payInsertErr } = await supabase
-        .from('financePayments')
+        .from('finance_payments')
         .insert(paymentRecord)
 
       if (payInsertErr) {
