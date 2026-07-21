@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
@@ -23,6 +23,8 @@ export default function AcademicsDashboard({ store, user }) {
   const [analytics, setAnalytics] = useState({ top_subjects: [] });
   const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
   
+  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents, fetchAcademicAnalytics }) => {
       fetchStudents(0, 1000).then(r => setStudents(r.data || [])).catch(() => {});
@@ -111,7 +113,7 @@ export default function AcademicsDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Students" value={students.length} sub="Enrolled" color="#0078D4" />
+        <Stat label="Total Students" value={activeStudentsList.length} sub="Enrolled" color="#0078D4" />
         <Stat label="Teaching Staff" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
         <Stat label="Classes & Streams" value={`${classesCount} / ${classesCount * 2}`} sub="Levels / Streams" color="#107C10" />
         <Stat label="Subjects" value="8" sub="Active subjects" color="#FFB900" />

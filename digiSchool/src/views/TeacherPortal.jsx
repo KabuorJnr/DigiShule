@@ -48,7 +48,8 @@ export default function TeacherPortal({ store, user }) {
     if (active) {
       if (assignedClass || subjectClasses.length > 0) {
         setLoadedStudents(store.students.filter(s => 
-          s.class === assignedClass || subjectClasses.includes(s.class)
+          (s.class === assignedClass || subjectClasses.includes(s.class)) &&
+          s.status !== 'Inactive' && s.status !== 'Graduated'
         ));
       } else {
         setLoadedStudents([]);

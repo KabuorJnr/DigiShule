@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge, ProgressBar } from '../components/widgets';
 import { fmtKES } from '../data/modules';
 
@@ -84,6 +84,7 @@ export default function AdminDashboard({ store, user }) {
 
   const activeStaffList = dbStaff.filter(s => s.status !== 'Inactive');
   const presentStaff = activeStaffList.filter(s => s.status === 'Present' || s.status === 'Active' || s.status === 'active').length;
+  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
   const operationalFac = dbFacilities.filter(f => f.status === 'Operational').length;
   const pendingLeave = 0;
   const openDiscipline = dbDiscipline.filter(d => d.status === 'Open').length;
@@ -352,7 +353,7 @@ export default function AdminDashboard({ store, user }) {
           </div>
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <Stat label="Total Students" value={students?.length || 0} color="#047857" />
+        <Stat label="Total Students" value={activeStudentsList.length} color="#047857" />
         <Stat label="Active Staff" value={activeStaffList.length} color="#047857" sub={`${presentStaff} Present Today`} />
         <Stat label="Facilities" value={dbFacilities.length} color="#047857" sub={`${operationalFac} Operational`} />
         <Stat label="Pending Leaves" value={pendingLeave} color="#F59E0B" />

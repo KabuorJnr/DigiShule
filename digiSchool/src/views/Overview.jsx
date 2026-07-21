@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell,
@@ -62,16 +62,9 @@ export default function Overview({ store }) {
   };
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
-  const [stats, setStats] = useState(null);
-  useEffect(() => {
-    import('../lib/api').then(({ fetchStudentStats }) => {
-      fetchStudentStats().then(setStats).catch(() => {});
-    });
-  }, []);
-
+  const activeStudents = (store.students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+  const totalStudents = activeStudents.length;
   const classDistData = [];
-
-  const totalStudents = stats?.total_active || 0;
   
   // Real Staff Metrics
   const activeStaffList = dbStaff.filter(t => t.status !== 'Inactive');
@@ -94,8 +87,8 @@ export default function Overview({ store }) {
   // Real Admissions
   const pendingApps = dbAdmissions.filter(a => a.status === 'Pending').length;
 
-  const maleCount = stats?.male || 0;
-  const femaleCount = stats?.female || 0;
+  const maleCount = activeStudents.filter(s => s.gender === 'Male').length;
+  const femaleCount = activeStudents.filter(s => s.gender === 'Female').length;
   const malePct = totalStudents ? Math.round((maleCount / totalStudents) * 100) : 0;
   const femalePct = totalStudents ? Math.round((femaleCount / totalStudents) * 100) : 0;
 
