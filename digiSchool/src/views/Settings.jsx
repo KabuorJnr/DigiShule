@@ -25,6 +25,13 @@ export default function Settings({ store, user }) {
     consumer_secret: ''
   });
 
+  const [kcbConfigured, setKcbConfigured] = useState(false);
+  const [kcbForm, setKcbForm] = useState({
+    client_id: '',
+    client_secret: '',
+    biller_code: ''
+  });
+
   useEffect(() => {
     // Check if gateway is configured
     if (tab === 'Payment Gateways' && store.schoolId) {
@@ -34,6 +41,8 @@ export default function Settings({ store, user }) {
             if (data) {
               setGatewayConfigured(data.is_configured);
               setGatewayForm(f => ({ ...f, shortcode: data.mpesa_shortcode || '' }));
+              setKcbConfigured(!!data.kcb_biller_code);
+              setKcbForm(f => ({ ...f, biller_code: data.kcb_biller_code || '' }));
             }
           });
       });
@@ -479,6 +488,69 @@ export default function Settings({ store, user }) {
                 notify(`Error saving credentials: ${e.message}`, 'error');
               }
             }}>Save Credentials Securely</button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'Payment Gateways' && (
+        <div className="card card-pad" style={{ maxWidth: 600, marginTop: 24 }}>
+          <h3 className="section-title" style={{ marginTop: 0 }}>KCB Bank API Settings</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 20 }}>
+            Configure your KCB API credentials for automated bank transfer reconciliation. 
+            Parents should use the student's Admission Number as the account reference.
+          </p>
+
+          {kcbConfigured && (
+            <div style={{ padding: '12px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1e3a8a' }}>KCB API is Configured</div>
+                <div style={{ fontSize: 12, color: '#1d4ed8' }}>Biller Code / Account: {kcbForm.biller_code}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+            <div>
+              <label className="field-label">KCB Biller Code / Account Number</label>
+              <input className="input" placeholder={kcbConfigured ? kcbForm.biller_code : 'e.g. 54321'} value={kcbForm.biller_code} onChange={(e) => setKcbForm(f => ({ ...f, biller_code: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">KCB API Client ID</label>
+              <input type="password" className="input" placeholder={kcbConfigured ? '••••••••••••••••' : 'Enter Client ID'} value={kcbForm.client_id} onChange={(e) => setKcbForm(f => ({ ...f, client_id: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">KCB API Client Secret</label>
+              <input type="password" className="input" placeholder={kcbConfigured ? '••••••••••••••••' : 'Enter Client Secret'} value={kcbForm.client_secret} onChange={(e) => setKcbForm(f => ({ ...f, client_secret: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <button className="btn" onClick={async () => {
+              if (!kcbForm.biller_code || !kcbForm.client_id || !kcbForm.client_secret) {
+                notify('Please fill in all KCB API fields', 'error');
+                return;
+              }
+              try {
+                const { supabase } = await import('../lib/supabaseClient');
+                const payload = {
+                  school_id: store.schoolId,
+                  kcb_biller_code: kcbForm.biller_code,
+                  kcb_client_id: kcbForm.client_id,
+                  kcb_client_secret: kcbForm.client_secret,
+                  updated_at: new Date().toISOString()
+                };
+                
+                const { error } = await supabase.from('school_payment_gateways').upsert(payload, { onConflict: 'school_id' });
+                if (error) throw error;
+                
+                notify('KCB API credentials saved securely.', 'success');
+                setKcbConfigured(true);
+                setKcbForm(f => ({ ...f, client_id: '', client_secret: '' }));
+              } catch (e) {
+                notify(`Error saving KCB credentials: ${e.message}`, 'error');
+              }
+            }}>Save KCB Credentials</button>
           </div>
         </div>
       )}
