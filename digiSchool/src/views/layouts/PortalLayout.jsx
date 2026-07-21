@@ -531,8 +531,16 @@ export default function PortalLayout() {
                         if (hasSub) toggleNav(item.id);
                         else if (item.action === 'logout') handleLogout();
                         else if (item.action === 'notif') setNotifOpen(true);
-                        else if (item.action === 'visit_academics') setOfficeVisitWarning('academics');
-                        else if (item.action === 'visit_admin') setOfficeVisitWarning('admin');
+                        else if (item.action === 'visit_academics') {
+                          setActiveRoleOverride('deputy_academic');
+                          setTimeout(() => store.navigate('academics_dashboard'), 10);
+                          notify('Entered Deputy Academics Office', 'success', 'Office Visit');
+                        }
+                        else if (item.action === 'visit_admin') {
+                          setActiveRoleOverride('deputy_admin');
+                          setTimeout(() => store.navigate('admin_dashboard'), 10);
+                          notify('Entered Deputy Administration Office', 'success', 'Office Visit');
+                        }
                         else if (item.view) {
                           store.navigate(item.view, { tab: item.tab, action: item.action, filter: item.filter });
                         }
@@ -553,11 +561,11 @@ export default function PortalLayout() {
                             onClick={() => {
                               if (subItem.action === 'visit_academics') {
                                 setActiveRoleOverride('deputy_academic');
-                                store.navigate('academics_dashboard');
+                                setTimeout(() => store.navigate('academics_dashboard'), 10);
                                 notify('Entered Deputy Academics Office', 'success', 'Office Visit');
                               } else if (subItem.action === 'visit_admin') {
                                 setActiveRoleOverride('deputy_admin');
-                                store.navigate('admin_dashboard');
+                                setTimeout(() => store.navigate('admin_dashboard'), 10);
                                 notify('Entered Deputy Administration Office', 'success', 'Office Visit');
                               } else if (subItem.view) {
                                 store.navigate(subItem.view, { tab: subItem.tab, action: subItem.action, filter: subItem.filter });
@@ -703,8 +711,7 @@ export default function PortalLayout() {
                 style={{ background: '#D13438', borderColor: '#D13438', marginRight: 16, height: 32, fontSize: 13 }}
                 onClick={() => {
                   setActiveRoleOverride(null);
-                  setView(ROLES[currentUser.role].home || 'overview');
-                  setViewParams({});
+                  store.navigate(ROLES[currentUser.role].home || 'overview');
                   notify('Returned to Principal Office', 'info', 'Office Visit');
                 }}
               >
@@ -775,71 +782,7 @@ export default function PortalLayout() {
         </>
       )}
 
-      {/* Office Visit Warning Modal - Academics */}
-      {officeVisitWarning === 'academics' && (
-        <div className="modal-overlay">
-          <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
-            <div style={{ background: '#9333ea', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
-                <Building2 size={20} /> Deputy Academics Office
-              </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
-            </div>
-            <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Building2 size={40} style={{ color: '#9333ea' }} /></div>
-              <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
-                You are about to visit the Deputy Academics Office. This will open the Academics dashboard where you can manage exams, subjects, and academic performance.
-              </p>
-              <div style={{ background: '#e0f2fe', color: '#0369a1', padding: 12, borderRadius: 6, fontSize: 13, textAlign: 'left', display: 'flex', gap: 8, marginBottom: 24 }}>
-                <div style={{ fontWeight: 700 }}>i</div>
-                <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
-                <button className="btn btn-primary" style={{ background: '#000000', borderColor: '#000000' }} onClick={() => {
-                  setOfficeVisitWarning(null);
-                  setActiveRoleOverride('deputy_academic');
-                  store.navigate('academics_dashboard');
-                  notify('Entered Deputy Academics Office', 'success', 'Office Visit');
-                }}>Continue to Office</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Office Visit Warning Modal - Admin */}
-      {officeVisitWarning === 'admin' && (
-        <div className="modal-overlay">
-          <div className="modal" style={{ maxWidth: 450, padding: 0, overflow: 'hidden' }}>
-            <div style={{ background: '#065f46', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600 }}>
-                <Landmark size={20} /> Deputy Administration Office
-              </div>
-              <button className="btn btn-icon" style={{ color: '#fff' }} onClick={() => setOfficeVisitWarning(null)}>✕</button>
-            </div>
-            <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Landmark size={40} style={{ color: '#065f46' }} /></div>
-              <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#334155' }}>
-                You are about to visit the Deputy Administration Office. This will open the Admin dashboard where you can manage student affairs, facilities, and staff welfare.
-              </p>
-              <div style={{ background: '#d1fae5', color: '#065f46', padding: 12, borderRadius: 6, fontSize: 13, textAlign: 'left', display: 'flex', gap: 8, marginBottom: 24 }}>
-                <div style={{ fontWeight: 700 }}>i</div>
-                <div><strong>Note:</strong> You can always return to your Principal Dashboard using the sidebar after visiting the office.</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-                <button className="btn" onClick={() => setOfficeVisitWarning(null)}>Cancel</button>
-                <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46' }} onClick={() => {
-                  setOfficeVisitWarning(null);
-                  setActiveRoleOverride('deputy_admin');
-                  store.navigate('admin_dashboard');
-                  notify('Entered Deputy Administration Office', 'success', 'Office Visit');
-                }}>Continue to Office</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {changePasswordOpen && (
         <ChangePasswordModal 
