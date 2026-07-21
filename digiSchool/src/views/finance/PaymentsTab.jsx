@@ -238,7 +238,7 @@ export default function PaymentsTab() {
                         </button>
                       ) : (
                         <button className="btn btn-sm" onClick={() => printReceipt(p, student, store.settings)} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '4px 10px', fontSize: 12 }}>
-                          ðŸ–¨ï¸ Receipt
+                          🖨️ Receipt
                         </button>
                       )}
                     </td>

@@ -10,12 +10,12 @@ import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, Us
 
 
 const ALERT_ICON_MAP = {
-  'ðŸ‘¨â€ðŸ«': Users,
-  'ðŸ“': FileText,
-  'ðŸ“š': GraduationCap,
-  'âš ï¸': AlertCircle,
-  'ðŸ”§': Building,
-  'ðŸ’°': DollarSign,
+  'users': Users,
+  'document': FileText,
+  'academic': GraduationCap,
+  'alert': AlertCircle,
+  'facility': Building,
+  'finance': DollarSign,
 };
 
 const QUICK_ACTIONS = [

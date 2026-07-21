@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { fetchTable, upsertRow } from '../lib/api';
 import { expandClassesWithStreams, SUBJECTS, DEPARTMENTS, DEPT_COLORS } from '../data/seed';
@@ -500,8 +500,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, opacity: 0.9 }}>
-          <span>ðŸ“… {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          <span>ðŸ“š Term 2, 2026</span>
+          <span>📅 {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span>📚 Term 2, 2026</span>
         </div>
       </div>
 

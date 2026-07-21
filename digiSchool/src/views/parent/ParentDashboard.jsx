@@ -701,7 +701,7 @@ export default function ParentDashboard() {
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
                     From: <strong>{m.sender_name || m.sender_role || 'School'}</strong>
-                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' ðŸ¥'}
+                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' 🏥'}
                   </div>
                   <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
                 </div>

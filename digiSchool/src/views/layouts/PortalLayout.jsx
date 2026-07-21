@@ -551,9 +551,15 @@ export default function PortalLayout() {
                             className={`nav-item${isNavActive(subItem) ? ' active' : ''}`}
                             style={{ padding: '6px 20px 6px 16px', minHeight: 32, fontSize: 13, opacity: isNavActive(subItem) ? 1 : 0.7 }}
                             onClick={() => {
-                              if (subItem.action === 'visit_academics') setOfficeVisitWarning('academics');
-                              else if (subItem.action === 'visit_admin') setOfficeVisitWarning('admin');
-                              else if (subItem.view) {
+                              if (subItem.action === 'visit_academics') {
+                                setActiveRoleOverride('deputy_academic');
+                                store.navigate('academics_dashboard');
+                                notify('Entered Deputy Academics Office', 'success', 'Office Visit');
+                              } else if (subItem.action === 'visit_admin') {
+                                setActiveRoleOverride('deputy_admin');
+                                store.navigate('admin_dashboard');
+                                notify('Entered Deputy Administration Office', 'success', 'Office Visit');
+                              } else if (subItem.view) {
                                 store.navigate(subItem.view, { tab: subItem.tab, action: subItem.action, filter: subItem.filter });
                               }
                             }}

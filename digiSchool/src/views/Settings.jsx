@@ -126,7 +126,7 @@ export default function Settings({ store, user }) {
 
           {/* School Location & Geofencing */}
           <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-            <h3 className="section-title" style={{ marginTop: 0 }}>ðŸ“ School Location & Geofencing</h3>
+            <h3 className="section-title" style={{ marginTop: 0 }}>📍 School Location & Geofencing</h3>
             <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 16 }}>
               Set your school's GPS coordinates. Teachers can only check in/out within the geofence radius.
             </p>
@@ -166,7 +166,7 @@ export default function Settings({ store, user }) {
                   );
                 }}
               >
-                ðŸ“ Detect My Location
+                📍 Detect My Location
               </button>
             </div>
 
