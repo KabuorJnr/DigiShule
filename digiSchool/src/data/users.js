@@ -275,11 +275,12 @@ export const ROLES = {
         ]
       },
       {
-        section: 'ACCOUNTS PAYABLE',
+        section: 'ACCOUNTS PAYABLE & HR',
         items: [
           { id: 'all_expenses', icon: 'finance', label: 'Expenses', view: 'finance', tab: 'expenses' },
           { id: 'procurement', icon: 'folder', label: 'Procurement', view: 'finance', tab: 'procurement' },
-          { id: 'payroll', icon: 'users', label: 'Payroll', view: 'finance', tab: 'payroll' }
+          { id: 'payroll', icon: 'users', label: 'Payroll', view: 'finance', tab: 'payroll' },
+          { id: 'staff_mgmt', icon: 'users', label: 'Support Staff Profiles', view: 'staff' }
         ]
       },
       {
@@ -305,6 +306,70 @@ export const ROLES = {
         items: [
           { id: 'finance_users', icon: 'shield', label: 'Team & Permissions', view: 'finance', tab: 'permissions' },
           { id: 'settings', icon: 'settings', label: 'Finance Settings', view: 'settings' },
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ],
+  },
+
+  accountant: {
+    label: 'Accountant',
+    portal: 'Finance Portal',
+    accent: '#000000',
+    home: 'finance',
+    nav: [
+      {
+        section: 'CORE',
+        items: [
+          { id: 'finance_dash', icon: 'dashboard', label: 'Overview', view: 'finance' },
+          { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
+        ]
+      },
+      {
+        section: 'RECEIVABLES',
+        items: [
+          { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
+          { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' }
+        ]
+      },
+      {
+        section: 'PAYABLES & HR',
+        items: [
+          { id: 'all_expenses', icon: 'finance', label: 'Expenses', view: 'finance', tab: 'expenses' },
+          { id: 'procurement', icon: 'folder', label: 'Procurement', view: 'finance', tab: 'procurement' },
+          { id: 'staff_mgmt', icon: 'users', label: 'Support Staff Profiles', view: 'staff' }
+        ]
+      },
+      {
+        section: 'GENERAL LEDGER',
+        items: [
+          { id: 'journals', icon: 'pen', label: 'Journal Entries', view: 'finance', tab: 'journal' },
+          { id: 'tax', icon: 'file', label: 'Tax & Statutory', view: 'finance', tab: 'tax' }
+        ]
+      },
+      {
+        section: 'PAYROLL',
+        items: [
+          { id: 'payroll', icon: 'users', label: 'Payroll', view: 'finance', tab: 'payroll' }
+        ]
+      },
+      {
+        section: 'ASSETS',
+        items: [
+          { id: 'assets', icon: 'facilities', label: 'Fixed Assets', view: 'finance', tab: 'assets' }
+        ]
+      },
+      {
+        section: 'REPORTS',
+        items: [
+          { id: 'reports', icon: 'chart', label: 'Financial Reports', view: 'finance', tab: 'reports' }
+        ]
+      },
+      {
+        section: 'SYSTEM',
+        items: [
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }
@@ -419,6 +484,29 @@ export const ROLES = {
       {
         section: 'ACCOUNT',
         items: [
+          { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
+        ]
+      }
+    ],
+  },
+
+  support: {
+    label: 'Support Staff',
+    portal: 'ESS Portal',
+    accent: '#000000',
+    home: 'notices',
+    nav: [
+      {
+        section: 'SELF SERVICE',
+        items: [
+          { id: 'notices', icon: 'bell', label: 'Notices & Memos', view: 'notices' },
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
+        ]
+      },
+      {
+        section: 'ACCOUNT',
+        items: [
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }

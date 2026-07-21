@@ -38,7 +38,7 @@ export default function StaffAttendance({ store, user }) {
   const [interviewForm, setInterviewForm] = useState({ date: '', time: '', type: 'In-person', notes: '' });
   const [selectedApp, setSelectedApp] = useState(null);
 
-  const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
+  const canApprove = user && (['principal', 'deputy_admin', 'deputy_academic', 'finance', 'accountant'].includes(user.role));
 
   // Reverse lookup: auth user UUID → staff record (for resolving log staff_id to names)
   const [uidToStaffMap, setUidToStaffMap] = useState({});
@@ -371,7 +371,7 @@ export default function StaffAttendance({ store, user }) {
           id: newStaff.id,
           name: newStaff.name,
           subject: newStaff.subject || newStaff.dept,
-          role: 'teacher',
+          role: addForm.role,
           emp_id: newStaff.id,
           phone: addForm.phone,
           status: 'Active',
@@ -741,6 +741,7 @@ export default function StaffAttendance({ store, user }) {
                   <option value="registrar">Registrar</option>
                   <option value="finance">Bursar / Finance</option>
                   <option value="accountant">Accountant</option>
+                  <option value="support">Support Staff (ESS)</option>
                 </select>
               </div>
               <div>
