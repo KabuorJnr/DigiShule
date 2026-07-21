@@ -17,22 +17,47 @@ serve(async (req) => {
       throw new Error('Phone and amount are required')
     }
 
-    // Initialize Supabase Client for the user (to verify token)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     
+    // 1. Resolve school_id from the authenticated user's profile
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: req.headers.get('Authorization')! } }
     })
 
-    // Fetch school config for the shortcode/phone if needed
-    const { data: config } = await supabase.from('app_config').select('phone, school_id').single()
-    const schoolId = config?.school_id
-    
-    if (!schoolId) throw new Error('Could not identify your school')
+    const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser()
+    if (authErr || !authUser) {
+      console.error('Auth error:', authErr)
+      throw new Error('Authentication failed. Please log in again.')
+    }
 
-    // Initialize Service Role client to bypass RLS and read the highly secure payment gateways table
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    // Try profile first (most reliable), then fall back to app_config
+    let schoolId = null
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('school_id')
+      .eq('id', authUser.id)
+      .single()
+    
+    schoolId = profile?.school_id
+
+    if (!schoolId) {
+      // Fallback: try app_config
+      const { data: config } = await supabase
+        .from('app_config')
+        .select('school_id')
+        .limit(1)
+        .maybeSingle()
+      schoolId = config?.school_id
+    }
+    
+    if (!schoolId) {
+      throw new Error('Could not identify your school. Please contact the administrator.')
+    }
+
+    // 2. Fetch M-Pesa credentials using service role (bypasses RLS)
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey)
 
     const { data: gateway, error: gatewayErr } = await adminSupabase
@@ -42,7 +67,8 @@ serve(async (req) => {
       .single()
 
     if (gatewayErr || !gateway) {
-      throw new Error('This school has not configured an M-Pesa payment gateway.')
+      console.error('Gateway lookup error:', gatewayErr)
+      throw new Error('M-Pesa payment gateway is not configured for this school. Please ask your Bursar to set up credentials in System Settings.')
     }
 
     const consumerKey = gateway.mpesa_consumer_key
@@ -50,7 +76,7 @@ serve(async (req) => {
     const shortcode = gateway.mpesa_shortcode
     const passkey = gateway.mpesa_passkey
     
-    // Format phone: 07XXXXXXXX -> 2547XXXXXXXX
+    // 3. Format phone: 07XXXXXXXX -> 2547XXXXXXXX
     let formattedPhone = phone.replace(/[^0-9]/g, '')
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '254' + formattedPhone.substring(1)
@@ -58,7 +84,7 @@ serve(async (req) => {
       formattedPhone = formattedPhone.substring(1)
     }
 
-    // 1. Get Access Token
+    // 4. Get Access Token from Safaricom
     const auth = btoa(`${consumerKey}:${consumerSecret}`)
     const tokenRes = await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
       headers: { Authorization: `Basic ${auth}` }
@@ -67,11 +93,11 @@ serve(async (req) => {
     if (!tokenRes.ok) {
       const err = await tokenRes.text()
       console.error('M-Pesa Token Error:', err)
-      throw new Error('Failed to authenticate with M-Pesa')
+      throw new Error('Failed to authenticate with M-Pesa. Please check your API credentials.')
     }
     const { access_token } = await tokenRes.json()
 
-    // 2. Prepare STK Push
+    // 5. Prepare STK Push
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)
     const password = btoa(`${shortcode}${passkey}${timestamp}`)
     
@@ -80,7 +106,7 @@ serve(async (req) => {
       Password: password,
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
-      Amount: Math.ceil(Number(amount)), // Safaricom requires integer amounts
+      Amount: Math.ceil(Number(amount)),
       PartyA: formattedPhone,
       PartyB: shortcode,
       PhoneNumber: formattedPhone,
@@ -103,7 +129,7 @@ serve(async (req) => {
       throw new Error(stkData.errorMessage)
     }
 
-    // 3. Save to database
+    // 6. Save to database
     if (stkData.ResponseCode === "0") {
       const { error: dbError } = await supabase
         .from('mpesa_transactions')
@@ -120,7 +146,7 @@ serve(async (req) => {
         
       if (dbError) {
         console.error('Database Error:', dbError)
-        // We still return success to frontend because STK push was sent
+        // Still return success — STK push was sent
       }
     }
 
@@ -128,9 +154,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
+    console.error('mpesa-stk error:', error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
+

@@ -50,13 +50,16 @@ export default function StudentFinanceTab() {
           body: { phone, amount: amt, invoiceId: null, studentId: me?.id || null }
         });
         
+        // supabase-js puts the parsed JSON body in `data` even on non-2xx responses
         if (error) {
-          // Parse the Edge Function error body for a more descriptive message
-          const msg = data?.error || error.message || 'Unknown error';
-          if (msg.includes('not configured') || msg.includes('payment gateway')) {
-            throw new Error('M-Pesa gateway not configured. Please contact the school Bursar to set up payment credentials.');
-          }
+          const serverMsg = data?.error || '';
+          const msg = serverMsg || error.message || 'Unknown error';
           throw new Error(msg);
+        }
+        
+        // Also check if the Edge Function returned an error field in the body
+        if (data?.error) {
+          throw new Error(data.error);
         }
         
         setPayModal(false);
@@ -64,11 +67,7 @@ export default function StudentFinanceTab() {
         notify('Check your phone for the M-Pesa PIN prompt. The system will update automatically.', 'success', 'Payment Initiated');
       } catch (e) {
         const errMsg = e.message || String(e);
-        if (errMsg.includes('non-2xx') || errMsg.includes('FunctionsHttpError')) {
-          notify('M-Pesa is not available right now. Please use a manual payment method (M-Pesa code, Bank) instead, or contact your Bursar.', 'error', 'Payment');
-        } else {
-          notify(`Payment error: ${errMsg}`, 'error', 'Payment');
-        }
+        notify(`Payment error: ${errMsg}`, 'error', 'Payment');
       }
       return;
     }
