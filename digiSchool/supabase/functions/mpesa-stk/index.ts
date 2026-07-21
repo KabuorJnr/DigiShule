@@ -21,15 +21,18 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     
+    const authHeader = req.headers.get('Authorization') || ''
+    const jwt = authHeader.replace('Bearer ', '').trim()
+
     // 1. Resolve school_id from the authenticated user's profile
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get('Authorization')! } }
+      global: { headers: { Authorization: authHeader } }
     })
 
-    const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser()
+    const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(jwt)
     if (authErr || !authUser) {
       console.error('Auth error:', authErr)
-      throw new Error('Authentication failed. Please log in again.')
+      throw new Error(`Authentication failed: ${authErr?.message || 'Invalid user session'}.`)
     }
 
     // Try profile first (staff/parents)
