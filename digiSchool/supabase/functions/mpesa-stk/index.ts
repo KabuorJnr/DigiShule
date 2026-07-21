@@ -32,16 +32,26 @@ serve(async (req) => {
       throw new Error('Authentication failed. Please log in again.')
     }
 
-    // Try profile first (most reliable), then fall back to app_config
+    // Try profile first (staff/parents)
     let schoolId = null
 
     const { data: profile } = await supabase
       .from('profiles')
       .select('school_id')
       .eq('id', authUser.id)
-      .single()
+      .maybeSingle()
     
     schoolId = profile?.school_id
+
+    // Try students table if not found in profiles (students login)
+    if (!schoolId) {
+      const { data: student } = await supabase
+        .from('students')
+        .select('school_id')
+        .eq('id', authUser.id)
+        .maybeSingle()
+      schoolId = student?.school_id
+    }
 
     if (!schoolId) {
       // Fallback: try app_config
@@ -71,10 +81,10 @@ serve(async (req) => {
       throw new Error('M-Pesa payment gateway is not configured for this school. Please ask your Bursar to set up credentials in System Settings.')
     }
 
-    const consumerKey = gateway.mpesa_consumer_key
-    const consumerSecret = gateway.mpesa_consumer_secret
-    const shortcode = gateway.mpesa_shortcode
-    const passkey = gateway.mpesa_passkey
+    const consumerKey = gateway.mpesa_consumer_key.trim()
+    const consumerSecret = gateway.mpesa_consumer_secret.trim()
+    const shortcode = gateway.mpesa_shortcode.trim()
+    const passkey = gateway.mpesa_passkey.trim()
     
     // 3. Format phone: 07XXXXXXXX -> 2547XXXXXXXX
     let formattedPhone = phone.replace(/[^0-9]/g, '')

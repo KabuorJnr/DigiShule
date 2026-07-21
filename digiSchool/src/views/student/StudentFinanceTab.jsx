@@ -50,16 +50,22 @@ export default function StudentFinanceTab() {
           body: { phone, amount: amt, invoiceId: null, studentId: me?.id || null }
         });
         
-        // supabase-js puts the parsed JSON body in `data` even on non-2xx responses
         if (error) {
-          const serverMsg = data?.error || '';
-          const msg = serverMsg || error.message || 'Unknown error';
+          let msg = error.message || 'Unknown error';
+          if (error.context && typeof error.context.json === 'function') {
+            try {
+              // Clone the response to read it safely
+              const body = await error.context.clone().json();
+              if (body && body.error) msg = body.error;
+            } catch (e) {
+              console.error('Failed to parse Edge Function error:', e);
+            }
+          }
+          // If no context, check data (just in case)
+          if (!error.context && data?.error) {
+            msg = data.error;
+          }
           throw new Error(msg);
-        }
-        
-        // Also check if the Edge Function returned an error field in the body
-        if (data?.error) {
-          throw new Error(data.error);
         }
         
         setPayModal(false);
