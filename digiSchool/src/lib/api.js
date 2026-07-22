@@ -290,11 +290,6 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
   return { data: mapped, count };
 }
 
-export async function fetchAllStudentsUnpaginated() {
-  const { data } = await fetchStudents(0, 1000);
-  return data || [];
-}
-
 export async function fetchStudentByQuery(field, value) {
   let query = supabase.from('students').select('*').eq(field, value);
   if (_schoolId) query = query.eq('school_id', _schoolId);
