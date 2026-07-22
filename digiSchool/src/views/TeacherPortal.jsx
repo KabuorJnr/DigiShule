@@ -298,7 +298,7 @@ export default function TeacherPortal({ store, user }) {
 
       {/* Welcome Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #0078D4 0%, #0369A1 100%)',
+        background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
         color: '#fff', borderRadius: 12, padding: '20px 24px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20
       }}>

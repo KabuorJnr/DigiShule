@@ -489,7 +489,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
     <div>
       {/* Header Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #0078D4 100%)',
+        background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
         color: '#fff', padding: '20px 24px', borderRadius: 10, marginBottom: 24,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
       }}>

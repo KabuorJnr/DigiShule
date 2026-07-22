@@ -49,7 +49,7 @@ export default function RegistrarLayout() {
       {/* KPI Bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Total Students', value: total_active, color: '#0078D4' },
+          { label: 'Total Students', value: total_active, color: '#047857' },
           { label: 'Male', value: male, color: '#0369A1' },
           { label: 'Female', value: female, color: '#7C3AED' },
           { label: 'Flagged', value: flagged, color: '#D13438' },

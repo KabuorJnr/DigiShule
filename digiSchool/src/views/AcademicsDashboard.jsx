@@ -99,9 +99,9 @@ export default function AcademicsDashboard({ store, user }) {
         <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
       </div>
 
-      <div style={{ background: '#0078D4', color: '#fff', padding: '16px 20px', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', color: '#fff', padding: '18px 24px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 18 }}>Academic Affairs Office</h3>
+          <h3 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Academic Affairs Office</h3>
           <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
             Managing exams, curriculum, subjects, and academic performance
           </p>
@@ -113,7 +113,7 @@ export default function AcademicsDashboard({ store, user }) {
       </div>
 
       <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-        <Stat label="Total Students" value={activeStudentsList.length} sub="Enrolled" color="#0078D4" />
+        <Stat label="Total Students" value={activeStudentsList.length} sub="Enrolled" color="#047857" />
         <Stat label="Teaching Staff" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
         <Stat label="Classes & Streams" value={`${classesCount} / ${classesCount * 2}`} sub="Levels / Streams" color="#107C10" />
         <Stat label="Subjects" value="8" sub="Active subjects" color="#FFB900" />
@@ -145,7 +145,7 @@ export default function AcademicsDashboard({ store, user }) {
 
       <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
         <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, marginBottom: 16 }}>
+          <h3 className="section-title" style={{ color: '#047857', fontSize: 15, marginBottom: 16 }}>
             Class Performance Overview
           </h3>
           <ResponsiveContainer width="100%" height={260}>
@@ -155,7 +155,7 @@ export default function AcademicsDashboard({ store, user }) {
               <YAxis tickLine={false} tick={{ fontSize: 12 }} tickFormatter={val => `${val}%`} />
               <Tooltip formatter={value => `${value}%`} cursor={{ fill: '#f8fafc' }} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="average" name="Average Score (%)" fill="#0078D4" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="average" name="Average Score (%)" fill="#047857" radius={[4, 4, 0, 0]} maxBarSize={40} />
               <Bar dataKey="passRate" name="Pass Rate (%)" fill="#107C10" radius={[4, 4, 0, 0]} maxBarSize={40} />
             </BarChart>
           </ResponsiveContainer>
@@ -163,7 +163,7 @@ export default function AcademicsDashboard({ store, user }) {
 
         <div className="card card-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, margin: 0 }}>
+            <h3 className="section-title" style={{ color: '#047857', fontSize: 15, margin: 0 }}>
               Top Performing Subjects
             </h3>
             <button className="btn btn-sm" onClick={handleExportAnalysis}>
@@ -190,7 +190,7 @@ export default function AcademicsDashboard({ store, user }) {
 
       <div className="card card-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 className="section-title" style={{ color: '#0078D4', fontSize: 15, margin: 0 }}>
+          <h3 className="section-title" style={{ color: '#047857', fontSize: 15, margin: 0 }}>
             Class Performance Summary
           </h3>
           <button className="btn btn-sm" onClick={handleExportClassPerf}>
