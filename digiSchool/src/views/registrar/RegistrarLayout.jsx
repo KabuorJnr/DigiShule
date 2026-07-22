@@ -50,12 +50,12 @@ export default function RegistrarLayout() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { label: 'Total Students', value: total_active, color: '#047857' },
-          { label: 'Male', value: male, color: '#0369A1' },
-          { label: 'Female', value: female, color: '#7C3AED' },
+          { label: 'Male', value: male, color: '#047857' },
+          { label: 'Female', value: female, color: '#047857' },
           { label: 'Flagged', value: flagged, color: '#D13438' },
         ].map(k => (
           <div key={k.label} className="card card-pad" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#0F172A' }}>{k.value}</div>
             <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{k.label}</div>
           </div>
         ))}

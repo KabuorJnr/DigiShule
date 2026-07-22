@@ -4,18 +4,21 @@ export function KpiCard({ icon, iconComponent, label, value, sub, accent, childr
   const valStr = String(value || '');
   const fontSize = valStr.length > 13 ? 15 : valStr.length > 9 ? 18 : 24;
 
+  const isAlert = accent === '#D13438' || accent === '#EF4444' || accent === '#F59E0B';
+  const iconColor = isAlert ? accent : '#047857';
+
   return (
     <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', justifyContent: 'space-between' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <span className="muted" style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>{label}</span>
         {iconComponent ? (
-          <span style={{ color: accent || 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: accent ? `${accent}15` : 'rgba(4,120,87,0.1)' }}>{iconComponent}</span>
+          <span style={{ color: iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: isAlert ? `${iconColor}15` : 'rgba(4,120,87,0.08)' }}>{iconComponent}</span>
         ) : (
           <span style={{ fontSize: 20 }}>{icon}</span>
         )}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '4px 0' }}>
-        <span style={{ fontSize, fontWeight: 700, color: accent || '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
+        <span style={{ fontSize, fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
       </div>
       {sub && <div className="muted" style={{ fontSize: 12, color: '#64748B' }}>{sub}</div>}
       {children}
