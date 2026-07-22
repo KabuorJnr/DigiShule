@@ -15,6 +15,12 @@ const deptColorBg = {
   Math: '#fef3c7',
 };
 
+export function formatTeacherFirstName(name) {
+  if (!name || name === 'TBD' || name === '-') return '';
+  const cleaned = name.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').trim();
+  return cleaned.split(/\s+/)[0] || name;
+}
+
 function defaultAssignments(teachers = []) {
   if (teachers.length === 0) return [];
   return SUBJECTS.map((sub, i) => ({
@@ -537,7 +543,7 @@ export default function Timetable({ store, user }) {
                             title={conflict ? `Conflict: ${cell.teacher} double-booked` : (isTimetableAdmin ? 'Click to edit' : '')}
                           >
                             <div className="tt-cell-sub">{cell.subject}</div>
-                            <div className="tt-cell-teacher">{cell.teacher}</div>
+                            <div className="tt-cell-teacher">{formatTeacherFirstName(cell.teacher) ? `(${formatTeacherFirstName(cell.teacher)})` : (cell.teacher || '')}</div>
                             {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
                           </td>
                         );

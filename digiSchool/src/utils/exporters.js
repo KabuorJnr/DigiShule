@@ -449,11 +449,12 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename, times
         }
       } else if (cell.type === 'lesson') {
         let sub = cell.subject || '';
-        let abbr = '';
-        if (cell.teacher && cell.teacher !== 'TBD') {
-          abbr = cell.teacher.split(' ').map(n => n[0]).join('.').toUpperCase();
+        let firstName = '';
+        if (cell.teacher && cell.teacher !== 'TBD' && cell.teacher !== '-') {
+          const cleaned = cell.teacher.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').trim();
+          firstName = cleaned.split(/\s+/)[0] || cell.teacher;
         }
-        let txt = sub ? (abbr ? `${sub}\n(${abbr})` : sub) : '-';
+        let txt = sub ? (firstName ? `${sub}\n(${firstName})` : sub) : '-';
         row.push({ 
           content: txt, 
           styles: { halign: 'center', valign: 'middle', fontStyle: 'italic', fontSize: 10 } 
