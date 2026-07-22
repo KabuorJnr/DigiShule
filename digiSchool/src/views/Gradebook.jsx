@@ -45,7 +45,9 @@ export default function Gradebook({ store }) {
   }, [user, teacherRecord]);
 
   const canEditCurrentSubject = useMemo(() => {
-    if (!user || user.role !== 'teacher') return true;
+    if (!user) return true;
+    if (user.role === 'dos' || user.role === 'principal' || user.role === 'deputy_academic' || user.role === 'admin' || user.dept === 'dos') return true;
+    if (user.role !== 'teacher') return true;
     return allowedSubjects.includes(subject);
   }, [user, allowedSubjects, subject]);
 

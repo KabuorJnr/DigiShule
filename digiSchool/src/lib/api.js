@@ -127,6 +127,10 @@ export async function fetchProfiles(userId) {
     .eq('id', userId);
   
   if (error) throw error;
+
+  // Find primary school_id & school_name across all profile rows for this user
+  const sharedSchoolId = data.find(p => p.school_id)?.school_id || null;
+  const sharedSchoolName = data.find(p => p.schools?.name)?.schools?.name || 'EduOne System';
   
   return data.map(p => ({
     profileId: p.profile_id,
@@ -137,8 +141,9 @@ export async function fetchProfiles(userId) {
     dept: p.dept,
     teacherId: p.teacher_id || null,
     studentId: p.student_id || null,
-    schoolId: p.school_id || null,
-    schoolName: p.schools?.name || 'EduOne System',
+    schoolId: p.school_id || sharedSchoolId,
+    school_id: p.school_id || sharedSchoolId,
+    schoolName: p.schools?.name || sharedSchoolName,
   }));
 }
 
