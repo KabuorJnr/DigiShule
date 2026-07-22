@@ -8,18 +8,18 @@ export const CBC_BOUNDARIES = [
 ];
 
 export const KCSE_BOUNDARIES = [
-  { min: 80, grade: 'A',  label: 'Plain A',  pts: 12, remark: 'Excellent' },
+  { min: 80, grade: 'A',  label: 'A Plain',  pts: 12, remark: 'Excellent' },
   { min: 75, grade: 'A-', label: 'A Minus',  pts: 11, remark: 'Very Good' },
   { min: 70, grade: 'B+', label: 'B Plus',   pts: 10, remark: 'Good' },
-  { min: 65, grade: 'B',  label: 'Plain B',  pts: 9,  remark: 'Good' },
+  { min: 65, grade: 'B',  label: 'B Plain',  pts: 9,  remark: 'Good' },
   { min: 60, grade: 'B-', label: 'B Minus',  pts: 8,  remark: 'Fairly Good' },
   { min: 55, grade: 'C+', label: 'C Plus',   pts: 7,  remark: 'Satisfactory' },
-  { min: 50, grade: 'C',  label: 'Plain C',  pts: 6,  remark: 'Average' },
+  { min: 50, grade: 'C',  label: 'C Plain',  pts: 6,  remark: 'Average' },
   { min: 45, grade: 'C-', label: 'C Minus',  pts: 5,  remark: 'Fair' },
   { min: 40, grade: 'D+', label: 'D Plus',   pts: 4,  remark: 'Below Average' },
-  { min: 35, grade: 'D',  label: 'Plain D',  pts: 3,  remark: 'Poor' },
+  { min: 35, grade: 'D',  label: 'D Plain',  pts: 3,  remark: 'Poor' },
   { min: 30, grade: 'D-', label: 'D Minus',  pts: 2,  remark: 'Very Poor' },
-  { min: 0,  grade: 'E',  label: 'Grade E',  pts: 1,  remark: 'Needs Serious Effort' },
+  { min: 0,  grade: 'E',  label: 'E Plain',  pts: 1,  remark: 'Needs Serious Effort' },
 ];
 
 export const REPORT_CARD_SUBJECTS = [
