@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { tokens } from './theme';
 import { Search, Bell, Menu, Sun, Moon } from 'lucide-react';
@@ -111,15 +111,20 @@ const useStyles = createUseStyles({
     gap: '1rem'
   },
   returnBtn: {
-    backgroundColor: '#D13438',
-    color: tokens.colors.white,
-    padding: '0.375rem 0.75rem',
-    borderRadius: tokens.borderRadius.lg,
+    backgroundColor: 'transparent',
+    color: '#1A1A18',
+    padding: '7px 16px',
+    borderRadius: '8px',
     fontSize: '0.8125rem',
     fontWeight: 500,
-    border: 'none',
+    border: '1px solid #C4C4C0',
     cursor: 'pointer',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    transition: 'background 0.15s ease, border-color 0.15s ease',
+    '&:hover': {
+      backgroundColor: '#F4F4F5',
+      borderColor: '#A1A1AA'
+    }
   },
   bellBtn: {
     background: 'none',
@@ -264,7 +269,7 @@ export default function TopBar({
               notify('Returned to Principal Office', 'info', 'Office Visit');
             }}
           >
-            Return to Principal Office
+            Return to principal office
           </button>
         )}
         <button 

@@ -708,15 +708,15 @@ export default function PortalLayout() {
           <div className="topbar-actions">
             {activeRoleOverride && (
               <button 
-                className="btn btn-primary" 
-                style={{ background: '#D13438', borderColor: '#D13438', marginRight: 16, height: 32, fontSize: 13 }}
+                className="btn btn-secondary" 
+                style={{ marginRight: 16, height: 36, fontSize: 13 }}
                 onClick={() => {
                   setActiveRoleOverride(null);
                   store.navigate(ROLES[currentUser.role].home || 'overview');
-                  notify('Returned to Principal Office', 'info', 'Office Visit');
+                  notify('Returned to principal office', 'info', 'Office Visit');
                 }}
               >
-                Return to Principal Office
+                Return to principal office
               </button>
             )}
             <button className="bell" onClick={() => setNotifOpen(true)} aria-label="Notifications">
