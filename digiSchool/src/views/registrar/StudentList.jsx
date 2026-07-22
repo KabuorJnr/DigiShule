@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download, Mail } from 'lucide-react';
+import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download, Mail, Printer } from 'lucide-react';
 import { fetchStudents, upsertStudent, deleteStudent } from '../../lib/api';
 import { sendParentPinEmail } from '../../utils/auth';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
-import { exportReportCardsPDF, exportNemisCSV } from '../../utils/exporters';
+import { exportReportCardsPDF, exportNemisCSV, exportTablePDF } from '../../utils/exporters';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../../data/seed';
 
 export default function StudentList() {
@@ -140,6 +140,30 @@ export default function StudentList() {
     }
   };
 
+  const handlePrintClassListPDF = () => {
+    if (filtered.length === 0) return notify('No students in current view', 'warning');
+    const head = ['#', 'Adm No', 'Student Name', 'Gender', 'Class', 'Guardian Name', 'Phone'];
+    const body = filtered.map((s, idx) => [
+      idx + 1,
+      s.adm || s.admission_no || '-',
+      s.name || '-',
+      s.gender || '-',
+      s.class || '-',
+      s.guardianName || s.guardian_name || '-',
+      s.guardianPhone || s.guardian_phone || '-'
+    ]);
+
+    exportTablePDF({
+      school: store.settings,
+      title: `CLASS REGISTER / ROSTER - ${classFilter === 'All' ? 'ALL CLASSES' : classFilter.toUpperCase()}`,
+      subtitle: `Total Students: ${filtered.length} | Date: ${new Date().toLocaleDateString()}`,
+      head,
+      body,
+      filename: `class_list_${classFilter === 'All' ? 'school' : classFilter.replace(/\s+/g, '_')}.pdf`
+    });
+    notify(`Class List PDF generated for ${filtered.length} student(s)`, 'success');
+  };
+
   const handleDownloadReportCards = () => {
     if (filtered.length === 0) return notify('No students in current view', 'warning');
     exportReportCardsPDF({
@@ -157,8 +181,9 @@ export default function StudentList() {
   return (
     <>
       {/* Exporter Toolbar */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button className="btn" style={{ gap: 6 }} onClick={exportCSV}><Download size={15} /> Student Roster</button>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        <button className="btn btn-primary" style={{ gap: 6 }} onClick={handlePrintClassListPDF}><Printer size={15} /> Printable Class List (PDF)</button>
+        <button className="btn" style={{ gap: 6 }} onClick={exportCSV}><Download size={15} /> Student Roster (CSV)</button>
         <button className="btn" style={{ gap: 6 }} onClick={exportContactsCSV}><Download size={15} /> Parent Contacts</button>
         <button className="btn btn-outline" style={{ gap: 6, borderColor: '#0ea5e9', color: '#0ea5e9' }} onClick={exportNEMIS}><Download size={15} /> NEMIS Export</button>
         <button className="btn" style={{ gap: 6 }} onClick={handleDownloadReportCards}><FileText size={15} /> Batch Report Cards</button>

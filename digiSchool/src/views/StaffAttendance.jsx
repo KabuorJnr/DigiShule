@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
+import { exportTablePDF, downloadCSV } from '../utils/exporters';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -136,62 +137,49 @@ export default function StaffAttendance({ store, user }) {
 
   const handleExportLogs = () => {
     if (!logs || logs.length === 0) {
-      notify('No logs available to export.', 'info');
+      notify('No attendance logs available to export.', 'warning');
       return;
     }
     
-    const headers = ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status'];
+    const rows = [
+      ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status'],
+      ...logs.map(l => {
+        const s = resolveStaffFromLog(l.staff_id) || { name: 'Unknown', role: 'Staff' };
+        const inTime = l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '-';
+        const outTime = l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '-';
+        return [s.name, s.role || 'Staff', l.date || (l.created_at || '').slice(0, 10), inTime, outTime, l.status || 'Present'];
+      })
+    ];
     
-    const csvRows = [headers.join(',')];
-    
-    logs.forEach(l => {
-      const s = resolveStaffFromLog(l.staff_id) || { name: 'Unknown', role: 'Unknown' };
-      const inTime = l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '';
-      const outTime = l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '';
-      
-      const row = [
-        `"${s.name}"`,
-        s.role || 'Staff',
-        l.date,
-        `"${inTime}"`,
-        `"${outTime}"`,
-        l.status || 'Present'
-      ];
-      csvRows.push(row.join(','));
-    });
-    
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `staff_attendance_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCSV(`Staff_Attendance_Logs_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    notify('Staff Attendance Logs CSV downloaded', 'success');
   };
 
   const handleExportRegister = () => {
-    import('../utils/exporters').then(({ exportTablePDF }) => {
-      const activeStaff = staff.filter(s => s.status !== 'Inactive');
-      const head = ['Name', 'Role', 'Department', 'Check-In', 'Status'];
-      const body = activeStaff.map(s => [
-        s.name || '-',
-        s.role || '-',
-        s.dept || '-',
-        s.checkIn || '-',
-        s.status || '-'
-      ]);
+    const activeStaff = staff.filter(s => s.status !== 'Inactive');
+    if (activeStaff.length === 0) {
+      notify('No staff data available to export.', 'warning');
+      return;
+    }
+    const head = ['#', 'Name', 'Role', 'Department', 'Check-In Time', 'Attendance Status'];
+    const body = activeStaff.map((s, idx) => [
+      idx + 1,
+      s.name || '-',
+      s.role || '-',
+      s.dept || '-',
+      s.checkIn || '-',
+      s.status || '-'
+    ]);
 
-      exportTablePDF({
-        school: store.settings,
-        title: 'Staff Attendance Register',
-        subtitle: `Date: ${new Date().toLocaleDateString()}`,
-        head,
-        body,
-        filename: 'Staff_Attendance_Register.pdf'
-      });
+    exportTablePDF({
+      school: store?.settings || {},
+      title: 'STAFF ATTENDANCE REGISTER',
+      subtitle: `Date: ${new Date().toLocaleDateString()} | Active Staff: ${activeStaff.length}`,
+      head,
+      body,
+      filename: `Staff_Attendance_Register_${new Date().toISOString().slice(0, 10)}.pdf`
     });
+    notify('Staff Attendance Register PDF downloaded', 'success');
   };
 
   const leaveTotals = useMemo(() => ({

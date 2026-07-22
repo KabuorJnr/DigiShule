@@ -133,8 +133,11 @@ export default function Gradebook({ store }) {
   }
 
   function generateReportCards() {
-    const chosen = loadedStudents.filter((r) => selected.includes(r.id));
-    if (chosen.length === 0) return notify('Select at least one student', 'warning');
+    let chosen = loadedStudents.filter((r) => selected.includes(r.id));
+    if (chosen.length === 0) {
+      chosen = loadedStudents.filter((r) => !cls || r.class === cls);
+    }
+    if (chosen.length === 0) return notify('No students found for generating report cards', 'warning');
     exportReportCardsPDF({
       school: settings,
       gradeBoundaries: gradeBoundaries,

@@ -1,8 +1,11 @@
-﻿import { useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { useState } from 'react';
-import { Printer, Users, Award } from 'lucide-react';
+import { Printer, Users, Award, FileText } from 'lucide-react';
 import Modal from '../../components/Modal';
 import PrintHeader from '../../components/PrintHeader';
+import ReportCardModal from '../../components/ReportCardModal';
+import { exportReportCardsPDF } from '../../utils/exporters';
+import { SUBJECTS } from '../../data/seed';
 
 export default function MyClasses() {
   const { store, teacherName, assignedClass, loadedStudents } = useOutletContext();
@@ -10,12 +13,29 @@ export default function MyClasses() {
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
   const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });
+  const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
 
   const handleLogBehavior = () => {
     if (!behaviorForm.student) return store.notify('Please select a student', 'warning');
     store.notify(`Logged ${behaviorForm.type} (${behaviorForm.points} pts) for ${behaviorForm.student}.`, 'success');
     setBehaviorModalOpen(false);
     setBehaviorForm({ student: '', type: 'Merit', points: 5, notes: '' });
+  };
+
+  const handleExportClassReportCards = () => {
+    const classStudents = loadedStudents.filter(s => s.class === assignedClass);
+    if (classStudents.length === 0) return store.notify(`No students found in ${assignedClass}`, 'warning');
+    store.notify(`Generating Report Books for ${classStudents.length} student(s)...`, 'info');
+    exportReportCardsPDF({
+      school: store.settings,
+      gradeBoundaries: store.gradeBoundaries || [],
+      students: classStudents,
+      subjects: SUBJECTS,
+      examTitle: 'Term 1 Opening Exam',
+      termName: 'Term 1',
+      filename: `report_books_${assignedClass.replace(/\s+/g, '_')}.pdf`
+    });
+    store.notify(`Generated ${classStudents.length} Report Book(s) for ${assignedClass}`, 'success');
   };
 
   const handleExportAttendanceSummary = async () => {
@@ -53,8 +73,11 @@ export default function MyClasses() {
             You are assigned to manage {assignedClass}.
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-primary" style={{ background: '#065f46', borderColor: '#065f46', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" style={{ background: '#047857', borderColor: '#047857', display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportClassReportCards}>
+            <FileText size={16} /> Print Report Books (PDF)
+          </button>
+          <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
             <Award size={16} /> Log Behavior
           </button>
           <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setPrintModalOpen(true)}>
@@ -63,16 +86,13 @@ export default function MyClasses() {
           <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportAttendanceSummary}>
             <Printer size={16} /> Summary (PDF)
           </button>
-          <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportAttendanceReport}>
-            <Printer size={16} /> Report (CSV)
-          </button>
         </div>
       </div>
 
       <div className="card card-pad">
         <h3 style={{ margin: '0 0 16px' }}>Students in {assignedClass}</h3>
         <table className="table">
-          <thead><tr><th>#</th><th>Adm No.</th><th>Student Name</th><th>Gender</th></tr></thead>
+          <thead><tr><th>#</th><th>Adm No.</th><th>Student Name</th><th>Gender</th><th>Actions</th></tr></thead>
           <tbody>
             {loadedStudents.filter(s => s.class === assignedClass).map((s, idx) => (
               <tr key={s.id}>
@@ -80,11 +100,29 @@ export default function MyClasses() {
                 <td>{s.adm}</td>
                 <td style={{ fontWeight: 600 }}>{s.name}</td>
                 <td>{s.gender || '-'}</td>
+                <td>
+                  <button className="btn btn-sm" style={{ fontSize: 12, padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={() => setSelectedStudentForReport(s)}>
+                    <FileText size={13} /> View Report Book
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {selectedStudentForReport && (
+        <ReportCardModal
+          student={selectedStudentForReport}
+          students={loadedStudents}
+          subjects={SUBJECTS}
+          gradeBoundaries={store.gradeBoundaries}
+          examTitle="Term 1 Opening Exam"
+          termName="Term 1"
+          schoolSettings={store.settings}
+          onClose={() => setSelectedStudentForReport(null)}
+        />
+      )}
 
       {printModalOpen && (
         <div className="modal-overlay" onMouseDown={() => setPrintModalOpen(false)}>
