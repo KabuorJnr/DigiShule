@@ -682,24 +682,28 @@ export default function PortalLayout() {
             >
               <Menu size={20} color="#1e293b" />
             </button>
-            <div className="topbar-title">{settings.name}</div>
-            <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '400px', width: '100%', marginLeft: '8px' }} ref={searchInputRef}>
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666666' }} />
+            <div className="topbar-title" style={{ fontWeight: 800, fontSize: 16, color: '#0f172a', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#047857', display: 'inline-block' }}></span>
+              {(settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST') ? settings.name : 'DigiShule Portal'}
+            </div>
+            <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '380px', width: '100%', marginLeft: '12px' }} ref={searchInputRef}>
+              <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#047857' }} />
               <input 
                 type="text" 
-                placeholder="Search" 
+                placeholder="Search students, staff, records..." 
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
                 onFocus={() => setShowSearchResults(true)}
                 style={{ 
                   width: '100%', 
-                  padding: '6px 8px 6px 32px', 
-                  background: '#eef3f8', 
-                  border: 'none', 
-                  borderRadius: '4px',
-                  fontSize: '14px',
+                  padding: '7px 12px 7px 36px', 
+                  background: '#f1f5f9', 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: '20px',
+                  fontSize: '13px',
                   outline: 'none',
-                  color: '#000'
+                  color: '#0f172a',
+                  transition: 'all 0.2s'
                 }} 
               />
               {showSearchResults && searchQuery.trim() && (

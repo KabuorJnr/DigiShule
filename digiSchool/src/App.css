@@ -107,15 +107,16 @@
 .main {
   flex: 1;
   min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 .topbar {
-  height: 52px;
-  background: #fff;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -124,9 +125,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  flex-shrink: 0;
 }
-.topbar-title { font-weight: 600; font-size: 15px; color: var(--text); }
+.topbar-title { font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: -0.3px; }
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
 .bell {
   position: relative;
@@ -169,8 +171,11 @@
 .principal-name { font-size: 13px; font-weight: 600; }
 
 .content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
-  max-width: 1280px;
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
 }
