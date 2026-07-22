@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Trash2, Image as ImageIcon, Loader } from 'lucide-react';
 import { saveFile, listFiles, deleteFile, getSignedUrl } from '../lib/fileStore';
 
@@ -116,7 +116,7 @@ export default function MediaManager({ notify, user }) {
           />
           <label className="btn btn-primary" style={{ cursor: uploading ? 'not-allowed' : 'pointer' }}>
             {uploading ? <Loader size={16} className="spin" /> : <Upload size={16} />}
-            {uploading ? 'Uploading...' : 'Upload Photos'}
+            {uploading ? 'Uploading...' : 'Upload photos'}
             <input 
               type="file" 
               multiple 

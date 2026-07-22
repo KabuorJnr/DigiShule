@@ -296,9 +296,9 @@ export default function AdminDashboard({ store, user }) {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn" onClick={() => setShowMediaManager(!showMediaManager)}>
-            {showMediaManager ? 'Back to Dashboard' : 'Media Gallery Manager'}
+            {showMediaManager ? 'Back to dashboard' : 'Media gallery manager'}
           </button>
-          <button className="btn btn-primary" onClick={() => navigate('notices')}>Post Notice</button>
+          <button className="btn btn-primary" onClick={() => navigate('notices')}>Post notice</button>
         </div>
       </div>
 

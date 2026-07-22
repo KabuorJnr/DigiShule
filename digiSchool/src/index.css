@@ -68,54 +68,105 @@ a:hover {
 
 /* ---------- Buttons ---------- */
 .btn {
-  padding: 10px 25px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
   font-size: 14px;
-  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #C4C4C0;
+  background: transparent;
+  color: #1A1A18;
   text-align: center;
   vertical-align: middle;
-  border-radius: 0.5rem;
-  border: 1px solid #bebebe;
-  gap: 10px;
-  color: #414141;
-  background: #fff;
-  font-family: inherit; /* keeping inherit so it uses the nice Outfit/Inter fonts */
-  cursor: pointer;
+  gap: 8px;
   text-decoration: none;
   user-select: none;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  transition: all 0.12s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  box-shadow: none;
 }
 
 .btn svg {
-  height: 20px; /* Scaled to fit standard buttons nicely while keeping the lucide feel */
+  height: 18px;
+  width: 18px;
 }
 
 .btn:hover {
-  border: solid 1px #464545;
+  background: #F4F4F5;
+  border-color: #A1A1AA;
+  color: #1A1A18;
 }
 
 .btn:active {
-  transform: translateY(1px); /* More reliable than margin-top which causes reflows */
+  transform: translateY(0.5px);
+}
+
+.btn-primary {
+  background: #047857;
+  color: #ffffff;
+  border: 1px solid #047857;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.btn-primary:hover {
+  background: #065f46;
+  border-color: #065f46;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #C4C4C0;
+  color: #1A1A18;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  background: #F4F4F5;
+  border-color: #A1A1AA;
+  color: #1A1A18;
+}
+
+.btn-danger {
+  background: #EF4444;
+  color: #ffffff;
+  border: 1px solid #EF4444;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.btn-danger:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #ffffff;
 }
 
 .btn-sm {
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 13px;
+  border-radius: 6px;
 }
+
 .btn-icon {
   width: 36px;
+  height: 36px;
   padding: 0;
+  border-radius: 8px;
 }
+
 .btn:disabled {
   pointer-events: none;
-  opacity: .65;
-  color: #7e7e7e;
-  background: #dcdcdc;
+  opacity: .5;
+  color: #A1A1AA;
+  background: #F4F4F5;
+  border-color: #E4E4E7;
   box-shadow: none;
-  text-shadow: none;
 }
 
 /* ---------- Inputs ---------- */
