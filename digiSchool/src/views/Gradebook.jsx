@@ -15,7 +15,7 @@ const GRADE_COLORS = { EE: '#047857', ME: '#047857', AE: '#F59E0B', BE: '#EF4444
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
-  const { updateStudent, gradeBoundaries, settings, setSettings, notify } = store;
+  const { updateStudent, gradeBoundaries, settings, setSettings, notify, user, teachers = [] } = store;
   const [cls, setCls] = useState('');
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
@@ -26,6 +26,28 @@ export default function Gradebook({ store }) {
   
   const [loadedStudents, setLoadedStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Subject permission check for teachers
+  const teacherRecord = useMemo(() => {
+    if (user?.role !== 'teacher') return null;
+    return (teachers || []).find(t => t.id === user.id || t.email === user.email || t.name === user.name) || null;
+  }, [user, teachers]);
+
+  const allowedSubjects = useMemo(() => {
+    if (!user || user.role !== 'teacher') return SUBJECTS;
+    const subjList = [];
+    if (user.subject) subjList.push(user.subject);
+    if (user.dept) subjList.push(user.dept);
+    if (teacherRecord?.subject) subjList.push(teacherRecord.subject);
+    if (teacherRecord?.subjects && Array.isArray(teacherRecord.subjects)) subjList.push(...teacherRecord.subjects);
+    const unique = [...new Set(subjList.filter(Boolean))];
+    return unique.length > 0 ? unique : SUBJECTS;
+  }, [user, teacherRecord]);
+
+  const canEditCurrentSubject = useMemo(() => {
+    if (!user || user.role !== 'teacher') return true;
+    return allowedSubjects.includes(subject);
+  }, [user, allowedSubjects, subject]);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +109,11 @@ export default function Gradebook({ store }) {
     }), [classStudents]);
 
   function saveScore(id, field, value) {
+    if (!canEditCurrentSubject) {
+      notify(`Access Restricted: You are assigned to teach ${allowedSubjects.join(', ')}. You cannot modify marks for ${subject}.`, 'warning', 'Subject Permission');
+      setEditing(null);
+      return;
+    }
     const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
     if (target) {
@@ -169,9 +196,21 @@ export default function Gradebook({ store }) {
     }
     return (
       <td 
-        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '40px', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
-        onClick={() => setEditing({ id: r.id, field })}
-        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}`}
+        style={{ 
+          cursor: canEditCurrentSubject ? 'pointer' : 'not-allowed', 
+          minWidth: field === 'remarks' ? '120px' : '40px', 
+          fontWeight: field === 'remarks' ? 400 : 600, 
+          color: field === 'remarks' ? '#475569' : '#0369A1',
+          opacity: canEditCurrentSubject ? 1 : 0.7 
+        }} 
+        onClick={() => {
+          if (!canEditCurrentSubject) {
+            notify(`Access Restricted: You are assigned to teach ${allowedSubjects.join(', ')}. You cannot modify marks for ${subject}.`, 'warning', 'Subject Permission');
+            return;
+          }
+          setEditing({ id: r.id, field });
+        }}
+        title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}` : `View only: Assigned to teach ${allowedSubjects.join(', ')}`}
       >
         {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
       </td>
@@ -200,7 +239,7 @@ export default function Gradebook({ store }) {
                 onClick={handlePublishResults}
               >
                 <Icon name={settings?.results_published ? "close" : "check"} size={16} /> 
-                {settings?.results_published ? 'Unpublish Results' : 'Publish Results (DoS)'}
+                {settings?.results_published ? 'Unpublish Results (DoS)' : 'Publish Results (DoS)'}
               </button>
             )}
             <button className="btn" onClick={exportExcel}><Icon name="file" size={16} /> Export Excel</button>
@@ -229,6 +268,15 @@ export default function Gradebook({ store }) {
         <div style={{ flex: 1, minWidth: 180 }}><label className="field-label">Search student</label>
           <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Type a name…" /></div>
       </div>
+
+      {!canEditCurrentSubject && (
+        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e', padding: '10px 16px', borderRadius: 8, marginBottom: 16, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="warning" size={16} style={{ color: '#d97706', flexShrink: 0 }} />
+          <div>
+            <strong>Subject Permission Restriction:</strong> You are logged in as a Subject Teacher for <strong>{allowedSubjects.join(', ')}</strong>. Results for <strong>{subject}</strong> are view-only.
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
