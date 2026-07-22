@@ -125,7 +125,7 @@ export default function Overview({ store }) {
           <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${outStr}`} sub={outstandingFees > 0 ? <Badge color="amber">View Defaulters →</Badge> : 'All clear'} />
         </div>
         <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={pendingApps.toString()} sub="Admissions portal" />
-        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub={totalStudents > 0 ? "Actual Ratio" : "N/A"} />
+        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M • ${femalePct}% F`} sub={totalStudents > 0 ? "Actual Ratio" : "N/A"} />
         <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "Enrolled Type" : "N/A"} />
       </div>
 
