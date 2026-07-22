@@ -1,4 +1,4 @@
-﻿import { useOutletContext, useParams, Navigate } from 'react-router-dom';
+import { useOutletContext, useParams, Navigate } from 'react-router-dom';
 import Overview from '../Overview';
 import Timetable from '../Timetable';
 import ExamSchedules from '../ExamSchedules';
@@ -53,7 +53,7 @@ const VIEW_MAP = {
 
 export default function LegacyViewLoader() {
   const { store, user, params: outletParams } = useOutletContext();
-  const { viewId } = useParams();
+  const { viewId, tab } = useParams();
 
   const ViewComponent = VIEW_MAP[viewId];
 
@@ -63,7 +63,12 @@ export default function LegacyViewLoader() {
 
   const isReadOnlyView = (viewId === 'scheme_of_work' || viewId === 'lesson_plans') && user?.role !== 'teacher';
 
-  return <ViewComponent store={store} user={user} params={outletParams || {}} readOnly={isReadOnlyView} />;
+  const mergedParams = {
+    ...(outletParams || {}),
+    ...(tab ? { tab } : {})
+  };
+
+  return <ViewComponent store={store} user={user} params={mergedParams} readOnly={isReadOnlyView} />;
 }
 
 

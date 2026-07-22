@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
 import PublicSchoolLanding from './views/PublicSchoolLanding';
 import Login from './views/Login';
@@ -149,6 +149,7 @@ export default function App() {
 
         {/* Fallback for all legacy components */}
         <Route path=":viewId" element={<LegacyViewLoader />} />
+        <Route path=":viewId/:tab" element={<LegacyViewLoader />} />
       </Route>
     </Routes>
   );
