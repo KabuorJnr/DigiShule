@@ -61,7 +61,7 @@ export async function fetchTable(key) {
       notifications: 'created_at', messages: 'created_at', leave_requests: 'created_at',
       clinic_visits: 'date', disciplinary_records: 'date', school_events: 'date', student_attendance: 'date',
       admissions: 'date', job_applications: 'applied_date',
-      assignment_submissions: 'submitted_at', library_loans: 'loan_date',
+      assignment_submissions: 'submitted_at',
       parent_meeting_requests: 'created_at', calendar_events: 'date'
     };
     
@@ -75,19 +75,29 @@ export async function fetchTable(key) {
       // Prevent fetching data without a school context to avoid cross-school leakage
       return [];
     }
-    const { data, error } = await query;
+
+    let { data, error } = await query;
+    if (error && dateColMap[table]) {
+      // Fallback query without column ordering if column does not exist
+      const retry = await supabase.from(table).select('*').eq('school_id', _schoolId);
+      if (!retry.error) {
+        data = retry.data || [];
+        error = null;
+      }
+    }
     if (error) throw error;
     
     // Save to cache for offline use
     saveToCache(`table_${table}`, data);
     return data;
   } catch (error) {
+    console.warn(`[fetchTable] Warning for ${table}:`, error.message);
     if (!navigator.onLine || error.message.includes('Failed to fetch')) {
       console.warn(`[Offline] Falling back to cache for ${table}`);
       const cached = await getFromCache(`table_${table}`);
       if (cached) return cached;
     }
-    throw error;
+    return [];
   }
 }
 
