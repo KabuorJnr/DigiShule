@@ -199,36 +199,38 @@ export default function PortalLayout() {
       navigate: (v, p = {}) => { 
         setViewParams(p); 
         setView(v); 
-        // Map view names that live inside nested layout routes
-        const nestedSubRoutes = {
-          // Finance sub-routes
-          finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
-          // Registrar sub-routes
-          registrar: ['enroll', 'transfers'],
-          // Student sub-routes
-          student: ['academics', 'records', 'resources', 'finance'],
-          // Teacher sub-routes
-          teacher: ['classes', 'attendance', 'gradebook'],
-          // Staff sub-routes
-          staff: ['leave', 'classes', 'recruitment'],
-          // Procurement sub-routes (standalone portal)
-          procurement: ['procurement_dashboard', 'tenders_manager', 'purchase_orders'],
-          // Parent sub-routes
-          parent: ['attendance', 'contact', 'health', 'disciplinary'],
-        };
 
-        // Check if this is a top-level view that maps to a nested route
+        // Top level layout routes should resolve directly to `/portal/${v}` or `/portal/${v}/${p.tab}`
+        const topLevelLayouts = ['finance', 'registrar', 'student', 'teacher', 'staff', 'procurement', 'parent'];
+
         let resolvedPath = `/portal/${v}`;
-        for (const [layout, subs] of Object.entries(nestedSubRoutes)) {
-          if (subs.includes(v)) {
-            resolvedPath = `/portal/${layout}/${v}`;
-            break;
+
+        if (topLevelLayouts.includes(v)) {
+          resolvedPath = p.tab ? `/portal/${v}/${p.tab}` : `/portal/${v}`;
+        } else {
+          // Map sub-route names that live inside nested layout routes
+          const nestedSubRoutes = {
+            finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
+            registrar: ['enroll', 'transfers'],
+            student: ['academics', 'records', 'resources', 'student_finance'],
+            teacher: ['classes', 'attendance', 'gradebook'],
+            staff: ['leave', 'classes', 'recruitment'],
+            procurement: ['procurement_dashboard', 'tenders_manager', 'purchase_orders'],
+            parent: ['attendance', 'contact', 'health', 'disciplinary'],
+          };
+
+          for (const [layout, subs] of Object.entries(nestedSubRoutes)) {
+            if (subs.includes(v)) {
+              resolvedPath = `/portal/${layout}/${v}`;
+              break;
+            }
+          }
+
+          if (p.tab) {
+            resolvedPath = `/portal/${v}/${p.tab}`;
           }
         }
-        // If there's a tab param and the view matches a layout, directly append tab to route
-        if (p.tab) {
-          resolvedPath = `/portal/${v}/${p.tab}`;
-        }
+
         navigateRouter(resolvedPath);
       },
       removeToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
