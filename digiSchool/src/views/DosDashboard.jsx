@@ -46,7 +46,7 @@ export default function DosDashboard({ store, user }) {
         studentQuery = studentQuery.eq('school_id', currentSchoolId);
       }
       const { data: studentData } = await studentQuery.limit(2000);
-      if (studentData) setStudents(studentData);
+      if (studentData && studentData.length > 0) setStudents(studentData);
 
       // Fetch live staff/teachers from profiles with school_id filter
       let staffQuery = supabase.from('profiles').select('*');
@@ -55,7 +55,7 @@ export default function DosDashboard({ store, user }) {
       }
       staffQuery = staffQuery.in('role', ['teacher', 'dos', 'deputy_academic', 'principal', 'deputy_admin', 'registrar', 'finance', 'accountant', 'librarian', 'clinic']);
       const { data: staffData } = await staffQuery;
-      if (staffData) setStaff(staffData);
+      if (staffData && staffData.length > 0) setStaff(staffData);
 
       // Fetch approvals with school_id filter
       let appQuery = supabase.from('approval_queue').select('*, profiles:teacher_id(full_name)');
@@ -99,15 +99,10 @@ export default function DosDashboard({ store, user }) {
 
   // ── COMPUTED DATA ──
   const rawStudents = useMemo(() => {
-    let list = [];
-    if (students && students.length > 0) list = students;
-    else if (store?.students && store.students.length > 0) list = store.students;
-
-    if (currentSchoolId) {
-      list = list.filter(s => !s.school_id || s.school_id === currentSchoolId);
-    }
-    return list;
-  }, [students, store?.students, currentSchoolId]);
+    if (students && students.length > 0) return students;
+    if (store?.students && store.students.length > 0) return store.students;
+    return [];
+  }, [students, store?.students]);
 
   const activeStudents = useMemo(() => 
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
