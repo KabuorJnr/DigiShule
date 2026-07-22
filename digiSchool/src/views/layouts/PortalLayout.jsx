@@ -520,13 +520,13 @@ export default function PortalLayout() {
             {settings.logo ? (
               <img src={settings.logo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             ) : (
-              <img src="/logo.png" alt="DigiShule Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/logo.png" alt="EduOne Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             )}
           </div>
           {!collapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <strong style={{ color: '#ffffff', fontSize: 15, fontWeight: 800, letterSpacing: '0.3px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {settings.name || 'DigiShule'}
+                {settings.name || 'EduOne'}
               </strong>
               <span style={{ fontSize: 11, color: '#34d399', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: 2 }}>
                 {role?.portal || 'Portal'}
@@ -684,7 +684,7 @@ export default function PortalLayout() {
             </button>
             <div className="topbar-title" style={{ fontWeight: 800, fontSize: 16, color: '#0f172a', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#047857', display: 'inline-block' }}></span>
-              {(settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST') ? settings.name : 'DigiShule Portal'}
+              {(settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST') ? settings.name : 'EduOne Portal'}
             </div>
             <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '380px', width: '100%', marginLeft: '12px' }} ref={searchInputRef}>
               <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#047857' }} />

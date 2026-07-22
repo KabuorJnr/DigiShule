@@ -270,7 +270,7 @@ export default function FeeStructureTab() {
             <li style={{ marginBottom: 4 }}>
               All monies should be paid directly into official institution accounts:
               <div style={{ fontWeight: 700, marginTop: 2, paddingLeft: 12 }}>
-                Bank: KCB Bank Ltd | Account Name: {school.name || 'DigiShule Technical Institute'} Main Acc<br />
+                Bank: KCB Bank Ltd | Account Name: {school.name || 'EduOne Technical Institute'} Main Acc<br />
                 Account No: 1209428430 | M-PESA PAYBILL: 522533 | Account: [ADM NO + Trainee Name]
               </div>
             </li>

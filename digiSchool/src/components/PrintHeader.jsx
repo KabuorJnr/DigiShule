@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { MapPin, Phone, Mail } from 'lucide-react';
 
 export default function PrintHeader({ settings = {} }) {
@@ -38,7 +38,7 @@ export default function PrintHeader({ settings = {} }) {
           <img src={settings.logo} alt="School Logo" style={{ maxHeight: 80, marginBottom: 12, borderRadius: 8 }} />
         )}
         <h1 style={{ margin: '0 0 6px 0', fontSize: 32, fontWeight: 800, textTransform: 'capitalize', letterSpacing: 1.5 }}>
-          {settings.name || 'DigiShule Institution'}
+          {settings.name || 'EduOne Institution'}
         </h1>
         {settings.motto && (
           <p style={{ margin: '0 0 10px 0', fontStyle: 'italic', fontSize: 15, color: '#555' }}>

@@ -15,7 +15,7 @@ import ExportMenu from './dashboard/ExportMenu';
 export default function FinanceDashboardTab() {
   const { invoices = [], payments = [], expenses = [], students = [], store } = useOutletContext();
   const navigate = useNavigate();
-  const schoolName = store?.settings?.name || 'DigiShule System';
+  const schoolName = store?.settings?.name || 'EduOne System';
   
   // --- SLICER STATES ---
   const [termFilter, setTermFilter] = useState('All');

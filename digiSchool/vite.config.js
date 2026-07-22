@@ -56,8 +56,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'DigiShule Offline-First PWA',
-        short_name: 'DigiShule',
+        name: 'EduOne School Management System',
+        short_name: 'EduOne',
         description: 'School Management System with Offline Support',
         theme_color: '#0f172a',
         background_color: '#ffffff',

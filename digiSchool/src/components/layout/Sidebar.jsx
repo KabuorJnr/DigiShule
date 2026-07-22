@@ -22,13 +22,13 @@ export default function Sidebar({
           {settings?.logo ? (
             <img src={settings.logo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           ) : (
-            <img src="/logo.png" alt="DigiShule Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="EduOne Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           )}
         </div>
         {!collapsed && (
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <strong style={{ color: '#ffffff', fontSize: 15, fontWeight: 800, letterSpacing: '0.3px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-              {settings?.name || 'DigiShule'}
+              {settings?.name || 'EduOne'}
             </strong>
             <span style={{ fontSize: 11, color: '#34d399', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: 2 }}>
               {role?.portal || 'Portal'}

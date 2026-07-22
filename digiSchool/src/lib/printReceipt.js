@@ -126,7 +126,7 @@ export function printReceipt(payment, student, schoolConfig) {
         <div class="header">
           ${schoolConfig?.logoUrl ? `<img src="${schoolConfig.logoUrl}" class="logo" />` : `<div class="logo" style="display:flex;align-items:center;justify-content:center;background:#1f2937;color:white;font-weight:bold;font-size:24px;">DS</div>`}
           <div class="school-info">
-            <h1>${schoolConfig?.name || 'DigiShule System'}</h1>
+            <h1>${schoolConfig?.name || 'EduOne System'}</h1>
             <p>${schoolConfig?.address || ''}</p>
             <p>${schoolConfig?.phone || ''} | ${schoolConfig?.email || ''}</p>
           </div>
@@ -151,7 +151,7 @@ export function printReceipt(payment, student, schoolConfig) {
             <div class="box-title">Received By</div>
             <div class="box-content">
               <strong>Finance Department</strong><br/>
-              ${schoolConfig?.name || 'DigiShule System'}<br/>
+              ${schoolConfig?.name || 'EduOne System'}<br/>
               ${schoolConfig?.email || ''}
             </div>
           </div>

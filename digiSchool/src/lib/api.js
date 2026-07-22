@@ -138,7 +138,7 @@ export async function fetchProfiles(userId) {
     teacherId: p.teacher_id || null,
     studentId: p.student_id || null,
     schoolId: p.school_id || null,
-    schoolName: p.schools?.name || 'DigiShule System',
+    schoolName: p.schools?.name || 'EduOne System',
   }));
 }
 
