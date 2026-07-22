@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader, Badge } from '../components/widgets';
 import { Icon } from '../components/icons';
@@ -169,7 +169,7 @@ export default function ExamSchedules({ store }) {
                       {['date', 'classes', 'subject', 'start', 'end', 'venue', 'invigilator', 'status'].map((k) => (
                         <th key={k} style={{ cursor: 'pointer' }} onClick={() => toggleSort(k)}>
                           {k === 'classes' ? 'Class' : k.charAt(0).toUpperCase() + k.slice(1)}
-                          {sortKey === k ? (sortDir === 'asc' ? ' â–²' : ' â–¼') : ''}
+                          {sortKey === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                         </th>
                       ))}
                       <th>Actions</th>
