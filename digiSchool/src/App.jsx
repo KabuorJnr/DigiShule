@@ -145,6 +145,7 @@ export default function App() {
 
         <Route path="parent" element={<ParentLayout />}>
           <Route index element={<ParentDashboard />} />
+          <Route path=":tab" element={<ParentDashboard />} />
         </Route>
 
         {/* Fallback for all legacy components */}

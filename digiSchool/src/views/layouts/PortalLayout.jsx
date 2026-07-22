@@ -46,6 +46,7 @@ export default function PortalLayout() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [profileExpanded, setProfileExpanded] = useState(false);
   const searchInputRef = useRef(null);
 
   // Domain state (loaded from Supabase after sign-in)
@@ -605,32 +606,57 @@ export default function PortalLayout() {
           ))}
         </nav>
 
-        <div className="sidebar-profile-setting" style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="sidebar-profile-setting" style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {!collapsed ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', padding: '0 4px' }}>
-                <div className="avatar" title={currentUser.name} style={{ width: 36, height: 36, fontSize: 14 }}>{initials}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{currentUser.name}</strong>
-                  <span style={{ fontSize: 11, opacity: 0.7 }}>{role.label}</span>
+              <div 
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px', 
+                  borderRadius: 8, cursor: 'pointer', userSelect: 'none', transition: 'background 0.2s' 
+                }}
+                onClick={() => setProfileExpanded(prev => !prev)}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                title="Click to expand account actions"
+              >
+                <div className="avatar" title={currentUser.name} style={{ width: 34, height: 34, fontSize: 13, flexShrink: 0 }}>{initials}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>{currentUser.name}</strong>
+                  <span style={{ fontSize: 11, opacity: 0.7, color: 'rgba(255,255,255,0.6)' }}>{role.label}</span>
                 </div>
+                {profileExpanded ? <ChevronDown size={14} style={{ opacity: 0.6 }} /> : <ChevronRight size={14} style={{ opacity: 0.6 }} />}
               </div>
-              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '8px 12px', fontSize: 13, minHeight: 'auto' }}>
-                <Key size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
-              </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '8px 12px', fontSize: 13, color: '#f87171', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ marginRight: 12, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
-              </button>
+              {profileExpanded && (
+                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4 }}>
+                  <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '6px 10px', fontSize: 12, minHeight: 'auto' }}>
+                    <Key size={13} style={{ marginRight: 10, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
+                  </button>
+                  <button className="nav-item" onClick={handleLogout} title="Logout" style={{ padding: '6px 10px', fontSize: 12, color: '#f87171', minHeight: 'auto' }}>
+                    <LogOut size={13} style={{ marginRight: 10, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Logout</span>
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <>
-              <div className="avatar" title={currentUser.name} style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 12px auto' }}>{initials}</div>
-              <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ justifyContent: 'center', padding: '8px', minHeight: 'auto' }}>
-                <Key size={14} style={{ margin: 0, opacity: 0.7 }} />
-              </button>
-              <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#f87171', minHeight: 'auto' }}>
-                <LogOut size={14} style={{ margin: 0, opacity: 0.7 }} />
-              </button>
+              <div 
+                className="avatar" 
+                title={`${currentUser.name} (${role.label})`} 
+                style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 8px auto', cursor: 'pointer' }}
+                onClick={() => setProfileExpanded(prev => !prev)}
+              >
+                {initials}
+              </div>
+              {profileExpanded && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ justifyContent: 'center', padding: '8px', minHeight: 'auto' }}>
+                    <Key size={14} style={{ margin: 0, opacity: 0.7 }} />
+                  </button>
+                  <button className="nav-item" onClick={handleLogout} title="Logout" style={{ justifyContent: 'center', padding: '8px', color: '#f87171', minHeight: 'auto' }}>
+                    <LogOut size={14} style={{ margin: 0, opacity: 0.7 }} />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell, 
   BarChart3, Trophy, Wallet, Calendar, Mail, Heart, ClipboardList, 
   CheckCircle2, XCircle, Send, Award, DollarSign } from 'lucide-react';
@@ -14,6 +14,9 @@ import ReportCardModal from '../../components/ReportCardModal';
 
 export default function ParentDashboard() {
   const { user: currentUser, store, params } = useOutletContext();
+  const { tab: urlTab } = useParams();
+  const activeTab = urlTab || params?.tab || 'dashboard';
+
   const [child, setChild] = useState(null);
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,9 +42,6 @@ export default function ParentDashboard() {
 
   const notify = store?.notify || (() => {});
   const { gradeBoundaries, feeStructure } = store || {};
-
-  // Active tab from sidebar params
-  const activeTab = params?.tab || 'dashboard';
 
   // ── Set default selected child ──
   useEffect(() => {
