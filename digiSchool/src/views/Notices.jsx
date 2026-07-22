@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 
 import Modal from '../components/Modal';
@@ -74,7 +74,7 @@ export default function Notices({ store, user }) {
 
   // ── Load notices: Supabase first, fall back to seed ──────────
   const loadNotices = useCallback(async () => {
-    setLoading(true);
+    if (dbNotices.length === 0) setLoading(true);
     try {
       const schoolId = getActiveSchoolId();
       if (!schoolId) { setDbNotices([]); setLoading(false); return; }

@@ -56,7 +56,7 @@ export default function ParentDashboard() {
   useEffect(() => {
     async function fetchChild() {
       if (!selectedChildId) { setLoading(false); return; }
-      setLoading(true);
+      if (!child) setLoading(true);
       try {
         const { data, error } = await supabase
           .from('students').select('*').eq('id', selectedChildId).maybeSingle();

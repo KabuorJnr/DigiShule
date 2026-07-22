@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -35,7 +35,7 @@ export default function LessonPlans({ store, user, readOnly = false }) {
   const [saveStatus, setSaveStatus] = useState('');
 
   const loadPlans = useCallback(async () => {
-    setLoading(true);
+    if (plans.length === 0) setLoading(true);
     try {
       const data = await fetchTable('lesson_plans');
       // If teacher, filter to their own plans (RLS should ideally do this, but just in case)

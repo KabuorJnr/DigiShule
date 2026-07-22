@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { saveFile, listFiles, deleteFile, openFilePDF, downloadFilePDF } from '../lib/fileStore';
@@ -29,7 +29,7 @@ export default function TeacherResources({ store, user }) {
   const [subFilter, setSubFilter] = useState('All');
 
   const refreshFiles = useCallback(async () => {
-    setLoading(true);
+    if (files.length === 0) setLoading(true);
     try {
       const data = await listFiles(tab, subFilter === 'All' ? null : subFilter);
       setFiles(data);

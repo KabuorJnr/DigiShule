@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, Badge } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -23,7 +23,7 @@ export default function SchemeOfWork({ store, user, readOnly = false }) {
   const [savingStatus, setSavingStatus] = useState({});
 
   const loadSchemes = useCallback(async () => {
-    setLoading(true);
+    if (schemes.length === 0) setLoading(true);
     try {
       const data = await fetchTable('schemes_of_work');
       // If HOD is viewing, they could see all. For now we filter based on selection.

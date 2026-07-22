@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Badge, ProgressBar } from '../components/widgets';
 import { jsPDF } from 'jspdf';
@@ -27,7 +27,7 @@ export default function DosDashboard({ store, user }) {
   const [loading, setLoading] = useState(false);
 
   const fetchDosData = async () => {
-    setLoading(true);
+    if (approvals.length === 0 && examPapers.length === 0) setLoading(true);
     try {
       // Fetch approvals
       const { data: appData } = await supabase.from('approval_queue').select('*, profiles:teacher_id(full_name)').eq('school_id', store.schoolId);

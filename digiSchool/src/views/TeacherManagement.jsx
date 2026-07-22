@@ -191,7 +191,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
   // Load data
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (subjects.length === 0 && qualifications.length === 0) setLoading(true);
     try {
       const [subj, quals, assigns] = await Promise.allSettled([
         fetchTable('subjects'),

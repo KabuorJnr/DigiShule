@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
 import Modal from '../components/Modal';
@@ -30,7 +30,7 @@ export default function SchoolCalendar({ store, user }) {
   }, []);
 
   const loadEvents = async () => {
-    setLoading(true);
+    if (events.length === 0) setLoading(true);
     try {
       // 1. Fetch global calendar events
       const data = await fetchTable('calendarEvents');
