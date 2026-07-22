@@ -237,16 +237,56 @@ export default function Settings({ store, user }) {
           </div>
 
           <div className="card card-pad">
-            <h3 className="section-title">Classes</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 className="section-title" style={{ margin: 0 }}>Classes & Forms Management</h3>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['Form 1', 'Form 2', 'Form 3', 'Form 4'].map(formName => (
+                  <button
+                    key={formName}
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 12, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
+                    onClick={() => {
+                      if (classList.some(c => c.name === formName)) {
+                        notify(`${formName} is already in class list`, 'info');
+                      } else {
+                        setClassList(cl => [...cl, { name: formName, capacity: 40, streams: 'East, West, North, South' }]);
+                        notify(`Added ${formName} with standard streams`, 'success', 'Classes');
+                      }
+                    }}
+                  >
+                    + {formName}
+                  </button>
+                ))}
+                {['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].map(gradeName => (
+                  <button
+                    key={gradeName}
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 12, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}
+                    onClick={() => {
+                      if (classList.some(c => c.name === gradeName)) {
+                        notify(`${gradeName} is already in class list`, 'info');
+                      } else {
+                        setClassList(cl => [...cl, { name: gradeName, capacity: 40, streams: 'A, B, C' }]);
+                        notify(`Added ${gradeName} with standard streams`, 'success', 'Classes');
+                      }
+                    }}
+                  >
+                    + {gradeName}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="scroll-x">
               <table className="table">
-                <thead><tr><th>Class Name</th><th>Streams (comma separated)</th><th>Capacity</th><th></th></tr></thead>
+                <thead><tr><th>Class / Form Name</th><th>Streams (comma separated)</th><th>Capacity</th><th></th></tr></thead>
                 <tbody>
                   {classList.map((c, i) => (
                     <tr key={i}>
-                      <td>{c.name}</td>
+                      <td><strong>{c.name}</strong></td>
                       <td>
-                        <input className="input" placeholder="e.g. A, B, C" value={c.streams || ''} style={{ width: 140, height: 32 }}
+                        <input className="input" placeholder="e.g. East, West, North" value={c.streams || ''} style={{ width: 220, height: 32 }}
                           onChange={(e) => setClassList((cl) => cl.map((x, j) => (j === i ? { ...x, streams: e.target.value } : x)))} />
                       </td>
                       <td><input className="input" type="number" value={c.capacity} style={{ width: 90, height: 32 }}
@@ -257,9 +297,9 @@ export default function Settings({ store, user }) {
                 </tbody>
               </table>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <input className="input" placeholder="New class name (e.g. Grade 7)" value={newClass} style={{ maxWidth: 260 }} onChange={(e) => setNewClass(e.target.value)} />
-              <button className="btn btn-primary btn-sm" disabled={!newClass} onClick={() => { setClassList((cl) => [...cl, { name: newClass, capacity: 40, streams: '' }]); setNewClass(''); notify('Class added', 'success', 'Settings'); }}>+ Add Class</button>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <input className="input" placeholder="Custom Class or Form name (e.g. Form 3, Grade 10)" value={newClass} style={{ maxWidth: 320 }} onChange={(e) => setNewClass(e.target.value)} />
+              <button className="btn btn-primary btn-sm" disabled={!newClass} onClick={() => { setClassList((cl) => [...cl, { name: newClass, capacity: 40, streams: 'A, B' }]); setNewClass(''); notify('Class added', 'success', 'Settings'); }}>+ Add Custom Class/Form</button>
             </div>
           </div>
 
