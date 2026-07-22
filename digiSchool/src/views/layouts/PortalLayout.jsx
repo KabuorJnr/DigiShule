@@ -275,6 +275,9 @@ export default function PortalLayout() {
     }
   }, []);
 
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+
   const handleSelectProfile = useCallback(async (profile, greet = true) => {
     const sid = profile.school_id || profile.schoolId || localStorage.getItem('eduone_school_id');
     if (sid) {
@@ -283,13 +286,15 @@ export default function PortalLayout() {
       localStorage.setItem('eduone_school_id', sid);
     }
     setCurrentUser(profile);
-    const newHome = ROLES[profile.role]?.home || 'overview';
-    setView(newHome);
-    // Explicitly navigate so the URL updates and triggers the correct layout
-    navigateRouter(`/portal/${newHome}`);
+    // Only navigate to role default home on initial sign in greeting, preserving current route during session
+    if (greet) {
+      const newHome = ROLES[profile.role]?.home || 'overview';
+      setView(newHome);
+      navigateRouter(`/portal/${newHome}`);
+    }
     if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
     await loadAllData();
-  }, [loadAllData, notify]);
+  }, [loadAllData, notify, navigateRouter]);
 
   const loadUser = useCallback(async (userId, greet) => {
     try {
@@ -325,7 +330,10 @@ export default function PortalLayout() {
       if (!active) return;
 
       if (session?.user) {
-        loadUser(session.user.id, event === 'SIGNED_IN');
+        // Only load profile on initial load or explicit SIGNED_IN event, avoiding resets on tab focus token refresh
+        if (!currentUserRef.current || event === 'SIGNED_IN') {
+          loadUser(session.user.id, event === 'SIGNED_IN');
+        }
       } else {
         setCurrentUser(null);
         setView('login');
