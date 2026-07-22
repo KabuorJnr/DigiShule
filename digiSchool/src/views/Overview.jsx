@@ -135,8 +135,8 @@ export default function Overview({ store }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 className="section-title" style={{ margin: 0 }}>Monthly Revenue Trend</h3>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            {displayTrend.length > 0 ? (
+          {displayTrend.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={displayTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
@@ -145,18 +145,18 @@ export default function Overview({ store }) {
                 <Legend />
                 <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#0078D4" strokeWidth={2} dot={true} />
               </LineChart>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
-                No revenue data available
-              </div>
-            )}
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: '#64748b', fontSize: 14 }}>
+              No revenue data available
+            </div>
+          )}
         </div>
 
         <div className="card card-pad">
           <h3 className="section-title">Class Distribution</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            {displayClassDist.length > 0 ? (
+          {displayClassDist.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie data={displayClassDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                   {displayClassDist.map((entry, index) => (
@@ -166,12 +166,12 @@ export default function Overview({ store }) {
                 <Tooltip />
                 <Legend />
               </PieChart>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
-                No students enrolled
-              </div>
-            )}
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: '#64748b', fontSize: 14 }}>
+              No students enrolled
+            </div>
+          )}
         </div>
       </div>
 
