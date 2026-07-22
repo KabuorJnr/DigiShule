@@ -32,11 +32,18 @@ export default function AcademicsDashboard({ store, user }) {
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
   const [searchStudent, setSearchStudent] = useState('');
 
+  const currentSchoolId = user?.school_id || store?.schoolId || store?.settings?.id;
+
   const rawStudents = useMemo(() => {
-    if (students && students.length > 0) return students;
-    if (store?.students && store.students.length > 0) return store.students;
-    return [];
-  }, [students, store?.students]);
+    let list = [];
+    if (students && students.length > 0) list = students;
+    else if (store?.students && store.students.length > 0) list = store.students;
+
+    if (currentSchoolId) {
+      list = list.filter(s => !s.school_id || s.school_id === currentSchoolId);
+    }
+    return list;
+  }, [students, store?.students, currentSchoolId]);
 
   const activeStudentsList = useMemo(() => {
     return rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');

@@ -35,35 +35,50 @@ export default function DosDashboard({ store, user }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
+  const currentSchoolId = user?.school_id || store?.schoolId || store?.settings?.id;
+
   const fetchAllDosData = async () => {
     setLoading(true);
     try {
-      // Fetch live students from registry
-      const { data: studentData } = await fetchStudents(0, 2000);
+      // Fetch live students from registry with school_id filter
+      let studentQuery = supabase.from('students').select('*');
+      if (currentSchoolId) {
+        studentQuery = studentQuery.eq('school_id', currentSchoolId);
+      }
+      const { data: studentData } = await studentQuery.limit(2000);
       if (studentData) setStudents(studentData);
 
-      // Fetch live staff/teachers from profiles
-      const { data: staffData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('school_id', store.schoolId)
-        .in('role', ['teacher', 'dos', 'deputy_academic', 'principal', 'deputy_admin', 'registrar', 'finance', 'accountant', 'librarian', 'clinic']);
+      // Fetch live staff/teachers from profiles with school_id filter
+      let staffQuery = supabase.from('profiles').select('*');
+      if (currentSchoolId) {
+        staffQuery = staffQuery.eq('school_id', currentSchoolId);
+      }
+      staffQuery = staffQuery.in('role', ['teacher', 'dos', 'deputy_academic', 'principal', 'deputy_admin', 'registrar', 'finance', 'accountant', 'librarian', 'clinic']);
+      const { data: staffData } = await staffQuery;
       if (staffData) setStaff(staffData);
 
-      // Fetch approvals
-      const { data: appData } = await supabase.from('approval_queue').select('*, profiles:teacher_id(full_name)').eq('school_id', store.schoolId);
+      // Fetch approvals with school_id filter
+      let appQuery = supabase.from('approval_queue').select('*, profiles:teacher_id(full_name)');
+      if (currentSchoolId) appQuery = appQuery.eq('school_id', currentSchoolId);
+      const { data: appData } = await appQuery;
       if (appData) setApprovals(appData);
 
-      // Fetch exam papers
-      const { data: paperData } = await supabase.from('exam_papers').select('*, profiles:set_by_teacher_id(full_name)').eq('school_id', store.schoolId);
+      // Fetch exam papers with school_id filter
+      let paperQuery = supabase.from('exam_papers').select('*, profiles:set_by_teacher_id(full_name)');
+      if (currentSchoolId) paperQuery = paperQuery.eq('school_id', currentSchoolId);
+      const { data: paperData } = await paperQuery;
       if (paperData) setExamPapers(paperData);
 
-      // Fetch coverage
-      const { data: covData } = await supabase.from('syllabus_coverage_snapshots').select('*, profiles:teacher_id(full_name)').eq('school_id', store.schoolId);
+      // Fetch coverage with school_id filter
+      let covQuery = supabase.from('syllabus_coverage_snapshots').select('*, profiles:teacher_id(full_name)');
+      if (currentSchoolId) covQuery = covQuery.eq('school_id', currentSchoolId);
+      const { data: covData } = await covQuery;
       if (covData) setCoverage(covData);
 
-      // Fetch observations
-      const { data: obsData } = await supabase.from('lesson_observations').select('*, profiles:teacher_id(full_name)').eq('school_id', store.schoolId);
+      // Fetch observations with school_id filter
+      let obsQuery = supabase.from('lesson_observations').select('*, profiles:teacher_id(full_name)');
+      if (currentSchoolId) obsQuery = obsQuery.eq('school_id', currentSchoolId);
+      const { data: obsData } = await obsQuery;
       if (obsData) setObservations(obsData);
     } catch (err) {
       console.error('DoS fetch error:', err);
@@ -74,7 +89,7 @@ export default function DosDashboard({ store, user }) {
 
   useEffect(() => {
     fetchAllDosData();
-  }, [store.schoolId]);
+  }, [currentSchoolId]);
 
   useEffect(() => {
     if (store?.students && store.students.length > 0 && students.length === 0) {
@@ -84,10 +99,15 @@ export default function DosDashboard({ store, user }) {
 
   // ── COMPUTED DATA ──
   const rawStudents = useMemo(() => {
-    if (students && students.length > 0) return students;
-    if (store?.students && store.students.length > 0) return store.students;
-    return [];
-  }, [students, store?.students]);
+    let list = [];
+    if (students && students.length > 0) list = students;
+    else if (store?.students && store.students.length > 0) list = store.students;
+
+    if (currentSchoolId) {
+      list = list.filter(s => !s.school_id || s.school_id === currentSchoolId);
+    }
+    return list;
+  }, [students, store?.students, currentSchoolId]);
 
   const activeStudents = useMemo(() => 
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
@@ -95,10 +115,15 @@ export default function DosDashboard({ store, user }) {
   );
 
   const rawStaff = useMemo(() => {
-    if (staff && staff.length > 0) return staff;
-    if (store?.teachers && store.teachers.length > 0) return store.teachers;
-    return [];
-  }, [staff, store?.teachers]);
+    let list = [];
+    if (staff && staff.length > 0) list = staff;
+    else if (store?.teachers && store.teachers.length > 0) list = store.teachers;
+
+    if (currentSchoolId) {
+      list = list.filter(t => !t.school_id || t.school_id === currentSchoolId);
+    }
+    return list;
+  }, [staff, store?.teachers, currentSchoolId]);
 
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(settings?.classes || []);
