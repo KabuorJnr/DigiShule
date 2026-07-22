@@ -266,8 +266,6 @@ export async function upsertTeacher(teacher) {
   if (error) throw error;
 }
 
-import { DEFAULT_SEED_STUDENTS } from '../data/seedStudents';
-
 export async function fetchStudents(page = 0, limit = 50, filters = {}) {
   let query = supabase.from('students').select('*', { count: 'exact' });
   
@@ -297,18 +295,14 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
     if (filters.activeOnly) fallbackQuery = fallbackQuery.neq('status', 'Inactive').neq('status', 'Graduated');
     
     const fb = await fallbackQuery.order('class').order('adm').range(page * limit, (page + 1) * limit - 1);
-    if (!fb.error && fb.data && fb.data.length > 0) {
+    if (!fb.error && fb.data) {
       data = fb.data;
       count = fb.count;
     }
   }
 
-  // Fallback 2: If database has 0 students total, return default seed students
-  if (!data || data.length === 0) {
-    data = DEFAULT_SEED_STUDENTS;
-    count = DEFAULT_SEED_STUDENTS.length;
-  }
-
+  if (error && !data) throw error;
+  
   const mapped = (data || []).map(s => ({
     ...s,
     birthCertNo: s.birthCertNo || s.birth_cert_no,
@@ -379,7 +373,7 @@ export async function fetchStudentStats() {
   const { data, error } = await supabase.rpc('get_student_stats');
   if (!error && data) return data;
 
-  if (!_schoolId) return { total_active: DEFAULT_SEED_STUDENTS.length, male: 15, female: 10, flagged: 0 };
+  if (!_schoolId) return { total_active: 0, male: 0, female: 0, flagged: 0 };
   
   const baseQuery = supabase.from('students').select('*', { count: 'exact', head: true })
     .eq('school_id', _schoolId)
@@ -393,9 +387,9 @@ export async function fetchStudentStats() {
   ]);
 
   return {
-    total_active: tRes.count || DEFAULT_SEED_STUDENTS.length,
-    male: mRes.count || 15,
-    female: fRes.count || 10,
+    total_active: tRes.count || 0,
+    male: mRes.count || 0,
+    female: fRes.count || 0,
     flagged: flRes.count || 0
   };
 }
@@ -405,7 +399,7 @@ export async function fetchAllStudentsUnpaginated() {
   if (_schoolId) query = query.eq('school_id', _schoolId);
   let { data, error } = await query;
 
-  // Fallback 1: If filtering by _schoolId returned no rows, retry without _schoolId filter
+  // Fallback: If filtering by _schoolId returned no rows, retry without _schoolId filter
   if ((!data || data.length === 0) && _schoolId) {
     const fb = await supabase.from('students').select('*').order('class').order('adm');
     if (!fb.error && fb.data && fb.data.length > 0) {
@@ -413,11 +407,7 @@ export async function fetchAllStudentsUnpaginated() {
     }
   }
 
-  // Fallback 2: Default seed students
-  if (!data || data.length === 0) {
-    data = DEFAULT_SEED_STUDENTS;
-  }
-
+  if (error && !data) throw error;
   return (data || []).map(s => ({
     ...s,
     birthCertNo: s.birthCertNo || s.birth_cert_no,

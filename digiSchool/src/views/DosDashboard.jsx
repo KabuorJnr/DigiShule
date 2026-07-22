@@ -93,12 +93,11 @@ export default function DosDashboard({ store, user }) {
     }
   }, [store?.students, students.length]);
 
-  // ── COMPUTED DATA ──
+  // ── COMPUTED DATA ── (Live data from Registrar & Principal portals)
   const rawStudents = useMemo(() => {
-    if (students && students.length > 0) return students;
-    if (store?.students && store.students.length > 0) return store.students;
-    return [];
-  }, [students, store?.students]);
+    if (store?.students && Array.isArray(store.students)) return store.students;
+    return students || [];
+  }, [store?.students, students]);
 
   const activeStudents = useMemo(() => 
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
@@ -106,15 +105,9 @@ export default function DosDashboard({ store, user }) {
   );
 
   const rawStaff = useMemo(() => {
-    let list = [];
-    if (staff && staff.length > 0) list = staff;
-    else if (store?.teachers && store.teachers.length > 0) list = store.teachers;
-
-    if (currentSchoolId) {
-      list = list.filter(t => !t.school_id || t.school_id === currentSchoolId);
-    }
-    return list;
-  }, [staff, store?.teachers, currentSchoolId]);
+    if (store?.teachers && Array.isArray(store.teachers) && store.teachers.length > 0) return store.teachers;
+    return staff || [];
+  }, [store?.teachers, staff]);
 
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(settings?.classes || []);
