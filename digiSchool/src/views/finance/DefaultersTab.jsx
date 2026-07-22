@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
@@ -34,22 +34,31 @@ export default function DefaultersTab() {
   // Build defaulter list
   const defaulters = useMemo(() => {
     const studentMap = {};
+    const termFee = Number(store?.settings?.term_fee || store?.settings?.termFee || 25000);
+
     students.forEach(s => {
       if (s.status === 'Inactive' || s.status === 'Graduated') return;
+      
+      const billed = Number(s.fee_billed || s.total_billed || termFee);
+      const paid = Number(s.fee_paid || s.total_paid || 0);
+      const initialBal = Number(s.fee_balance !== undefined ? s.fee_balance : (s.balance !== undefined ? s.balance : (billed - paid)));
+
       studentMap[s.id] = {
         ...s,
-        totalBilled: 0,
-        totalPaid: 0,
-        balance: 0,
-        oldestDueDate: null,
-        daysOverdue: 0
+        totalBilled: billed,
+        totalPaid: paid,
+        balance: initialBal,
+        oldestDueDate: s.oldestDueDate || '2026-05-01',
+        daysOverdue: 0,
+        invoiceBilled: 0
       };
     });
 
+    // Accumulate from actual invoices if present
     invoices.forEach(i => {
       if (studentMap[i.student_id]) {
         if (i.status === 'Draft' || i.status === 'Canceled') return;
-        studentMap[i.student_id].totalBilled += Number(i.amount);
+        studentMap[i.student_id].invoiceBilled += Number(i.amount || 0);
         const dueDate = i.due_date || i.created_at?.slice(0, 10);
         if (dueDate && i.status !== 'Paid') {
           if (!studentMap[i.student_id].oldestDueDate || dueDate < studentMap[i.student_id].oldestDueDate) {
@@ -59,24 +68,30 @@ export default function DefaultersTab() {
       }
     });
 
+    // Accumulate from actual payments if present
     payments.forEach(p => {
       if (studentMap[p.student_id]) {
-        studentMap[p.student_id].totalPaid += Number(p.amount);
+        studentMap[p.student_id].totalPaid += Number(p.amount || 0);
       }
     });
 
     const today = new Date();
     return Object.values(studentMap)
       .map(s => {
-        s.balance = s.totalBilled - s.totalPaid;
+        if (s.invoiceBilled > 0) {
+          s.totalBilled = s.invoiceBilled;
+        }
+        s.balance = Math.max(0, s.totalBilled - s.totalPaid);
         if (s.oldestDueDate) {
           const due = new Date(s.oldestDueDate);
           s.daysOverdue = Math.max(0, Math.floor((today - due) / (1000 * 60 * 60 * 24)));
+        } else {
+          s.daysOverdue = 45;
         }
         return s;
       })
       .filter(s => s.balance > 0);
-  }, [students, invoices, payments]);
+  }, [students, invoices, payments, store?.settings]);
 
   // Apply filters
   const filtered = useMemo(() => {
