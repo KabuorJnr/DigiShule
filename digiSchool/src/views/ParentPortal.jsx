@@ -1,6 +1,7 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
+import ReportCardModal from '../components/ReportCardModal';
 import { Icon } from '../components/icons';
 import { computeRow, gradeFor } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
@@ -18,6 +19,7 @@ export default function ParentPortal({ store, user }) {
 
   const [children, setChildren] = useState([]);
   const [activeChildId, setActiveChildId] = useState(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -130,28 +132,14 @@ export default function ParentPortal({ store, user }) {
   const upcomingExams = (examSchedules || []).filter((e) => e.sessions?.some((s) => s.status === 'Upcoming'));
 
   const handleDownloadTranscript = () => {
-    const enrichedChild = {
-      ...child,
-      position: 1,
-      classSize: 40,
-      average: overallAvg,
-      grade: gradeFor(overallAvg, gradeBoundaries),
-      attendance: latestAtt?.rate || 0
-    };
     exportReportCardsPDF({
       school: store.settings,
-      students: [enrichedChild],
+      gradeBoundaries,
+      students: [child],
       subjects: SUBJECTS,
-      computeStudent: (stu, sub) => {
-        const scores = stu.scores[sub] || {};
-        const avg = computeRow(scores).average;
-        return {
-          score: avg || '-',
-          grade: avg ? gradeFor(avg, gradeBoundaries) : '-',
-          remark: avg ? (avg >= 80 ? 'Excellent' : 'Good') : '-'
-        };
-      },
-      filename: `${child.name}_Transcript.pdf`
+      examTitle: 'Term 1 Opening Exam',
+      termName: 'Term 1',
+      filename: `${child.name}_Report_Card.pdf`
     });
   };
 
@@ -331,11 +319,12 @@ export default function ParentPortal({ store, user }) {
           <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setPayModalOpen(true)}>
             <Icon name="finance" size={18} /> Pay School Fees
           </button>
-          {store.settings?.results_published && (
-            <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
-              <Download size={18} /> Download Transcript
+            <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setReportModalOpen(true)}>
+              <Download size={18} /> View Report Card
             </button>
-          )}
+            <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadTranscript}>
+              <Download size={18} /> Download Report Card PDF
+            </button>
           <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={handleDownloadStatement}>
             <Download size={18} /> Download Statement
           </button>
@@ -674,6 +663,19 @@ export default function ParentPortal({ store, user }) {
             This information will be used by the school in case of medical emergencies or critical alerts.
           </p>
         </Modal>
+      )}
+
+      {reportModalOpen && (
+        <ReportCardModal
+          student={child}
+          students={students}
+          subjects={SUBJECTS}
+          gradeBoundaries={gradeBoundaries}
+          examTitle="Term 1 Opening Exam"
+          termName="Term 1"
+          schoolSettings={store.settings}
+          onClose={() => setReportModalOpen(false)}
+        />
       )}
     </div>
   );

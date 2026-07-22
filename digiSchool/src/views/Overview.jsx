@@ -114,12 +114,16 @@ export default function Overview({ store }) {
         </KpiCard>
         <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value={totalTeachers.toString()} sub={`${activeTeachers} active, ${onLeave} on leave`} />
         <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={`${attRate}%`} accent="#047857" sub="Pending Logs" />
-        <KpiCard iconComponent={<DollarSign size={20} />} label="Total Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Recorded Payments" />
+        <div style={{ cursor: 'pointer' }} onClick={() => navigate('finance', { tab: 'payments' })} title="Click to open Payments & Collections">
+          <KpiCard iconComponent={<DollarSign size={20} />} label="Total Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Click to view payments →" />
+        </div>
       </div>
 
       {/* KPI Row 2 */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${outStr}`} sub={outstandingFees > 0 ? <Badge color="amber">Unpaid Invoices</Badge> : 'All clear'} />
+        <div style={{ cursor: 'pointer' }} onClick={() => navigate('finance', { tab: 'defaulters' })} title="Click to open Defaulters List">
+          <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${outStr}`} sub={outstandingFees > 0 ? <Badge color="amber">View Defaulters →</Badge> : 'All clear'} />
+        </div>
         <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={pendingApps.toString()} sub="Admissions portal" />
         <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M / ${femalePct}% F`} sub={totalStudents > 0 ? "Actual Ratio" : "N/A"} />
         <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "Enrolled Type" : "N/A"} />

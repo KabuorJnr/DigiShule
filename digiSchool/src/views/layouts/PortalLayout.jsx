@@ -225,10 +225,9 @@ export default function PortalLayout() {
             break;
           }
         }
-        // If there's a tab param and the view matches a layout, navigate to layout then let Layout redirect
+        // If there's a tab param and the view matches a layout, directly append tab to route
         if (p.tab) {
-          // The Layout's useEffect will handle the tab redirect
-          resolvedPath = `/portal/${v}`;
+          resolvedPath = `/portal/${v}/${p.tab}`;
         }
         navigateRouter(resolvedPath);
       },

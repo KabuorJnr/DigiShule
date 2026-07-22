@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Loader, Users, AlertTriangle, CheckCircle2, Edit2, FileText, Download, Mail } from 'lucide-react';
@@ -142,27 +142,13 @@ export default function StudentList() {
 
   const handleDownloadReportCards = () => {
     if (filtered.length === 0) return notify('No students in current view', 'warning');
-    const ranked = [...filtered].map((s) => {
-      const avg = SUBJECTS.reduce((a, sub) => a + (s.scores?.[sub]?.average || 0), 0) / SUBJECTS.length;
-      return { id: s.id, avg };
-    }).sort((a, b) => b.avg - a.avg);
-
-    const posOf = (id) => ranked.findIndex((x) => x.id === id) + 1;
-    const enriched = filtered.map((r) => {
-      const stuAvg = ranked.find(x => x.id === r.id)?.avg || 0;
-      return { ...r, position: posOf(r.id), classSize: filtered.length, average: Math.round(stuAvg * 10) / 10, grade: 'B', attendance: 92 };
-    });
-
     exportReportCardsPDF({
       school: store.settings,
       gradeBoundaries: store.gradeBoundaries,
-      students: enriched,
+      students: filtered,
       subjects: SUBJECTS,
-      computeStudent: (stu, sub) => {
-        const row = stu.scores?.[sub] || {};
-        const score = row.average || '-';
-        return { score, grade: score !== '-' ? 'B' : '-', remark: score !== '-' ? 'Good' : '-' };
-      },
+      examTitle: 'Term 1 Opening Exam',
+      termName: 'Term 1',
       filename: `report_cards_${classFilter === 'All' ? 'school' : classFilter}.pdf`
     });
     notify('Report Cards generated', 'success');

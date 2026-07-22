@@ -10,6 +10,7 @@ import { computeRow, gradeFor } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
 import { printReceipt } from '../../lib/printReceipt';
 import Modal from '../../components/Modal';
+import ReportCardModal from '../../components/ReportCardModal';
 
 export default function ParentDashboard() {
   const { user: currentUser, store, params } = useOutletContext();
@@ -34,6 +35,7 @@ export default function ParentDashboard() {
   // Modal states
   const [msgModal, setMsgModal] = useState(false);
   const [msgForm, setMsgForm] = useState({ to: 'Class Teacher', subject: '', body: '' });
+  const [showReportCardModal, setShowReportCardModal] = useState(false);
 
   const notify = store?.notify || (() => {});
   const { gradeBoundaries, feeStructure } = store || {};
@@ -340,7 +342,7 @@ export default function ParentDashboard() {
         <div className="card card-pad" style={{ marginBottom: 16 }}>
           <h3 className="section-title">Quick Actions</h3>
           <div className="grid grid-4" style={{ gap: 10 }}>
-            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => store.navigate('student', { tab: 'academics', childId: child?.id })}>
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setShowReportCardModal(true)}>
               <BarChart3 size={16} /> View Report Card
             </button>
             <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => store.navigate('student', { tab: 'finance', childId: child?.id })}>
@@ -483,13 +485,26 @@ export default function ParentDashboard() {
             </div>
           </Modal>
         )}
+
+        {showReportCardModal && (
+          <ReportCardModal
+            student={child}
+            students={store?.students || []}
+            subjects={SUBJECTS}
+            gradeBoundaries={gradeBoundaries}
+            examTitle="Term 1 Opening Exam"
+            termName="Term 1"
+            schoolSettings={store?.settings}
+            onClose={() => setShowReportCardModal(false)}
+          />
+        )}
       </div>
     );
   }
 
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
+  // â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  
   // ── ATTENDANCE TAB ──
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
+  // â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  
   if (activeTab === 'attendance') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>

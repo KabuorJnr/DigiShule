@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { fetchStudents } from '../lib/api';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
@@ -131,37 +131,16 @@ export default function Gradebook({ store }) {
   }
 
   function generateReportCards() {
-    const chosen = rows.filter((r) => selected.includes(r.id));
+    const chosen = loadedStudents.filter((r) => selected.includes(r.id));
     if (chosen.length === 0) return notify('Select at least one student', 'warning');
-    const ranked = [...classStudents].map((s) => {
-      const avg = SUBJECTS.reduce((a, sub) => a + subjectAverage(s.scores?.[sub]), 0) / SUBJECTS.length;
-      return { id: s.id, avg };
-    }).sort((a, b) => b.avg - a.avg);
-    const posOf = (id) => ranked.findIndex((x) => x.id === id) + 1;
-
-    const enriched = chosen.map((r) => {
-      const overall = Math.round((SUBJECTS.reduce((a, sub) => a + subjectAverage(r.scores?.[sub]), 0) / SUBJECTS.length) * 10) / 10;
-      return {
-        name: r.name, adm: r.adm, class: r.class,
-        scores: r.scores,
-        average: overall,
-        grade: gradeFor(overall, gradeBoundaries),
-        position: posOf(r.id),
-        classSize: classStudents.length,
-        attendance: 88 + (posOf(r.id) % 10),
-      };
-    });
     exportReportCardsPDF({
       school: settings,
       gradeBoundaries: gradeBoundaries,
-      students: enriched,
+      students: chosen,
       subjects: SUBJECTS,
-      computeStudent: (stu, sub) => {
-        const rr = computeRow(stu.scores?.[sub]);
-        const g = gradeFor(rr.average, gradeBoundaries);
-        return { score: rr.average, grade: g, remark: rr.remarks || remarkFor(g) };
-      },
-      filename: `report-cards-${cls}.pdf`,
+      examTitle: `${term} Opening Exam`,
+      termName: term,
+      filename: `report-cards-${cls || 'all'}.pdf`,
     });
     notify(`Generated ${chosen.length} report card(s)`, 'success', 'Report Cards');
   }

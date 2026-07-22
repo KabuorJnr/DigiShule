@@ -1,15 +1,17 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Badge } from '../../components/widgets';
 import { computeRow, gradeFor } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
-import { Send } from 'lucide-react';
+import { Send, FileText } from 'lucide-react';
+import ReportCardModal from '../../components/ReportCardModal';
 
 export default function AcademicsTab() {
   const { me, rank, store, notify, submissions, cloudAssignments } = useOutletContext();
   const [tab, setTab] = useState('class');
   const [subFilter, setSubFilter] = useState('All');
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const { gradeBoundaries, students } = store;
 
@@ -169,7 +171,12 @@ export default function AcademicsTab() {
               <div className="card card-pad" style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <h3 className="section-title" style={{ margin: 0 }}>Term 2 Results</h3>
-                  {rank && <span className="muted">Class Position: <strong>{rank.position} / {rank.classSize}</strong></span>}
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    {rank && <span className="muted">Class Position: <strong>{rank.position} / {rank.classSize}</strong></span>}
+                    <button className="btn btn-sm btn-primary" onClick={() => setReportModalOpen(true)}>
+                      <FileText size={14} style={{ marginRight: 6 }} /> View Report Card
+                    </button>
+                  </div>
                 </div>
                 <div className="scroll-x">
                   <table className="table">
@@ -213,6 +220,19 @@ export default function AcademicsTab() {
             </div>
           )}
         </>
+      )}
+
+      {reportModalOpen && (
+        <ReportCardModal
+          student={me}
+          students={students || []}
+          subjects={SUBJECTS}
+          gradeBoundaries={gradeBoundaries}
+          examTitle="Term 1 Opening Exam"
+          termName="Term 1"
+          schoolSettings={store?.settings}
+          onClose={() => setReportModalOpen(false)}
+        />
       )}
     </>
   );

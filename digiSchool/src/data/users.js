@@ -94,10 +94,16 @@ export const ROLES = {
             ]
           },
           {
-            id: 'finance_mgmt', icon: 'finance', label: 'Finance',
+            id: 'finance_mgmt', icon: 'finance', label: 'Finance & Accounts',
             sub: [
-              { id: 'accounts', label: 'Accounts Office', view: 'finance' },
-              { id: 'fee_structures', label: 'Fee Structures', view: 'finance' }
+              { id: 'finance_overview', label: 'Finance Dashboard', view: 'finance' },
+              { id: 'billing_nav', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
+              { id: 'payments_nav', label: 'Payments & Receipts', view: 'finance', tab: 'payments' },
+              { id: 'defaulters_nav', label: 'Defaulters List', view: 'finance', tab: 'defaulters' },
+              { id: 'fee_structures_nav', label: 'Fee Structures', view: 'finance', tab: 'fee_structure' },
+              { id: 'expenses_nav', label: 'Expenses', view: 'finance', tab: 'expenses' },
+              { id: 'reports_nav', label: 'Financial Reports', view: 'finance', tab: 'reports' },
+              { id: 'audit_nav', label: 'Audit Trail', view: 'finance', tab: 'audit' }
             ]
           }
         ]
