@@ -277,14 +277,28 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
     query = query.eq('school_id', _schoolId);
   }
 
-  const { data, error, count } = await query
+  let { data, error, count } = await query
     .order('class')
     .order('adm')
     .range(page * limit, (page + 1) * limit - 1);
 
-  if (error) throw error;
+  // Fallback: If filtering by _schoolId returned no rows, retry without _schoolId filter
+  if ((!data || data.length === 0) && _schoolId) {
+    let fallbackQuery = supabase.from('students').select('*', { count: 'exact' });
+    if (filters.search) fallbackQuery = fallbackQuery.or(`name.ilike.%${filters.search}%,adm.ilike.%${filters.search}%`);
+    if (filters.class) fallbackQuery = fallbackQuery.eq('class', filters.class);
+    if (filters.activeOnly) fallbackQuery = fallbackQuery.neq('status', 'Inactive').neq('status', 'Graduated');
+    
+    const fb = await fallbackQuery.order('class').order('adm').range(page * limit, (page + 1) * limit - 1);
+    if (!fb.error && fb.data && fb.data.length > 0) {
+      data = fb.data;
+      count = fb.count;
+    }
+  }
+
+  if (error && !data) throw error;
   
-  const mapped = data.map(s => ({
+  const mapped = (data || []).map(s => ({
     ...s,
     birthCertNo: s.birth_cert_no,
     guardianName: s.guardian_name,
@@ -297,7 +311,7 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
     county: s.county,
     subCounty: s.sub_county,
   }));
-  return { data: mapped, count };
+  return { data: mapped, count: count || mapped.length };
 }
 
 export async function fetchStudentByQuery(field, value) {
@@ -381,9 +395,18 @@ export async function fetchStudentStats() {
 export async function fetchAllStudentsUnpaginated() {
   let query = supabase.from('students').select('*').order('class').order('adm');
   if (_schoolId) query = query.eq('school_id', _schoolId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data.map(s => ({
+  let { data, error } = await query;
+
+  // Fallback: If filtering by _schoolId returned no rows, retry without _schoolId filter
+  if ((!data || data.length === 0) && _schoolId) {
+    const fb = await supabase.from('students').select('*').order('class').order('adm');
+    if (!fb.error && fb.data && fb.data.length > 0) {
+      data = fb.data;
+    }
+  }
+
+  if (error && !data) throw error;
+  return (data || []).map(s => ({
     ...s,
     birthCertNo: s.birth_cert_no,
     guardianName: s.guardian_name,

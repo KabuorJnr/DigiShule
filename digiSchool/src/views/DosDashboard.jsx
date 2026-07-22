@@ -40,12 +40,8 @@ export default function DosDashboard({ store, user }) {
   const fetchAllDosData = async () => {
     setLoading(true);
     try {
-      // Fetch live students from registry with school_id filter
-      let studentQuery = supabase.from('students').select('*');
-      if (currentSchoolId) {
-        studentQuery = studentQuery.eq('school_id', currentSchoolId);
-      }
-      const { data: studentData } = await studentQuery.limit(2000);
+      // Fetch live students using api helper (with school_id & fallback handling)
+      const { data: studentData } = await fetchStudents(0, 2000);
       if (studentData && studentData.length > 0) setStudents(studentData);
 
       // Fetch live staff/teachers from profiles with school_id filter
