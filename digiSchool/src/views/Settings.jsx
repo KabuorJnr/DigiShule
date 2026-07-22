@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS } from '../data/seed';
+import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
 const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
@@ -340,23 +341,83 @@ export default function Settings({ store, user }) {
       )}
 
       {tab === 'Grade Boundaries' && (
-        <div className="card card-pad" style={{ maxWidth: 480 }}>
-          <p className="muted" style={{ marginTop: 0 }}>Set the minimum average % for each grade. Changes propagate to the gradebook.</p>
-          <table className="table">
-            <thead><tr><th>Grade</th><th>Minimum Score (%)</th></tr></thead>
+        <div className="card card-pad" style={{ maxWidth: 640 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <h3 className="section-title" style={{ margin: 0 }}>Grade Boundaries Settings</h3>
+              <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+                Set the minimum percentage threshold (%) for each performance grade.
+              </p>
+            </div>
+            <button 
+              className="btn btn-sm"
+              onClick={() => {
+                const defaultCbc = CBC_BOUNDARIES.map(b => ({ grade: b.grade, min: b.min }));
+                setBounds(defaultCbc);
+                notify('Reset boundaries to official CBC percentage defaults (80%, 50%, 30%, 0%).', 'info');
+              }}
+            >
+              Reset Official Defaults
+            </button>
+          </div>
+
+          {/* System Boundary Selector */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+            <button
+              className={`btn btn-sm ${bounds.some(b => ['EE', 'ME', 'AE', 'BE'].includes(b.grade)) ? 'btn-primary' : ''}`}
+              onClick={() => {
+                setBounds(CBC_BOUNDARIES.map(b => ({ grade: b.grade, min: b.min })));
+              }}
+            >
+              CBC Curriculum Scale (Grade 1 - 10)
+            </button>
+            <button
+              className={`btn btn-sm ${bounds.some(b => ['A', 'B+', 'C+'].includes(b.grade)) ? 'btn-primary' : ''}`}
+              onClick={() => {
+                setBounds(KCSE_BOUNDARIES.map(b => ({ grade: b.grade, min: b.min })));
+              }}
+            >
+              8-4-4 KCSE Scale (Form 1 - 4)
+            </button>
+          </div>
+
+          <table className="table" style={{ width: '100%' }}>
+            <thead>
+              <tr>
+                <th>Grade Code</th>
+                <th>Performance Level</th>
+                <th style={{ textAlign: 'center' }}>Minimum Score (%)</th>
+              </tr>
+            </thead>
             <tbody>
-              {bounds.map((b, i) => (
-                <tr key={b.grade}>
-                  <td><strong>{b.grade}</strong></td>
-                  <td>
-                    <input className="input" type="number" min="0" max="100" value={b.min} style={{ width: 110, height: 32 }}
-                      onChange={(e) => setBounds((bs) => bs.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) } : x)))} />
-                  </td>
-                </tr>
-              ))}
+              {bounds.map((b, i) => {
+                const fullMatch = [...CBC_BOUNDARIES, ...KCSE_BOUNDARIES].find(x => x.grade === b.grade);
+                return (
+                  <tr key={b.grade}>
+                    <td><strong style={{ fontSize: 14 }}>{b.grade}</strong></td>
+                    <td style={{ color: '#64748b', fontSize: 13 }}>{fullMatch?.label || b.label || b.grade}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <input
+                          className="input"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={b.min > 4 ? b.min : (b.grade === 'EE' ? 80 : b.grade === 'ME' ? 50 : b.grade === 'AE' ? 30 : 0)}
+                          style={{ width: 90, height: 32, textAlign: 'center', fontWeight: 600 }}
+                          onChange={(e) => setBounds((bs) => bs.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) } : x)))}
+                        />
+                        <span style={{ fontSize: 13, color: '#64748b' }}>%</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={saveBounds}>Save Grade Boundaries</button>
+          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" onClick={saveBounds}>Save Grade Boundaries</button>
+          </div>
         </div>
       )}
 

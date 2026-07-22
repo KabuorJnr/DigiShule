@@ -140,7 +140,7 @@ export async function fetchConfig() {
 
   const { data, error } = await query.maybeSingle();
   let cbcFallback = [
-    { grade: 'EE', min: 80 }, { grade: 'ME', min: 60 }, { grade: 'AE', min: 40 }, { grade: 'BE', min: 0 }
+    { grade: 'EE', min: 80 }, { grade: 'ME', min: 50 }, { grade: 'AE', min: 30 }, { grade: 'BE', min: 0 }
   ];
 
   if (error || !data) {
