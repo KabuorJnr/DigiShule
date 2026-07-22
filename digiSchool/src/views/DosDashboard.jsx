@@ -73,14 +73,32 @@ export default function DosDashboard({ store, user }) {
   };
 
   useEffect(() => {
-    if (store.schoolId) fetchAllDosData();
+    fetchAllDosData();
   }, [store.schoolId]);
 
+  useEffect(() => {
+    if (store?.students && store.students.length > 0 && students.length === 0) {
+      setStudents(store.students);
+    }
+  }, [store?.students, students.length]);
+
   // ── COMPUTED DATA ──
+  const rawStudents = useMemo(() => {
+    if (students && students.length > 0) return students;
+    if (store?.students && store.students.length > 0) return store.students;
+    return [];
+  }, [students, store?.students]);
+
   const activeStudents = useMemo(() => 
-    students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
-    [students]
+    rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
+    [rawStudents]
   );
+
+  const rawStaff = useMemo(() => {
+    if (staff && staff.length > 0) return staff;
+    if (store?.teachers && store.teachers.length > 0) return store.teachers;
+    return [];
+  }, [staff, store?.teachers]);
 
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(settings?.classes || []);
@@ -88,7 +106,10 @@ export default function DosDashboard({ store, user }) {
     return [...new Set([...saved, ...dynamic])];
   }, [activeStudents, settings]);
 
-  const activeTeacherList = useMemo(() => teachers.filter(t => t.status !== 'Inactive'), [teachers]);
+  const activeTeacherList = useMemo(() => {
+    const list = teachers.length > 0 ? teachers : rawStaff;
+    return list.filter(t => t.status !== 'Inactive');
+  }, [teachers, rawStaff]);
   const activeTeachers = useMemo(() => activeTeacherList.filter(t => t.status === 'Active').length, [activeTeacherList]);
 
   // Class enrollment breakdown
