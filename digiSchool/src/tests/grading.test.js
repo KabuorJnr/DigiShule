@@ -2,11 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { computeRow, gradeFor, remarkFor, subjectAverage, studentOverall, is844Class, computeStudentReport, pointsForGrade } from '../utils/grading';
 
 describe('grading calculations', () => {
-  it('assigns correct CBC grade for standard thresholds', () => {
+  it('assigns correct CBC grade for standard thresholds and 1-4 rubric points', () => {
     expect(gradeFor(85)).toBe('EE');
     expect(gradeFor(65)).toBe('ME');
     expect(gradeFor(40)).toBe('AE');
     expect(gradeFor(15)).toBe('BE');
+
+    // 1, 2, 3, 4 Rubric Points Scale Detection
+    expect(gradeFor(4, null, 'CBC')).toBe('EE');
+    expect(gradeFor(3, null, 'CBC')).toBe('ME');
+    expect(gradeFor(2, null, 'CBC')).toBe('AE');
+    expect(gradeFor(1, null, 'CBC')).toBe('BE');
+    expect(gradeFor(3.8, null, 'CBC')).toBe('EE');
+    expect(gradeFor(2.8, null, 'CBC')).toBe('ME');
+
     expect(gradeFor(null)).toBe('-');
   });
 

@@ -54,7 +54,7 @@ export function computeRow(scores = {}) {
   return { a1, a2, a3, a4, average: Math.round(average * 10) / 10, remarks: safeScores.remarks || '' };
 }
 
-// Map numerical average/score (0-100) to a grade.
+// Map numerical average/score (0-100 or 1-4 rubric points) to a grade.
 export function gradeFor(average, boundaries, systemType = 'CBC') {
   const defaultBoundaries = systemType === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
   const bnds = boundaries && boundaries.length > 0 ? boundaries : defaultBoundaries;
@@ -62,8 +62,18 @@ export function gradeFor(average, boundaries, systemType = 'CBC') {
   if (average === null || average === undefined || isNaN(average)) return '-';
   const num = Number(average);
   const fallback = systemType === '844' ? 'E' : 'BE';
-  if (num === 0 && (!boundaries || boundaries.length === 0)) return fallback;
-  
+  if (num === 0) return fallback;
+
+  if (systemType === 'CBC' || systemType === 'cbc') {
+    // Detect 1-4 rubric score scale and map to EE, ME, AE, BE
+    if (num > 0 && num <= 4) {
+      if (num >= 3.5) return 'EE'; // 4 -> EE
+      if (num >= 2.5) return 'ME'; // 3 -> ME
+      if (num >= 1.5) return 'AE'; // 2 -> AE
+      return 'BE';                 // 1 -> BE
+    }
+  }
+
   for (const b of bnds) {
     if (num >= b.min) {
       return b.grade;
