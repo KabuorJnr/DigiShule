@@ -26,7 +26,7 @@ export default function RegistrarLayout() {
     }
   }, [params?.tab, location.pathname, navigate]);
 
-  const activeStudents = context?.store?.students ? context.store.students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated') : [];
+  const activeStudents = context?.store?.students ? context.store.students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending') : [];
   const total_active = activeStudents.length;
   const male = activeStudents.filter(s => s.gender === 'Male').length;
   const female = activeStudents.filter(s => s.gender === 'Female').length;

@@ -23,7 +23,7 @@ export default function AcademicsDashboard({ store, user }) {
   const [analytics, setAnalytics] = useState({ top_subjects: [] });
   const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
   
-  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
 
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents, fetchAcademicAnalytics }) => {

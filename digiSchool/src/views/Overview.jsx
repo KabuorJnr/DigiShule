@@ -62,7 +62,7 @@ export default function Overview({ store }) {
   };
 
   const sparkData = fullTrend.slice(-12).map((d) => d.present);
-  const activeStudents = (store.students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+  const activeStudents = (store.students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
   const totalStudents = activeStudents.length;
   const classDistData = [];
   

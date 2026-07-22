@@ -84,7 +84,7 @@ export default function AdminDashboard({ store, user }) {
 
   const activeStaffList = dbStaff.filter(s => s.status !== 'Inactive');
   const presentStaff = activeStaffList.filter(s => s.status === 'Present' || s.status === 'Active' || s.status === 'active').length;
-  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+  const activeStudentsList = (students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
   const operationalFac = dbFacilities.filter(f => f.status === 'Operational').length;
   const pendingLeave = 0;
   const openDiscipline = dbDiscipline.filter(d => d.status === 'Open').length;
