@@ -16,16 +16,30 @@ export default function ReportCardModal({
 }) {
   if (!student) return null;
 
-  const report = computeStudentReport({
-    student,
-    students,
-    subjects,
-    examTitle,
-    termName,
-    gradeBoundaries
-  });
+  let report = null;
+  try {
+    report = computeStudentReport({
+      student,
+      students,
+      subjects,
+      examTitle,
+      termName,
+      gradeBoundaries
+    });
+  } catch (err) {
+    console.error("Error computing report card:", err);
+  }
 
-  if (!report) return null;
+  if (!report) {
+    return (
+      <Modal title="Student Report Card" onClose={onClose} width={600}>
+        <div style={{ padding: '30px', textAlign: 'center' }}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Report Card Unavailable</h3>
+          <p className="muted" style={{ fontSize: 14 }}>The academic report card for <strong>{student.name || 'this student'}</strong> could not be generated. Please ensure subject marks are published by the Academic Office.</p>
+        </div>
+      </Modal>
+    );
+  }
 
   const is844 = report.systemType === '844';
 

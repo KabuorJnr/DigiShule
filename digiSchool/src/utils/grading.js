@@ -169,8 +169,13 @@ export function studentOverall(student, subjects) {
 // Compute full detailed report card object for a given student (supports both CBC and 8-4-4)
 export function computeStudentReport({ student, students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', gradeBoundaries = [] }) {
   if (!student) return null;
+
+  // Resolve enriched student object with scores if available in students array
+  const richStudent = (student?.scores && Object.keys(student.scores).length > 0)
+    ? student
+    : (students.find(s => String(s.id) === String(student?.id) || (s.adm && String(s.adm) === String(student?.adm))) || student);
   
-  const systemType = is844Class(student.class) ? '844' : 'CBC';
+  const systemType = is844Class(richStudent.class || student.class) ? '844' : 'CBC';
   const defaultBnds = systemType === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
   const targetBoundaries = gradeBoundaries && gradeBoundaries.length > 0 ? gradeBoundaries : defaultBnds;
 
@@ -178,19 +183,20 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
   
   // Class/Stream students
   const streamStudents = students.length > 0 
-    ? students.filter(s => s.class === student.class)
-    : [student];
-  const activeStream = streamStudents.length > 0 ? streamStudents : [student];
+    ? students.filter(s => s.class === richStudent.class)
+    : [richStudent];
+  const activeStream = streamStudents.length > 0 ? streamStudents : [richStudent];
   
   // Overall students (same grade or form level prefix)
-  const classLevel = student.class ? student.class.split(' ')[0] : '';
+  const classLevel = richStudent.class ? richStudent.class.split(' ')[0] : '';
   const overallStudents = classLevel && students.length > 0
     ? students.filter(s => s.class && s.class.startsWith(classLevel))
-    : (students.length > 0 ? students : [student]);
+    : (students.length > 0 ? students : [richStudent]);
   const activeOverall = overallStudents.length > 0 ? overallStudents : activeStream;
 
   // Helper to extract score 0-100 for a student in a subject
   const getScoreVal = (stu, sub) => {
+    if (!stu) return 0;
     const sc = stu.scores?.[sub];
     if (sc === undefined || sc === null) return 0;
     if (typeof sc === 'number') return sc;
@@ -200,7 +206,7 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
       return avg <= 4 && avg > 0 ? Math.round(avg * 25) : avg;
     }
     const { average } = computeRow(sc);
-    return average <= 4 && average > 0 ? Math.round(avg * 25) : average;
+    return average <= 4 && average > 0 ? Math.round(average * 25) : average;
   };
 
   // Helper for student total marks
@@ -213,7 +219,7 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
   let totalPoints = 0;
 
   const subjectRows = targetSubjects.map((sub) => {
-    const scoreVal = Math.round(getScoreVal(student, sub));
+    const scoreVal = Math.round(getScoreVal(richStudent, sub));
     totalMarks += scoreVal;
 
     const gCode = gradeFor(scoreVal, targetBoundaries, systemType);
@@ -252,18 +258,18 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
 
   // Stream Position
   const streamTotals = activeStream.map(st => ({ id: st.id, total: getStudentTotal(st) })).sort((a, b) => b.total - a.total);
-  let streamRank = streamTotals.findIndex(t => t.id === student.id) + 1;
+  let streamRank = streamTotals.findIndex(t => String(t.id) === String(richStudent.id)) + 1;
   if (streamRank <= 0) streamRank = 1;
   const streamPositionText = `${streamRank} of ${activeStream.length}`;
 
   // Overall Position
   const overallTotals = activeOverall.map(st => ({ id: st.id, total: getStudentTotal(st) })).sort((a, b) => b.total - a.total);
-  let overallRank = overallTotals.findIndex(t => t.id === student.id) + 1;
+  let overallRank = overallTotals.findIndex(t => String(t.id) === String(richStudent.id)) + 1;
   if (overallRank <= 0) overallRank = 1;
   const overallPositionText = `${overallRank} of ${activeOverall.length}`;
 
   // Standardize Class Display Name
-  let formattedClassName = student.class || 'Form 3';
+  let formattedClassName = richStudent.class || student.class || 'Form 3';
   if (!formattedClassName.toLowerCase().includes('form') && !formattedClassName.toLowerCase().includes('grade')) {
     formattedClassName = `Grade ${formattedClassName}`;
   }
@@ -275,8 +281,8 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
 
   return {
     systemType: systemType,
-    studentName: student.name || 'Student Name',
-    admissionNo: student.adm || student.admission_no || student.id || 'N/A',
+    studentName: richStudent.name || student.name || 'Student Name',
+    admissionNo: richStudent.adm || richStudent.admission_no || student.adm || student.admission_no || student.id || 'N/A',
     className: formattedClassName,
     streamPosition: streamPositionText,
     overallPosition: overallPositionText,
