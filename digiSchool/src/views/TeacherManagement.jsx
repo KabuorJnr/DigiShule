@@ -666,7 +666,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       <span>{quals.length} subjects</span>
                     </div>
                     <button className="btn btn-sm btn-primary" style={{ padding: '4px 14px', fontSize: 12 }}
-                      onClick={() => navigate('teacher_management', { tab: 'assign' })}>
+                      onClick={() => switchTab('assign')}>
                       Assign
                     </button>
                   </div>
