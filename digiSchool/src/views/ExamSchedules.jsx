@@ -9,14 +9,14 @@ const EXAM_TYPES = ['Mid-Term', 'End-Term', 'Mock', 'CAT'];
 const STATUSES = ['Upcoming', 'In Progress', 'Completed', 'Cancelled'];
 const statusColor = { Upcoming: 'blue', 'In Progress': 'amber', Completed: 'green', Cancelled: 'red' };
 
-export default function ExamSchedules({ store }) {
+export default function ExamSchedules({ store, params = {} }) {
   const { examSchedules, setExamSchedules, venues, setVenues, notify, settings, teachers = [] } = store;
   const [examType, setExamType] = useState('End-Term');
   const [year, setYear] = useState('2026');
   const [term, setTerm] = useState('Term 2');
   const [mode, setMode] = useState('list'); // list | calendar
   const [mainTab, setMainTab] = useState('schedules'); // schedules | venues
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(params.openCreate || false);
   const [editSession, setEditSession] = useState(null);
   const [selected, setSelected] = useState([]);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);

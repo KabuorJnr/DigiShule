@@ -28,6 +28,7 @@ const VIEW_MAP = {
   developer_portal: DeveloperPortal,
   overview: Overview,
   timetable: Timetable,
+  create_exam: ExamSchedules,
   exams: ExamSchedules,
   academics_dashboard: AcademicsDashboard,
   admin_dashboard: AdminDashboard,
@@ -65,7 +66,8 @@ export default function LegacyViewLoader() {
 
   const mergedParams = {
     ...(outletParams || {}),
-    ...(tab ? { tab } : {})
+    ...(tab ? { tab } : {}),
+    ...(viewId === 'create_exam' ? { openCreate: true } : {})
   };
 
   return <ViewComponent store={store} user={user} params={mergedParams} readOnly={isReadOnlyView} />;
