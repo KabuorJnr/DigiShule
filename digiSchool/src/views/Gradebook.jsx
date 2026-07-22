@@ -224,7 +224,7 @@ export default function Gradebook({ store }) {
         subtitle="Inspect, edit and analyse student performance"
         actions={
           <div style={{ display: 'flex', gap: 10 }}>
-            {(store.user?.role === 'deputy_academic' || store.user?.role === 'principal') && (
+            {(store.user?.role === 'deputy_academic' || store.user?.role === 'principal' || store.user?.role === 'dos') && (
               <button 
                 className={`btn ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
                 onClick={handleApproveResults}

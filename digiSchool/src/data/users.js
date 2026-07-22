@@ -189,13 +189,22 @@ export const ROLES = {
     home: 'dos_dashboard',
     nav: [
       {
-        section: 'CORE',
+        section: 'EXAM OFFICE',
         items: [
-          { id: 'dos_dash', icon: 'dashboard', label: 'Overview', view: 'dos_dashboard' },
+          { id: 'dos_dash', icon: 'dashboard', label: 'DOS Overview', view: 'dos_dashboard' },
+          { id: 'exams', icon: 'exam', label: 'Exam Schedules', view: 'exams' },
+          { id: 'gradebook', icon: 'dashboard', label: 'Gradebook & Entry', view: 'gradebook' },
+          { id: 'academics', icon: 'dashboard', label: 'Merit & Analysis', view: 'academics_dashboard' }
+        ]
+      },
+      {
+        section: 'ACADEMIC MANAGEMENT',
+        items: [
           { id: 'timetable', icon: 'calendar', label: 'Timetable', view: 'timetable' },
-          { id: 'exams', icon: 'exam', label: 'Exams', view: 'exams' },
-          { id: 'gradebook', icon: 'dashboard', label: 'Gradebook', view: 'gradebook' },
-          { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' }
+          { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' },
+          { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
+          { id: 'staff', icon: 'users', label: 'Staff Attendance', view: 'staff_attendance' }
         ]
       },
       {
