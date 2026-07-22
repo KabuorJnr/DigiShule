@@ -6,7 +6,7 @@ import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell,
 import { supabase } from '../../lib/supabaseClient';
 import { fetchTable } from '../../lib/api';
 import { KpiCard, ProgressBar, Badge } from '../../components/widgets';
-import { computeRow, gradeFor } from '../../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
 import { printReceipt } from '../../lib/printReceipt';
 import Modal from '../../components/Modal';
@@ -101,12 +101,14 @@ export default function ParentDashboard() {
   // ── Computed values ──
   const subjects = useMemo(() => {
     if (!child) return [];
+    const systemType = is844Class(child.class) ? '844' : 'CBC';
     return SUBJECTS.map(sub => {
       const scores = (child.scores || {})[sub];
       if (!scores) return null;
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { subject: sub, ...row, grade };
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { subject: sub, ...row, percentage, grade };
     }).filter(Boolean);
   }, [child, gradeBoundaries]);
 

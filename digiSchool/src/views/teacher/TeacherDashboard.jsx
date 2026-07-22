@@ -1,6 +1,6 @@
-﻿import { useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { KpiCard, Badge } from '../../components/widgets';
-import { computeRow, gradeFor } from '../../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
@@ -33,8 +33,10 @@ export default function TeacherDashboard() {
 
       const scores = s.scores?.[actualSubject];
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { ...s, ...row, grade };
+      const systemType = is844Class(s.class) ? '844' : 'CBC';
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { ...s, ...row, percentage, grade };
     });
   }, [loadedStudents, gradeBoundaries, subject, subjectAssignments]);
 

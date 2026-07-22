@@ -1,9 +1,9 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { BarChart3, Trophy, Wallet, ClipboardList, Calendar, Mail, Award } from 'lucide-react';
 import { KpiCard, ProgressBar } from '../../components/widgets';
-import { computeRow, gradeFor } from '../../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
 import Modal from '../../components/Modal';
 
@@ -17,12 +17,14 @@ export default function StudentDashboard() {
 
   const subjects = useMemo(() => {
     if (!me) return [];
+    const systemType = is844Class(me.class) ? '844' : 'CBC';
     return SUBJECTS.map(sub => {
       const scores = (me.scores || {})[sub];
       if (!scores) return null;
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { subject: sub, ...row, grade };
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { subject: sub, ...row, percentage, grade };
     }).filter(Boolean);
   }, [me, gradeBoundaries]);
 

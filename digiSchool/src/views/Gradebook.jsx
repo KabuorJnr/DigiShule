@@ -8,10 +8,10 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { CLASSES, SUBJECTS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
-import { computeRow, gradeFor, remarkFor, subjectAverage } from '../utils/grading';
+import { computeRow, gradeFor, remarkFor, subjectAverage, is844Class } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 
-const GRADE_COLORS = { EE: '#047857', ME: '#047857', AE: '#F59E0B', BE: '#EF4444', '-': '#9CA3AF' };
+const GRADE_COLORS = { EE: '#047857', ME: '#047857', AE: '#F59E0B', BE: '#EF4444', A: '#047857', 'A-': '#047857', 'B+': '#047857', B: '#047857', 'B-': '#047857', 'C+': '#047857', C: '#F59E0B', 'C-': '#F59E0B', 'D+': '#F59E0B', D: '#EF4444', 'D-': '#EF4444', E: '#EF4444', '-': '#9CA3AF' };
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
 
 export default function Gradebook({ store }) {
@@ -57,8 +57,10 @@ export default function Gradebook({ store }) {
   const rows = useMemo(() =>
     classStudents.map((s) => {
       const r = computeRow(s.scores?.[subject]);
-      const grade = gradeFor(r.average, gradeBoundaries);
-      return { ...s, ...r, grade, remarks: r.remarks || remarkFor(grade) };
+      const systemType = is844Class(s.class) ? '844' : 'CBC';
+      const percentage = r.average <= 4 && r.average > 0 ? Math.round(r.average * 25) : r.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { ...s, ...r, percentage, grade, remarks: r.remarks || remarkFor(grade, systemType) };
     }), [classStudents, subject, gradeBoundaries]);
 
   const colAvg = useMemo(() => {

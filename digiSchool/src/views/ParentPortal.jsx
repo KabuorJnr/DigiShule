@@ -3,7 +3,7 @@ import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import Modal from '../components/Modal';
 import ReportCardModal from '../components/ReportCardModal';
 import { Icon } from '../components/icons';
-import { computeRow, gradeFor } from '../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../utils/grading';
 import { SUBJECTS } from '../data/seed';
 import { fetchTable, upsertRow, fetchStudentsByQuery } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
@@ -99,12 +99,14 @@ export default function ParentPortal({ store, user }) {
 
   const subjects = useMemo(() => {
     if (!child) return [];
+    const systemType = is844Class(child.class) ? '844' : 'CBC';
     return SUBJECTS.map((sub) => {
       const scores = child.scores[sub];
       if (!scores) return null;
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { subject: sub, ...row, grade };
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { subject: sub, ...row, percentage, grade };
     }).filter(Boolean);
   }, [child, gradeBoundaries]);
 

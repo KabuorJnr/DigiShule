@@ -1,6 +1,6 @@
-﻿import { useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { computeRow, gradeFor } from '../../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../../utils/grading';
 import { BarChart3 } from 'lucide-react';
 import { Badge } from '../../components/widgets';
 
@@ -13,8 +13,10 @@ export default function GradebookTab() {
     return loadedStudents.map((s) => {
       const scores = s.scores?.[subject];
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { ...s, ...row, grade };
+      const systemType = is844Class(s.class) ? '844' : 'CBC';
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { ...s, ...row, percentage, grade };
     });
   }, [loadedStudents, gradeBoundaries, subject]);
 
@@ -100,7 +102,7 @@ export default function GradebookTab() {
                     <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                     <td style={{ fontWeight: 700 }}>{r.average || '-'}</td>
                     <td>
-                      <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
+                      <Badge color={['EE', 'ME', 'A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : ['AE', 'C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
                         {r.grade}
                       </Badge>
                     </td>

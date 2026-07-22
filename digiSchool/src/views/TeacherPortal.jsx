@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
-import { computeRow, gradeFor } from '../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -252,8 +252,10 @@ export default function TeacherPortal({ store, user }) {
       .map((s) => {
         const scores = s.scores?.[subject];
         const row = computeRow(scores);
-        const grade = gradeFor(row.average, gradeBoundaries);
-        return { ...s, ...row, grade };
+        const systemType = is844Class(s.class) ? '844' : 'CBC';
+        const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+        const grade = gradeFor(percentage, gradeBoundaries, systemType);
+        return { ...s, ...row, percentage, grade };
       });
   }, [loadedStudents, gradeBoundaries, subject]);
 

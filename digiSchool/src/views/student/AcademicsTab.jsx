@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Badge } from '../../components/widgets';
-import { computeRow, gradeFor } from '../../utils/grading';
+import { computeRow, gradeFor, is844Class } from '../../utils/grading';
 import { SUBJECTS } from '../../data/seed';
 import { Send, FileText } from 'lucide-react';
 import ReportCardModal from '../../components/ReportCardModal';
@@ -17,12 +17,14 @@ export default function AcademicsTab() {
 
   const subjects = useMemo(() => {
     if (!me) return [];
+    const systemType = is844Class(me.class) ? '844' : 'CBC';
     return SUBJECTS.map(sub => {
       const scores = (me.scores || {})[sub];
       if (!scores) return null;
       const row = computeRow(scores);
-      const grade = gradeFor(row.average, gradeBoundaries);
-      return { subject: sub, ...row, grade };
+      const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
+      const grade = gradeFor(percentage, gradeBoundaries, systemType);
+      return { subject: sub, ...row, percentage, grade };
     }).filter(Boolean);
   }, [me, gradeBoundaries]);
 
@@ -194,7 +196,7 @@ export default function AcademicsTab() {
                       <tr style={{ fontWeight: 700, background: '#f5f5f5' }}>
                         <td colSpan={6}>Overall Average</td>
                         <td>{overallAvg}%</td>
-                        <td><Badge color={Number(overallAvg) >= 70 ? 'green' : Number(overallAvg) >= 50 ? 'amber' : 'red'}>{gradeFor(Number(overallAvg), gradeBoundaries)}</Badge></td>
+                        <td><Badge color={Number(overallAvg) >= 70 ? 'green' : Number(overallAvg) >= 50 ? 'amber' : 'red'}>{gradeFor(Number(overallAvg), gradeBoundaries, is844Class(me?.class) ? '844' : 'CBC')}</Badge></td>
                       </tr>
                     </tbody>
                   </table>
