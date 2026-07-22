@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 import {
   Users, UserCheck, Building2, BookOpen, ClipboardList, BarChart3,
   GraduationCap, Search, Filter, RotateCcw, Zap, Eye, EyeOff,
-  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X
+  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X, Clock
 } from 'lucide-react';
 
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
@@ -142,7 +142,18 @@ const DEFAULT_DEPARTMENTS = ['Mathematics', 'Languages', 'Sciences', 'Humanities
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
 export default function TeacherManagement({ store, user, params = {} }) {
   const { teachers = [], settings = {}, notify, navigate } = store;
-  const activeTab = params.tab || 'directory';
+  const [activeTab, setActiveTab] = useState(params.tab || 'directory');
+
+  useEffect(() => {
+    if (params?.tab) {
+      setActiveTab(params.tab);
+    }
+  }, [params?.tab]);
+
+  const switchTab = (tabKey) => {
+    setActiveTab(tabKey);
+    navigate('teacher_management', { tab: tabKey === 'directory' ? undefined : tabKey });
+  };
 
   // Data state
   const [subjects, setSubjects] = useState([]);
@@ -482,7 +493,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
   const tabs = [
     { key: 'directory', label: 'Teaching Staff', icon: <Users size={16} /> },
     { key: 'assign', label: 'Assign to Class', icon: <ClipboardList size={16} /> },
-    { key: 'qualifications', label: 'Qualifications', icon: <GraduationCap size={16} /> }
+    { key: 'qualifications', label: 'Qualifications', icon: <GraduationCap size={16} /> },
+    { key: 'workload', label: 'Workload Analysis', icon: <BarChart3 size={16} /> }
   ];
 
   return (
@@ -510,13 +522,13 @@ export default function TeacherManagement({ store, user, params = {} }) {
         {tabs.map(t => (
           <button
             key={t.key}
-            onClick={() => navigate('teacher_management', { tab: t.key === 'directory' ? undefined : t.key })}
+            onClick={() => switchTab(t.key)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '10px 20px', border: 'none', cursor: 'pointer',
               background: 'none', fontSize: 14, fontWeight: 600,
-              color: activeTab === t.key ? '#1e3a5f' : '#64748b',
-              borderBottom: activeTab === t.key ? '2px solid #0078D4' : '2px solid transparent',
+              color: activeTab === t.key ? '#047857' : '#64748b',
+              borderBottom: activeTab === t.key ? '2px solid #047857' : '2px solid transparent',
               marginBottom: -2, transition: 'all 0.15s'
             }}
           >
@@ -563,11 +575,11 @@ export default function TeacherManagement({ store, user, params = {} }) {
           {/* Quick Actions */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             <QuickAction icon={<ClipboardList size={22} />} label="Assign to Class" subtitle="Teacher allocation"
-              onClick={() => navigate('teacher_management', { tab: 'assign' })} />
+              onClick={() => switchTab('assign')} />
             <QuickAction icon={<GraduationCap size={22} />} label="Manage Qualifications" subtitle="Qualification setup"
-              onClick={() => navigate('teacher_management', { tab: 'qualifications' })} />
+              onClick={() => switchTab('qualifications')} />
             <QuickAction icon={<BarChart3 size={22} />} label="Workload Analysis" subtitle="Load balancing"
-              onClick={() => notify('Workload analysis coming soon', 'info')} />
+              onClick={() => switchTab('workload')} />
             <QuickAction icon={<Users size={22} />} label="Class Teachers" subtitle="Leadership roles"
               onClick={() => navigate('class_teachers')} />
           </div>
@@ -923,6 +935,89 @@ export default function TeacherManagement({ store, user, params = {} }) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* WORKLOAD TAB */}
+      {activeTab === 'workload' && (
+        <div>
+          <InfoCallout>
+            <strong>Teacher Workload & Load Balancing:</strong> Monitor periods per week assigned to each teacher across all classes. Standard target workload is 20–30 periods per week.
+          </InfoCallout>
+
+          {/* Workload Summary KPIs */}
+          <div className="grid grid-4" style={{ marginBottom: 24 }}>
+            <KpiCard iconComponent={<Users size={20} />} label="Total Teachers" value={activeTeachers.length} />
+            <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Optimal Load (15-30 pds)" value={activeTeachers.filter(t => (teacherWorkloads[t.id] || 0) >= 15 && (teacherWorkloads[t.id] || 0) <= 30).length} accent="#047857" />
+            <KpiCard iconComponent={<AlertTriangle size={20} />} label="Heavy Load (>30 pds)" value={activeTeachers.filter(t => (teacherWorkloads[t.id] || 0) > 30).length} accent="#D13438" />
+            <KpiCard iconComponent={<Clock size={20} />} label="Light Load (<15 pds)" value={activeTeachers.filter(t => (teacherWorkloads[t.id] || 0) < 15).length} accent="#F59E0B" />
+          </div>
+
+          <div className="card card-pad">
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Teacher Workload Breakdown</h3>
+            <div className="scroll-x">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Teacher Name</th>
+                    <th>Department</th>
+                    <th>Assigned Classes & Subjects</th>
+                    <th>Periods / Wk</th>
+                    <th>Workload Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeTeachers.map(t => {
+                    const load = teacherWorkloads[t.id] || 0;
+                    const assigned = teacherAssignMap[t.id] || [];
+                    const statusColor = load > 30 ? '#ef4444' : load >= 15 ? '#10b981' : '#f59e0b';
+                    const statusText = load > 30 ? 'Overloaded' : load >= 15 ? 'Optimal' : 'Underloaded';
+                    const pct = Math.min(100, Math.round((load / 35) * 100));
+
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{t.name}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{t.emp_id || t.id} · {t.subject}</div>
+                        </td>
+                        <td>{t.department || 'General'}</td>
+                        <td>
+                          {assigned.length === 0 ? (
+                            <span className="muted" style={{ fontSize: 12 }}>No class assignments</span>
+                          ) : (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {assigned.map((a, i) => (
+                                <span key={i} style={{ fontSize: 11, padding: '2px 6px', background: '#f1f5f9', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+                                  {a.class_name} {a.stream_name || ''} ({a.subject_name})
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{load} <span style={{ fontSize: 11, fontWeight: 400, color: '#64748b' }}>/ 35</span></div>
+                          <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: statusColor }} />
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: `${statusColor}18`, color: statusColor }}>
+                            {statusText}
+                          </span>
+                        </td>
+                        <td>
+                          <button className="btn btn-sm" onClick={() => switchTab('assign')}>
+                            Manage Assignments
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

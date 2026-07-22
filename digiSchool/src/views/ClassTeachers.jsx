@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard } from '../components/widgets';
 import { Search, GraduationCap, Users, UserCheck } from 'lucide-react';
@@ -12,26 +12,39 @@ export default function ClassTeachers(props) {
   const { teachers = [], updateTeacher, settings = {}, notify } = store || {};
   const [searchTerm, setSearchTerm] = useState('');
 
+  const getTeacherClasses = (t) => {
+    if (!t || !t.assignedClass) return [];
+    if (Array.isArray(t.assignedClass)) return t.assignedClass;
+    return String(t.assignedClass).split(',').map(s => s.trim()).filter(Boolean);
+  };
+
   const classes = useMemo(() => {
     return expandClassesWithStreams(settings.classes || []);
   }, [settings.classes]);
 
-  const assignedCount = classes.filter(cls => teachers.some(t => t.assignedClass === cls)).length;
+  const assignedCount = classes.filter(cls => teachers.some(t => getTeacherClasses(t).includes(cls))).length;
 
   const handleAssign = (cls, teacherId) => {
-    // Unassign this class from any current teacher
-    const currentTeacher = teachers.find(t => t.assignedClass === cls);
-    if (currentTeacher && currentTeacher.id !== teacherId) {
-      updateTeacher(currentTeacher.id, { assignedClass: null });
-    }
-    
+    // 1. Remove this class `cls` from any teacher currently assigned
+    teachers.forEach(t => {
+      const currentList = getTeacherClasses(t);
+      if (currentList.includes(cls) && t.id !== teacherId) {
+        const updatedList = currentList.filter(c => c !== cls);
+        updateTeacher(t.id, { assignedClass: updatedList.length ? updatedList.join(', ') : null });
+      }
+    });
+
+    // 2. Add `cls` to selected teacher's assigned classes list
     if (teacherId) {
       const newTeacher = teachers.find(t => t.id === teacherId);
-      if (newTeacher.assignedClass && newTeacher.assignedClass !== cls) {
-        if (!confirm(`${newTeacher.name} is already assigned to ${newTeacher.assignedClass}. Reassign to ${cls}?`)) return;
+      if (newTeacher) {
+        const currentList = getTeacherClasses(newTeacher);
+        if (!currentList.includes(cls)) {
+          const updatedList = [...currentList, cls];
+          updateTeacher(teacherId, { assignedClass: updatedList.join(', ') });
+        }
+        notify(`${newTeacher.name} assigned as Class Teacher for ${cls}`, 'success');
       }
-      updateTeacher(teacherId, { assignedClass: cls });
-      notify(`${newTeacher.name} assigned as Class Teacher for ${cls}`, 'success');
     } else {
       notify(`Removed Class Teacher for ${cls}`, 'info');
     }
@@ -41,7 +54,7 @@ export default function ClassTeachers(props) {
 
   return (
     <div>
-      <PageHeader title="Class Teachers" subtitle="Assign class teachers for the academic year" />
+      <PageHeader title="Class Teachers" subtitle="Assign class teachers for the academic year (teachers can lead multiple classes)" />
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
         <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Classes" value={classes.length} />
@@ -76,7 +89,7 @@ export default function ClassTeachers(props) {
                 <tr><td colSpan={4} className="muted" style={{ textAlign: 'center', padding: 24 }}>No classes found.</td></tr>
               ) : (
                 filteredClasses.map(cls => {
-                  const assigned = teachers.find(t => t.assignedClass === cls);
+                  const assigned = teachers.find(t => getTeacherClasses(t).includes(cls));
                   return (
                     <tr key={cls}>
                       <td style={{ fontWeight: 600 }}>{cls}</td>
@@ -85,12 +98,18 @@ export default function ClassTeachers(props) {
                           className="select" 
                           value={assigned?.id || ''} 
                           onChange={(e) => handleAssign(cls, e.target.value)}
-                          style={{ maxWidth: 280 }}
+                          style={{ maxWidth: 320 }}
                         >
                           <option value="">-- Unassigned --</option>
-                          {teachers.filter(t => t.status !== 'Inactive').map(t => (
-                            <option key={t.id} value={t.id}>{t.name} ({t.subject})</option>
-                          ))}
+                          {teachers.filter(t => t.status !== 'Inactive').map(t => {
+                            const tClasses = getTeacherClasses(t);
+                            const classLabel = tClasses.length > 0 ? ` [Leads: ${tClasses.join(', ')}]` : '';
+                            return (
+                              <option key={t.id} value={t.id}>
+                                {t.name} ({t.subject || 'General'}){classLabel}
+                              </option>
+                            );
+                          })}
                         </select>
                       </td>
                       <td className="muted">{assigned?.department || '-'}</td>
