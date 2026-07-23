@@ -59,13 +59,42 @@ export default function ReportCardModal({
     window.print();
   };
 
+  // Dynamic comment logic
+  const meanPct = report.totalMarks / (report.subjectRows.length * 100) * 100;
+  let teacherComment = "";
+  let principalComment = "";
+  
+  if (is844) {
+    if (meanPct >= 70) {
+      teacherComment = "An excellent performance. Keep up the high standard and maintain focus.";
+      principalComment = "Outstanding result. Continue working hard to achieve even greater success.";
+    } else if (meanPct >= 50) {
+      teacherComment = "A good effort, but there is room for improvement in weaker subjects.";
+      principalComment = "Good work. With more dedication, you can achieve a much higher grade.";
+    } else {
+      teacherComment = "Below average performance. You need to put in more effort and seek help in challenging areas.";
+      principalComment = "Work harder and stay focused. Close monitoring by teachers and parents is advised.";
+    }
+  } else {
+    if (meanPct >= 75) {
+      teacherComment = "Exceeding expectations across most learning areas. Keep up the excellent work.";
+      principalComment = "Outstanding performance. Keep maintaining this high level of excellence.";
+    } else if (meanPct >= 50) {
+      teacherComment = "Meeting expectations in most areas. Work on the subjects where you are approaching expectation.";
+      principalComment = "Good effort. Aim to exceed expectations in the upcoming assessments.";
+    } else {
+      teacherComment = "Needs intensive support and remedial intervention across multiple learning areas. Immediate action is required.";
+      principalComment = "Immediate intervention is required to improve your performance. The school will work closely with you and your parents to provide necessary support.";
+    }
+  }
+
   return (
     <Modal title="Student Report Card" onClose={onClose} width={840}>
       <div style={{ padding: '8px 16px 24px 16px', background: '#fff', color: '#1e293b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         {/* Action Toolbar */}
         <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: is844 ? '#eff6ff' : '#f0fdf4', color: is844 ? '#1d4ed8' : '#15803d', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-            <Award size={14} /> {is844 ? 'SYSTEM: 8-4-4 KCSE SYSTEM (FORM 3/4)' : 'SYSTEM: CBC CURRICULUM'}
+            <Award size={14} /> {is844 ? 'SYSTEM: 8-4-4 KCSE FORMAT' : 'SYSTEM: CBC CURRICULUM FORMAT'}
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn" onClick={handlePrint} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -78,165 +107,135 @@ export default function ReportCardModal({
         </div>
 
         {/* Printable Card Area */}
-        <div className="report-card-container" style={{ background: '#fff', padding: '32px 40px', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>
-              {is844 ? 'SECONDARY SCHOOL ACADEMIC REPORT CARD (8-4-4)' : 'STUDENT REPORT CARD (CBC)'}
-            </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
-              {report.examTitle}
+        <div className="report-card-container" style={{ background: '#fff', padding: '0 0 20px 0', fontFamily: 'Arial, sans-serif', color: '#000' }}>
+          
+          <div style={{ borderTop: '6px solid #1d4ed8', paddingTop: 20, textAlign: 'center', marginBottom: 16 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 'bold', margin: '0 0 4px 0', color: '#1e293b' }}>
+              {schoolSettings.name || 'Kinjau Junior Secondary'}
             </h1>
-            <div style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>
-              {report.termName}
+            <div style={{ fontSize: 13, color: '#64748b', fontStyle: 'italic', marginBottom: 12 }}>
+              {schoolSettings.motto || 'Excellence in Education'}
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1d4ed8', textTransform: 'uppercase' }}>
+              {is844 ? 'SECONDARY SCHOOL ACADEMIC REPORT CARD' : 'JUNIOR SECONDARY ASSESSMENT REPORT'}
             </div>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '20px 0 24px 0' }} />
-
-          {/* Student Info Block */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 12px', marginBottom: 24, fontSize: 13 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                STUDENT
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.studentName}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                ADMISSION NO.
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.admissionNo}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                CLASS
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.className}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                STREAM POSITION
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.streamPosition}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                OVERALL POSITION
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.overallPosition}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                MEAN GRADE
-              </div>
-              <div style={{ fontWeight: 700, color: is844 ? '#1d4ed8' : '#0f172a', fontSize: 15 }}>
-                {report.meanGradeCode}
-              </div>
-            </div>
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                TOTAL POINTS
-              </div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
-                {report.totalPointsText}
-              </div>
-            </div>
+          <div style={{ border: '1px solid #94a3b8', display: 'flex', flexWrap: 'wrap', fontSize: 13, background: '#f8fafc', marginBottom: 16 }}>
+            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1.5, minWidth: 200 }}><strong>Name:</strong> {report.studentName}</div>
+            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1, minWidth: 150 }}><strong>Adm No:</strong> {report.admissionNo}</div>
+            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1, minWidth: 150 }}><strong>Grade:</strong> {report.className}</div>
+            <div style={{ padding: '8px 12px', flex: 1, minWidth: 150 }}><strong>Term:</strong> {report.termName}</div>
           </div>
 
-          {/* Subject Table */}
-          <div style={{ overflowX: 'auto', marginBottom: 24 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #0f172a' }}>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a' }}>Subject</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>Score</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>%</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a' }}>Grade</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>{is844 ? 'Pts (1-12)' : 'Pts'}</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a' }}>Remark</th>
-                  <th style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a', textAlign: 'right' }}>Position</th>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#e2e8f0', borderBottom: '1px solid #94a3b8' }}>
+                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'left', fontWeight: 'bold' }}>{is844 ? 'Subject' : 'Learning Area'}</th>
+                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 60 }}>Score</th>
+                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 80 }}>{is844 ? '%' : 'Level'}</th>
+                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 60 }}>Pts</th>
+                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'left', fontWeight: 'bold' }}>Remarks</th>
+                <th style={{ padding: '8px', textAlign: 'left', fontWeight: 'bold', width: 120 }}>Teacher</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.subjectRows.map(row => (
+                <tr key={row.subject} style={{ borderBottom: '1px solid #94a3b8' }}>
+                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8' }}>{row.subject}</td>
+                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center' }}>{row.scoreText}</td>
+                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center' }}>{is844 ? row.percentageText : row.gradeFull}</td>
+                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', color: '#0f172a' }}>{row.pts}</td>
+                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', fontSize: 12 }}>{row.remark}</td>
+                  <td style={{ padding: '6px 8px', fontSize: 12 }}></td>
                 </tr>
-              </thead>
-              <tbody>
-                {report.subjectRows.map((row) => (
-                  <tr key={row.subject} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '10px 8px', color: '#1e293b' }}>{row.subject}</td>
-                    <td style={{ padding: '10px 8px', textAlign: 'center', color: '#1e293b' }}>{row.scoreText}</td>
-                    <td style={{ padding: '10px 8px', textAlign: 'center', color: '#1e293b' }}>{row.percentageText}</td>
-                    <td style={{ padding: '10px 8px', color: '#1e293b', fontWeight: 600 }}>{row.gradeFull}</td>
-                    <td style={{ padding: '10px 8px', textAlign: 'center', color: '#1e293b' }}>{row.pts}</td>
-                    <td style={{ padding: '10px 8px', color: '#64748b', fontSize: 12 }}>{row.remark}</td>
-                    <td style={{ padding: '10px 8px', textAlign: 'right', color: '#1e293b' }}>{row.position}</td>
-                  </tr>
-                ))}
-                {/* Mean / Total Row */}
-                <tr style={{ borderTop: '2px solid #0f172a', borderBottom: '2px solid #0f172a', fontWeight: 700 }}>
-                  <td style={{ padding: '12px 8px', color: '#0f172a' }}>Mean / Total</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0f172a' }}>{report.totalMarks}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0f172a' }}>{report.meanPercentageText}</td>
-                  <td style={{ padding: '12px 8px', color: is844 ? '#1d4ed8' : '#0f172a' }}>{report.meanGradeFull}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0f172a' }}>{report.totalPoints}</td>
-                  <td style={{ padding: '12px 8px', color: '#64748b', fontSize: 12 }}>{is844 ? 'Overall Performance' : 'Mean CBC Performance'}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right', color: '#0f172a' }}></td>
-                </tr>
-              </tbody>
-            </table>
+              ))}
+              <tr style={{ background: '#f8fafc', fontWeight: 'bold' }}>
+                <td colSpan={2} style={{ padding: '8px', borderRight: '1px solid #94a3b8' }}>
+                  Total Points: <span style={{ color: '#1d4ed8' }}>{report.totalPoints}/{is844 ? report.subjectRows.length * 12 : report.subjectRows.length * 4}</span>
+                </td>
+                <td colSpan={2} style={{ padding: '8px', borderRight: '1px solid #94a3b8' }}>
+                  Average ({report.subjectRows.length} {is844 ? 'subjects' : 'learning areas'}): {report.meanPercentageText}
+                </td>
+                <td colSpan={2} style={{ padding: '8px' }}>
+                  Mean Grade: <span style={{ color: '#dc2626' }}>{report.meanGradeFull}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style={{ border: '1px solid #94a3b8', borderTop: 'none', display: 'flex', alignItems: 'center', fontSize: 11, background: '#f8fafc', marginBottom: 16 }}>
+            <div style={{ padding: '6px 12px', fontWeight: 'bold', borderRight: '1px solid #94a3b8' }}>KEY:</div>
+            <div style={{ padding: '6px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px 16px', flex: 1 }}>
+              {is844 ? (
+                <>
+                  <span style={{ color: '#1d4ed8' }}>A=80-100%</span>
+                  <span style={{ color: '#1d4ed8' }}>A-=75-79%</span>
+                  <span style={{ color: '#16a34a' }}>B+=70-74%</span>
+                  <span style={{ color: '#16a34a' }}>B=65-69%</span>
+                  <span style={{ color: '#16a34a' }}>B-=60-64%</span>
+                  <span style={{ color: '#16a34a' }}>C+=55-59%</span>
+                  <span style={{ color: '#d97706' }}>C=50-54%</span>
+                  <span style={{ color: '#d97706' }}>C-=45-49%</span>
+                  <span style={{ color: '#d97706' }}>D+=40-44%</span>
+                  <span style={{ color: '#dc2626' }}>D=35-39%</span>
+                  <span style={{ color: '#dc2626' }}>D-=30-34%</span>
+                  <span style={{ color: '#dc2626' }}>E=0-29%</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ color: '#1d4ed8' }}>EE1=90-100%</span>
+                  <span style={{ color: '#1d4ed8' }}>EE2=75-89%</span>
+                  <span style={{ color: '#16a34a' }}>ME1=58-74%</span>
+                  <span style={{ color: '#16a34a' }}>ME2=41-57%</span>
+                  <span style={{ color: '#d97706' }}>AE1=31-40%</span>
+                  <span style={{ color: '#d97706' }}>AE2=21-30%</span>
+                  <span style={{ color: '#dc2626' }}>BE1=11-20%</span>
+                  <span style={{ color: '#dc2626' }}>BE2=0-10%</span>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Grading Key Footer */}
-          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-              {is844 ? '8-4-4 KCSE GRADING KEY' : 'GRADING KEY'}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>
+            <div style={{ border: '1px solid #94a3b8', padding: '12px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: 6 }}>Class Teacher's Comment:</div>
+              <div style={{ fontStyle: 'italic', color: '#334155', marginBottom: 16 }}>
+                {report.studentName} {teacherComment}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <div>Name: _______________________________</div>
+                <div>Signature: _______________________________</div>
+                <div>Date: _______________________________</div>
+              </div>
             </div>
-            {is844 ? (
-              <div style={{ fontSize: 11, color: '#334155', fontWeight: 500 }}>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: 6 }}>
-                  <span><strong>A</strong> (80–100% | 12pts)</span>
-                  <span><strong>A-</strong> (75–79% | 11pts)</span>
-                  <span><strong>B+</strong> (70–74% | 10pts)</span>
-                  <span><strong>B</strong> (65–69% | 9pts)</span>
-                  <span><strong>B-</strong> (60–64% | 8pts)</span>
-                  <span><strong>C+</strong> (55–59% | 7pts)</span>
-                </div>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                  <span><strong>C</strong> (50–54% | 6pts)</span>
-                  <span><strong>C-</strong> (45–49% | 5pts)</span>
-                  <span><strong>D+</strong> (40–44% | 4pts)</span>
-                  <span><strong>D</strong> (35–39% | 3pts)</span>
-                  <span><strong>D-</strong> (30–34% | 2pts)</span>
-                  <span><strong>E</strong> (0–29% | 1pt)</span>
+
+            <div style={{ border: '1px solid #94a3b8', padding: '12px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: 6 }}>Principal's Comment:</div>
+              <div style={{ fontStyle: 'italic', color: '#334155', marginBottom: 16 }}>
+                {report.studentName}, {principalComment}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <div>Name: _______________________________</div>
+                <div>Signature: _______________________________</div>
+                <div>Date: _______________________________</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ border: '1px solid #94a3b8', padding: '12px', flex: 1 }}>
+                <div style={{ fontWeight: 'bold', marginBottom: 20 }}>Parent/Guardian Comment:</div>
+                <div style={{ display: 'flex', gap: '40px' }}>
+                  <div>Signature: _______________________________</div>
+                  <div>Date: _______________________________</div>
                 </div>
               </div>
-            ) : (
-              <div>
-                <div style={{ fontSize: 11, color: '#334155', fontWeight: 500, display: 'flex', gap: '28px', flexWrap: 'wrap', marginBottom: 4 }}>
-                  <span>Exceeding Expectation (80–100%)</span>
-                  <span>Meeting Expectation (50–79%)</span>
-                  <span>Approaching Expectation (30–49%)</span>
-                </div>
-                <div style={{ fontSize: 11, color: '#334155', fontWeight: 500 }}>
-                  <span>Below Expectation (0–29%)</span>
-                </div>
+              <div style={{ width: 150, border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: 11, fontWeight: 'bold' }}>
+                SCHOOL STAMP
               </div>
-            )}
+            </div>
           </div>
+
         </div>
       </div>
     </Modal>

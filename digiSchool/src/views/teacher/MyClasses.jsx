@@ -46,6 +46,44 @@ export default function MyClasses() {
     exportTablePDF({ school: store.settings, title: `Attendance Summary - ${assignedClass}`, subtitle: 'Term 2', head, body, filename: `attendance_summary_${assignedClass}.pdf` });
   };
 
+  const handleExportClassBroadsheetExcel = async () => {
+    const classStudents = loadedStudents.filter(s => s.class === assignedClass);
+    if (classStudents.length === 0) return store.notify(`No students found in ${assignedClass}`, 'warning');
+    
+    store.notify('Generating Class Broadsheet...', 'info');
+    const { downloadExcel } = await import('../../utils/exporters');
+    const { computeStudentReport } = await import('../../utils/grading');
+    
+    const header = ['Rank', 'Adm No', 'Student Name', 'Class', 'Gender'];
+    SUBJECTS.forEach(sub => header.push(sub));
+    header.push('Total Marks', 'Mean %', 'Mean Grade', 'Points', 'Stream Pos', 'Overall Pos');
+
+    const meritList = classStudents.map(s => {
+      const report = computeStudentReport({ student: s, students: classStudents, subjects: SUBJECTS, gradeBoundaries: store.gradeBoundaries });
+      return { s, report, totalMarks: report.totalMarks };
+    }).sort((a, b) => b.totalMarks - a.totalMarks);
+
+    const aoa = [
+      header,
+      ...meritList.map(({ s, report }, idx) => {
+        const row = [idx + 1, s.adm, s.name, s.class, s.gender];
+        SUBJECTS.forEach(sub => {
+          const subRow = report.subjectRows.find(r => r.subject === sub);
+          if (subRow && subRow.scoreText !== '-') {
+             row.push(`${subRow.scoreText} (${subRow.gradeCode || subRow.gradeFull})`);
+          } else {
+             row.push('-');
+          }
+        });
+        row.push(report.totalMarks, report.meanPercentage, report.meanGradeCode, report.meanPoints, report.streamPosition, report.overallPosition);
+        return row;
+      })
+    ];
+    
+    downloadExcel(`class_broadsheet_${assignedClass.replace(/\s+/g, '_')}.xlsx`, [{ name: 'Broadsheet', aoa }]);
+    store.notify('Class Broadsheet exported as Excel', 'success');
+  };
+
   const handleExportAttendanceReport = async () => {
     store.notify('Downloading Students Attendance Report CSV...', 'info');
     const { downloadCSV } = await import('../../utils/exporters');
@@ -76,6 +114,9 @@ export default function MyClasses() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" style={{ background: '#047857', borderColor: '#047857', display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportClassReportCards}>
             <FileText size={16} /> Print Report Books (PDF)
+          </button>
+          <button className="btn btn-primary" style={{ background: '#107C10', borderColor: '#107C10', display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleExportClassBroadsheetExcel}>
+            <FileText size={16} /> Download Broadsheet (Excel)
           </button>
           <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setBehaviorModalOpen(true)}>
             <Award size={16} /> Log Behavior

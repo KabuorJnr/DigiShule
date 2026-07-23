@@ -215,6 +215,37 @@ export default function AcademicsDashboard({ store, user }) {
     notify('Merit list exported as Excel', 'success');
   };
 
+  const handleExportBroadsheetExcel = () => {
+    if (meritList.length === 0) return notify('No students in current selection to generate Broadsheet', 'warning');
+    
+    const header = ['Rank', 'Adm No', 'Student Name', 'Class', 'Gender'];
+    SUBJECTS.forEach(sub => header.push(sub));
+    header.push('Total Marks', 'Mean %', 'Mean Grade', 'Points', 'Stream Pos', 'Overall Pos');
+
+    const aoa = [
+      header,
+      ...meritList.map((s, idx) => {
+        const report = computeStudentReport({ student: s.rawStudent, students: activeStudentsList, subjects: SUBJECTS, gradeBoundaries: store.gradeBoundaries });
+        const row = [idx + 1, s.adm, s.name, s.class, s.gender];
+        
+        SUBJECTS.forEach(sub => {
+          const subRow = report.subjectRows.find(r => r.subject === sub);
+          if (subRow && subRow.scoreText !== '-') {
+             row.push(`${subRow.scoreText} (${subRow.gradeCode || subRow.gradeFull})`);
+          } else {
+             row.push('-');
+          }
+        });
+
+        row.push(s.totalMarks, s.meanPercentage, s.meanGradeCode, s.meanPoints, s.streamPosition, s.overallPosition);
+        return row;
+      })
+    ];
+    
+    downloadExcel(`broadsheet_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.xlsx`, [{ name: 'Broadsheet', aoa }]);
+    notify('Broadsheet exported as Excel', 'success');
+  };
+
   const handleExportAuditPDF = () => {
     if (marksAuditMatrix.length === 0) return notify('No audit records to export', 'warning');
     const head = ['Class', 'Subject', 'Assigned Teacher', 'Progress', 'Entered / Total', 'Status'];
@@ -357,6 +388,9 @@ export default function AcademicsDashboard({ store, user }) {
                 </select>
                 <button className="btn btn-primary" style={{ gap: 6 }} onClick={handleExportMeritListPDF}>
                   <Printer size={15} /> Download Merit List (PDF)
+                </button>
+                <button className="btn btn-primary" style={{ gap: 6, background: '#107C10', borderColor: '#107C10' }} onClick={handleExportBroadsheetExcel}>
+                  <Download size={15} /> Download Broadsheet (Excel)
                 </button>
                 <button className="btn" style={{ gap: 6 }} onClick={handleExportMeritListExcel}>
                   <Download size={15} /> Export Excel
