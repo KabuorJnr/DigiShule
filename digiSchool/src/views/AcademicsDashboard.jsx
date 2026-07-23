@@ -2,10 +2,10 @@ import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Badge, ProgressBar } from '../components/widgets';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
-import { computeStudentReport } from '../utils/grading';
+import { studentOverall, gradeFor, pointsForGrade, subjectAverage, is844Class } from '../utils/grading';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import ReportCardModal from '../components/ReportCardModal';
-import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Filter } from 'lucide-react';
+import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search } from 'lucide-react';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
   const accent = color || '#047857';
@@ -46,8 +46,8 @@ function Stat({ label, value, color, sub, icon: IconComp }) {
   );
 }
 
-export default function AcademicsDashboard({ store, user }) {
-  const { navigate, notify, settings, teachers = [], examSchedules = [] } = store;
+export default function AcademicsDashboard({ store = {}, user = {} }) {
+  const { navigate = (() => {}), notify = (() => {}), settings = {}, teachers = [], examSchedules = [] } = store || {};
   const [students, setStudents] = useState([]);
   const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
   const [activeTab, setActiveTab] = useState('overview'); // overview | merit | audit | slips
@@ -65,6 +65,11 @@ export default function AcademicsDashboard({ store, user }) {
   const activeStudentsList = useMemo(() => {
     return rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
   }, [rawStudents]);
+
+  const rawStaff = useMemo(() => {
+    if (store?.teachers && Array.isArray(store.teachers) && store.teachers.length > 0) return store.teachers;
+    return teachers || [];
+  }, [store?.teachers, teachers]);
 
   const dynamicClasses = useMemo(() => {
     const saved = expandClassesWithStreams(settings?.classes || []);
@@ -88,9 +93,9 @@ export default function AcademicsDashboard({ store, user }) {
       }
     };
     fetchApprovals();
-  }, [store.schoolId]);
+  }, [store?.schoolId]);
 
-  const activeTeacherList = useMemo(() => teachers.filter(t => t.status !== 'Inactive'), [teachers]);
+  const activeTeacherList = useMemo(() => rawStaff.filter(t => t.status !== 'Inactive'), [rawStaff]);
   const activeTeachers = useMemo(() => activeTeacherList.filter(t => t.status === 'Active').length, [activeTeacherList]);
   const classesCount = dynamicClasses.length;
 
@@ -101,13 +106,22 @@ export default function AcademicsDashboard({ store, user }) {
       : activeStudentsList.filter(s => s.class === selectedClass);
 
     const evaluated = listToRank.map(s => {
-      const report = computeStudentReport(s.scores || {}, store.gradeBoundaries, s.class);
+      const is844 = is844Class(s.class);
+      const overallScore = studentOverall(s, SUBJECTS);
+      const meanGradeCode = gradeFor(overallScore, store?.gradeBoundaries, is844 ? '844' : 'CBC');
+      const meanPoints = pointsForGrade(meanGradeCode, is844 ? '844' : 'CBC');
+
+      let totalMarks = 0;
+      SUBJECTS.forEach(sub => {
+        totalMarks += subjectAverage(s.scores?.[sub]);
+      });
+
       return {
         ...s,
-        totalMarks: report.totalMarks,
-        meanPercentage: report.meanPercentage,
-        meanGradeCode: report.meanGradeCode,
-        meanPoints: report.meanPoints,
+        totalMarks,
+        meanPercentage: overallScore,
+        meanGradeCode,
+        meanPoints,
         rawStudent: s,
       };
     });
@@ -123,16 +137,15 @@ export default function AcademicsDashboard({ store, user }) {
         return { ...s, streamPosition: currentRank };
       }
     });
-  }, [activeStudentsList, selectedClass, store.gradeBoundaries]);
+  }, [activeStudentsList, selectedClass, store?.gradeBoundaries]);
 
   const schoolOverallMean = useMemo(() => {
     if (activeStudentsList.length === 0) return '0.0%';
     const sum = activeStudentsList.reduce((acc, s) => {
-      const report = computeStudentReport(s.scores || {}, store.gradeBoundaries, s.class);
-      return acc + report.meanPercentage;
+      return acc + studentOverall(s, SUBJECTS);
     }, 0);
     return `${(sum / activeStudentsList.length).toFixed(1)}%`;
-  }, [activeStudentsList, store.gradeBoundaries]);
+  }, [activeStudentsList]);
 
   // ── MARKS AUDIT ──
   const marksAuditMatrix = useMemo(() => {
@@ -144,7 +157,7 @@ export default function AcademicsDashboard({ store, user }) {
       if (studentsInClass.length === 0) return;
 
       SUBJECTS.forEach(sub => {
-        const teacherAssigned = teachers.find(t => t.subject === sub || t.dept === sub || (t.subjects && t.subjects.includes(sub)))?.name || 'Unassigned';
+        const teacherAssigned = rawStaff.find(t => t.subject === sub || t.dept === sub || (t.subjects && t.subjects.includes(sub)))?.name || 'Unassigned';
         const enteredCount = studentsInClass.filter(s => {
           const sc = s.scores?.[sub];
           if (!sc) return false;
@@ -173,7 +186,7 @@ export default function AcademicsDashboard({ store, user }) {
     });
 
     return matrix;
-  }, [dynamicClasses, selectedClass, activeStudentsList, teachers]);
+  }, [dynamicClasses, selectedClass, activeStudentsList, rawStaff]);
 
   const auditStats = useMemo(() => {
     const totalUnits = marksAuditMatrix.length || 1;
@@ -639,10 +652,10 @@ export default function AcademicsDashboard({ store, user }) {
           student={selectedStudentForReport}
           students={activeStudentsList}
           subjects={SUBJECTS}
-          gradeBoundaries={store.gradeBoundaries}
+          gradeBoundaries={store?.gradeBoundaries}
           examTitle="Term 2 Main Examination"
           termName="Term 2"
-          schoolSettings={store.settings}
+          schoolSettings={store?.settings}
           onClose={() => setSelectedStudentForReport(null)}
         />
       )}

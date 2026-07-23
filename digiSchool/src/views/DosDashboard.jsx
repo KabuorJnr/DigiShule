@@ -5,8 +5,8 @@ import { Badge, ProgressBar } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { 
-  Download, FileText, CheckCircle, Clock, ShieldCheck, Check, 
+import {
+  Download, FileText, CheckCircle, Clock, ShieldCheck, Check,
   Users, BookOpen, Award, AlertTriangle, Printer, RefreshCw, Search, Filter,
   Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight
 } from 'lucide-react';
@@ -15,8 +15,8 @@ import {
 function Stat({ label, value, color, sub, icon: IconComp, badge }) {
   const accent = color || '#047857';
   return (
-    <div 
-      style={{ 
+    <div
+      style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: 8,
@@ -60,7 +60,7 @@ function Stat({ label, value, color, sub, icon: IconComp, badge }) {
 
 export default function DosDashboard({ store, user }) {
   const { navigate, notify, settings, teachers = [], examSchedules = [], timetables = {} } = store;
-  
+
   const [students, setStudents] = useState([]);
   const [staff, setStaff] = useState([]);
   const [approvals, setApprovals] = useState([]);
@@ -80,7 +80,7 @@ export default function DosDashboard({ store, user }) {
 
   const fetchAllDosData = async () => {
     setLoading(true);
-    
+
     try {
       const { data: studentData } = await fetchStudents(0, 2000, { activeOnly: true });
       setStudents(studentData ? studentData.filter(s => s.status === 'Active') : []);
@@ -143,7 +143,7 @@ export default function DosDashboard({ store, user }) {
 
   const rawStudents = useMemo(() => students || [], [students]);
 
-  const activeStudents = useMemo(() => 
+  const activeStudents = useMemo(() =>
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
     [rawStudents]
   );
@@ -206,9 +206,9 @@ export default function DosDashboard({ store, user }) {
         });
       });
     });
-    
+
     const validNames = new Set(activeTeacherList.map(t => t.name.toLowerCase()));
-    
+
     return Object.entries(counts)
       .filter(([name]) => validNames.has(name.toLowerCase()))
       .map(([name, periods]) => ({ name, periods, isOverload: periods > 27 }))
@@ -258,8 +258,8 @@ export default function DosDashboard({ store, user }) {
   // Filtered Lists
   const filteredStudents = useMemo(() => {
     return activeStudents.filter(s => {
-      const matchSearch = !studentSearch || 
-        s.name?.toLowerCase().includes(studentSearch.toLowerCase()) || 
+      const matchSearch = !studentSearch ||
+        s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
         (s.adm || s.admission_no || '').toLowerCase().includes(studentSearch.toLowerCase());
       const matchClass = studentClassFilter === 'All' || s.class === studentClassFilter;
       return matchSearch && matchClass;
@@ -270,8 +270,8 @@ export default function DosDashboard({ store, user }) {
     return rawStaff.filter(s => {
       const name = s.full_name || s.name || '';
       const email = s.email || '';
-      const matchSearch = !staffSearch || 
-        name.toLowerCase().includes(staffSearch.toLowerCase()) || 
+      const matchSearch = !staffSearch ||
+        name.toLowerCase().includes(staffSearch.toLowerCase()) ||
         email.toLowerCase().includes(staffSearch.toLowerCase());
       const matchRole = staffRoleFilter === 'All' || s.role === staffRoleFilter;
       return matchSearch && matchRole;
@@ -282,8 +282,8 @@ export default function DosDashboard({ store, user }) {
   const handleApprove = async (id, table) => {
     try {
       const { error } = await supabase.from(table).update(
-        table === 'approval_queue' 
-          ? { status: 'approved', reviewer_id: user.id, reviewed_at: new Date().toISOString() } 
+        table === 'approval_queue'
+          ? { status: 'approved', reviewer_id: user.id, reviewed_at: new Date().toISOString() }
           : { moderation_status: 'approved', moderated_by: user.id }
       ).eq('id', id);
       if (error) throw error;
@@ -350,42 +350,42 @@ export default function DosDashboard({ store, user }) {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button 
-            onClick={fetchAllDosData} 
+          <button
+            onClick={fetchAllDosData}
             disabled={loading}
-            style={{ 
-              height: 36, 
-              padding: '0 14px', 
-              borderRadius: 6, 
-              background: '#ffffff', 
-              border: '1px solid #cbd5e1', 
-              fontSize: 13, 
-              fontWeight: 600, 
+            style={{
+              height: 36,
+              padding: '0 14px',
+              borderRadius: 6,
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              fontSize: 13,
+              fontWeight: 600,
               color: '#334155',
-              display: 'flex', 
-              alignItems: 'center', 
+              display: 'flex',
+              alignItems: 'center',
               gap: 6,
-              cursor: 'pointer' 
+              cursor: 'pointer'
             }}
           >
             <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
-          <button 
+          <button
             onClick={handleExportTermlyReport}
-            style={{ 
-              height: 36, 
-              padding: '0 16px', 
-              borderRadius: 6, 
-              background: '#047857', 
-              border: 'none', 
-              fontSize: 13, 
-              fontWeight: 600, 
+            style={{
+              height: 36,
+              padding: '0 16px',
+              borderRadius: 6,
+              background: '#047857',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 600,
               color: '#ffffff',
-              display: 'flex', 
-              alignItems: 'center', 
+              display: 'flex',
+              alignItems: 'center',
               gap: 6,
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.3)' 
+              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.3)'
             }}
           >
             <Download size={14} /> Export Report (PDF)
@@ -394,15 +394,15 @@ export default function DosDashboard({ store, user }) {
       </div>
 
       {/* ── COMPACT EMERALD HEADER BANNER ── */}
-      <div 
-        style={{ 
-          background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', 
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)',
           border: '1px solid #047857',
-          borderRadius: 8, 
-          padding: '14px 20px', 
-          display: 'flex', 
-          justify: 'space-between', 
-          alignItems: 'center', 
+          borderRadius: 8,
+          padding: '14px 20px',
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
           marginBottom: 16,
           color: '#ffffff',
           flexWrap: 'wrap',
@@ -444,8 +444,8 @@ export default function DosDashboard({ store, user }) {
         ].map(t => {
           const isActive = activeTab === t.id;
           return (
-            <button 
-              key={t.id} 
+            <button
+              key={t.id}
               onClick={() => setActiveTab(t.id)}
               style={{
                 display: 'flex',
@@ -465,11 +465,11 @@ export default function DosDashboard({ store, user }) {
               <t.icon size={15} color={isActive ? '#047857' : '#64748b'} />
               <span>{t.label}</span>
               {t.badge !== undefined && (
-                <span style={{ 
-                  fontSize: 11, 
-                  fontWeight: 700, 
-                  padding: '1px 6px', 
-                  borderRadius: 4, 
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: 4,
                   background: t.alert ? '#fee2e2' : isActive ? '#dcfce7' : '#f1f5f9',
                   color: t.alert ? '#991b1b' : isActive ? '#047857' : '#475569'
                 }}>
@@ -483,7 +483,7 @@ export default function DosDashboard({ store, user }) {
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-          <RefreshCw size={24} color="#047857" className="spin" style={{ marginBottom: 10 }} />
+          <RefreshCw size={24} color="#96d5c3ff" className="spin" style={{ marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Loading Live Academic Records...</div>
         </div>
       )}
@@ -510,7 +510,7 @@ export default function DosDashboard({ store, user }) {
           <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Layers size={16} color="#047857" /> Executive Quick Actions
+                <Layers size={16} color="#8cafa5ff" /> Executive Quick Actions
               </div>
               <span style={{ fontSize: 12, color: '#64748b' }}>Shortcuts to core academic modules</span>
             </div>
@@ -600,7 +600,7 @@ export default function DosDashboard({ store, user }) {
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Gender Demographics</h3>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
                   <div style={{ background: '#eff6ff', border: '1px solid #dbeafe', padding: 12, borderRadius: 6, textAlign: 'center' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: '#2563eb' }}>{genderDist.male}</div>
@@ -651,17 +651,17 @@ export default function DosDashboard({ store, user }) {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <div style={{ position: 'relative', width: 220 }}>
                 <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 11 }} />
-                <input 
-                  type="text" 
-                  placeholder="Search student or adm..." 
-                  value={studentSearch} 
+                <input
+                  type="text"
+                  placeholder="Search student or adm..."
+                  value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                   style={{ width: '100%', paddingLeft: 30, height: 34, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
                 />
               </div>
 
-              <select 
-                value={studentClassFilter} 
+              <select
+                value={studentClassFilter}
                 onChange={(e) => setStudentClassFilter(e.target.value)}
                 style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
               >
