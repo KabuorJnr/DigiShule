@@ -342,7 +342,7 @@ export default function DosDashboard({ store, user }) {
           <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
             <Stat icon={Users} label="Total Students" value={activeStudents.length} sub={`${genderDist.male}M / ${genderDist.female}F`} color="#047857" />
             <Stat icon={BookOpen} label="Teaching Staff" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
-            <Stat icon={Award} label="Classes" value={dynamicClasses.length} sub={`${classEnrollment.length} with students`} color="#107C10" />
+            <Stat icon={Award} label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classEnrollment.length} active streams`} color="#107C10" />
             <Stat icon={FileText} label="Exam Schedules" value={examSchedules.length} sub="Published exams" color="#6366f1" />
           </div>
 

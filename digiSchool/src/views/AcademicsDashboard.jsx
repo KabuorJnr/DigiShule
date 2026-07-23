@@ -340,7 +340,7 @@ export default function AcademicsDashboard({ store, user }) {
           <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
             <Stat label="Total Enrolled" value={activeStudentsList.length} sub="Active students" color="#047857" />
             <Stat label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
-            <Stat label="Classes & Streams" value={classesCount} sub="Active class levels" color="#107C10" />
+            <Stat label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classesCount} active streams`} color="#107C10" />
             <Stat label="Overall Mean Score" value={schoolOverallMean} sub="Across all subjects" color="#047857" />
           </div>
 
