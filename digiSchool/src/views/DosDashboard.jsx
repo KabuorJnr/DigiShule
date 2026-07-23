@@ -8,56 +8,51 @@ import 'jspdf-autotable';
 import { 
   Download, FileText, CheckCircle, Clock, ShieldCheck, Check, 
   Users, BookOpen, Award, AlertTriangle, Printer, RefreshCw, Search, Filter,
-  Sparkles, Layers, ArrowUpRight, CheckCircle2, UserCheck
+  Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight
 } from 'lucide-react';
 
-function Stat({ label, value, color, sub, icon: IconComp, trend }) {
+// Microsoft Corporate Stat Card
+function Stat({ label, value, color, sub, icon: IconComp, badge }) {
   return (
     <div 
-      className="card card-pad" 
       style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justify: 'space-between',
-        borderRadius: 12,
-        border: '1px solid var(--border, #e2e8f0)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 8,
+        padding: '16px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justify: 'space-between',
+        minHeight: 105,
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
         position: 'relative',
         overflow: 'hidden'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {IconComp && (
-            <div style={{ 
-              width: 32, 
-              height: 32, 
-              borderRadius: 8, 
-              background: `${color}12`, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justify: 'center' 
-            }}>
-              <IconComp size={16} color={color || '#64748b'} />
-            </div>
-          )}
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.6 }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {label}
+        </span>
+        {IconComp && (
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${color || '#0078d4'}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconComp size={15} color={color || '#0078d4'} />
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
+          {value}
         </div>
-        {trend && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#047857', background: '#dcfce7', padding: '2px 6px', borderRadius: 4 }}>
-            {trend}
+        {badge && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: color || '#0078d4', background: `${color || '#0078d4'}14`, padding: '2px 8px', borderRadius: 4 }}>
+            {badge}
           </span>
         )}
       </div>
 
-      <div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: color || '#0f172a', letterSpacing: '-0.5px', lineHeight: 1.1 }}>{value}</div>
-        {sub && <div className="muted" style={{ fontSize: 12, marginTop: 4, fontWeight: 500 }}>{sub}</div>}
-      </div>
-
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: color || '#64748b', opacity: 0.8 }} />
+      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{sub}</div>}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color || '#0078d4' }} />
     </div>
   );
 }
@@ -74,7 +69,7 @@ export default function DosDashboard({ store, user }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Search & Filters state
+  // Search & Filters
   const [studentSearch, setStudentSearch] = useState('');
   const [studentClassFilter, setStudentClassFilter] = useState('All');
   const [staffSearch, setStaffSearch] = useState('');
@@ -155,9 +150,7 @@ export default function DosDashboard({ store, user }) {
     fetchAllDosData();
   }, [currentSchoolId]);
 
-  const rawStudents = useMemo(() => {
-    return students || [];
-  }, [students]);
+  const rawStudents = useMemo(() => students || [], [students]);
 
   const activeStudents = useMemo(() => 
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
@@ -209,7 +202,7 @@ export default function DosDashboard({ store, user }) {
     return Object.entries(map).map(([role, count]) => ({ role, count }));
   }, [rawStaff]);
 
-  // Teacher workload from timetables (filtered to actual profiles)
+  // Teacher workload from timetables
   const teacherWorkload = useMemo(() => {
     const counts = {};
     Object.values(timetables).forEach(tt => {
@@ -231,7 +224,7 @@ export default function DosDashboard({ store, user }) {
       .sort((a, b) => b.periods - a.periods);
   }, [timetables, activeTeacherList]);
 
-  // Marks entry audit per class/subject
+  // Marks entry audit
   const marksAudit = useMemo(() => {
     const results = [];
     dynamicClasses.forEach(cls => {
@@ -271,7 +264,7 @@ export default function DosDashboard({ store, user }) {
   const pendingPapersCount = examPapers.filter(p => p.moderation_status === 'pending').length;
   const totalPendingActionCount = pendingApprovalsCount + pendingPapersCount;
 
-  // Filtered Student List
+  // Filtered Lists
   const filteredStudents = useMemo(() => {
     return activeStudents.filter(s => {
       const matchSearch = !studentSearch || 
@@ -282,7 +275,6 @@ export default function DosDashboard({ store, user }) {
     });
   }, [activeStudents, studentSearch, studentClassFilter]);
 
-  // Filtered Staff List
   const filteredStaff = useMemo(() => {
     return rawStaff.filter(s => {
       const name = s.full_name || s.name || '';
@@ -295,7 +287,7 @@ export default function DosDashboard({ store, user }) {
     });
   }, [rawStaff, staffSearch, staffRoleFilter]);
 
-  // ── HANDLERS ──
+  // Handlers
   const handleApprove = async (id, table) => {
     try {
       const { error } = await supabase.from(table).update(
@@ -313,46 +305,33 @@ export default function DosDashboard({ store, user }) {
 
   const handleExportTermlyReport = () => {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Director of Studies (DoS) Termly Report', 14, 20);
-    doc.setFontSize(11);
-    doc.text(`School: ${settings?.name || 'School'}`, 14, 30);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 38);
-    doc.text(`Total Students: ${activeStudents.length} | Teachers: ${activeTeacherList.length} | Classes: ${dynamicClasses.length}`, 14, 46);
+    doc.setFontSize(16);
+    doc.text('Director of Studies (DoS) Academic Report', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`School: ${settings?.name || 'School'}`, 14, 28);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 34);
+    doc.text(`Total Students: ${activeStudents.length} | Teachers: ${activeTeacherList.length} | Streams: ${dynamicClasses.length}`, 14, 40);
 
-    // Enrollment table
-    doc.setFontSize(14);
-    doc.text('Class Enrollment Summary', 14, 58);
+    doc.setFontSize(13);
+    doc.text('Class Enrollment Summary', 14, 50);
     doc.autoTable({
-      startY: 63,
-      head: [['Class', 'Students']],
+      startY: 54,
+      head: [['Class Stream', 'Enrolled Students']],
       body: classEnrollment.map(c => [c.class, c.count]),
     });
 
-    let finalY = doc.lastAutoTable?.finalY || 80;
+    let finalY = doc.lastAutoTable?.finalY || 70;
 
-    // Marks completion
-    doc.setFontSize(14);
-    doc.text('Marks Entry Completion', 14, finalY + 15);
+    doc.setFontSize(13);
+    doc.text('Marks Entry Audit Summary', 14, finalY + 12);
     doc.autoTable({
-      startY: finalY + 20,
-      head: [['Class', 'Students', 'Marks Entered', 'Total Possible', 'Completion %']],
+      startY: finalY + 16,
+      head: [['Class', 'Students', 'Entered', 'Total Possible', 'Completion %']],
       body: marksAudit.map(m => [m.class, m.students, m.entered, m.total, `${m.pct}%`]),
     });
 
-    finalY = doc.lastAutoTable?.finalY || finalY + 40;
-
-    // Teacher workload
-    doc.setFontSize(14);
-    doc.text('Teacher Workload', 14, finalY + 15);
-    doc.autoTable({
-      startY: finalY + 20,
-      head: [['Teacher', 'Periods/Week', 'Status']],
-      body: teacherWorkload.map(t => [t.name, t.periods, t.isOverload ? 'OVERLOADED' : 'Normal']),
-    });
-
-    doc.save('DoS_Termly_Report.pdf');
-    notify('DoS Termly Report exported as PDF');
+    doc.save('DoS_Academic_Report.pdf');
+    notify('DoS Academic Report exported as PDF');
   };
 
   const roleLabels = {
@@ -361,111 +340,112 @@ export default function DosDashboard({ store, user }) {
     finance: 'Bursar', accountant: 'Accountant', librarian: 'Librarian', clinic: 'Clinic/Nurse'
   };
 
-  // Dynamic time greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-
   return (
-    <div style={{ paddingBottom: 40 }}>
-      {/* ── HEADER TOOLBAR ── */}
+    <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '0 0 40px 0' }}>
+      {/* ── TOP CORPORATE BAR ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px' }}>Director of Studies (DoS) Portal</h2>
-            <Badge color="blue" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
-              Live System
-            </Badge>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              Director of Studies Portal
+            </h1>
+            <span style={{ background: '#0078d4', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+              Academic Office
+            </span>
           </div>
-          <p className="muted" style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-            Academic oversight, exam office management, marks audit & curriculum quality control
+          <p style={{ margin: '3px 0 0 0', fontSize: 13, color: '#64748b' }}>
+            Executive oversight, exam office management, marks audit & curriculum quality assurance
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+
+        <div style={{ display: 'flex', gap: 8 }}>
           <button 
-            className="btn" 
             onClick={fetchAllDosData} 
             disabled={loading}
-            style={{ borderRadius: 8, height: 40, background: '#ffffff', border: '1px solid #cbd5e1', fontWeight: 600 }}
+            style={{ 
+              height: 36, 
+              padding: '0 14px', 
+              borderRadius: 6, 
+              background: '#ffffff', 
+              border: '1px solid #cbd5e1', 
+              fontSize: 13, 
+              fontWeight: 600, 
+              color: '#334155',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              cursor: 'pointer' 
+            }}
           >
-            <RefreshCw size={15} style={{ marginRight: 6 }} className={loading ? 'spin' : ''} /> Refresh Data
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh Data
           </button>
           <button 
-            className="btn btn-primary" 
             onClick={handleExportTermlyReport}
-            style={{ borderRadius: 8, height: 40, background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', border: 'none', fontWeight: 600, boxShadow: '0 2px 6px rgba(4, 120, 87, 0.2)' }}
+            style={{ 
+              height: 36, 
+              padding: '0 16px', 
+              borderRadius: 6, 
+              background: '#0078d4', 
+              border: 'none', 
+              fontSize: 13, 
+              fontWeight: 600, 
+              color: '#ffffff',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 120, 212, 0.3)' 
+            }}
           >
-            <Download size={15} style={{ marginRight: 6 }} /> Export Termly Report
+            <Download size={14} /> Export Report (PDF)
           </button>
         </div>
       </div>
 
-      {/* ── EXECUTIVE HERO BANNER ── */}
+      {/* ── MICROSOFT FLUENT CORPORATE HEADER ── */}
       <div 
         style={{ 
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)', 
-          color: '#fff', 
-          padding: '24px 28px', 
-          borderRadius: 16, 
+          background: '#0f172a', 
+          border: '1px solid #1e293b',
+          borderRadius: 8, 
+          padding: '20px 24px', 
           display: 'flex', 
           justify: 'space-between', 
           alignItems: 'center', 
-          marginBottom: 24, 
-          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.25)',
-          position: 'relative',
-          overflow: 'hidden'
+          marginBottom: 20,
+          color: '#ffffff'
         }}
       >
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <Sparkles size={18} color="#10b981" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: 1 }}>{greeting}, Director of Studies</span>
-          </div>
-          <h3 style={{ margin: 0, fontSize: 22, color: '#ffffff', fontWeight: 800, letterSpacing: '-0.3px' }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
             {settings?.name || 'Academic Command Center'}
-          </h3>
-          <p style={{ margin: '6px 0 0 0', fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span>Exam Office</span> · <span>Curriculum Quality</span> · <span>Moderation</span> · <span>Syllabus Assurance</span>
-          </p>
-        </div>
-        <div style={{ textAlign: 'right', position: 'relative', zIndex: 2 }}>
-          <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 13, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-            <Clock size={14} color="#94a3b8" />
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
-          <span style={{ 
-            background: 'rgba(255, 255, 255, 0.12)', 
-            color: '#34d399', 
-            padding: '6px 14px', 
-            borderRadius: 20, 
-            fontSize: 12, 
-            fontWeight: 700, 
-            border: '1px solid rgba(52, 211, 153, 0.25)',
-            display: 'inline-block'
-          }}>
-            Term 2 · 2026 Academic Year
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+            Director of Studies Executive Dashboard
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
+            <span>Curriculum Management</span> · <span>Exam Moderation</span> · <span>Marks Verification</span>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 6 }}>
+            <Clock size={13} color="#38bdf8" />
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
+          <span style={{ background: '#1e293b', color: '#38bdf8', border: '1px solid #334155', padding: '4px 12px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
+            Term 2 · Academic Year 2026
           </span>
         </div>
-        
-        {/* Subtle decorative glow circle */}
-        <div style={{ position: 'absolute', right: -40, top: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', filter: 'blur(30px)', pointerEvents: 'none' }} />
       </div>
 
-      {/* ── TABS BAR WITH NOTIFICATION BADGES ── */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          gap: 8, 
-          marginBottom: 24, 
-          borderBottom: '1px solid #e2e8f0', 
-          paddingBottom: 4,
-          flexWrap: 'wrap' 
-        }}
-      >
+      {/* ── CORPORATE TAB NAVIGATION ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 20, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
         {[
-          { id: 'overview', label: 'Dashboard Overview', icon: ShieldCheck },
+          { id: 'overview', label: 'Academic Overview', icon: ShieldCheck },
           { id: 'registry', label: 'Student Registry', icon: Users, badge: activeStudents.length },
-          { id: 'staff', label: 'Staff & Workload', icon: BookOpen, badge: rawStaff.length },
-          { id: 'marks', label: 'Marks Audit', icon: CheckCircle, badge: `${overallMarksPct}%` },
+          { id: 'staff', label: 'Faculty & Workload', icon: BookOpen, badge: rawStaff.length },
+          { id: 'marks', label: 'Marks Audit Matrix', icon: CheckCircle, badge: `${overallMarksPct}%` },
           { id: 'moderation', label: 'Approvals & Moderation', icon: FileText, badge: totalPendingActionCount, alert: totalPendingActionCount > 0 },
         ].map(t => {
           const isActive = activeTab === t.id;
@@ -477,33 +457,28 @@ export default function DosDashboard({ store, user }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '10px 18px',
-                borderRadius: '8px 8px 0 0',
+                padding: '12px 18px',
+                background: 'transparent',
                 border: 'none',
-                borderBottom: isActive ? '3px solid #047857' : '3px solid transparent',
-                background: isActive ? '#ffffff' : 'transparent',
-                color: isActive ? '#047857' : '#64748b',
+                borderBottom: isActive ? '3px solid #0078d4' : '3px solid transparent',
+                color: isActive ? '#0078d4' : '#64748b',
                 fontWeight: isActive ? 700 : 600,
-                fontSize: 14,
+                fontSize: 13,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.03)' : 'none'
+                transition: 'all 0.15s ease'
               }}
             >
-              <t.icon size={16} color={isActive ? '#047857' : '#64748b'} /> 
+              <t.icon size={15} color={isActive ? '#0078d4' : '#64748b'} />
               <span>{t.label}</span>
               {t.badge !== undefined && (
-                <span 
-                  style={{ 
-                    fontSize: 11, 
-                    fontWeight: 700, 
-                    padding: '2px 7px', 
-                    borderRadius: 12, 
-                    background: t.alert ? '#ef4444' : isActive ? '#dcfce7' : '#f1f5f9',
-                    color: t.alert ? '#ffffff' : isActive ? '#047857' : '#475569',
-                    marginLeft: 2
-                  }}
-                >
+                <span style={{ 
+                  fontSize: 11, 
+                  fontWeight: 700, 
+                  padding: '1px 6px', 
+                  borderRadius: 4, 
+                  background: t.alert ? '#fee2e2' : isActive ? '#e0f2fe' : '#f1f5f9',
+                  color: t.alert ? '#991b1b' : isActive ? '#0369a1' : '#475569'
+                }}>
                   {t.badge}
                 </span>
               )}
@@ -513,43 +488,40 @@ export default function DosDashboard({ store, user }) {
       </div>
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-          <RefreshCw size={28} color="#047857" className="spin" style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a' }}>Loading Live Academic Registry Data...</div>
-          <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>Syncing student scores, staff workloads, and moderation queues</div>
+        <div style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <RefreshCw size={24} color="#0078d4" className="spin" style={{ marginBottom: 10 }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Loading Live Academic Records...</div>
         </div>
       )}
 
-      {/* ── TAB 1: DASHBOARD OVERVIEW ── */}
+      {/* ── TAB 1: ACADEMIC OVERVIEW ── */}
       {!loading && activeTab === 'overview' && (
         <>
-          {/* Primary KPI Grid */}
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-            <Stat icon={Users} label="Total Active Students" value={activeStudents.length} sub={`${genderDist.male} Male / ${genderDist.female} Female`} color="#047857" trend="Active Registry" />
-            <Stat icon={BookOpen} label="Teaching Staff" value={activeTeacherList.length} sub={`${activeTeachers} Active Faculty`} color="#0EA5E9" trend="Assigned" />
-            <Stat icon={Award} label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classEnrollment.length} Active Streams`} color="#107C10" />
-            <Stat icon={FileText} label="Exam Schedules" value={examSchedules.length} sub="Published Timetables" color="#6366f1" />
+          {/* Balanced 4-Column Stat Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <Stat icon={Users} label="Total Enrolled Students" value={activeStudents.length} sub={`${genderDist.male} Male / ${genderDist.female} Female`} color="#0078d4" badge="Active" />
+            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Members`} color="#107c10" badge="Assigned" />
+            <Stat icon={Award} label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classEnrollment.length} Active Streams`} color="#0078d4" badge="Structure" />
+            <Stat icon={FileText} label="Published Exams" value={examSchedules.length} sub="Term Exam Schedules" color="#6b21a8" badge="Exams" />
           </div>
 
-          {/* Secondary KPI Grid */}
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 24 }}>
-            <Stat icon={CheckCircle} label="Marks Completion" value={`${overallMarksPct}%`} sub="Overall Entry Progress" color={overallMarksPct >= 80 ? '#047857' : '#F59E0B'} />
-            <Stat icon={AlertTriangle} label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lesson Plans" color={pendingApprovalsCount > 0 ? '#F59E0B' : '#047857'} />
-            <Stat icon={FileText} label="Papers to Moderate" value={pendingPapersCount} sub="Exam Papers Pending Review" color={pendingPapersCount > 0 ? '#F59E0B' : '#047857'} />
-            <Stat icon={AlertTriangle} label="Overloaded Teachers" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#EF4444" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+            <Stat icon={CheckCircle} label="Marks Completion" value={`${overallMarksPct}%`} sub="Overall Entry Progress" color={overallMarksPct >= 80 ? '#107c10' : '#d97706'} />
+            <Stat icon={AlertTriangle} label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lesson Plans" color={pendingApprovalsCount > 0 ? '#d97706' : '#107c10'} />
+            <Stat icon={FileText} label="Papers to Moderate" value={pendingPapersCount} sub="Exam Papers Pending" color={pendingPapersCount > 0 ? '#d97706' : '#107c10'} />
+            <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#d13438" />
           </div>
 
-          {/* Quick Actions Hub */}
-          <div className="card card-pad" style={{ marginBottom: 24, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Layers size={18} color="#047857" />
-                <h3 className="section-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>DOS Quick Management Hub</h3>
+          {/* Quick Management Hub */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Layers size={16} color="#0078d4" /> Executive Quick Actions
               </div>
-              <span className="muted" style={{ fontSize: 12 }}>Instant academic tools & shortcuts</span>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Shortcuts to core academic modules</span>
             </div>
-            
-            <div className="grid grid-4" style={{ gap: 12 }}>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               {[
                 { label: 'Merit Lists & Analysis', icon: Award, route: 'academics_dashboard', desc: 'Rankings & means' },
                 { label: 'Gradebook & Entry', icon: BookOpen, route: 'gradebook', desc: 'Marks entry portal' },
@@ -564,58 +536,49 @@ export default function DosDashboard({ store, user }) {
                   key={idx}
                   onClick={() => act.route ? navigate(act.route) : setActiveTab(act.tab)}
                   style={{
-                    padding: '14px 16px',
-                    borderRadius: 10,
+                    padding: '12px 14px',
+                    borderRadius: 6,
                     border: '1px solid #e2e8f0',
                     background: '#f8fafc',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
                     display: 'flex',
-                    flexDirection: 'column',
-                    justify: 'space-between'
+                    alignItems: 'center',
+                    justify: 'space-between',
+                    transition: 'all 0.15s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#ffffff';
-                    e.currentTarget.style.borderColor = '#047857';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(4, 120, 87, 0.08)';
+                    e.currentTarget.style.borderColor = '#0078d4';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = '#f8fafc';
                     e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <act.icon size={17} color="#0284c7" />
-                    </div>
-                    <ArrowUpRight size={15} color="#94a3b8" />
-                  </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{act.label}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{act.desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{act.label}</div>
+                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{act.desc}</div>
                   </div>
+                  <ChevronRight size={15} color="#94a3b8" />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Class Enrollment & Gender Visualizer */}
-          <div className="grid grid-2" style={{ gap: 24 }}>
-            {/* Live Enrollment */}
-            <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 className="section-title" style={{ fontSize: 15, margin: 0, fontWeight: 700 }}>Class Enrollment Breakdown</h3>
-                <span className="muted" style={{ fontSize: 12 }}>{classEnrollment.length} Active Streams</span>
+          {/* Balanced 2-Column Enrollment & Gender Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            {/* Enrollment */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Stream Enrollment</h3>
+                <span style={{ fontSize: 12, color: '#64748b' }}>{classEnrollment.length} Active Streams</span>
               </div>
-              <table className="table" style={{ margin: 0 }}>
+              <table className="table" style={{ width: '100%', margin: 0 }}>
                 <thead>
                   <tr>
-                    <th>Class / Stream</th>
-                    <th style={{ textAlign: 'right' }}>Students</th>
-                    <th style={{ width: 160 }}>Share of School</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase', textAlign: 'right' }}>Students</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase', width: 140 }}>Share</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -627,8 +590,8 @@ export default function DosDashboard({ store, user }) {
                         <td style={{ textAlign: 'right', fontWeight: 700 }}>{c.count}</td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ flex: 1 }}><ProgressBar value={share} color="#047857" /></div>
-                            <span style={{ fontSize: 11, fontWeight: 600, minWidth: 28 }}>{share}%</span>
+                            <div style={{ flex: 1 }}><ProgressBar value={share} color="#0078d4" /></div>
+                            <span style={{ fontSize: 11, fontWeight: 600, minWidth: 26 }}>{share}%</span>
                           </div>
                         </td>
                       </tr>
@@ -636,51 +599,46 @@ export default function DosDashboard({ store, user }) {
                   })}
                 </tbody>
               </table>
-              {classEnrollment.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No students in registry.</div>}
+              {classEnrollment.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 16 }}>No students in registry.</div>}
             </div>
 
-            {/* Gender Distribution */}
-            <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            {/* Demographics */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, fontWeight: 700 }}>Gender & Student Demographics</h3>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Gender Demographics</h3>
                 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-                  <div style={{ flex: 1, textAlign: 'center', padding: '16px 12px', background: '#eff6ff', borderRadius: 10, border: '1px solid #dbeafe' }}>
-                    <div style={{ fontSize: 30, fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>{genderDist.male}</div>
-                    <div style={{ fontSize: 12, color: '#1e40af', fontWeight: 700, marginTop: 6 }}>Male Students</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{genderDist.total > 0 ? Math.round((genderDist.male / genderDist.total) * 100) : 0}% of total</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+                  <div style={{ background: '#eff6ff', border: '1px solid #dbeafe', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#2563eb' }}>{genderDist.male}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af', marginTop: 2 }}>Male</div>
                   </div>
-
-                  <div style={{ flex: 1, textAlign: 'center', padding: '16px 12px', background: '#fdf2f8', borderRadius: 10, border: '1px solid #fce7f3' }}>
-                    <div style={{ fontSize: 30, fontWeight: 800, color: '#db2777', lineHeight: 1 }}>{genderDist.female}</div>
-                    <div style={{ fontSize: 12, color: '#9d174d', fontWeight: 700, marginTop: 6 }}>Female Students</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{genderDist.total > 0 ? Math.round((genderDist.female / genderDist.total) * 100) : 0}% of total</div>
+                  <div style={{ background: '#fdf2f8', border: '1px solid #fce7f3', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#db2777' }}>{genderDist.female}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#9d174d', marginTop: 2 }}>Female</div>
                   </div>
-
-                  <div style={{ flex: 1, textAlign: 'center', padding: '16px 12px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #dcfce7' }}>
-                    <div style={{ fontSize: 30, fontWeight: 800, color: '#047857', lineHeight: 1 }}>{genderDist.total}</div>
-                    <div style={{ fontSize: 12, color: '#065f46', fontWeight: 700, marginTop: 6 }}>Total Enrolled</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>100% Active</div>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #dcfce7', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#107c10' }}>{genderDist.total}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#065f46', marginTop: 2 }}>Total</div>
                   </div>
                 </div>
 
                 {genderDist.total > 0 && (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#475569' }}>
-                      <span>Gender Ratio Progress</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
+                      <span>Ratio Breakdown</span>
                       <span>{genderDist.male} M : {genderDist.female} F</span>
                     </div>
-                    <div style={{ display: 'flex', height: 14, borderRadius: 7, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
-                      <div style={{ width: `${(genderDist.male / genderDist.total) * 100}%`, background: '#2563eb' }} title={`Male: ${genderDist.male}`} />
-                      <div style={{ width: `${(genderDist.female / genderDist.total) * 100}%`, background: '#db2777' }} title={`Female: ${genderDist.female}`} />
+                    <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden' }}>
+                      <div style={{ width: `${(genderDist.male / genderDist.total) * 100}%`, background: '#2563eb' }} />
+                      <div style={{ width: `${(genderDist.female / genderDist.total) * 100}%`, background: '#db2777' }} />
                     </div>
                   </div>
                 )}
               </div>
 
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="muted" style={{ fontSize: 12 }}>Managed via Live Registry</span>
-                <button className="btn btn-sm" onClick={() => navigate('registrar')} style={{ fontSize: 12 }}>Open Registrar Hub</button>
+              <div style={{ paddingTop: 14, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, color: '#64748b' }}>Live Registry State</span>
+                <button className="btn btn-sm" onClick={() => navigate('registrar')} style={{ fontSize: 12 }}>Open Registrar</button>
               </div>
             </div>
           </div>
@@ -689,239 +647,135 @@ export default function DosDashboard({ store, user }) {
 
       {/* ── TAB 2: STUDENT REGISTRY ── */}
       {!loading && activeTab === 'registry' && (
-        <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-          {/* Controls Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>Live Student Registry</h3>
-              <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Showing {filteredStudents.length} of {activeStudents.length} active students</p>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Live Student Registry</h3>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Showing {filteredStudents.length} of {activeStudents.length} active students</span>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              {/* Search Bar */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <div style={{ position: 'relative', width: 220 }}>
-                <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 12 }} />
+                <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 11 }} />
                 <input 
                   type="text" 
                   placeholder="Search student or adm..." 
                   value={studentSearch} 
                   onChange={(e) => setStudentSearch(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 32, height: 38, borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  style={{ width: '100%', paddingLeft: 30, height: 34, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
                 />
               </div>
 
-              {/* Class Filter */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Filter size={15} color="#64748b" />
-                <select 
-                  value={studentClassFilter} 
-                  onChange={(e) => setStudentClassFilter(e.target.value)}
-                  style={{ height: 38, borderRadius: 8, border: '1px solid #cbd5e1', padding: '0 12px', fontSize: 13 }}
-                >
-                  <option value="All">All Classes & Streams</option>
-                  {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <select 
+                value={studentClassFilter} 
+                onChange={(e) => setStudentClassFilter(e.target.value)}
+                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
+              >
+                <option value="All">All Streams</option>
+                {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
 
-              <button className="btn btn-primary" onClick={() => navigate('registrar')} style={{ height: 38, borderRadius: 8 }}>
-                <Users size={15} style={{ marginRight: 6 }} /> Open Full Registrar
+              <button className="btn btn-primary" onClick={() => navigate('registrar')} style={{ height: 34, borderRadius: 6, fontSize: 12 }}>
+                Open Full Registrar
               </button>
             </div>
           </div>
 
           <div className="scroll-x">
-            <table className="table" style={{ width: '100%' }}>
+            <table className="table" style={{ width: '100%', margin: 0 }}>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Adm No</th>
-                  <th>Student Name</th>
-                  <th>Gender</th>
-                  <th>Class / Stream</th>
-                  <th>Guardian</th>
-                  <th>Contact Phone</th>
-                  <th>Status</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>#</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Adm No</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Student Name</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Gender</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Guardian</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudents.slice(0, 100).map((s, idx) => (
                   <tr key={s.id || idx}>
                     <td>{idx + 1}</td>
-                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#475569' }}>{s.adm || s.admission_no || '-'}</span></td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ 
-                          width: 30, 
-                          height: 30, 
-                          borderRadius: '50%', 
-                          background: s.gender === 'Female' ? '#fce7f3' : '#e0f2fe',
-                          color: s.gender === 'Female' ? '#db2777' : '#0284c7',
-                          fontWeight: 700,
-                          fontSize: 12,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justify: 'center'
-                        }}>
-                          {(s.name || 'S').charAt(0)}
-                        </div>
-                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</span>
-                      </div>
-                    </td>
+                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || s.admission_no || '-'}</span></td>
+                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
                     <td>{s.gender || '-'}</td>
                     <td><strong>{s.class || '-'}</strong></td>
                     <td className="muted">{s.guardianName || s.guardian_name || '-'}</td>
-                    <td className="muted" style={{ fontSize: 12 }}>{s.guardianPhone || s.guardian_phone || '-'}</td>
                     <td><Badge color={s.status === 'Active' ? 'green' : 'amber'}>{s.status || 'Active'}</Badge></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {filteredStudents.length > 100 && (
-            <div className="muted" style={{ textAlign: 'center', padding: 14, background: '#f8fafc', borderRadius: 8, marginTop: 12 }}>
-              Showing first 100 of {filteredStudents.length} students. Use filters or open full Registrar for all.
-            </div>
-          )}
-          {filteredStudents.length === 0 && (
-            <div className="muted" style={{ textAlign: 'center', padding: 40 }}>
-              No matching students found in active registry.
-            </div>
-          )}
+          {filteredStudents.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 30 }}>No matching students found.</div>}
         </div>
       )}
 
-      {/* ── TAB 3: STAFF & WORKLOAD ── */}
+      {/* ── TAB 3: FACULTY & WORKLOAD ── */}
       {!loading && activeTab === 'staff' && (
         <>
-          {/* Staff Stats */}
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 20 }}>
-            <Stat icon={Users} label="Total Staff Members" value={rawStaff.length} sub="Portal User Accounts" color="#0EA5E9" />
-            <Stat icon={BookOpen} label="Subject Teachers" value={rawStaff.filter(s => s.role === 'teacher').length} sub="Active Faculty" color="#047857" />
-            <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#EF4444" />
-            <Stat icon={Award} label="Staff Roles" value={staffByRole.length} sub="Distinct Administrative Roles" color="#6366f1" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <Stat icon={Users} label="Total Staff" value={rawStaff.length} sub="Registered Portal Users" color="#0078d4" />
+            <Stat icon={BookOpen} label="Subject Teachers" value={rawStaff.filter(s => s.role === 'teacher').length} sub="Active Faculty" color="#107c10" />
+            <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#d13438" />
+            <Stat icon={Award} label="Staff Roles" value={staffByRole.length} sub="Distinct Roles" color="#6b21a8" />
           </div>
 
-          {/* Controls Bar for Staff */}
-          <div className="card card-pad" style={{ marginBottom: 24, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Staff & Faculty Directory</h3>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Live records from database profiles</p>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', width: 220 }}>
-                  <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 12 }} />
-                  <input 
-                    type="text" 
-                    placeholder="Search staff name or email..." 
-                    value={staffSearch} 
-                    onChange={(e) => setStaffSearch(e.target.value)}
-                    style={{ width: '100%', paddingLeft: 32, height: 38, borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
-                  />
-                </div>
-
-                <select 
-                  value={staffRoleFilter} 
-                  onChange={(e) => setStaffRoleFilter(e.target.value)}
-                  style={{ height: 38, borderRadius: 8, border: '1px solid #cbd5e1', padding: '0 12px', fontSize: 13 }}
-                >
-                  <option value="All">All Staff Roles</option>
-                  {Object.entries(roleLabels).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-            {/* Staff Table */}
-            <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-              <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, fontWeight: 700 }}>Staff Profiles</h3>
-              <div className="scroll-x">
-                <table className="table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Staff Name</th>
-                      <th>Role</th>
-                      <th>Subject / Dept</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStaff.map((s, idx) => (
-                      <tr key={s.id || idx}>
-                        <td>{idx + 1}</td>
-                        <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.full_name || s.name || '-'}</td>
-                        <td><Badge color="blue">{roleLabels[s.role] || s.role}</Badge></td>
-                        <td>{s.subject || s.dept || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {filteredStaff.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No staff records found matching filter.</div>}
-            </div>
-
-            {/* Workload Table */}
-            <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-              <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, fontWeight: 700 }}>Teacher Workload (from Timetable)</h3>
-              <table className="table" style={{ width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Staff Directory</h3>
+              <table className="table" style={{ width: '100%', margin: 0 }}>
                 <thead>
                   <tr>
-                    <th>Teacher Name</th>
-                    <th>Periods / Week</th>
-                    <th>Workload Status</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>#</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Name</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Role</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Department</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStaff.map((s, idx) => (
+                    <tr key={s.id || idx}>
+                      <td>{idx + 1}</td>
+                      <td style={{ fontWeight: 700 }}>{s.full_name || s.name || '-'}</td>
+                      <td><Badge color="blue">{roleLabels[s.role] || s.role}</Badge></td>
+                      <td>{s.subject || s.dept || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredStaff.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No staff profiles found.</div>}
+            </div>
+
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Teacher Workload</h3>
+              <table className="table" style={{ width: '100%', margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Teacher Name</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Periods/Wk</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {teacherWorkload.map((tw, idx) => (
                     <tr key={idx} style={{ background: tw.isOverload ? '#fef2f2' : 'transparent' }}>
                       <td><strong>{tw.name}</strong></td>
-                      <td style={{ fontWeight: 700 }}>{tw.periods} Periods</td>
+                      <td style={{ fontWeight: 700 }}>{tw.periods}</td>
                       <td>
                         {tw.isOverload ? (
-                          <Badge color="red" style={{ background: '#fee2e2', color: '#991b1b' }}>Overload (&gt;27)</Badge>
+                          <Badge color="red">Overload (&gt;27)</Badge>
                         ) : (
-                          <Badge color="green">Normal Workload</Badge>
+                          <Badge color="green">Normal</Badge>
                         )}
                       </td>
                     </tr>
                   ))}
-                  {teacherWorkload.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="muted" style={{ textAlign: 'center', padding: 20 }}>
-                        No timetable workloads mapped to registered staff profiles.
-                      </td>
-                    </tr>
-                  )}
+                  {teacherWorkload.length === 0 && <tr><td colSpan={3} className="muted" style={{ textAlign: 'center', padding: 20 }}>No workload mapped.</td></tr>}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          {/* Role Breakdown Chips */}
-          <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <h3 className="section-title" style={{ fontSize: 15, marginBottom: 16, fontWeight: 700 }}>Staff Role Distribution</h3>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {staffByRole.map(r => (
-                <div 
-                  key={r.role} 
-                  style={{ 
-                    background: '#f8fafc', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 10, 
-                    padding: '14px 20px', 
-                    textAlign: 'center', 
-                    minWidth: 130 
-                  }}
-                >
-                  <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{r.count}</div>
-                  <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginTop: 4 }}>{roleLabels[r.role] || r.role}</div>
-                </div>
-              ))}
             </div>
           </div>
         </>
@@ -929,187 +783,93 @@ export default function DosDashboard({ store, user }) {
 
       {/* ── TAB 4: MARKS AUDIT ── */}
       {!loading && activeTab === 'marks' && (
-        <>
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 20 }}>
-            <Stat icon={CheckCircle} label="Overall Completion" value={`${overallMarksPct}%`} color={overallMarksPct >= 80 ? '#047857' : '#F59E0B'} />
-            <Stat icon={BookOpen} label="Classes Audited" value={marksAudit.length} color="#0EA5E9" />
-            <Stat icon={Award} label="Subjects" value={SUBJECTS.length} sub="Curriculum Subjects" color="#6366f1" />
-            <Stat icon={Users} label="Total Students" value={activeStudents.length} color="#047857" />
-          </div>
-
-          <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <h3 className="section-title" style={{ fontSize: 16, margin: 0, fontWeight: 700 }}>Marks Entry Progress by Class (Live)</h3>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Audits all subject entries across all class streams</p>
-              </div>
-              <button className="btn btn-sm btn-primary" onClick={() => navigate('gradebook')}>
-                Open Gradebook Portal
-              </button>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Marks Entry Audit Register</h3>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Live completion audit across all class streams</span>
             </div>
-
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Class / Stream</th>
-                  <th>Students</th>
-                  <th>Marks Entered</th>
-                  <th>Total Possible</th>
-                  <th>Completion Progress</th>
-                  <th>Audit Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {marksAudit.map(m => (
-                  <tr key={m.class}>
-                    <td><strong>{m.class}</strong></td>
-                    <td>{m.students}</td>
-                    <td style={{ fontWeight: 700, color: '#047857' }}>{m.entered}</td>
-                    <td className="muted">{m.total}</td>
-                    <td style={{ width: 180 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, minWidth: 36 }}>{m.pct}%</span>
-                        <div style={{ flex: 1 }}>
-                          <ProgressBar value={m.pct} color={m.pct === 100 ? '#047857' : m.pct > 0 ? '#F59E0B' : '#EF4444'} />
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge color={m.pct === 100 ? 'green' : m.pct > 0 ? 'amber' : 'red'}>
-                        {m.pct === 100 ? '100% Complete' : m.pct > 0 ? 'In Progress' : 'Pending Entry'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {marksAudit.length === 0 && (
-              <div className="muted" style={{ textAlign: 'center', padding: 30 }}>
-                No class data available for marks audit.
-              </div>
-            )}
+            <button className="btn btn-sm btn-primary" onClick={() => navigate('gradebook')}>
+              Open Gradebook
+            </button>
           </div>
-        </>
+
+          <table className="table" style={{ width: '100%', margin: 0 }}>
+            <thead>
+              <tr>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Students</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Marks Entered</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Total Possible</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase', width: 160 }}>Completion %</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {marksAudit.map(m => (
+                <tr key={m.class}>
+                  <td><strong>{m.class}</strong></td>
+                  <td>{m.students}</td>
+                  <td style={{ fontWeight: 700, color: '#107c10' }}>{m.entered}</td>
+                  <td className="muted">{m.total}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, minWidth: 32 }}>{m.pct}%</span>
+                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#107c10' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
+                    </div>
+                  </td>
+                  <td>
+                    <Badge color={m.pct === 100 ? 'green' : m.pct > 0 ? 'amber' : 'red'}>
+                      {m.pct === 100 ? 'Complete' : m.pct > 0 ? 'In Progress' : 'Pending'}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* ── TAB 5: APPROVALS & MODERATION ── */}
       {!loading && activeTab === 'moderation' && (
-        <div className="grid grid-2" style={{ gap: 24 }}>
-          {/* Scheme & Lesson Plan Approvals */}
-          <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 className="section-title" style={{ fontSize: 15, margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
-                <ShieldCheck size={18} color="#047857"/> Schemes of Work & Lesson Plans
-              </h3>
-              <Badge color={pendingApprovalsCount > 0 ? 'amber' : 'green'}>
-                {pendingApprovalsCount} Pending
-              </Badge>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          {/* Schemes */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Schemes & Lesson Plans</h3>
+              <Badge color={pendingApprovalsCount > 0 ? 'amber' : 'green'}>{pendingApprovalsCount} Pending</Badge>
             </div>
-
-            <div className="list-flex" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {approvals.filter(a => a.status === 'pending').map(a => (
-                <div 
-                  key={a.id} 
-                  style={{ 
-                    display: 'flex', 
-                    justify: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '12px 14px', 
-                    background: '#f8fafc', 
-                    borderRadius: 8, 
-                    border: '1px solid #e2e8f0' 
-                  }}
-                >
+                <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#f8fafc', borderRadius: 6, border: '1px solid #e2e8f0' }}>
                   <div>
-                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{a.item_type === 'scheme_of_work' ? 'Scheme of Work' : 'Lesson Plan'}</span>
-                    <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>Submitted by: {a.profiles?.full_name || 'Teacher'}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{a.item_type === 'scheme_of_work' ? 'Scheme of Work' : 'Lesson Plan'}</div>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>By: {a.profiles?.full_name || 'Teacher'}</div>
                   </div>
-                  <button 
-                    className="btn btn-sm btn-primary" 
-                    onClick={() => handleApprove(a.id, 'approval_queue')}
-                    style={{ borderRadius: 6 }}
-                  >
-                    <Check size={14} style={{ marginRight: 4 }} /> Approve Document
-                  </button>
+                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(a.id, 'approval_queue')}>Approve</button>
                 </div>
               ))}
-              {approvals.filter(a => a.status === 'pending').length === 0 && (
-                <div className="muted" style={{ padding: 24, textAlign: 'center', background: '#f8fafc', borderRadius: 8 }}>
-                  No pending schemes or lesson plans awaiting approval.
-                </div>
-              )}
+              {approvals.filter(a => a.status === 'pending').length === 0 && <div className="muted" style={{ padding: 16, textAlign: 'center' }}>No pending schemes.</div>}
             </div>
           </div>
 
-          {/* Exam Paper Moderation */}
-          <div className="card card-pad" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 className="section-title" style={{ fontSize: 15, margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
-                <FileText size={18} color="#047857"/> Exam Paper Moderation Queue
-              </h3>
-              <Badge color={pendingPapersCount > 0 ? 'amber' : 'green'}>
-                {pendingPapersCount} Pending
-              </Badge>
+          {/* Exam Papers */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Exam Paper Moderation</h3>
+              <Badge color={pendingPapersCount > 0 ? 'amber' : 'green'}>{pendingPapersCount} Pending</Badge>
             </div>
-
-            <div className="list-flex" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {examPapers.filter(p => p.moderation_status === 'pending').map(p => (
-                <div 
-                  key={p.id} 
-                  style={{ 
-                    display: 'flex', 
-                    justify: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '12px 14px', 
-                    background: '#f8fafc', 
-                    borderRadius: 8, 
-                    border: '1px solid #e2e8f0' 
-                  }}
-                >
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#f8fafc', borderRadius: 6, border: '1px solid #e2e8f0' }}>
                   <div>
-                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{p.subject} ({p.class})</span>
-                    <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>Paper Set by: {p.profiles?.full_name || 'Unknown'}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{p.subject} ({p.class})</div>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>Set by: {p.profiles?.full_name || 'Unknown'}</div>
                   </div>
-                  <button 
-                    className="btn btn-sm btn-primary" 
-                    onClick={() => handleApprove(p.id, 'exam_papers')}
-                    style={{ borderRadius: 6 }}
-                  >
-                    <Check size={14} style={{ marginRight: 4 }} /> Approve Paper
-                  </button>
+                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(p.id, 'exam_papers')}>Moderate</button>
                 </div>
               ))}
-              {examPapers.filter(p => p.moderation_status === 'pending').length === 0 && (
-                <div className="muted" style={{ padding: 24, textAlign: 'center', background: '#f8fafc', borderRadius: 8 }}>
-                  No pending exam papers in moderation queue.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Syllabus Coverage Tracker */}
-          <div className="card card-pad" style={{ gridColumn: '1 / -1', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-            <h3 className="section-title" style={{ fontSize: 16, marginBottom: 16, fontWeight: 700 }}>Syllabus & Curriculum Coverage Tracker</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-              {coverage.map(c => {
-                const pct = Math.round((c.strands_covered / (c.strands_total || 1)) * 100);
-                return (
-                  <div key={c.id} style={{ padding: 14, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 14 }}>
-                      <strong>{c.subject} ({c.class})</strong>
-                      <span style={{ fontWeight: 700, color: pct >= 80 ? '#047857' : '#f59e0b' }}>{pct}%</span>
-                    </div>
-                    <ProgressBar value={pct} color={pct >= 80 ? '#047857' : pct >= 50 ? '#F59E0B' : '#EF4444'} />
-                    <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Teacher: {c.profiles?.full_name || 'Unknown'}</div>
-                  </div>
-                );
-              })}
-              {coverage.length === 0 && (
-                <div className="muted" style={{ padding: 24, textAlign: 'center', gridColumn: '1 / -1' }}>
-                  No syllabus coverage snapshots generated yet.
-                </div>
-              )}
+              {examPapers.filter(p => p.moderation_status === 'pending').length === 0 && <div className="muted" style={{ padding: 16, textAlign: 'center' }}>No pending papers.</div>}
             </div>
           </div>
         </div>

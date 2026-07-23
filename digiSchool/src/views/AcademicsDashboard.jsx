@@ -1,21 +1,46 @@
 import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
-} from 'recharts';
 import { Badge, ProgressBar } from '../components/widgets';
-import { exportTablePDF, downloadCSV, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
-import { computeStudentReport, is844Class } from '../utils/grading';
+import { exportTablePDF, downloadExcel } from '../utils/exporters';
+import { computeStudentReport } from '../utils/grading';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import ReportCardModal from '../components/ReportCardModal';
-import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, ShieldCheck } from 'lucide-react';
+import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Filter } from 'lucide-react';
 
-function Stat({ label, value, color, sub }) {
+function Stat({ label, value, color, sub, icon: IconComp }) {
   return (
-    <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: color || '#0f172a', marginBottom: 2 }}>{value}</div>
-      {sub && <div className="muted" style={{ fontSize: 12 }}>{sub}</div>}
+    <div 
+      style={{ 
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 8,
+        padding: '16px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justify: 'space-between',
+        minHeight: 105,
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {label}
+        </span>
+        {IconComp && (
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${color || '#0078d4'}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconComp size={15} color={color || '#0078d4'} />
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 8, fontSize: 26, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
+        {value}
+      </div>
+
+      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{sub}</div>}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color || '#0078d4' }} />
     </div>
   );
 }
@@ -23,18 +48,15 @@ function Stat({ label, value, color, sub }) {
 export default function AcademicsDashboard({ store, user }) {
   const { navigate, notify, settings, teachers = [], examSchedules = [] } = store;
   const [students, setStudents] = useState([]);
-  const [analytics, setAnalytics] = useState({ top_subjects: [] });
   const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
-  const [activeTab, setActiveTab] = useState('overview'); // overview | merit | audit | slips | exams
+  const [activeTab, setActiveTab] = useState('overview'); // overview | merit | audit | slips
   
   // Selection states
   const [selectedClass, setSelectedClass] = useState('All');
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
   const [searchStudent, setSearchStudent] = useState('');
 
-  const rawStudents = useMemo(() => {
-    return students || [];
-  }, [students]);
+  const rawStudents = useMemo(() => students || [], [students]);
 
   const activeStudentsList = useMemo(() => {
     return rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
@@ -47,76 +69,69 @@ export default function AcademicsDashboard({ store, user }) {
   }, [activeStudentsList, settings]);
 
   useEffect(() => {
-    import('../lib/api').then(({ fetchStudents, fetchAcademicAnalytics }) => {
-      fetchStudents(0, 1000).then(r => setStudents(r.data || [])).catch(() => {});
-      fetchAcademicAnalytics().then(r => setAnalytics(r || { top_subjects: [] })).catch(() => {});
+    import('../lib/api').then(({ fetchStudents }) => {
+      fetchStudents(0, 2000, { activeOnly: true }).then(r => setStudents(r.data || [])).catch(() => {});
     });
 
     const fetchApprovals = async () => {
       try {
         const { count: approvalCount } = await supabase.from('approval_queue')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending')
-          .eq('school_id', store.schoolId);
-          
-        const { count: paperCount } = await supabase.from('exam_papers')
-          .select('*', { count: 'exact', head: true })
-          .eq('moderation_status', 'pending')
-          .eq('school_id', store.schoolId);
-          
-        setAwaitingApprovalCount((approvalCount || 0) + (paperCount || 0));
-      } catch (err) {
-        console.error(err);
+          .eq('status', 'pending');
+        setAwaitingApprovalCount(approvalCount || 0);
+      } catch (e) {
+        console.warn('Failed to load approvals:', e);
       }
     };
-    if (store.schoolId) fetchApprovals();
+    fetchApprovals();
   }, [store.schoolId]);
-  
-  const classesCount = settings.levels?.length || dynamicClasses.length || 0;
-  const activeTeacherList = teachers.filter(t => t.status !== 'Inactive');
-  const activeTeachers = activeTeacherList.filter(t => t.status === 'Active').length;
 
-  // ── MERIT LIST COMPUTATION ──
+  const activeTeacherList = useMemo(() => teachers.filter(t => t.status !== 'Inactive'), [teachers]);
+  const activeTeachers = useMemo(() => activeTeacherList.filter(t => t.status === 'Active').length, [activeTeacherList]);
+  const classesCount = dynamicClasses.length;
+
+  // ── MERIT LIST & RANKINGS COMPUTATION ──
   const meritList = useMemo(() => {
-    const list = activeStudentsList.map(s => {
-      const report = computeStudentReport({
-        student: s,
-        students: activeStudentsList,
-        subjects: SUBJECTS,
-        examTitle: 'Term 1 Opening Exam',
-        termName: 'Term 1',
-        gradeBoundaries: store.gradeBoundaries
-      });
+    const listToRank = selectedClass === 'All'
+      ? activeStudentsList
+      : activeStudentsList.filter(s => s.class === selectedClass);
+
+    const evaluated = listToRank.map(s => {
+      const report = computeStudentReport(s.scores || {}, store.gradeBoundaries, s.class);
       return {
-        id: s.id,
-        adm: s.adm || s.admission_no || s.id || '-',
-        name: s.name,
-        class: s.class || '-',
-        gender: s.gender || '-',
-        totalMarks: report?.totalMarks || 0,
-        meanPercentage: report?.meanPercentage || 0,
-        meanGradeCode: report?.meanGradeCode || '-',
-        meanGradeFull: report?.meanGradeFull || '-',
-        meanPoints: report?.meanPoints || 0,
-        streamPosition: report?.streamPosition || '-',
-        overallPosition: report?.overallPosition || '-',
-        rawStudent: s
+        ...s,
+        totalMarks: report.totalMarks,
+        meanPercentage: report.meanPercentage,
+        meanGradeCode: report.meanGradeCode,
+        meanPoints: report.meanPoints,
+        rawStudent: s,
       };
     });
 
-    const filtered = selectedClass === 'All'
-      ? list
-      : list.filter(s => s.class === selectedClass || (s.class && s.class.startsWith(selectedClass)));
+    // Sort descending by meanPercentage
+    evaluated.sort((a, b) => b.meanPercentage - a.meanPercentage);
 
-    return filtered.sort((a, b) => b.totalMarks - a.totalMarks);
+    // Compute rank positions
+    let currentRank = 1;
+    return evaluated.map((s, idx, arr) => {
+      if (idx > 0 && Math.abs(s.meanPercentage - arr[idx - 1].meanPercentage) < 0.01) {
+        return { ...s, streamPosition: arr[idx - 1].streamPosition };
+      } else {
+        currentRank = idx + 1;
+        return { ...s, streamPosition: currentRank };
+      }
+    });
   }, [activeStudentsList, selectedClass, store.gradeBoundaries]);
 
-  // Overall Mean Score across school
+  // Overall School Mean
   const schoolOverallMean = useMemo(() => {
-    if (meritList.length === 0) return '0.0%';
-    const totalPct = meritList.reduce((acc, s) => acc + s.meanPercentage, 0);
-    return (totalPct / meritList.length).toFixed(1) + '%';
-  }, [meritList]);
+    if (activeStudentsList.length === 0) return '0.0%';
+    const sum = activeStudentsList.reduce((acc, s) => {
+      const report = computeStudentReport(s.scores || {}, store.gradeBoundaries, s.class);
+      return acc + report.meanPercentage;
+    }, 0);
+    return `${(sum / activeStudentsList.length).toFixed(1)}%`;
+  }, [activeStudentsList, store.gradeBoundaries]);
 
   // ── MARKS ENTRY AUDIT COMPUTATION ──
   const marksAuditMatrix = useMemo(() => {
@@ -171,22 +186,21 @@ export default function AcademicsDashboard({ store, user }) {
   // Exporters
   const handleExportMeritListPDF = () => {
     if (meritList.length === 0) return notify('No students in current merit list selection', 'warning');
-    const head = ['Rank', 'Adm No', 'Student Name', 'Class', 'Total Marks', 'Mean %', 'Grade', 'Points', 'Stream Pos'];
+    const head = ['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points'];
     const body = meritList.map((s, idx) => [
-      idx + 1,
-      s.adm,
+      s.streamPosition || idx + 1,
+      s.adm || s.admission_no || '-',
       s.name,
       s.class,
       s.totalMarks,
       `${s.meanPercentage.toFixed(1)}%`,
       s.meanGradeCode,
-      s.meanPoints.toFixed(1),
-      s.streamPosition
+      s.meanPoints.toFixed(1)
     ]);
 
     exportTablePDF({
       school: settings,
-      title: `OFFICIAL MERIT LIST - ${selectedClass === 'All' ? 'ALL CLASSES' : selectedClass.toUpperCase()}`,
+      title: `OFFICIAL MERIT RANKING - ${selectedClass === 'All' ? 'ALL STREAMS' : selectedClass.toUpperCase()}`,
       subtitle: `Term 2 · Academic Year 2026 | Total Ranked: ${meritList.length}`,
       head,
       body,
@@ -198,174 +212,219 @@ export default function AcademicsDashboard({ store, user }) {
   const handleExportMeritListExcel = () => {
     if (meritList.length === 0) return notify('No students in current merit list selection', 'warning');
     const aoa = [
-      ['Rank', 'Adm No', 'Student Name', 'Class', 'Gender', 'Total Marks', 'Mean %', 'Grade', 'Points', 'Stream Position', 'Overall Position'],
-      ...meritList.map((s, idx) => [
-        idx + 1,
-        s.adm,
+      ['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points']
+    ];
+    meritList.forEach((s, idx) => {
+      aoa.push([
+        s.streamPosition || idx + 1,
+        s.adm || s.admission_no || '-',
         s.name,
         s.class,
-        s.gender,
         s.totalMarks,
-        s.meanPercentage,
+        Number(s.meanPercentage.toFixed(1)),
         s.meanGradeCode,
-        s.meanPoints,
-        s.streamPosition,
-        s.overallPosition
-      ])
-    ];
-    downloadExcel(`merit_list_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.xlsx`, [{ name: 'Merit List', aoa }]);
-    notify('Merit list exported as Excel', 'success');
-  };
+        Number(s.meanPoints.toFixed(1))
+      ]);
+    });
 
-  const handleExportBroadsheetExcel = () => {
-    if (meritList.length === 0) return notify('No students in current selection to generate Broadsheet', 'warning');
-    
-    const header = ['Rank', 'Adm No', 'Student Name', 'Class', 'Gender'];
-    SUBJECTS.forEach(sub => header.push(sub));
-    header.push('Total Marks', 'Mean %', 'Mean Grade', 'Points', 'Stream Pos', 'Overall Pos');
-
-    const aoa = [
-      header,
-      ...meritList.map((s, idx) => {
-        const report = computeStudentReport({ student: s.rawStudent, students: activeStudentsList, subjects: SUBJECTS, gradeBoundaries: store.gradeBoundaries });
-        const row = [idx + 1, s.adm, s.name, s.class, s.gender];
-        
-        SUBJECTS.forEach(sub => {
-          const subRow = report.subjectRows.find(r => r.subject === sub);
-          if (subRow && subRow.scoreText !== '-') {
-             row.push(`${subRow.scoreText} (${subRow.gradeCode || subRow.gradeFull})`);
-          } else {
-             row.push('-');
-          }
-        });
-
-        row.push(s.totalMarks, s.meanPercentage, s.meanGradeCode, s.meanPoints, s.streamPosition, s.overallPosition);
-        return row;
-      })
-    ];
-    
-    downloadExcel(`broadsheet_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.xlsx`, [{ name: 'Broadsheet', aoa }]);
-    notify('Broadsheet exported as Excel', 'success');
+    downloadExcel(`Merit_List_${selectedClass}.xlsx`, [{ name: 'Merit Ranking', aoa }]);
+    notify('Merit list Excel export complete', 'success');
   };
 
   const handleExportAuditPDF = () => {
     if (marksAuditMatrix.length === 0) return notify('No audit records to export', 'warning');
-    const head = ['Class', 'Subject', 'Assigned Teacher', 'Progress', 'Entered / Total', 'Status'];
+    const head = ['Class', 'Subject', 'Teacher', 'Entered', 'Total', 'Completion %', 'Status'];
     const body = marksAuditMatrix.map(m => [
       m.class,
       m.subject,
       m.teacher,
+      m.enteredCount,
+      m.totalStudents,
       `${m.pct}%`,
-      `${m.enteredCount} / ${m.totalStudents}`,
       m.status
     ]);
+
     exportTablePDF({
       school: settings,
-      title: 'MARKS ENTRY AUDIT & VERIFICATION REGISTER',
-      subtitle: `DOS Office Audit · Date: ${new Date().toLocaleDateString()}`,
+      title: 'MARKS ENTRY VERIFICATION AUDIT REGISTER',
+      subtitle: `Term 2 · Academic Year 2026 | Class Scope: ${selectedClass}`,
       head,
       body,
-      filename: 'Marks_Entry_Audit_Register.pdf'
+      filename: `Marks_Audit_${selectedClass}.pdf`
     });
-    notify('Marks Entry Audit PDF downloaded', 'success');
-  };
-
-  const handleExportBatchResultSlips = () => {
-    const listToExport = selectedClass === 'All' ? activeStudentsList : activeStudentsList.filter(s => s.class === selectedClass);
-    if (listToExport.length === 0) return notify('No students found for generating result slips', 'warning');
-    notify(`Generating Result Slips for ${listToExport.length} student(s)...`, 'info');
-    exportReportCardsPDF({
-      school: settings,
-      gradeBoundaries: store.gradeBoundaries,
-      students: listToExport,
-      subjects: SUBJECTS,
-      examTitle: 'Term 1 Opening Exam',
-      termName: 'Term 1',
-      filename: `result_slips_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.pdf`
-    });
-    notify(`Generated ${listToExport.length} Result Slip(s)`, 'success');
+    notify('Marks audit PDF downloaded', 'success');
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 40 }}>
+      {/* ── TOP CORPORATE BAR ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 22, color: '#0f172a' }}>Director of Studies (DOS) & Academic Hub</h2>
-          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Exam office management, merit lists, result analysis, and marks entry verification</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-primary" onClick={() => navigate('gradebook')}>
-            <FileText size={16} style={{ marginRight: 6 }} /> Open Gradebook
-          </button>
-          <button className="btn" onClick={() => navigate('exams')}>
-            <BookOpen size={16} style={{ marginRight: 6 }} /> Exam Schedules
-          </button>
-        </div>
-      </div>
-
-      {/* Header Office Banner */}
-      <div style={{ background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', color: '#fff', padding: '18px 24px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, boxShadow: '0 4px 12px rgba(4, 120, 87, 0.15)' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 18, color: '#fff', fontWeight: 800 }}>Academic Affairs & Examination Office</h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Director of Studies (DOS) · Merit Ranking · Marks Audit · Result Slips
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              Academic Merit & Performance Hub
+            </h1>
+            <span style={{ background: '#0078d4', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+              Academic Office
+            </span>
+          </div>
+          <p style={{ margin: '3px 0 0 0', fontSize: 13, color: '#64748b' }}>
+            Merit list generation, subject performance analysis, marks verification & official result slips
           </p>
         </div>
-        <div style={{ textAlign: 'right', fontSize: 13, opacity: 0.9 }}>
-          <div style={{ marginBottom: 4, fontWeight: 600 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <Badge color="green" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderColor: 'transparent' }}>Term 2 · 2026</Badge>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button 
+            onClick={() => navigate('gradebook')}
+            style={{ 
+              height: 36, 
+              padding: '0 14px', 
+              borderRadius: 6, 
+              background: '#ffffff', 
+              border: '1px solid #cbd5e1', 
+              fontSize: 13, 
+              fontWeight: 600, 
+              color: '#334155',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              cursor: 'pointer' 
+            }}
+          >
+            <BookOpen size={14} /> Open Gradebook
+          </button>
+          <button 
+            onClick={handleExportMeritListPDF}
+            style={{ 
+              height: 36, 
+              padding: '0 16px', 
+              borderRadius: 6, 
+              background: '#0078d4', 
+              border: 'none', 
+              fontSize: 13, 
+              fontWeight: 600, 
+              color: '#ffffff',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 120, 212, 0.3)' 
+            }}
+          >
+            <Download size={14} /> Export Merit List (PDF)
+          </button>
         </div>
       </div>
 
-      {/* DOS Navigation Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: '2px solid var(--border)', flexWrap: 'wrap' }}>
-        <button className={`tab${activeTab === 'overview' ? ' active' : ''}`} onClick={() => setActiveTab('overview')}>
-          <ShieldCheck size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Academic Overview
-        </button>
-        <button className={`tab${activeTab === 'merit' ? ' active' : ''}`} onClick={() => setActiveTab('merit')}>
-          <Award size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Merit List & Performance
-        </button>
-        <button className={`tab${activeTab === 'audit' ? ' active' : ''}`} onClick={() => setActiveTab('audit')}>
-          <CheckCircle2 size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Marks Entry Audit
-          {auditStats.pendingUnits > 0 && <Badge color="amber" style={{ marginLeft: 8 }}>{auditStats.pendingUnits} Pending</Badge>}
-        </button>
-        <button className={`tab${activeTab === 'slips' ? ' active' : ''}`} onClick={() => setActiveTab('slips')}>
-          <Printer size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Result Slips & Cards
-        </button>
+      {/* ── MICROSOFT CORPORATE HEADER BANNER ── */}
+      <div 
+        style={{ 
+          background: '#0f172a', 
+          border: '1px solid #1e293b',
+          borderRadius: 8, 
+          padding: '20px 24px', 
+          display: 'flex', 
+          justify: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: 20,
+          color: '#ffffff'
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
+            {settings?.name || 'Academic Office'}
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+            Academic Performance & Examination Analytics
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
+            <span>Merit Ranking</span> · <span>Subject Means</span> · <span>Audit Register</span> · <span>Result Slips</span>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 6 }}>
+            <Clock size={13} color="#38bdf8" />
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
+          <span style={{ background: '#1e293b', color: '#38bdf8', border: '1px solid #334155', padding: '4px 12px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
+            Term 2 · Academic Year 2026
+          </span>
+        </div>
       </div>
 
-      {/* ── TAB 1: ACADEMIC OVERVIEW ── */}
+      {/* ── CORPORATE TAB NAVIGATION ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 20, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
+        {[
+          { id: 'overview', label: 'Academic Summary', icon: Award },
+          { id: 'merit', label: 'Merit List & Performance', icon: Award, badge: meritList.length },
+          { id: 'audit', label: 'Marks Entry Audit', icon: CheckCircle2, badge: `${auditStats.overallPct}%` },
+          { id: 'slips', label: 'Result Slips & Cards', icon: Printer, badge: activeStudentsList.length },
+        ].map(t => {
+          const isActive = activeTab === t.id;
+          return (
+            <button 
+              key={t.id} 
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 18px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: isActive ? '3px solid #0078d4' : '3px solid transparent',
+                color: isActive ? '#0078d4' : '#64748b',
+                fontWeight: isActive ? 700 : 600,
+                fontSize: 13,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <t.icon size={15} color={isActive ? '#0078d4' : '#64748b'} />
+              <span>{t.label}</span>
+              {t.badge !== undefined && (
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: isActive ? '#e0f2fe' : '#f1f5f9', color: isActive ? '#0369a1' : '#475569' }}>
+                  {t.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── TAB 1: ACADEMIC SUMMARY ── */}
       {activeTab === 'overview' && (
         <>
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 16 }}>
-            <Stat label="Total Enrolled" value={activeStudentsList.length} sub="Active students" color="#047857" />
-            <Stat label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} active`} color="#0EA5E9" />
-            <Stat label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classesCount} active streams`} color="#107C10" />
-            <Stat label="Overall Mean Score" value={schoolOverallMean} sub="Across all subjects" color="#047857" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <Stat icon={Users} label="Total Enrolled Students" value={activeStudentsList.length} sub="Active Registry" color="#0078d4" />
+            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Faculty`} color="#107c10" />
+            <Stat icon={Award} label="Classes & Streams" value={`${settings?.classes?.length || 1} / ${classesCount}`} sub="Active Streams" color="#0078d4" />
+            <Stat icon={Award} label="Overall Mean Score" value={schoolOverallMean} sub="Across All Subjects" color="#107c10" />
           </div>
 
-          <div className="grid grid-4" style={{ gap: 16, marginBottom: 24 }}>
-            <Stat label="Total Exams" value={examSchedules.length} sub={`${examSchedules.length} schedules published`} />
-            <Stat label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} complete`} color={auditStats.overallPct >= 90 ? '#107C10' : '#F59E0B'} />
-            <Stat label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending DoS review" color="#D13438" />
-            <Stat label="Subject Count" value={SUBJECTS.length} sub="Active curriculum" color="#FFB900" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+            <Stat icon={FileText} label="Total Exam Schedules" value={examSchedules.length} sub="Published Exams" color="#6b21a8" />
+            <Stat icon={CheckCircle2} label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} Units`} color={auditStats.overallPct >= 80 ? '#107c10' : '#d97706'} />
+            <Stat icon={AlertTriangle} label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending Review" color={awaitingApprovalCount > 0 ? '#d97706' : '#107c10'} />
+            <Stat icon={BookOpen} label="Curriculum Subjects" value={SUBJECTS.length} sub="Active Subjects" color="#0078d4" />
           </div>
 
-          {/* Quick Actions */}
-          <div className="card card-pad" style={{ marginBottom: 24 }}>
-            <h3 className="section-title">DOS Quick Tools</h3>
-            <div className="grid grid-4" style={{ gap: 10 }}>
-              <button className="btn" style={{ height: 44, justifyContent: 'flex-start' }} onClick={() => setActiveTab('merit')}>
-                <Award size={16} style={{ marginRight: 6 }} /> Merit List Generator
+          {/* Quick Tools Grid */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Academic Quick Tools</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('merit')}>
+                <Award size={15} style={{ marginRight: 6 }} /> Merit List Generator
               </button>
-              <button className="btn" style={{ height: 44, justifyContent: 'flex-start' }} onClick={() => setActiveTab('audit')}>
-                <CheckCircle2 size={16} style={{ marginRight: 6 }} /> Audit Marks Entry
+              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('audit')}>
+                <CheckCircle2 size={15} style={{ marginRight: 6 }} /> Audit Marks Entry
               </button>
-              <button className="btn" style={{ height: 44, justifyContent: 'flex-start' }} onClick={() => setActiveTab('slips')}>
-                <Printer size={16} style={{ marginRight: 6 }} /> Result Slips Hub
+              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('slips')}>
+                <Printer size={15} style={{ marginRight: 6 }} /> Result Slips Hub
               </button>
-              <button className="btn" style={{ height: 44, justifyContent: 'flex-start' }} onClick={() => navigate('gradebook')}>
-                <FileText size={16} style={{ marginRight: 6 }} /> Gradebook Review
+              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => navigate('gradebook')}>
+                <FileText size={15} style={{ marginRight: 6 }} /> Gradebook Review
               </button>
             </div>
           </div>
@@ -374,224 +433,200 @@ export default function AcademicsDashboard({ store, user }) {
 
       {/* ── TAB 2: MERIT LIST & PERFORMANCE ── */}
       {activeTab === 'merit' && (
-        <>
-          <div className="card card-pad" style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Class Performance & Official Merit List</h3>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Ranked performance order based on total marks and mean percentages</p>
-              </div>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Official Merit Ranking & Analysis</h3>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Ranked {meritList.length} student(s) in selected scope</span>
+            </div>
 
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <label style={{ fontSize: 13, fontWeight: 600 }}>Filter Class:</label>
-                <select className="select" style={{ width: 150 }} value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
-                  <option value="All">All Classes</option>
-                  {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
-                </select>
-                <button className="btn btn-primary" style={{ gap: 6 }} onClick={handleExportMeritListPDF}>
-                  <Printer size={15} /> Download Merit List (PDF)
-                </button>
-                <button className="btn btn-primary" style={{ gap: 6, background: '#107C10', borderColor: '#107C10' }} onClick={handleExportBroadsheetExcel}>
-                  <Download size={15} /> Download Broadsheet (Excel)
-                </button>
-                <button className="btn" style={{ gap: 6 }} onClick={handleExportMeritListExcel}>
-                  <Download size={15} /> Export Excel
-                </button>
-              </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <select 
+                value={selectedClass} 
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
+              >
+                <option value="All">All Classes & Streams</option>
+                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
+              </select>
+
+              <button className="btn" onClick={handleExportMeritListExcel} style={{ height: 34, fontSize: 12 }}>
+                Excel Export
+              </button>
+              <button className="btn btn-primary" onClick={handleExportMeritListPDF} style={{ height: 34, fontSize: 12 }}>
+                PDF Export
+              </button>
             </div>
           </div>
 
-          <div className="card card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <strong>Showing {meritList.length} ranked student(s)</strong>
-              <span className="muted" style={{ fontSize: 12 }}>Class Filter: {selectedClass}</span>
-            </div>
-
-            {meritList.length === 0 ? (
-              <div className="muted" style={{ padding: 40, textAlign: 'center' }}>No students found in current merit selection.</div>
-            ) : (
-              <div className="scroll-x">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th>Adm No</th>
-                      <th>Student Name</th>
-                      <th>Class</th>
-                      <th>Total Marks</th>
-                      <th>Mean %</th>
-                      <th>Grade</th>
-                      <th>Points</th>
-                      <th>Stream Pos</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {meritList.map((s, idx) => (
-                      <tr key={s.id}>
-                        <td>
-                          <span style={{ 
-                            fontWeight: 800, 
-                            color: idx === 0 ? '#d97706' : idx === 1 ? '#475569' : idx === 2 ? '#b45309' : '#0f172a',
-                            fontSize: idx < 3 ? 15 : 13 
-                          }}>
-                            #{idx + 1} {idx === 0 && '🥇'} {idx === 1 && '🥈'} {idx === 2 && '🥉'}
-                          </span>
-                        </td>
-                        <td>{s.adm}</td>
-                        <td style={{ fontWeight: 600 }}>{s.name}</td>
-                        <td>{s.class}</td>
-                        <td style={{ fontWeight: 700, color: '#047857' }}>{s.totalMarks}</td>
-                        <td style={{ fontWeight: 700 }}>{s.meanPercentage.toFixed(1)}%</td>
-                        <td>
-                          <Badge color={s.meanGradeCode === 'A' || s.meanGradeCode === 'EE' ? 'green' : s.meanGradeCode === 'E' || s.meanGradeCode === 'BE' ? 'red' : 'blue'}>
-                            {s.meanGradeCode}
-                          </Badge>
-                        </td>
-                        <td>{s.meanPoints.toFixed(1)}</td>
-                        <td className="muted">{s.streamPosition}</td>
-                        <td>
-                          <button className="btn btn-sm" style={{ fontSize: 12, padding: '3px 8px' }} onClick={() => setSelectedStudentForReport(s.rawStudent)}>
-                            <FileText size={13} style={{ marginRight: 4 }} /> Result Slip
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* ── TAB 3: MARKS ENTRY AUDIT ── */}
-      {activeTab === 'audit' && (
-        <>
-          <div className="card card-pad" style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Marks Entry Verification & Audit Register</h3>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Audit subject teachers' score submission progress across all active classes</p>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <label style={{ fontSize: 13, fontWeight: 600 }}>Filter Class:</label>
-                <select className="select" style={{ width: 150 }} value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
-                  <option value="All">All Classes</option>
-                  {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
-                </select>
-                <button className="btn btn-primary" style={{ gap: 6 }} onClick={handleExportAuditPDF}>
-                  <Printer size={15} /> Download Audit Register (PDF)
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="stat-tiles" style={{ marginBottom: 20 }}>
-            <KpiCard iconComponent={<BookOpen size={20} />} label="Total Class Units" value={auditStats.totalUnits} />
-            <KpiCard iconComponent={<CheckCircle2 size={20} />} label="100% Completed" value={auditStats.completedUnits} accent="#047857" />
-            <KpiCard iconComponent={<Clock size={20} />} label="In Progress" value={auditStats.inProgressUnits} accent="#F59E0B" />
-            <KpiCard iconComponent={<AlertTriangle size={20} />} label="Pending Entry" value={auditStats.pendingUnits} accent="#EF4444" />
-          </div>
-
-          <div className="card card-pad">
-            <table className="table">
+          <div className="scroll-x">
+            <table className="table" style={{ width: '100%', margin: 0 }}>
               <thead>
                 <tr>
-                  <th>Class</th>
-                  <th>Subject</th>
-                  <th>Assigned Teacher</th>
-                  <th>Progress</th>
-                  <th>Entered / Total</th>
-                  <th>Status</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Rank</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Adm No</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Student Name</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Stream</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Total Marks</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Mean %</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Grade</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Points</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {marksAuditMatrix.map(m => (
-                  <tr key={m.id}>
-                    <td><strong>{m.class}</strong></td>
-                    <td style={{ fontWeight: 600 }}>{m.subject}</td>
-                    <td>{m.teacher}</td>
-                    <td style={{ width: 140 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, minWidth: 35 }}>{m.pct}%</span>
-                        <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#047857' : m.pct > 0 ? '#F59E0B' : '#EF4444'} /></div>
-                      </div>
-                    </td>
-                    <td className="muted">{m.enteredCount} of {m.totalStudents}</td>
+                {meritList.map((s, idx) => (
+                  <tr key={s.id || idx}>
+                    <td><strong style={{ color: '#0078d4' }}>#{s.streamPosition || idx + 1}</strong></td>
+                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || s.admission_no || '-'}</span></td>
+                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
+                    <td>{s.class}</td>
+                    <td style={{ fontWeight: 700, color: '#107c10' }}>{s.totalMarks}</td>
+                    <td style={{ fontWeight: 700 }}>{s.meanPercentage.toFixed(1)}%</td>
                     <td>
-                      <Badge color={m.status === 'Complete' ? 'green' : m.status === 'In Progress' ? 'amber' : 'red'}>
-                        {m.status}
+                      <Badge color={s.meanGradeCode === 'A' || s.meanGradeCode === 'EE' ? 'green' : s.meanGradeCode === 'E' || s.meanGradeCode === 'BE' ? 'red' : 'blue'}>
+                        {s.meanGradeCode}
                       </Badge>
+                    </td>
+                    <td>{s.meanPoints.toFixed(1)}</td>
+                    <td>
+                      <button className="btn btn-sm" style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => setSelectedStudentForReport(s.rawStudent)}>
+                        Result Slip
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </>
+          {meritList.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 30 }}>No students found in merit ranking selection.</div>}
+        </div>
       )}
 
-      {/* ── TAB 4: RESULT SLIPS & REPORT CARDS ── */}
+      {/* ── TAB 3: MARKS ENTRY AUDIT ── */}
+      {activeTab === 'audit' && (
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Marks Entry Audit Register</h3>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Audit score submissions across all class subjects</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <select 
+                value={selectedClass} 
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
+              >
+                <option value="All">All Streams</option>
+                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
+              </select>
+
+              <button className="btn btn-primary" onClick={handleExportAuditPDF} style={{ height: 34, fontSize: 12 }}>
+                Export Audit PDF
+              </button>
+            </div>
+          </div>
+
+          <table className="table" style={{ width: '100%', margin: 0 }}>
+            <thead>
+              <tr>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Subject</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Teacher</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase', width: 140 }}>Progress</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Entered / Total</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {marksAuditMatrix.map(m => (
+                <tr key={m.id}>
+                  <td><strong>{m.class}</strong></td>
+                  <td style={{ fontWeight: 600 }}>{m.subject}</td>
+                  <td>{m.teacher}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, minWidth: 32 }}>{m.pct}%</span>
+                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#107c10' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
+                    </div>
+                  </td>
+                  <td className="muted">{m.enteredCount} of {m.totalStudents}</td>
+                  <td>
+                    <Badge color={m.status === 'Complete' ? 'green' : m.status === 'In Progress' ? 'amber' : 'red'}>
+                      {m.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── TAB 4: RESULT SLIPS & CARDS ── */}
       {activeTab === 'slips' && (
-        <>
-          <div className="card card-pad" style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Official Result Slips & Report Cards Hub</h3>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Generate and print official student result slips for terminal exams</p>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Result Slips & Report Cards Hub</h3>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Generate and print official terminal result slips</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ position: 'relative', width: 220 }}>
+                <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 11 }} />
+                <input 
+                  type="text" 
+                  placeholder="Search student or adm..." 
+                  value={searchStudent} 
+                  onChange={(e) => setSearchStudent(e.target.value)}
+                  style={{ width: '100%', paddingLeft: 30, height: 34, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                />
               </div>
 
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <select className="select" style={{ width: 150 }} value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
-                  <option value="All">All Classes</option>
-                  {dynamicClasses.map(c => <option key={c} value={c}>Grade {c}</option>)}
-                </select>
-                <button className="btn btn-primary" style={{ gap: 6 }} onClick={handleExportBatchResultSlips}>
-                  <Printer size={15} /> Print Batch Result Slips (PDF)
-                </button>
-              </div>
+              <select 
+                value={selectedClass} 
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
+              >
+                <option value="All">All Streams</option>
+                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
+              </select>
             </div>
           </div>
 
-          <div className="card card-pad">
-            <div style={{ marginBottom: 16 }}>
-              <input 
-                className="input" 
-                placeholder="Search student name or adm number..." 
-                value={searchStudent} 
-                onChange={e => setSearchStudent(e.target.value)} 
-                style={{ maxWidth: 350 }}
-              />
-            </div>
-
-            <table className="table">
-              <thead>
-                <tr><th>Adm No</th><th>Student Name</th><th>Class</th><th>Gender</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                {activeStudentsList
-                  .filter(s => selectedClass === 'All' || s.class === selectedClass)
-                  .filter(s => s.name.toLowerCase().includes(searchStudent.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(searchStudent.toLowerCase())))
-                  .slice(0, 50)
-                  .map(s => (
-                    <tr key={s.id}>
-                      <td>{s.adm || '-'}</td>
-                      <td style={{ fontWeight: 600 }}>{s.name}</td>
-                      <td>{s.class || '-'}</td>
-                      <td>{s.gender || '-'}</td>
-                      <td>
-                        <button className="btn btn-sm btn-primary" style={{ fontSize: 12, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={() => setSelectedStudentForReport(s)}>
-                          <FileText size={13} /> View Result Slip
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+          <table className="table" style={{ width: '100%', margin: 0 }}>
+            <thead>
+              <tr>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Adm No</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Student Name</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Gender</th>
+                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeStudentsList
+                .filter(s => selectedClass === 'All' || s.class === selectedClass)
+                .filter(s => s.name.toLowerCase().includes(searchStudent.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(searchStudent.toLowerCase())))
+                .slice(0, 50)
+                .map(s => (
+                  <tr key={s.id}>
+                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || '-'}</span></td>
+                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
+                    <td><strong>{s.class || '-'}</strong></td>
+                    <td>{s.gender || '-'}</td>
+                    <td>
+                      <button className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '3px 10px' }} onClick={() => setSelectedStudentForReport(s)}>
+                        View Result Slip
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Result Slip Modal */}
@@ -601,8 +636,8 @@ export default function AcademicsDashboard({ store, user }) {
           students={activeStudentsList}
           subjects={SUBJECTS}
           gradeBoundaries={store.gradeBoundaries}
-          examTitle="Term 1 Opening Exam"
-          termName="Term 1"
+          examTitle="Term 2 Main Examination"
+          termName="Term 2"
           schoolSettings={store.settings}
           onClose={() => setSelectedStudentForReport(null)}
         />
