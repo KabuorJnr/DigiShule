@@ -5,6 +5,7 @@ import { exportTablePDF, downloadExcel } from '../utils/exporters';
 import { studentOverall, gradeFor, pointsForGrade, subjectAverage, is844Class } from '../utils/grading';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import ReportCardModal from '../components/ReportCardModal';
+import MeritListModule from '../components/MeritListModule';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search } from 'lucide-react';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
@@ -450,74 +451,15 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
 
       {/* ── TAB 2: MERIT LIST & PERFORMANCE ── */}
       {activeTab === 'merit' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Official Merit Ranking & Analysis</h3>
-              <span style={{ fontSize: 12, color: '#64748b' }}>Ranked {meritList.length} student(s) in selected scope</span>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <select 
-                value={selectedClass} 
-                onChange={(e) => setSelectedClass(e.target.value)}
-                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
-              >
-                <option value="All">All Classes & Streams</option>
-                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
-              </select>
-
-              <button className="btn" onClick={handleExportMeritListExcel} style={{ height: 34, fontSize: 12 }}>
-                Excel Export
-              </button>
-              <button className="btn btn-primary" onClick={handleExportMeritListPDF} style={{ height: 34, fontSize: 12, background: '#047857', border: 'none' }}>
-                PDF Export
-              </button>
-            </div>
-          </div>
-
-          <div className="scroll-x">
-            <table className="table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Rank</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Adm No</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Student Name</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Stream</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Total Marks</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Mean %</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Grade</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Points</th>
-                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {meritList.map((s, idx) => (
-                  <tr key={s.id || idx}>
-                    <td><strong style={{ color: '#047857' }}>#{s.streamPosition || idx + 1}</strong></td>
-                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || s.admission_no || '-'}</span></td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
-                    <td>{s.class}</td>
-                    <td style={{ fontWeight: 700, color: '#047857' }}>{s.totalMarks}</td>
-                    <td style={{ fontWeight: 700 }}>{s.meanPercentage.toFixed(1)}%</td>
-                    <td>
-                      <Badge color={s.meanGradeCode === 'A' || s.meanGradeCode === 'EE' ? 'green' : s.meanGradeCode === 'E' || s.meanGradeCode === 'BE' ? 'red' : 'blue'}>
-                        {s.meanGradeCode}
-                      </Badge>
-                    </td>
-                    <td>{s.meanPoints.toFixed(1)}</td>
-                    <td>
-                      <button className="btn btn-sm" style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => setSelectedStudentForReport(s.rawStudent)}>
-                        Result Slip
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {meritList.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 30 }}>No students found in merit ranking selection.</div>}
-        </div>
+        <MeritListModule 
+          students={activeStudentsList}
+          schoolSettings={store?.settings}
+          teachers={rawStaff}
+          classes={dynamicClasses}
+          userRole={user?.role || 'dos'}
+          currentStudentId={user?.student_id || user?.id}
+          notify={notify}
+        />
       )}
 
       {/* ── TAB 3: MARKS AUDIT ── */}

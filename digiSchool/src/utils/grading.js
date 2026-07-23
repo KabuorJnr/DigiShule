@@ -22,16 +22,40 @@ export const KCSE_BOUNDARIES = [
   { min: 0,  grade: 'E',  label: 'E Plain',  pts: 1,  remark: 'Needs Serious Effort' },
 ];
 
-export const REPORT_CARD_SUBJECTS = [
-  'Creative Arts',
-  'English',
-  'Environmental Activities',
-  'Indigenous Language',
-  'Kiswahili',
+export const CBC_SUBJECTS = [
   'Mathematics',
+  'English',
+  'Kiswahili',
+  'Environmental Activities',
+  'Social Studies',
   'Religious Education (CRE)',
-  'Social Studies'
+  'Creative Arts',
+  'Indigenous Language'
 ];
+
+export const KCSE_844_SUBJECTS = [
+  'Mathematics',
+  'English',
+  'Kiswahili',
+  'Biology',
+  'Chemistry',
+  'Physics',
+  'History',
+  'Geography',
+  'CRE',
+  'Agriculture'
+];
+
+export const REPORT_CARD_SUBJECTS = CBC_SUBJECTS;
+
+export function calculateStandardDeviation(numbers = []) {
+  if (!numbers || numbers.length <= 1) return 0;
+  const validNumbers = numbers.filter(n => typeof n === 'number' && !isNaN(n));
+  if (validNumbers.length <= 1) return 0;
+  const mean = validNumbers.reduce((a, b) => a + b, 0) / validNumbers.length;
+  const variance = validNumbers.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (validNumbers.length - 1);
+  return Math.round(Math.sqrt(variance) * 10) / 10;
+}
 
 export function is844Class(className = '') {
   if (!className) return false;
