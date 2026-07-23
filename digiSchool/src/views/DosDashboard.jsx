@@ -158,12 +158,12 @@ export default function DosDashboard({ store, user }) {
   // Staff by role
   const staffByRole = useMemo(() => {
     const map = {};
-    staff.forEach(s => {
+    rawStaff.forEach(s => {
       const role = s.role || 'Unknown';
       map[role] = (map[role] || 0) + 1;
     });
     return Object.entries(map).map(([role, count]) => ({ role, count }));
-  }, [staff]);
+  }, [rawStaff]);
 
   // Teacher workload from timetables (filtered to actual profiles)
   const teacherWorkload = useMemo(() => {
@@ -469,8 +469,8 @@ export default function DosDashboard({ store, user }) {
       {!loading && activeTab === 'staff' && (
         <>
           <div className="grid grid-4" style={{ gap: 16, marginBottom: 20 }}>
-            <Stat icon={Users} label="Total Staff" value={staff.length} sub="All portal users" color="#0EA5E9" />
-            <Stat icon={BookOpen} label="Teachers" value={staff.filter(s => s.role === 'teacher').length} sub="Subject teachers" color="#047857" />
+            <Stat icon={Users} label="Total Staff" value={rawStaff.length} sub="All portal users" color="#0EA5E9" />
+            <Stat icon={BookOpen} label="Teachers" value={rawStaff.filter(s => s.role === 'teacher').length} sub="Subject teachers" color="#047857" />
             <Stat icon={AlertTriangle} label="Overloaded" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 periods" color="#EF4444" />
             <Stat icon={Award} label="Staff Roles" value={staffByRole.length} sub="Distinct roles" color="#6366f1" />
           </div>
@@ -481,7 +481,7 @@ export default function DosDashboard({ store, user }) {
               <table className="table">
                 <thead><tr><th>#</th><th>Name</th><th>Role</th><th>Email</th><th>Subject/Dept</th></tr></thead>
                 <tbody>
-                  {staff.map((s, idx) => (
+                  {rawStaff.map((s, idx) => (
                     <tr key={s.id}>
                       <td>{idx + 1}</td>
                       <td style={{ fontWeight: 600 }}>{s.full_name || s.name || '-'}</td>
@@ -492,7 +492,7 @@ export default function DosDashboard({ store, user }) {
                   ))}
                 </tbody>
               </table>
-              {staff.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No staff records found.</div>}
+              {rawStaff.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No staff records found.</div>}
             </div>
 
             <div className="card card-pad">
