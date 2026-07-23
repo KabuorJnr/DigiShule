@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { saveToCache, getFromCache, queueMutation } from './offlineSync';
+import { DEFAULT_SEED_STUDENTS } from '../data/seedStudents';
 
 /**
  * api.js — Supabase query layer, multi-tenant edition.
@@ -287,6 +288,36 @@ export async function fetchStudents(page = 0, limit = 50, filters = {}) {
     .order('adm')
     .range(page * limit, (page + 1) * limit - 1);
 
+  // Auto-seed if database is completely empty for this school
+  if ((!data || data.length === 0) && _schoolId && !filters.search && !filters.class) {
+    console.log('[fetchStudents] No students found. Auto-seeding for school_id:', _schoolId);
+    try {
+      const mappedSeeds = DEFAULT_SEED_STUDENTS.map(s => ({
+        id: s.id + '_' + _schoolId.slice(0, 5),
+        name: s.name,
+        adm: s.adm,
+        class: s.class,
+        gender: s.gender,
+        birth_cert_no: s.birthCertNo,
+        scores: s.scores,
+        status: s.status,
+        guardian_name: s.guardianName,
+        guardian_phone: s.guardianPhone,
+        school_id: _schoolId
+      }));
+      await supabase.from('students').insert(mappedSeeds);
+      
+      const retry = await supabase.from('students').select('*', { count: 'exact' })
+        .eq('school_id', _schoolId)
+        .order('class').order('adm')
+        .range(page * limit, (page + 1) * limit - 1);
+      data = retry.data;
+      count = retry.count;
+    } catch (seedErr) {
+      console.warn('Failed to auto-seed students:', seedErr);
+    }
+  }
+
   // Fallback 1: If filtering by _schoolId returned no rows, retry without _schoolId filter
   if ((!data || data.length === 0) && _schoolId) {
     let fallbackQuery = supabase.from('students').select('*', { count: 'exact' });
@@ -398,6 +429,32 @@ export async function fetchAllStudentsUnpaginated() {
   let query = supabase.from('students').select('*').order('class').order('adm');
   if (_schoolId) query = query.eq('school_id', _schoolId);
   let { data, error } = await query;
+
+  // Auto-seed if database is completely empty for this school
+  if ((!data || data.length === 0) && _schoolId) {
+    console.log('[fetchAllStudentsUnpaginated] No students found. Auto-seeding for school_id:', _schoolId);
+    try {
+      const mappedSeeds = DEFAULT_SEED_STUDENTS.map(s => ({
+        id: s.id + '_' + _schoolId.slice(0, 5),
+        name: s.name,
+        adm: s.adm,
+        class: s.class,
+        gender: s.gender,
+        birth_cert_no: s.birthCertNo,
+        scores: s.scores,
+        status: s.status,
+        guardian_name: s.guardianName,
+        guardian_phone: s.guardianPhone,
+        school_id: _schoolId
+      }));
+      await supabase.from('students').insert(mappedSeeds);
+      
+      const retry = await supabase.from('students').select('*').eq('school_id', _schoolId).order('class').order('adm');
+      data = retry.data;
+    } catch (seedErr) {
+      console.warn('Failed to auto-seed students:', seedErr);
+    }
+  }
 
   // Fallback: If filtering by _schoolId returned no rows, retry without _schoolId filter
   if ((!data || data.length === 0) && _schoolId) {

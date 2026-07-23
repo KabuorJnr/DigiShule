@@ -576,8 +576,30 @@ export default function AdminDashboard({ store, user }) {
         <Modal title="Discipline Case Details" onClose={() => setDisciplineModal(null)} footer={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => setDisciplineModal(null)}>Close</button>
-            {disciplineModal.status === 'Open' && (
-              <button className="btn btn-primary" onClick={() => { setDisciplineModal(null); notify('Case marked as resolved', 'success'); }}>Mark Resolved</button>
+            {disciplineModal.status === 'Open' ? (
+              <button className="btn btn-primary" onClick={async () => {
+                try {
+                  const updated = { ...disciplineModal, status: 'Resolved' };
+                  await upsertRow('disciplinaryRecords', updated);
+                  setDbDiscipline(prev => prev.map(item => item.id === updated.id ? updated : item));
+                  setDisciplineModal(null);
+                  notify('Case marked as resolved', 'success');
+                } catch (err) {
+                  notify(`Failed to resolve case: ${err.message}`, 'error');
+                }
+              }}>Mark Resolved</button>
+            ) : (
+              <button className="btn" onClick={async () => {
+                try {
+                  const updated = { ...disciplineModal, status: 'Open' };
+                  await upsertRow('disciplinaryRecords', updated);
+                  setDbDiscipline(prev => prev.map(item => item.id === updated.id ? updated : item));
+                  setDisciplineModal(null);
+                  notify('Case re-opened', 'success');
+                } catch (err) {
+                  notify(`Failed to re-open case: ${err.message}`, 'error');
+                }
+              }}>Re-open Case</button>
             )}
           </div>
         }>

@@ -20,6 +20,7 @@ const AUDIENCE_OPTS = [
   { value: 'parents', label: 'Parents Only' },
   { value: 'teachers', label: 'Teachers Only' },
   { value: 'staff', label: 'Staff Only' },
+  { value: 'admins', label: 'Admins Only' },
   { value: 'specific', label: 'Specific User' },
 ];
 

@@ -755,13 +755,13 @@ export default function ParentDashboard() {
             </div>
           ) : (
             <table className="table">
-              <thead><tr><th>Date</th><th>Incident</th><th>Action</th><th>Status</th></tr></thead>
+              <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Status</th></tr></thead>
               <tbody>
                 {disciplinary.map((d, i) => (
-                  <tr key={d.id || i}>
+                  <tr key={d.id || i} style={{ cursor: 'pointer' }} onClick={() => setMsgForm({ ...msgForm, disciplineModal: d })}>
                     <td>{d.date || (d.created_at || '').slice(0, 10)}</td>
-                    <td>{d.incident || d.offense || '-'}</td>
-                    <td>{d.action_taken || d.punishment || '-'}</td>
+                    <td style={{ fontWeight: 600 }}>{d.category || d.incident || d.offense || '-'}</td>
+                    <td>{d.description ? (d.description.length > 50 ? d.description.slice(0, 50) + '...' : d.description) : '-'}</td>
                     <td><Badge color={d.status === 'Resolved' ? 'green' : 'red'}>{d.status || 'Open'}</Badge></td>
                   </tr>
                 ))}
@@ -769,6 +769,23 @@ export default function ParentDashboard() {
             </table>
           )}
         </div>
+
+        {msgForm.disciplineModal && (
+          <Modal title="Discipline Case Details" onClose={() => setMsgForm({ ...msgForm, disciplineModal: null })} footer={
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" onClick={() => setMsgForm({ ...msgForm, disciplineModal: null })}>Close</button>
+            </div>
+          }>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div><span className="field-label">Student</span><div style={{ fontWeight: 600 }}>{msgForm.disciplineModal.student || child.name}</div></div>
+              <div><span className="field-label">Category</span><div><Badge color="red">{msgForm.disciplineModal.category || msgForm.disciplineModal.incident}</Badge></div></div>
+              <div><span className="field-label">Date</span><div>{msgForm.disciplineModal.date || (msgForm.disciplineModal.created_at || '').slice(0, 10)}</div></div>
+              <div><span className="field-label">Description</span><div style={{ lineHeight: 1.5 }}>{msgForm.disciplineModal.description || '-'}</div></div>
+              <div><span className="field-label">Action Taken</span><div>{msgForm.disciplineModal.action || msgForm.disciplineModal.action_taken || 'Pending review'}</div></div>
+              <div><span className="field-label">Status</span><div><Badge color={msgForm.disciplineModal.status === 'Resolved' ? 'green' : 'red'}>{msgForm.disciplineModal.status}</Badge></div></div>
+            </div>
+          </Modal>
+        )}
       </div>
     );
   }

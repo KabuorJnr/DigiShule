@@ -163,6 +163,7 @@ export default function PortalLayout() {
     return notifications.filter((n) => {
       const aud = n.audience || [];
       if (aud.includes('all')) return true;
+      if (aud.includes('admins') && ['principal', 'deputy_admin', 'deputy_academic', 'finance', 'registrar', 'dos'].includes(currentUser.role)) return true;
       if (aud.includes(currentUser.role)) return true;
       if (aud.includes(currentUser.id)) return true;
       if (currentUser.role === 'parent' && students.length > 0) {

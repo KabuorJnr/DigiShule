@@ -39,48 +39,67 @@ export default function DosDashboard({ store, user }) {
 
   const fetchAllDosData = async () => {
     setLoading(true);
+    
+    // 1. Fetch live students using api helper
     try {
-      // Fetch live students using api helper (with school_id & fallback handling)
       const { data: studentData } = await fetchStudents(0, 2000);
       if (studentData && studentData.length > 0) setStudents(studentData);
+    } catch (e) {
+      console.warn('DoS student fetch error:', e);
+    }
 
-      // Fetch live staff/teachers from profiles with school_id filter
+    // 2. Fetch live staff/teachers from profiles
+    try {
       let staffQuery = supabase.from('profiles').select('*');
-      if (currentSchoolId) {
-        staffQuery = staffQuery.eq('school_id', currentSchoolId);
-      }
+      if (currentSchoolId) staffQuery = staffQuery.eq('school_id', currentSchoolId);
       staffQuery = staffQuery.in('role', ['teacher', 'dos', 'deputy_academic', 'principal', 'deputy_admin', 'registrar', 'finance', 'accountant', 'librarian', 'clinic']);
       const { data: staffData } = await staffQuery;
       if (staffData && staffData.length > 0) setStaff(staffData);
+    } catch (e) {
+      console.warn('DoS staff fetch error:', e);
+    }
 
-      // Fetch approvals with school_id filter
-      let appQuery = supabase.from('approval_queue').select('*, profiles:teacher_id(full_name)');
+    // 3. Fetch approvals
+    try {
+      let appQuery = supabase.from('approval_queue').select('*');
       if (currentSchoolId) appQuery = appQuery.eq('school_id', currentSchoolId);
       const { data: appData } = await appQuery;
       if (appData) setApprovals(appData);
+    } catch (e) {
+      console.warn('DoS approvals fetch error:', e);
+    }
 
-      // Fetch exam papers with school_id filter
-      let paperQuery = supabase.from('exam_papers').select('*, profiles:set_by_teacher_id(full_name)');
+    // 4. Fetch exam papers
+    try {
+      let paperQuery = supabase.from('exam_papers').select('*');
       if (currentSchoolId) paperQuery = paperQuery.eq('school_id', currentSchoolId);
       const { data: paperData } = await paperQuery;
       if (paperData) setExamPapers(paperData);
+    } catch (e) {
+      console.warn('DoS exam papers fetch error:', e);
+    }
 
-      // Fetch coverage with school_id filter
-      let covQuery = supabase.from('syllabus_coverage_snapshots').select('*, profiles:teacher_id(full_name)');
+    // 5. Fetch syllabus coverage
+    try {
+      let covQuery = supabase.from('syllabus_coverage_snapshots').select('*');
       if (currentSchoolId) covQuery = covQuery.eq('school_id', currentSchoolId);
       const { data: covData } = await covQuery;
       if (covData) setCoverage(covData);
+    } catch (e) {
+      console.warn('DoS coverage fetch error:', e);
+    }
 
-      // Fetch observations with school_id filter
-      let obsQuery = supabase.from('lesson_observations').select('*, profiles:teacher_id(full_name)');
+    // 6. Fetch lesson observations
+    try {
+      let obsQuery = supabase.from('lesson_observations').select('*');
       if (currentSchoolId) obsQuery = obsQuery.eq('school_id', currentSchoolId);
       const { data: obsData } = await obsQuery;
       if (obsData) setObservations(obsData);
-    } catch (err) {
-      console.error('DoS fetch error:', err);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.warn('DoS observations fetch error:', e);
     }
+
+    setLoading(false);
   };
 
   useEffect(() => {
