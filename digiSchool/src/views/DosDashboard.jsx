@@ -165,7 +165,7 @@ export default function DosDashboard({ store, user }) {
     return Object.entries(map).map(([role, count]) => ({ role, count }));
   }, [staff]);
 
-  // Teacher workload from timetables
+  // Teacher workload from timetables (filtered to actual profiles)
   const teacherWorkload = useMemo(() => {
     const counts = {};
     Object.values(timetables).forEach(tt => {
@@ -178,10 +178,14 @@ export default function DosDashboard({ store, user }) {
         });
       });
     });
+    
+    const validNames = new Set(activeTeacherList.map(t => t.name.toLowerCase()));
+    
     return Object.entries(counts)
+      .filter(([name]) => validNames.has(name.toLowerCase()))
       .map(([name, periods]) => ({ name, periods, isOverload: periods > 27 }))
       .sort((a, b) => b.periods - a.periods);
-  }, [timetables]);
+  }, [timetables, activeTeacherList]);
 
   // Marks entry audit per class/subject
   const marksAudit = useMemo(() => {
