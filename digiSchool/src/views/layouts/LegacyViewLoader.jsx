@@ -30,7 +30,7 @@ const VIEW_MAP = {
   timetable: Timetable,
   create_exam: ExamSchedules,
   exams: ExamSchedules,
-  academics_dashboard: AcademicsDashboard,
+  academics_dashboard: DosDashboard,
   admin_dashboard: AdminDashboard,
   gradebook: Gradebook,
   settings: Settings,
