@@ -11,19 +11,20 @@ import {
   Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight
 } from 'lucide-react';
 
-// Microsoft Corporate Stat Card
+// Corporate Dark Emerald Stat Card
 function Stat({ label, value, color, sub, icon: IconComp, badge }) {
+  const accent = color || '#047857';
   return (
     <div 
       style={{ 
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: 8,
-        padding: '16px 20px',
+        padding: '14px 18px',
         display: 'flex',
         flexDirection: 'column',
         justify: 'space-between',
-        minHeight: 105,
+        minHeight: 100,
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
         position: 'relative',
         overflow: 'hidden'
@@ -34,25 +35,25 @@ function Stat({ label, value, color, sub, icon: IconComp, badge }) {
           {label}
         </span>
         {IconComp && (
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${color || '#0078d4'}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconComp size={15} color={color || '#0078d4'} />
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${accent}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconComp size={15} color={accent} />
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <div style={{ marginTop: 6, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
           {value}
         </div>
         {badge && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: color || '#0078d4', background: `${color || '#0078d4'}14`, padding: '2px 8px', borderRadius: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: accent, background: `${accent}14`, padding: '2px 8px', borderRadius: 4 }}>
             {badge}
           </span>
         )}
       </div>
 
-      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{sub}</div>}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color || '#0078d4' }} />
+      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 500 }}>{sub}</div>}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accent }} />
     </div>
   );
 }
@@ -80,19 +81,13 @@ export default function DosDashboard({ store, user }) {
   const fetchAllDosData = async () => {
     setLoading(true);
     
-    // 1. Fetch live students using api helper
     try {
       const { data: studentData } = await fetchStudents(0, 2000, { activeOnly: true });
-      if (studentData) {
-        setStudents(studentData.filter(s => s.status === 'Active'));
-      } else {
-        setStudents([]);
-      }
+      setStudents(studentData ? studentData.filter(s => s.status === 'Active') : []);
     } catch (e) {
       console.warn('DoS student fetch error:', e);
     }
 
-    // 2. Fetch live staff/teachers from profiles
     try {
       let staffQuery = supabase.from('profiles').select('*');
       if (currentSchoolId) staffQuery = staffQuery.eq('school_id', currentSchoolId);
@@ -103,7 +98,6 @@ export default function DosDashboard({ store, user }) {
       console.warn('DoS staff fetch error:', e);
     }
 
-    // 3. Fetch approvals
     try {
       let appQuery = supabase.from('approval_queue').select('*');
       if (currentSchoolId) appQuery = appQuery.eq('school_id', currentSchoolId);
@@ -113,7 +107,6 @@ export default function DosDashboard({ store, user }) {
       console.warn('DoS approvals fetch error:', e);
     }
 
-    // 4. Fetch exam papers
     try {
       let paperQuery = supabase.from('exam_papers').select('*');
       if (currentSchoolId) paperQuery = paperQuery.eq('school_id', currentSchoolId);
@@ -123,7 +116,6 @@ export default function DosDashboard({ store, user }) {
       console.warn('DoS exam papers fetch error:', e);
     }
 
-    // 5. Fetch syllabus coverage
     try {
       let covQuery = supabase.from('syllabus_coverage_snapshots').select('*');
       if (currentSchoolId) covQuery = covQuery.eq('school_id', currentSchoolId);
@@ -133,7 +125,6 @@ export default function DosDashboard({ store, user }) {
       console.warn('DoS coverage fetch error:', e);
     }
 
-    // 6. Fetch lesson observations
     try {
       let obsQuery = supabase.from('lesson_observations').select('*');
       if (currentSchoolId) obsQuery = obsQuery.eq('school_id', currentSchoolId);
@@ -202,7 +193,7 @@ export default function DosDashboard({ store, user }) {
     return Object.entries(map).map(([role, count]) => ({ role, count }));
   }, [rawStaff]);
 
-  // Teacher workload from timetables
+  // Teacher workload
   const teacherWorkload = useMemo(() => {
     const counts = {};
     Object.values(timetables).forEach(tt => {
@@ -224,7 +215,7 @@ export default function DosDashboard({ store, user }) {
       .sort((a, b) => b.periods - a.periods);
   }, [timetables, activeTeacherList]);
 
-  // Marks entry audit
+  // Marks audit
   const marksAudit = useMemo(() => {
     const results = [];
     dynamicClasses.forEach(cls => {
@@ -341,20 +332,20 @@ export default function DosDashboard({ store, user }) {
   };
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '0 0 40px 0' }}>
-      {/* ── TOP CORPORATE BAR ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 40 }}>
+      {/* ── TOP TOOLBAR ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
               Director of Studies Portal
             </h1>
-            <span style={{ background: '#0078d4', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+            <span style={{ background: '#047857', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
               Academic Office
             </span>
           </div>
-          <p style={{ margin: '3px 0 0 0', fontSize: 13, color: '#64748b' }}>
-            Executive oversight, exam office management, marks audit & curriculum quality assurance
+          <p style={{ margin: '2px 0 0 0', fontSize: 13, color: '#64748b' }}>
+            Academic oversight, exam office management & curriculum quality assurance
           </p>
         </div>
 
@@ -377,7 +368,7 @@ export default function DosDashboard({ store, user }) {
               cursor: 'pointer' 
             }}
           >
-            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh Data
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
           </button>
           <button 
             onClick={handleExportTermlyReport}
@@ -385,7 +376,7 @@ export default function DosDashboard({ store, user }) {
               height: 36, 
               padding: '0 16px', 
               borderRadius: 6, 
-              background: '#0078d4', 
+              background: '#047857', 
               border: 'none', 
               fontSize: 13, 
               fontWeight: 600, 
@@ -394,7 +385,7 @@ export default function DosDashboard({ store, user }) {
               alignItems: 'center', 
               gap: 6,
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0, 120, 212, 0.3)' 
+              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.3)' 
             }}
           >
             <Download size={14} /> Export Report (PDF)
@@ -402,45 +393,48 @@ export default function DosDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* ── MICROSOFT FLUENT CORPORATE HEADER ── */}
+      {/* ── COMPACT EMERALD HEADER BANNER ── */}
       <div 
         style={{ 
-          background: '#0f172a', 
-          border: '1px solid #1e293b',
+          background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', 
+          border: '1px solid #047857',
           borderRadius: 8, 
-          padding: '20px 24px', 
+          padding: '14px 20px', 
           display: 'flex', 
           justify: 'space-between', 
           alignItems: 'center', 
-          marginBottom: 20,
-          color: '#ffffff'
+          marginBottom: 16,
+          color: '#ffffff',
+          flexWrap: 'wrap',
+          gap: 12
         }}
       >
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
-            {settings?.name || 'Academic Command Center'}
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+              {settings?.name || 'Academic Command Center'}
+            </span>
+            <span style={{ color: '#047857', fontSize: 10 }}>•</span>
+            <span style={{ fontSize: 11, color: '#a7f3d0' }}>Term 2 · 2026 Academic Year</span>
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
             Director of Studies Executive Dashboard
           </div>
-          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span>Curriculum Management</span> · <span>Exam Moderation</span> · <span>Marks Verification</span>
+          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 2 }}>
+            Curriculum Management · Exam Moderation · Marks Verification
           </div>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 6 }}>
-            <Clock size={13} color="#38bdf8" />
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.08)', padding: '6px 12px', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <Clock size={13} color="#6ee7b7" />
+            {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
-          <span style={{ background: '#1e293b', color: '#38bdf8', border: '1px solid #334155', padding: '4px 12px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
-            Term 2 · Academic Year 2026
-          </span>
         </div>
       </div>
 
-      {/* ── CORPORATE TAB NAVIGATION ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 20, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
+      {/* ── CORPORATE EMERALD TAB NAVIGATION ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 16, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
         {[
           { id: 'overview', label: 'Academic Overview', icon: ShieldCheck },
           { id: 'registry', label: 'Student Registry', icon: Users, badge: activeStudents.length },
@@ -460,15 +454,15 @@ export default function DosDashboard({ store, user }) {
                 padding: '12px 18px',
                 background: 'transparent',
                 border: 'none',
-                borderBottom: isActive ? '3px solid #0078d4' : '3px solid transparent',
-                color: isActive ? '#0078d4' : '#64748b',
+                borderBottom: isActive ? '3px solid #047857' : '3px solid transparent',
+                color: isActive ? '#047857' : '#64748b',
                 fontWeight: isActive ? 700 : 600,
                 fontSize: 13,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
             >
-              <t.icon size={15} color={isActive ? '#0078d4' : '#64748b'} />
+              <t.icon size={15} color={isActive ? '#047857' : '#64748b'} />
               <span>{t.label}</span>
               {t.badge !== undefined && (
                 <span style={{ 
@@ -476,8 +470,8 @@ export default function DosDashboard({ store, user }) {
                   fontWeight: 700, 
                   padding: '1px 6px', 
                   borderRadius: 4, 
-                  background: t.alert ? '#fee2e2' : isActive ? '#e0f2fe' : '#f1f5f9',
-                  color: t.alert ? '#991b1b' : isActive ? '#0369a1' : '#475569'
+                  background: t.alert ? '#fee2e2' : isActive ? '#dcfce7' : '#f1f5f9',
+                  color: t.alert ? '#991b1b' : isActive ? '#047857' : '#475569'
                 }}>
                   {t.badge}
                 </span>
@@ -488,8 +482,8 @@ export default function DosDashboard({ store, user }) {
       </div>
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-          <RefreshCw size={24} color="#0078d4" className="spin" style={{ marginBottom: 10 }} />
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <RefreshCw size={24} color="#047857" className="spin" style={{ marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Loading Live Academic Records...</div>
         </div>
       )}
@@ -499,24 +493,24 @@ export default function DosDashboard({ store, user }) {
         <>
           {/* Balanced 4-Column Stat Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-            <Stat icon={Users} label="Total Enrolled Students" value={activeStudents.length} sub={`${genderDist.male} Male / ${genderDist.female} Female`} color="#0078d4" badge="Active" />
-            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Members`} color="#107c10" badge="Assigned" />
-            <Stat icon={Award} label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classEnrollment.length} Active Streams`} color="#0078d4" badge="Structure" />
-            <Stat icon={FileText} label="Published Exams" value={examSchedules.length} sub="Term Exam Schedules" color="#6b21a8" badge="Exams" />
+            <Stat icon={Users} label="Total Enrolled Students" value={activeStudents.length} sub={`${genderDist.male} Male / ${genderDist.female} Female`} color="#047857" badge="Active" />
+            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Members`} color="#047857" badge="Assigned" />
+            <Stat icon={Award} label="Classes / Streams" value={`${settings?.classes?.length || 1} / ${dynamicClasses.length}`} sub={`${classEnrollment.length} Active Streams`} color="#047857" badge="Structure" />
+            <Stat icon={FileText} label="Published Exams" value={examSchedules.length} sub="Term Exam Schedules" color="#047857" badge="Exams" />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-            <Stat icon={CheckCircle} label="Marks Completion" value={`${overallMarksPct}%`} sub="Overall Entry Progress" color={overallMarksPct >= 80 ? '#107c10' : '#d97706'} />
-            <Stat icon={AlertTriangle} label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lesson Plans" color={pendingApprovalsCount > 0 ? '#d97706' : '#107c10'} />
-            <Stat icon={FileText} label="Papers to Moderate" value={pendingPapersCount} sub="Exam Papers Pending" color={pendingPapersCount > 0 ? '#d97706' : '#107c10'} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <Stat icon={CheckCircle} label="Marks Completion" value={`${overallMarksPct}%`} sub="Overall Entry Progress" color={overallMarksPct >= 80 ? '#047857' : '#d97706'} />
+            <Stat icon={AlertTriangle} label="Pending Approvals" value={pendingApprovalsCount} sub="Schemes & Lesson Plans" color={pendingApprovalsCount > 0 ? '#d97706' : '#047857'} />
+            <Stat icon={FileText} label="Papers to Moderate" value={pendingPapersCount} sub="Exam Papers Pending" color={pendingPapersCount > 0 ? '#d97706' : '#047857'} />
             <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#d13438" />
           </div>
 
           {/* Quick Management Hub */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Layers size={16} color="#0078d4" /> Executive Quick Actions
+                <Layers size={16} color="#047857" /> Executive Quick Actions
               </div>
               <span style={{ fontSize: 12, color: '#64748b' }}>Shortcuts to core academic modules</span>
             </div>
@@ -548,7 +542,7 @@ export default function DosDashboard({ store, user }) {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#ffffff';
-                    e.currentTarget.style.borderColor = '#0078d4';
+                    e.currentTarget.style.borderColor = '#047857';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = '#f8fafc';
@@ -566,10 +560,10 @@ export default function DosDashboard({ store, user }) {
           </div>
 
           {/* Balanced 2-Column Enrollment & Gender Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {/* Enrollment */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Stream Enrollment</h3>
                 <span style={{ fontSize: 12, color: '#64748b' }}>{classEnrollment.length} Active Streams</span>
               </div>
@@ -590,7 +584,7 @@ export default function DosDashboard({ store, user }) {
                         <td style={{ textAlign: 'right', fontWeight: 700 }}>{c.count}</td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ flex: 1 }}><ProgressBar value={share} color="#0078d4" /></div>
+                            <div style={{ flex: 1 }}><ProgressBar value={share} color="#047857" /></div>
                             <span style={{ fontSize: 11, fontWeight: 600, minWidth: 26 }}>{share}%</span>
                           </div>
                         </td>
@@ -603,11 +597,11 @@ export default function DosDashboard({ store, user }) {
             </div>
 
             {/* Demographics */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Gender Demographics</h3>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Gender Demographics</h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
                   <div style={{ background: '#eff6ff', border: '1px solid #dbeafe', padding: 12, borderRadius: 6, textAlign: 'center' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: '#2563eb' }}>{genderDist.male}</div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af', marginTop: 2 }}>Male</div>
@@ -617,7 +611,7 @@ export default function DosDashboard({ store, user }) {
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#9d174d', marginTop: 2 }}>Female</div>
                   </div>
                   <div style={{ background: '#f0fdf4', border: '1px solid #dcfce7', padding: 12, borderRadius: 6, textAlign: 'center' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#107c10' }}>{genderDist.total}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#047857' }}>{genderDist.total}</div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#065f46', marginTop: 2 }}>Total</div>
                   </div>
                 </div>
@@ -636,7 +630,7 @@ export default function DosDashboard({ store, user }) {
                 )}
               </div>
 
-              <div style={{ paddingTop: 14, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ paddingTop: 12, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, color: '#64748b' }}>Live Registry State</span>
                 <button className="btn btn-sm" onClick={() => navigate('registrar')} style={{ fontSize: 12 }}>Open Registrar</button>
               </div>
@@ -647,8 +641,8 @@ export default function DosDashboard({ store, user }) {
 
       {/* ── TAB 2: STUDENT REGISTRY ── */}
       {!loading && activeTab === 'registry' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Live Student Registry</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>Showing {filteredStudents.length} of {activeStudents.length} active students</span>
@@ -675,7 +669,7 @@ export default function DosDashboard({ store, user }) {
                 {dynamicClasses.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
 
-              <button className="btn btn-primary" onClick={() => navigate('registrar')} style={{ height: 34, borderRadius: 6, fontSize: 12 }}>
+              <button className="btn btn-primary" onClick={() => navigate('registrar')} style={{ height: 34, borderRadius: 6, fontSize: 12, background: '#047857', border: 'none' }}>
                 Open Full Registrar
               </button>
             </div>
@@ -717,15 +711,15 @@ export default function DosDashboard({ store, user }) {
       {!loading && activeTab === 'staff' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-            <Stat icon={Users} label="Total Staff" value={rawStaff.length} sub="Registered Portal Users" color="#0078d4" />
-            <Stat icon={BookOpen} label="Subject Teachers" value={rawStaff.filter(s => s.role === 'teacher').length} sub="Active Faculty" color="#107c10" />
+            <Stat icon={Users} label="Total Staff" value={rawStaff.length} sub="Registered Portal Users" color="#047857" />
+            <Stat icon={BookOpen} label="Subject Teachers" value={rawStaff.filter(s => s.role === 'teacher').length} sub="Active Faculty" color="#047857" />
             <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#d13438" />
-            <Stat icon={Award} label="Staff Roles" value={staffByRole.length} sub="Distinct Roles" color="#6b21a8" />
+            <Stat icon={Award} label="Staff Roles" value={staffByRole.length} sub="Distinct Roles" color="#047857" />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Staff Directory</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Staff Directory</h3>
               <table className="table" style={{ width: '100%', margin: 0 }}>
                 <thead>
                   <tr>
@@ -740,7 +734,7 @@ export default function DosDashboard({ store, user }) {
                     <tr key={s.id || idx}>
                       <td>{idx + 1}</td>
                       <td style={{ fontWeight: 700 }}>{s.full_name || s.name || '-'}</td>
-                      <td><Badge color="blue">{roleLabels[s.role] || s.role}</Badge></td>
+                      <td><Badge color="green">{roleLabels[s.role] || s.role}</Badge></td>
                       <td>{s.subject || s.dept || '-'}</td>
                     </tr>
                   ))}
@@ -749,8 +743,8 @@ export default function DosDashboard({ store, user }) {
               {filteredStaff.length === 0 && <div className="muted" style={{ textAlign: 'center', padding: 20 }}>No staff profiles found.</div>}
             </div>
 
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Teacher Workload</h3>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Teacher Workload</h3>
               <table className="table" style={{ width: '100%', margin: 0 }}>
                 <thead>
                   <tr>
@@ -783,13 +777,13 @@ export default function DosDashboard({ store, user }) {
 
       {/* ── TAB 4: MARKS AUDIT ── */}
       {!loading && activeTab === 'marks' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Marks Entry Audit Register</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>Live completion audit across all class streams</span>
             </div>
-            <button className="btn btn-sm btn-primary" onClick={() => navigate('gradebook')}>
+            <button className="btn btn-sm btn-primary" onClick={() => navigate('gradebook')} style={{ background: '#047857', border: 'none' }}>
               Open Gradebook
             </button>
           </div>
@@ -810,12 +804,12 @@ export default function DosDashboard({ store, user }) {
                 <tr key={m.class}>
                   <td><strong>{m.class}</strong></td>
                   <td>{m.students}</td>
-                  <td style={{ fontWeight: 700, color: '#107c10' }}>{m.entered}</td>
+                  <td style={{ fontWeight: 700, color: '#047857' }}>{m.entered}</td>
                   <td className="muted">{m.total}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, minWidth: 32 }}>{m.pct}%</span>
-                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#107c10' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
+                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#047857' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
                     </div>
                   </td>
                   <td>
@@ -832,10 +826,10 @@ export default function DosDashboard({ store, user }) {
 
       {/* ── TAB 5: APPROVALS & MODERATION ── */}
       {!loading && activeTab === 'moderation' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {/* Schemes */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Schemes & Lesson Plans</h3>
               <Badge color={pendingApprovalsCount > 0 ? 'amber' : 'green'}>{pendingApprovalsCount} Pending</Badge>
             </div>
@@ -846,7 +840,7 @@ export default function DosDashboard({ store, user }) {
                     <div style={{ fontWeight: 700, fontSize: 13 }}>{a.item_type === 'scheme_of_work' ? 'Scheme of Work' : 'Lesson Plan'}</div>
                     <div style={{ fontSize: 11, color: '#64748b' }}>By: {a.profiles?.full_name || 'Teacher'}</div>
                   </div>
-                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(a.id, 'approval_queue')}>Approve</button>
+                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(a.id, 'approval_queue')} style={{ background: '#047857', border: 'none' }}>Approve</button>
                 </div>
               ))}
               {approvals.filter(a => a.status === 'pending').length === 0 && <div className="muted" style={{ padding: 16, textAlign: 'center' }}>No pending schemes.</div>}
@@ -854,8 +848,8 @@ export default function DosDashboard({ store, user }) {
           </div>
 
           {/* Exam Papers */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Exam Paper Moderation</h3>
               <Badge color={pendingPapersCount > 0 ? 'amber' : 'green'}>{pendingPapersCount} Pending</Badge>
             </div>
@@ -866,7 +860,7 @@ export default function DosDashboard({ store, user }) {
                     <div style={{ fontWeight: 700, fontSize: 13 }}>{p.subject} ({p.class})</div>
                     <div style={{ fontSize: 11, color: '#64748b' }}>Set by: {p.profiles?.full_name || 'Unknown'}</div>
                   </div>
-                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(p.id, 'exam_papers')}>Moderate</button>
+                  <button className="btn btn-sm btn-primary" onClick={() => handleApprove(p.id, 'exam_papers')} style={{ background: '#047857', border: 'none' }}>Moderate</button>
                 </div>
               ))}
               {examPapers.filter(p => p.moderation_status === 'pending').length === 0 && <div className="muted" style={{ padding: 16, textAlign: 'center' }}>No pending papers.</div>}

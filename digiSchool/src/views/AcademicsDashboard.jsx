@@ -8,17 +8,18 @@ import ReportCardModal from '../components/ReportCardModal';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Filter } from 'lucide-react';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
+  const accent = color || '#047857';
   return (
     <div 
       style={{ 
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: 8,
-        padding: '16px 20px',
+        padding: '14px 18px',
         display: 'flex',
         flexDirection: 'column',
         justify: 'space-between',
-        minHeight: 105,
+        minHeight: 100,
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
         position: 'relative',
         overflow: 'hidden'
@@ -29,18 +30,18 @@ function Stat({ label, value, color, sub, icon: IconComp }) {
           {label}
         </span>
         {IconComp && (
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${color || '#0078d4'}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconComp size={15} color={color || '#0078d4'} />
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${accent}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconComp size={15} color={accent} />
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 8, fontSize: 26, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
         {value}
       </div>
 
-      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{sub}</div>}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color || '#0078d4' }} />
+      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 500 }}>{sub}</div>}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accent }} />
     </div>
   );
 }
@@ -90,7 +91,7 @@ export default function AcademicsDashboard({ store, user }) {
   const activeTeachers = useMemo(() => activeTeacherList.filter(t => t.status === 'Active').length, [activeTeacherList]);
   const classesCount = dynamicClasses.length;
 
-  // ── MERIT LIST & RANKINGS COMPUTATION ──
+  // ── MERIT LIST & RANKINGS ──
   const meritList = useMemo(() => {
     const listToRank = selectedClass === 'All'
       ? activeStudentsList
@@ -108,10 +109,8 @@ export default function AcademicsDashboard({ store, user }) {
       };
     });
 
-    // Sort descending by meanPercentage
     evaluated.sort((a, b) => b.meanPercentage - a.meanPercentage);
 
-    // Compute rank positions
     let currentRank = 1;
     return evaluated.map((s, idx, arr) => {
       if (idx > 0 && Math.abs(s.meanPercentage - arr[idx - 1].meanPercentage) < 0.01) {
@@ -123,7 +122,6 @@ export default function AcademicsDashboard({ store, user }) {
     });
   }, [activeStudentsList, selectedClass, store.gradeBoundaries]);
 
-  // Overall School Mean
   const schoolOverallMean = useMemo(() => {
     if (activeStudentsList.length === 0) return '0.0%';
     const sum = activeStudentsList.reduce((acc, s) => {
@@ -133,7 +131,7 @@ export default function AcademicsDashboard({ store, user }) {
     return `${(sum / activeStudentsList.length).toFixed(1)}%`;
   }, [activeStudentsList, store.gradeBoundaries]);
 
-  // ── MARKS ENTRY AUDIT COMPUTATION ──
+  // ── MARKS AUDIT ──
   const marksAuditMatrix = useMemo(() => {
     const matrix = [];
     const classesToAudit = selectedClass === 'All' ? dynamicClasses : [selectedClass];
@@ -257,18 +255,18 @@ export default function AcademicsDashboard({ store, user }) {
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 40 }}>
-      {/* ── TOP CORPORATE BAR ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      {/* ── TOP TOOLBAR ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
               Academic Merit & Performance Hub
             </h1>
-            <span style={{ background: '#0078d4', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+            <span style={{ background: '#047857', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
               Academic Office
             </span>
           </div>
-          <p style={{ margin: '3px 0 0 0', fontSize: 13, color: '#64748b' }}>
+          <p style={{ margin: '2px 0 0 0', fontSize: 13, color: '#64748b' }}>
             Merit list generation, subject performance analysis, marks verification & official result slips
           </p>
         </div>
@@ -299,7 +297,7 @@ export default function AcademicsDashboard({ store, user }) {
               height: 36, 
               padding: '0 16px', 
               borderRadius: 6, 
-              background: '#0078d4', 
+              background: '#047857', 
               border: 'none', 
               fontSize: 13, 
               fontWeight: 600, 
@@ -308,7 +306,7 @@ export default function AcademicsDashboard({ store, user }) {
               alignItems: 'center', 
               gap: 6,
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0, 120, 212, 0.3)' 
+              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.3)' 
             }}
           >
             <Download size={14} /> Export Merit List (PDF)
@@ -316,45 +314,48 @@ export default function AcademicsDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* ── MICROSOFT CORPORATE HEADER BANNER ── */}
+      {/* ── COMPACT EMERALD HEADER BANNER ── */}
       <div 
         style={{ 
-          background: '#0f172a', 
-          border: '1px solid #1e293b',
+          background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', 
+          border: '1px solid #047857',
           borderRadius: 8, 
-          padding: '20px 24px', 
+          padding: '14px 20px', 
           display: 'flex', 
           justify: 'space-between', 
           alignItems: 'center', 
-          marginBottom: 20,
-          color: '#ffffff'
+          marginBottom: 16,
+          color: '#ffffff',
+          flexWrap: 'wrap',
+          gap: 12
         }}
       >
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
-            {settings?.name || 'Academic Office'}
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+              {settings?.name || 'Academic Office'}
+            </span>
+            <span style={{ color: '#047857', fontSize: 10 }}>•</span>
+            <span style={{ fontSize: 11, color: '#a7f3d0' }}>Term 2 · 2026 Academic Year</span>
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
             Academic Performance & Examination Analytics
           </div>
-          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span>Merit Ranking</span> · <span>Subject Means</span> · <span>Audit Register</span> · <span>Result Slips</span>
+          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 2 }}>
+            Merit Ranking · Subject Means · Audit Register · Result Slips
           </div>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 6 }}>
-            <Clock size={13} color="#38bdf8" />
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.08)', padding: '6px 12px', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <Clock size={13} color="#6ee7b7" />
+            {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
-          <span style={{ background: '#1e293b', color: '#38bdf8', border: '1px solid #334155', padding: '4px 12px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
-            Term 2 · Academic Year 2026
-          </span>
         </div>
       </div>
 
-      {/* ── CORPORATE TAB NAVIGATION ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 20, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
+      {/* ── CORPORATE EMERALD TAB NAVIGATION ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 16, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
         {[
           { id: 'overview', label: 'Academic Summary', icon: Award },
           { id: 'merit', label: 'Merit List & Performance', icon: Award, badge: meritList.length },
@@ -373,18 +374,18 @@ export default function AcademicsDashboard({ store, user }) {
                 padding: '12px 18px',
                 background: 'transparent',
                 border: 'none',
-                borderBottom: isActive ? '3px solid #0078d4' : '3px solid transparent',
-                color: isActive ? '#0078d4' : '#64748b',
+                borderBottom: isActive ? '3px solid #047857' : '3px solid transparent',
+                color: isActive ? '#047857' : '#64748b',
                 fontWeight: isActive ? 700 : 600,
                 fontSize: 13,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
             >
-              <t.icon size={15} color={isActive ? '#0078d4' : '#64748b'} />
+              <t.icon size={15} color={isActive ? '#047857' : '#64748b'} />
               <span>{t.label}</span>
               {t.badge !== undefined && (
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: isActive ? '#e0f2fe' : '#f1f5f9', color: isActive ? '#0369a1' : '#475569' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: isActive ? '#dcfce7' : '#f1f5f9', color: isActive ? '#047857' : '#475569' }}>
                   {t.badge}
                 </span>
               )}
@@ -397,33 +398,33 @@ export default function AcademicsDashboard({ store, user }) {
       {activeTab === 'overview' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-            <Stat icon={Users} label="Total Enrolled Students" value={activeStudentsList.length} sub="Active Registry" color="#0078d4" />
-            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Faculty`} color="#107c10" />
-            <Stat icon={Award} label="Classes & Streams" value={`${settings?.classes?.length || 1} / ${classesCount}`} sub="Active Streams" color="#0078d4" />
-            <Stat icon={Award} label="Overall Mean Score" value={schoolOverallMean} sub="Across All Subjects" color="#107c10" />
+            <Stat icon={Users} label="Total Enrolled Students" value={activeStudentsList.length} sub="Active Registry" color="#047857" />
+            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Faculty`} color="#047857" />
+            <Stat icon={Award} label="Classes & Streams" value={`${settings?.classes?.length || 1} / ${classesCount}`} sub="Active Streams" color="#047857" />
+            <Stat icon={Award} label="Overall Mean Score" value={schoolOverallMean} sub="Across All Subjects" color="#047857" />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-            <Stat icon={FileText} label="Total Exam Schedules" value={examSchedules.length} sub="Published Exams" color="#6b21a8" />
-            <Stat icon={CheckCircle2} label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} Units`} color={auditStats.overallPct >= 80 ? '#107c10' : '#d97706'} />
-            <Stat icon={AlertTriangle} label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending Review" color={awaitingApprovalCount > 0 ? '#d97706' : '#107c10'} />
-            <Stat icon={BookOpen} label="Curriculum Subjects" value={SUBJECTS.length} sub="Active Subjects" color="#0078d4" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <Stat icon={FileText} label="Total Exam Schedules" value={examSchedules.length} sub="Published Exams" color="#047857" />
+            <Stat icon={CheckCircle2} label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} Units`} color={auditStats.overallPct >= 80 ? '#047857' : '#d97706'} />
+            <Stat icon={AlertTriangle} label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending Review" color={awaitingApprovalCount > 0 ? '#d97706' : '#047857'} />
+            <Stat icon={BookOpen} label="Curriculum Subjects" value={SUBJECTS.length} sub="Active Subjects" color="#047857" />
           </div>
 
           {/* Quick Tools Grid */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Academic Quick Tools</h3>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Academic Quick Tools</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('merit')}>
+              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('merit')}>
                 <Award size={15} style={{ marginRight: 6 }} /> Merit List Generator
               </button>
-              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('audit')}>
+              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('audit')}>
                 <CheckCircle2 size={15} style={{ marginRight: 6 }} /> Audit Marks Entry
               </button>
-              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('slips')}>
+              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('slips')}>
                 <Printer size={15} style={{ marginRight: 6 }} /> Result Slips Hub
               </button>
-              <button className="btn" style={{ height: 42, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => navigate('gradebook')}>
+              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => navigate('gradebook')}>
                 <FileText size={15} style={{ marginRight: 6 }} /> Gradebook Review
               </button>
             </div>
@@ -433,8 +434,8 @@ export default function AcademicsDashboard({ store, user }) {
 
       {/* ── TAB 2: MERIT LIST & PERFORMANCE ── */}
       {activeTab === 'merit' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Official Merit Ranking & Analysis</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>Ranked {meritList.length} student(s) in selected scope</span>
@@ -453,7 +454,7 @@ export default function AcademicsDashboard({ store, user }) {
               <button className="btn" onClick={handleExportMeritListExcel} style={{ height: 34, fontSize: 12 }}>
                 Excel Export
               </button>
-              <button className="btn btn-primary" onClick={handleExportMeritListPDF} style={{ height: 34, fontSize: 12 }}>
+              <button className="btn btn-primary" onClick={handleExportMeritListPDF} style={{ height: 34, fontSize: 12, background: '#047857', border: 'none' }}>
                 PDF Export
               </button>
             </div>
@@ -477,11 +478,11 @@ export default function AcademicsDashboard({ store, user }) {
               <tbody>
                 {meritList.map((s, idx) => (
                   <tr key={s.id || idx}>
-                    <td><strong style={{ color: '#0078d4' }}>#{s.streamPosition || idx + 1}</strong></td>
+                    <td><strong style={{ color: '#047857' }}>#{s.streamPosition || idx + 1}</strong></td>
                     <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || s.admission_no || '-'}</span></td>
                     <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
                     <td>{s.class}</td>
-                    <td style={{ fontWeight: 700, color: '#107c10' }}>{s.totalMarks}</td>
+                    <td style={{ fontWeight: 700, color: '#047857' }}>{s.totalMarks}</td>
                     <td style={{ fontWeight: 700 }}>{s.meanPercentage.toFixed(1)}%</td>
                     <td>
                       <Badge color={s.meanGradeCode === 'A' || s.meanGradeCode === 'EE' ? 'green' : s.meanGradeCode === 'E' || s.meanGradeCode === 'BE' ? 'red' : 'blue'}>
@@ -503,10 +504,10 @@ export default function AcademicsDashboard({ store, user }) {
         </div>
       )}
 
-      {/* ── TAB 3: MARKS ENTRY AUDIT ── */}
+      {/* ── TAB 3: MARKS AUDIT ── */}
       {activeTab === 'audit' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Marks Entry Audit Register</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>Audit score submissions across all class subjects</span>
@@ -522,7 +523,7 @@ export default function AcademicsDashboard({ store, user }) {
                 {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
               </select>
 
-              <button className="btn btn-primary" onClick={handleExportAuditPDF} style={{ height: 34, fontSize: 12 }}>
+              <button className="btn btn-primary" onClick={handleExportAuditPDF} style={{ height: 34, fontSize: 12, background: '#047857', border: 'none' }}>
                 Export Audit PDF
               </button>
             </div>
@@ -548,7 +549,7 @@ export default function AcademicsDashboard({ store, user }) {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, minWidth: 32 }}>{m.pct}%</span>
-                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#107c10' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
+                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#047857' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
                     </div>
                   </td>
                   <td className="muted">{m.enteredCount} of {m.totalStudents}</td>
@@ -566,8 +567,8 @@ export default function AcademicsDashboard({ store, user }) {
 
       {/* ── TAB 4: RESULT SLIPS & CARDS ── */}
       {activeTab === 'slips' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Result Slips & Report Cards Hub</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>Generate and print official terminal result slips</span>
@@ -618,7 +619,7 @@ export default function AcademicsDashboard({ store, user }) {
                     <td><strong>{s.class || '-'}</strong></td>
                     <td>{s.gender || '-'}</td>
                     <td>
-                      <button className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '3px 10px' }} onClick={() => setSelectedStudentForReport(s)}>
+                      <button className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '3px 10px', background: '#047857', border: 'none' }} onClick={() => setSelectedStudentForReport(s)}>
                         View Result Slip
                       </button>
                     </td>
