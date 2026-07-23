@@ -116,8 +116,11 @@ export default function Gradebook({ store }) {
       setEditing(null);
       return;
     }
-    const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
+    if (!target) return;
+    const is844 = is844Class(target.class);
+    const maxScore = is844 ? 100 : 4;
+    const v = field === 'remarks' ? value : Math.max(0, Math.min(maxScore, Number(value) || 0));
     if (target) {
       const currentScores = target.scores || {};
       const subjectScores = currentScores[subject] || {};

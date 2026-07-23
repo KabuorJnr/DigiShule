@@ -195,8 +195,14 @@ export default function DosDashboard({ store, user }) {
         const entered = studentsInClass.filter(s => {
           const sc = s.scores?.[sub];
           if (!sc) return false;
-          if (typeof sc === 'number') return sc > 0;
-          return (Number(sc.a1) || 0) + (Number(sc.a2) || 0) + (Number(sc.a3) || 0) + (Number(sc.a4) || 0) > 0;
+          if (typeof sc === 'number') return true;
+          if (sc.score !== undefined && sc.score !== '') return true;
+          if (sc.average !== undefined && sc.average !== '') return true;
+          if (sc.a1 !== undefined && sc.a1 !== '') return true;
+          if (sc.a2 !== undefined && sc.a2 !== '') return true;
+          if (sc.a3 !== undefined && sc.a3 !== '') return true;
+          if (sc.a4 !== undefined && sc.a4 !== '') return true;
+          return false;
         }).length;
         classEntered += entered;
         classTotal += studentsInClass.length;
