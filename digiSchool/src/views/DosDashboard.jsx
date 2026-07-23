@@ -42,8 +42,10 @@ export default function DosDashboard({ store, user }) {
     
     // 1. Fetch live students using api helper
     try {
-      const { data: studentData } = await fetchStudents(0, 2000);
-      if (studentData && studentData.length > 0) setStudents(studentData);
+      const { data: studentData } = await fetchStudents(0, 2000, { activeOnly: true });
+      if (studentData && studentData.length > 0) {
+        setStudents(studentData.filter(s => s.status === 'Active'));
+      }
     } catch (e) {
       console.warn('DoS student fetch error:', e);
     }
@@ -114,8 +116,9 @@ export default function DosDashboard({ store, user }) {
 
   // ── COMPUTED DATA ── (Live data from Registrar & Principal portals)
   const rawStudents = useMemo(() => {
-    if (store?.students && Array.isArray(store.students)) return store.students;
-    return students || [];
+    if (students && students.length > 0) return students;
+    if (store?.students && Array.isArray(store.students)) return store.students.filter(s => s.status === 'Active');
+    return [];
   }, [store?.students, students]);
 
   const activeStudents = useMemo(() => 
