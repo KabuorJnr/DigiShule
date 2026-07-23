@@ -142,7 +142,11 @@ export default function DosDashboard({ store, user }) {
     fetchAllDosData();
   }, [currentSchoolId]);
 
-  const rawStudents = useMemo(() => students || [], [students]);
+  const rawStudents = useMemo(() => {
+    if (students && Array.isArray(students) && students.length > 0) return students;
+    if (store?.students && Array.isArray(store.students) && store.students.length > 0) return store.students;
+    return [];
+  }, [store?.students, students]);
 
   const activeStudents = useMemo(() =>
     rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'),
