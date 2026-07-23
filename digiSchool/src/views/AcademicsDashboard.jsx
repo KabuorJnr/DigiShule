@@ -33,10 +33,8 @@ export default function AcademicsDashboard({ store, user }) {
   const [searchStudent, setSearchStudent] = useState('');
 
   const rawStudents = useMemo(() => {
-    if (students && students.length > 0) return students;
-    if (store?.students && store.students.length > 0) return store.students;
-    return [];
-  }, [students, store?.students]);
+    return students || [];
+  }, [students]);
 
   const activeStudentsList = useMemo(() => {
     return rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
