@@ -6,9 +6,9 @@ import {
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 import { Badge, ProgressBar } from './widgets';
 import { 
-  Award, Download, Filter, Search, ArrowUpDown, ArrowUp, ArrowDown, 
-  TrendingUp, TrendingDown, Users, CheckCircle2, FileSpreadsheet, FileText,
-  Star, ShieldCheck, Info
+  Award, Download, Filter, Search, ArrowUp, ArrowDown, 
+  TrendingUp, FileSpreadsheet, CheckCircle2, Lock, Unlock, Edit3, Save,
+  CheckCircle, AlertTriangle, ShieldCheck, RefreshCw
 } from 'lucide-react';
 
 export default function MeritListModule({ 
@@ -18,8 +18,21 @@ export default function MeritListModule({
   classes = [], 
   userRole = 'dos', 
   currentStudentId = null,
-  notify = console.log 
+  notify = console.log,
+  onUpdateStudentScores = null
 }) {
+  // ── EXECUTIVE READ & WRITE PERMISSION ──
+  const isExecutive = useMemo(() => {
+    const role = (userRole || '').toLowerCase();
+    return ['dos', 'deputy_academic', 'principal', 'admin', 'super_admin'].includes(role);
+  }, [userRole]);
+
+  // ── PUBLICATION & EDITING STATE ──
+  const [isPublished, setIsPublished] = useState(false);
+  const [publishedInfo, setPublishedInfo] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedScores, setEditedScores] = useState({}); // { studentId_subject: score }
+
   // ── CONTROLS STATE ──
   const [modelMode, setModelMode] = useState('auto'); // 'auto' | 'cbc' | '844'
   const [selectedClass, setSelectedClass] = useState('All');
@@ -50,7 +63,7 @@ export default function MeritListModule({
     return activeCurriculum === '844' ? KCSE_844_SUBJECTS : CBC_SUBJECTS;
   }, [activeCurriculum]);
 
-  // Filter & Evaluate Students
+  // Filter & Evaluate Students with Live Score Overrides
   const evaluatedStudents = useMemo(() => {
     let list = students.filter(s => 
       s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'
@@ -71,19 +84,28 @@ export default function MeritListModule({
     // Evaluate scores for active subjects
     const evaluated = list.map(s => {
       const is844 = activeCurriculum === '844' || is844Class(s.class);
-      const overallPct = studentOverall(s, activeSubjects);
+      
+      // Build effective score map with live overrides
+      const effectiveScores = { ...(s.scores || {}) };
+      activeSubjects.forEach(sub => {
+        const overrideKey = `${s.id}_${sub}`;
+        if (editedScores[overrideKey] !== undefined) {
+          effectiveScores[sub] = Number(editedScores[overrideKey]) || 0;
+        }
+      });
+
+      const studentWithEffectiveScores = { ...s, scores: effectiveScores };
+      const overallPct = studentOverall(studentWithEffectiveScores, activeSubjects);
       const grade = gradeFor(overallPct, schoolSettings?.gradeBoundaries, is844 ? '844' : 'CBC');
       const pts = pointsForGrade(grade, is844 ? '844' : 'CBC');
 
-      const subjectScores = {};
+      const subjectScoresMap = {};
       let total = 0;
-      let countedSubs = 0;
 
       activeSubjects.forEach(sub => {
-        const val = subjectAverage(s.scores?.[sub]);
-        subjectScores[sub] = val;
+        const val = subjectAverage(effectiveScores[sub]);
+        subjectScoresMap[sub] = val;
         total += val;
-        if (val > 0) countedSubs++;
       });
 
       const average = activeSubjects.length > 0 ? Math.round((total / activeSubjects.length) * 10) / 10 : 0;
@@ -95,13 +117,13 @@ export default function MeritListModule({
         name: s.name || 'Unnamed Student',
         class: s.class || '-',
         gender: s.gender || '-',
-        scores: subjectScores,
+        scores: subjectScoresMap,
         totalMarks: Math.round(total),
         averagePct: average,
         meanGrade: grade,
         points: pts,
         isPassed,
-        raw: s
+        raw: studentWithEffectiveScores
       };
     });
 
@@ -139,7 +161,26 @@ export default function MeritListModule({
     }
 
     return ranked;
-  }, [students, selectedClass, searchQuery, activeCurriculum, activeSubjects, passThreshold, schoolSettings, sortField, sortDirection]);
+  }, [students, selectedClass, searchQuery, activeCurriculum, activeSubjects, passThreshold, schoolSettings, sortField, sortDirection, editedScores]);
+
+  // Handle Score Input Change (Exec Only)
+  const handleScoreChange = (studentId, subject, val) => {
+    if (!isExecutive) return;
+    const num = Math.min(100, Math.max(0, Number(val) || 0));
+    setEditedScores(prev => ({
+      ...prev,
+      [`${studentId}_${subject}`]: num
+    }));
+  };
+
+  // Save Score Modifications
+  const handleSaveAllScores = () => {
+    if (onUpdateStudentScores) {
+      onUpdateStudentScores(editedScores);
+    }
+    setIsEditing(false);
+    notify('Student scores updated and saved successfully!', 'success');
+  };
 
   // Handle Sort Click
   const handleSort = (field) => {
@@ -148,6 +189,24 @@ export default function MeritListModule({
     } else {
       setSortField(field);
       setSortDirection(field === 'name' || field === 'adm' ? 'asc' : 'desc');
+    }
+  };
+
+  // Toggle Publication (Executive Only)
+  const handleTogglePublication = () => {
+    if (!isExecutive) return;
+    if (isPublished) {
+      setIsPublished(false);
+      setPublishedInfo(null);
+      notify('Merit list returned to DRAFT mode for moderation', 'info');
+    } else {
+      const info = {
+        approverRole: userRole === 'dos' ? 'Director of Studies (DoS)' : userRole === 'principal' ? 'Principal' : 'Deputy Academics',
+        approvedAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      };
+      setIsPublished(true);
+      setPublishedInfo(info);
+      notify(`Official Merit List APPROVED & PUBLISHED by ${info.approverRole}!`, 'success');
     }
   };
 
@@ -162,7 +221,6 @@ export default function MeritListModule({
       const mean = Math.round((sum / (scores.length || 1)) * 10) / 10;
       const sd = calculateStandardDeviation(scores);
 
-      // Top Performer
       let topVal = -1;
       let topStudent = 'None';
       evaluatedStudents.forEach(s => {
@@ -173,7 +231,6 @@ export default function MeritListModule({
         }
       });
 
-      // Pass Rate in Subject
       const passedCount = scores.filter(sc => sc >= passThreshold).length;
       const passPct = Math.round((passedCount / (scores.length || 1)) * 100);
 
@@ -203,7 +260,6 @@ export default function MeritListModule({
     const passedStudents = evaluatedStudents.filter(s => s.isPassed).length;
     const passRate = Math.round((passedStudents / totalStudents) * 100);
 
-    // Identify Strongest and Weakest Subjects
     let bestSub = '-';
     let highestMean = -1;
     let worstSub = '-';
@@ -258,7 +314,6 @@ export default function MeritListModule({
       activeCurriculum === '844' ? `${s.meanGrade} (${s.points}pts)` : s.meanGrade
     ]);
 
-    // Subject Mean Footer Row
     const footerRow = [
       'CLASS MEAN', '-', '-', '-',
       ...activeSubjects.map(sub => subjectAnalysis[sub]?.mean || '-'),
@@ -271,7 +326,7 @@ export default function MeritListModule({
     exportTablePDF({
       school: schoolSettings,
       title: `OFFICIAL MERIT LIST — ${activeCurriculum === '844' ? '8-4-4 KCSE MODEL' : 'CBC COMPETENCY RATING'}`,
-      subtitle: `Scope: ${selectedClass === 'All' ? 'All Classes & Streams' : selectedClass} | Ranked Students: ${evaluatedStudents.length} | Class Mean: ${classStats.meanScore}% (${classStats.overallGrade})`,
+      subtitle: `Status: ${isPublished ? 'PUBLISHED & OFFICIALLY VERIFIED' : 'DRAFT FOR MODERATION'} | Scope: ${selectedClass === 'All' ? 'All Classes & Streams' : selectedClass} | Ranked: ${evaluatedStudents.length} | Class Mean: ${classStats.meanScore}% (${classStats.overallGrade})`,
       head,
       body,
       filename: `Merit_List_${activeCurriculum}_${selectedClass.replace(/\s+/g, '_')}.pdf`
@@ -302,7 +357,6 @@ export default function MeritListModule({
       rows.push(row);
     });
 
-    // Append Subject Means
     rows.push(['-', 'SUMMARY', 'CLASS MEAN', '-', '-', ...activeSubjects.map(sub => subjectAnalysis[sub]?.mean || 0), '-', classStats.meanScore, classStats.overallGrade, '-']);
 
     downloadExcel(`NEMIS_Merit_List_${selectedClass.replace(/\s+/g, '_')}.xlsx`, [{ name: 'Merit List', aoa: rows }]);
@@ -311,6 +365,95 @@ export default function MeritListModule({
 
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 18, marginBottom: 20 }}>
+      
+      {/* ── EXECUTIVE APPROVAL & PUBLICATION BANNER ── */}
+      <div 
+        style={{ 
+          background: isPublished ? '#f0fdf4' : '#fffbeb',
+          border: `1px solid ${isPublished ? '#bbf7d0' : '#fde68a'}`,
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 16,
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {isPublished ? (
+            <ShieldCheck size={22} color="#166534" />
+          ) : (
+            <AlertTriangle size={22} color="#b45309" />
+          )}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: isPublished ? '#166534' : '#b45309', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>{isPublished ? 'OFFICIALLY APPROVED & PUBLISHED' : 'DRAFT RESULTS — PENDING EXECUTIVE APPROVAL'}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: isPublished ? '#166534' : '#b45309', color: '#ffffff', textTransform: 'uppercase' }}>
+                {isPublished ? 'Verified' : 'Unpublished'}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: isPublished ? '#15803d' : '#92400e', marginTop: 2 }}>
+              {isPublished ? (
+                <>Approved by <strong>{publishedInfo?.approverRole}</strong> on {publishedInfo?.approvedAt}. Official report cards can now be issued.</>
+              ) : (
+                <>Requires sign-off from <strong>Director of Studies (DoS)</strong>, <strong>Deputy Academic</strong>, or <strong>Principal</strong> before publishing.</>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Action Controls */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {isExecutive ? (
+            <>
+              {Object.keys(editedScores).length > 0 && (
+                <button 
+                  onClick={handleSaveAllScores}
+                  style={{ height: 34, padding: '0 12px', background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Save size={14} /> Save Score Changes
+                </button>
+              )}
+
+              <button 
+                onClick={() => setIsEditing(prev => !prev)}
+                style={{ height: 34, padding: '0 12px', background: isEditing ? '#f1f5f9' : '#ffffff', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Edit3 size={14} color="#047857" /> {isEditing ? 'Done Editing' : 'Direct Score Editing'}
+              </button>
+
+              <button 
+                onClick={handleTogglePublication}
+                style={{ 
+                  height: 34, 
+                  padding: '0 14px', 
+                  background: isPublished ? '#dc2626' : '#047857', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  borderRadius: 6, 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  boxShadow: isPublished ? 'none' : '0 1px 3px rgba(4, 120, 87, 0.4)'
+                }}
+              >
+                {isPublished ? <Unlock size={14} /> : <Lock size={14} />}
+                {isPublished ? 'Unpublish / Revoke' : 'Approve & Publish Results'}
+              </button>
+            </>
+          ) : (
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', background: '#ffffff', padding: '4px 10px', borderRadius: 4, border: '1px solid #cbd5e1' }}>
+              Read-Only Access Mode
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ── TOOLBAR & CONTROLS ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -408,7 +551,7 @@ export default function MeritListModule({
         </div>
 
         <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
-          Ranked: <strong style={{ color: '#047857' }}>{evaluatedStudents.length}</strong> Students
+          Access Level: <strong style={{ color: isExecutive ? '#047857' : '#2563eb' }}>{isExecutive ? 'Read & Write (Executive)' : 'Read-Only'}</strong>
         </div>
       </div>
 
@@ -516,21 +659,21 @@ export default function MeritListModule({
               let rankBadge = null;
 
               if (s.rank === 1) {
-                rowStyle.background = '#fffbeb'; // Subtle Gold Accent
+                rowStyle.background = '#fffbeb';
                 rankBadge = (
                   <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     🥇 #1 Top
                   </span>
                 );
               } else if (s.rank === 2) {
-                rowStyle.background = '#f8fafc'; // Subtle Silver Accent
+                rowStyle.background = '#f8fafc';
                 rankBadge = (
                   <span style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     🥈 #2
                   </span>
                 );
               } else if (s.rank === 3) {
-                rowStyle.background = '#fff7ed'; // Subtle Bronze Accent
+                rowStyle.background = '#fff7ed';
                 rankBadge = (
                   <span style={{ background: '#ffedd5', color: '#c2410c', border: '1px solid #fed7aa', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     🥉 #3
@@ -547,23 +690,46 @@ export default function MeritListModule({
                   <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
                   <td style={{ padding: '10px 12px', fontSize: 12 }}>{s.class}</td>
 
-                  {/* Subject Scores Cells */}
+                  {/* Subject Scores Cells (Editable for Executive) */}
                   {activeSubjects.map(sub => {
                     const score = s.scores[sub];
                     const isTopInSub = score > 0 && score === subjectAnalysis[sub]?.topScore;
+                    const overrideKey = `${s.id}_${sub}`;
+                    const isOverridden = editedScores[overrideKey] !== undefined;
+
                     return (
                       <td 
                         key={sub} 
                         style={{ 
-                          padding: '10px 8px', 
+                          padding: isEditing && isExecutive ? '4px' : '10px 8px', 
                           textAlign: 'center', 
                           fontWeight: isTopInSub ? 800 : 600,
                           fontSize: 12,
-                          background: isTopInSub ? '#dcfce7' : 'transparent',
+                          background: isOverridden ? '#eff6ff' : isTopInSub ? '#dcfce7' : 'transparent',
                           color: isTopInSub ? '#15803d' : score >= passThreshold ? '#0f172a' : '#d13438'
                         }}
                       >
-                        {score || '-'}
+                        {isEditing && isExecutive ? (
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value={score || ''} 
+                            onChange={e => handleScoreChange(s.id, sub, e.target.value)}
+                            style={{ 
+                              width: 48, 
+                              height: 28, 
+                              textAlign: 'center', 
+                              borderRadius: 4, 
+                              border: isOverridden ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              background: '#ffffff'
+                            }}
+                          />
+                        ) : (
+                          score || '-'
+                        )}
                       </td>
                     );
                   })}
@@ -626,21 +792,6 @@ export default function MeritListModule({
                   Statistical Variance
                 </td>
               </tr>
-
-              {/* Row 3: Top Performer per Subject */}
-              <tr style={{ background: '#f0fdf4', borderTop: '1px solid #dcfce7', fontSize: 11 }}>
-                <td colSpan={4} style={{ padding: '8px 12px', color: '#166534', fontWeight: 700 }}>
-                  🏆 Subject Champions
-                </td>
-                {activeSubjects.map(sub => (
-                  <td key={sub} style={{ padding: '8px 8px', textAlign: 'center', color: '#15803d', fontWeight: 700 }}>
-                    {subjectAnalysis[sub]?.topScore ? `${subjectAnalysis[sub]?.topScore}pts` : '-'}
-                  </td>
-                ))}
-                <td colSpan={3} style={{ padding: '8px 12px', textAlign: 'right', color: '#166534', fontWeight: 700 }}>
-                  Highest Column Scorers
-                </td>
-              </tr>
             </tfoot>
           )}
         </table>
@@ -649,45 +800,6 @@ export default function MeritListModule({
       {displayedStudents.length === 0 && (
         <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>
           No student records found matching the active filters or class selection.
-        </div>
-      )}
-
-      {/* ── DETAILED PER-SUBJECT ANALYSIS GRID ── */}
-      {userRole !== 'parent' && (
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <TrendingUp size={16} color="#047857" /> Per-Subject Performance Matrix & Top Performers
-          </h3>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-            {activeSubjects.map(sub => {
-              const data = subjectAnalysis[sub] || {};
-              return (
-                <div key={sub} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{sub}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#047857', background: '#dcfce7', padding: '1px 6px', borderRadius: 4 }}>
-                      {data.mean}% Mean
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 6 }}>
-                    <span>Pass Rate: <strong>{data.passPct}%</strong></span>
-                    <span>SD: <strong>&plusmn;{data.sd}</strong></span>
-                  </div>
-
-                  <ProgressBar value={data.mean} color={data.mean >= 60 ? '#047857' : data.mean >= 45 ? '#d97706' : '#d13438'} />
-
-                  <div style={{ fontSize: 11, color: '#334155', marginTop: 6, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Star size={11} color="#b45309" fill="#fde68a" />
-                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      Top: {data.topStudent}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
     </div>

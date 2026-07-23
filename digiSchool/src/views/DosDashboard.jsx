@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { fetchStudents } from '../lib/api';
 import { Badge, ProgressBar } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
+import MeritListModule from '../components/MeritListModule';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import {
@@ -437,6 +438,7 @@ export default function DosDashboard({ store, user }) {
       <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 16, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
         {[
           { id: 'overview', label: 'Academic Overview', icon: ShieldCheck },
+          { id: 'merit', label: 'Merit List & Rankings', icon: Award, badge: activeStudents.length },
           { id: 'registry', label: 'Student Registry', icon: Users, badge: activeStudents.length },
           { id: 'staff', label: 'Faculty & Workload', icon: BookOpen, badge: rawStaff.length },
           { id: 'marks', label: 'Marks Audit Matrix', icon: CheckCircle, badge: `${overallMarksPct}%` },
@@ -486,6 +488,19 @@ export default function DosDashboard({ store, user }) {
           <RefreshCw size={24} color="#96d5c3ff" className="spin" style={{ marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Loading Live Academic Records...</div>
         </div>
+      )}
+
+      {/* ── TAB: MERIT LIST & RANKINGS ── */}
+      {!loading && activeTab === 'merit' && (
+        <MeritListModule 
+          students={activeStudents}
+          schoolSettings={settings}
+          teachers={rawStaff}
+          classes={dynamicClasses}
+          userRole={user?.role || 'dos'}
+          currentStudentId={user?.student_id || user?.id}
+          notify={notify}
+        />
       )}
 
       {/* ── TAB 1: ACADEMIC OVERVIEW ── */}
