@@ -87,6 +87,10 @@ export default function LandingPage() {
           </div>
           <div className="utility-right">
             <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+              E-Learning Portal
+            </a>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
               School Staff &amp; Parent Portal
             </a>
