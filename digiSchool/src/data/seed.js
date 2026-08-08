@@ -39,3 +39,22 @@ export const DEPT_COLORS = {
   Languages: '#8B5CF6',
   Math: '#F59E0B',
 };
+
+// Zeraki-style subject metadata: KNEC-ish code, short initials and a display colour.
+export const SUBJECT_META = {
+  Mathematics: { code: '121', initials: 'MAT', color: '#F59E0B' },
+  English:     { code: '101', initials: 'ENG', color: '#8B5CF6' },
+  Kiswahili:   { code: '102', initials: 'KIS', color: '#A855F7' },
+  Biology:     { code: '231', initials: 'BIO', color: '#3B82F6' },
+  Chemistry:   { code: '233', initials: 'CHE', color: '#0EA5E9' },
+  Physics:     { code: '232', initials: 'PHY', color: '#6366F1' },
+  History:     { code: '311', initials: 'HIS', color: '#10B981' },
+  Geography:   { code: '312', initials: 'GEO', color: '#14B8A6' },
+};
+
+// Metadata for any subject, deriving sensible defaults for ones not in SUBJECT_META.
+export const getSubjectMeta = (name) => SUBJECT_META[name] || {
+  code: '',
+  initials: (name || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || '—',
+  color: DEPT_COLORS[DEPARTMENTS[name]] || '#64748b',
+};
