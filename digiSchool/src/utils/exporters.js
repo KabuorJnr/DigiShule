@@ -126,6 +126,11 @@ export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], studen
     if (!r) return;
     const is844 = r.systemType === '844';
     
+    if (!is844) {
+      renderCBCReportCard(doc, r, school, pageWidth, pageHeight);
+      return;
+    }
+    
     // Outer Premium Border
     doc.setDrawColor(15, 23, 42); // Deep Navy
     doc.setLineWidth(2);
@@ -343,6 +348,203 @@ export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], studen
   doc.save(filename);
 }
 
+function renderCBCReportCard(doc, r, school, pageWidth, pageHeight) {
+  // 1. Header Block
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 58, 95);
+  doc.text(school.name || "Homa Bay School", pageWidth / 2, 40, { align: 'center' });
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(70, 70, 70);
+  let headerY = 55;
+  if (school.address) { doc.text(`Address: ${school.address}`, pageWidth / 2, headerY, { align: 'center' }); headerY += 12; }
+  if (school.phone || school.tel) { doc.text(`Tel: ${school.phone || school.tel || ''}`, pageWidth / 2, headerY, { align: 'center' }); headerY += 12; }
+  if (school.email) { doc.text(`Email: ${school.email || ''}`, pageWidth / 2, headerY, { align: 'center' }); headerY += 12; }
+  
+  // 2. Title Banner
+  headerY += 10;
+  doc.setFillColor(150, 160, 180);
+  doc.rect(20, headerY, pageWidth - 40, 18, 'F');
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text(`ACADEMIC REPORT FORM - ${String(r.className).toUpperCase()} - ${String(r.examTitle).toUpperCase()} - (${String(r.termName).toUpperCase()})`, pageWidth / 2, headerY + 12, { align: 'center' });
+  
+  headerY += 32;
+  
+  // 3. Student Profile Area
+  doc.setFillColor(220, 220, 220);
+  doc.rect(20, headerY, 70, 75, 'F'); // Photo placeholder
+  
+  doc.setTextColor(30, 30, 40);
+  doc.setFontSize(14);
+  doc.text(r.studentName, 100, headerY + 15);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`ADMNO: ${r.admissionNo}`, 100, headerY + 30);
+  doc.text(`GRADE: ${r.className}`, 100, headerY + 45);
+  doc.text(`PATHWAY: STEM`, 100, headerY + 60);
+
+  // 4. Graph Area
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text("Subject Performance - Student vs Class", pageWidth - 200, headerY + 10);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(pageWidth - 200, headerY + 15, pageWidth - 20, headerY + 15);
+  doc.line(pageWidth - 200, headerY + 65, pageWidth - 20, headerY + 65);
+  
+  const subjects = r.subjectRows;
+  if (subjects.length > 0) {
+    const xStep = 180 / subjects.length;
+    let prevX = null, prevY = null;
+    doc.setDrawColor(100, 120, 150);
+    doc.setFillColor(100, 120, 150);
+    doc.setLineWidth(1);
+    subjects.forEach((sub, i) => {
+      const sx = pageWidth - 200 + (i * xStep) + (xStep / 2);
+      const sy = headerY + 65 - ((sub.percentage / 100) * 50);
+      doc.circle(sx, sy, 2, 'F');
+      if (prevX !== null) doc.line(prevX, prevY, sx, sy);
+      prevX = sx; prevY = sy;
+      doc.setFontSize(6);
+      doc.text(sub.subject.substring(0, 4).toUpperCase(), sx, headerY + 75, { align: 'center' });
+    });
+  }
+  
+  headerY += 95;
+  
+  // 5. Summary Stats Banner
+  doc.setFillColor(235, 240, 245);
+  doc.rect(20, headerY, pageWidth - 40, 36, 'F');
+  
+  const stats = [
+    { label: 'Performance Level', val: r.meanGradeCode },
+    { label: 'Total Marks', val: `${r.totalMarks}/${subjects.length * 100}` },
+    { label: 'Total Points', val: `${r.totalPoints}/${subjects.length * 8}` },
+    { label: 'Mean Points', val: `${r.meanPoints}/8` }
+  ];
+  
+  doc.setTextColor(30, 58, 95);
+  stats.forEach((st, i) => {
+    const cx = 20 + ((pageWidth - 40) / 4) * i + ((pageWidth - 40) / 8);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(st.label, cx, headerY + 14, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(st.val, cx, headerY + 28, { align: 'center' });
+  });
+  
+  headerY += 46;
+  
+  // 6. Subjects Table
+  const tableBody = subjects.map(s => [
+    s.subject,
+    `${s.percentage}%`,
+    `0 ->`, 
+    s.gradeCode,
+    s.remark || 'Meets basic standards; keep going.',
+    'Subject Teacher' 
+  ]);
+  
+  autoTable(doc, {
+    head: [['SUBJECTS', 'MARKS', 'DEV.', 'GRADE', 'COMMENT', 'TEACHER']],
+    body: tableBody,
+    startY: headerY,
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 5, textColor: [30,30,30], lineColor: [200,200,200] },
+    headStyles: { fillColor: [240, 240, 240], textColor: [30, 30, 30], fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 120, fontStyle: 'bold' },
+      1: { halign: 'center', cellWidth: 40 },
+      2: { halign: 'center', cellWidth: 40 },
+      3: { halign: 'center', fontStyle: 'bold', cellWidth: 45 },
+      4: { cellWidth: 170 },
+      5: { cellWidth: 95 }
+    },
+    margin: { left: 20, right: 20 }
+  });
+  
+  let finalY = doc.lastAutoTable.finalY + 10;
+  
+  // 7. Remarks Section
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(20, finalY, 250, 60); 
+  doc.rect(280, finalY, pageWidth - 300, 60); 
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text("Class Teacher Remarks:", 25, finalY + 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`${r.studentName}, you're meeting the expected standards with\nsolid effort. Continue this positive momentum.`, 25, finalY + 26);
+  doc.text("Signature: _______________________", 25, finalY + 52);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Principal Remarks:", 285, finalY + 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`${r.studentName}, you are performing well and meeting expectations.\nKeep up the good work - you're on track for success!`, 285, finalY + 26);
+  doc.text("Signature: _______________________", 285, finalY + 52);
+  
+  // Official Stamp Mock
+  doc.setDrawColor(60, 80, 180);
+  doc.setTextColor(60, 80, 180);
+  doc.setLineWidth(1);
+  doc.rect(380, finalY + 15, 140, 45);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text("CHIEF PRINCIPAL", 450, finalY + 27, { align: 'center' });
+  doc.setFontSize(7);
+  doc.text((school.name || 'HOMA BAY SCHOOL').toUpperCase(), 450, finalY + 39, { align: 'center' });
+  doc.text(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase(), 450, finalY + 49, { align: 'center' });
+  
+  finalY += 80;
+  
+  // 8. Grade Descriptors Table
+  if (finalY + 80 > pageHeight - 40) {
+    doc.addPage();
+    finalY = 40;
+  }
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(50, 50, 50);
+  doc.text("GRADE DESCRIPTORS", 20, finalY);
+  
+  autoTable(doc, {
+    head: [['Performance Level', 'Exceeding Expectations', 'Meeting Expectations', 'Approaching Expectations', 'Below Expectations']],
+    body: [
+      ['Actual Performance', 'EE1             EE2', 'ME1             ME2', 'AE1             AE2', 'BE1             BE2'],
+      ['Points', '8                  7', '6                  5', '4                  3', '2                  1'],
+      ['Range (%)', '90-100       75-89', '58-74          41-57', '31-40          21-30', '11-20          0-10']
+    ],
+    startY: finalY + 5,
+    theme: 'grid',
+    styles: { fontSize: 7, cellPadding: 4, halign: 'center', textColor: [50,50,50], lineColor: [200,200,200] },
+    headStyles: { fillColor: [240, 240, 240], textColor: [50, 50, 50], fontStyle: 'bold', halign: 'center' },
+    columnStyles: { 0: { fontStyle: 'bold', halign: 'left', cellWidth: 100 } },
+    margin: { left: 20, right: 20 }
+  });
+  
+  // 9. Footer
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFontSize(7);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Verification Code: ${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 70, pageH - 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Scan to access your interactive student profile.`, 70, pageH - 20);
+  doc.text(`Your username: ${String(r.admissionNo)}@${(school.name || 'school').replace(/\s+/g, '').toLowerCase()}`, 70, pageH - 10);
+  
+  // QR code mock box
+  doc.setDrawColor(150, 150, 150);
+  doc.setFillColor(240, 240, 240);
+  doc.rect(20, pageH - 35, 30, 30, 'FD');
+}
 
 export function exportSchemeOfWorkPDF({ school, scheme, rows, filename }) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
@@ -514,7 +716,7 @@ export function exportTimetableLandscapePDF({
   const colCount = grid.length + 1;
   const cellPad = colCount >= 12 ? 3 : colCount >= 10 ? 4 : 5;
   const marginBottom = 30; // leaves room for the footer line
-  const headerH = 30;
+  const headerH = 38; // taller header so period # and time don't overlap
   const availH = pageH - tableTop - marginBottom;
   const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
 
@@ -538,25 +740,30 @@ export function exportTimetableLandscapePDF({
       const ti = ci - 1;
       const cx = data.cell.x + data.cell.width / 2;
 
-      // Header: period number (bold) + time range (small grey).
+      // Header: period number on top, bold time range below (no overlap).
       if (data.section === 'head') {
         if (ci === 0) return;
         const slot = cols[ti];
         if (!slot) return;
         doc.setTextColor(0);
+        // Overpaint the whole header cell white so nothing autoTable drew earlier bleeds through.
+        doc.setFillColor(255, 255, 255);
+        doc.rect(data.cell.x + 0.4, data.cell.y + 0.4, data.cell.width - 0.8, data.cell.height - 0.8, 'F');
         doc.setFont('helvetica', 'bold');
         if (slot.teaching) {
+          // Period number, bold, top-aligned.
           doc.setFontSize(11);
-          doc.text(String(slot.period), cx, data.cell.y + (slot.start ? 13 : 18), { align: 'center' });
+          doc.text(String(slot.period), cx, data.cell.y + 14, { align: 'center' });
+          // Bold time range, bottom-aligned — clear space between them, no overlap.
+          if (slot.start) {
+            doc.setFontSize(6.8); doc.setTextColor(60);
+            doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 7, { align: 'center' });
+            doc.setTextColor(0);
+          }
         } else {
-          // Narrow break/lunch column: small single-line label, centered.
-          doc.setFontSize(6);
+          // Narrow break/lunch column: small bold label, centered.
+          doc.setFontSize(6.5);
           doc.text(String(slot.label), cx, data.cell.y + data.cell.height / 2 + 2, { align: 'center' });
-        }
-        if (slot.start && slot.teaching) {
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(90);
-          doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 5, { align: 'center' });
-          doc.setTextColor(0);
         }
         return;
       }

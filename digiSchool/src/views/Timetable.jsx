@@ -34,7 +34,7 @@ export function teacherAbbr(name) {
 const tint = (hex) => (hex || '#64748b') + '22';
 
 export default function Timetable({ store, user }) {
-  const isTimetableAdmin = user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
+  const isTimetableAdmin = ['deputy_admin', 'deputy_academic', 'dos', 'principal'].includes(user?.role);
   const { timetables, setTimetables, notify, settings, teachers } = store;
 
   const dynamicClasses = useMemo(() => {
@@ -257,7 +257,12 @@ export default function Timetable({ store, user }) {
   function saveCell(updated) {
     setTimetables((prev) => {
       const copy = { ...prev };
-      const grid = copy[actualCls].grid.map((r) => r.slice());
+      const baseCls = editCell.cls || cls;
+      const targetCls = ttType === 'Remedial' ? `${baseCls} (Remedial)` : baseCls;
+      
+      if (!copy[targetCls] || !copy[targetCls].grid) return prev;
+      
+      const grid = copy[targetCls].grid.map((r) => r.slice());
       grid[editCell.p][editCell.d] = {
         type: 'lesson',
         subject: updated.subject,
@@ -265,7 +270,7 @@ export default function Timetable({ store, user }) {
         dept: DEPARTMENTS[updated.subject] || 'Humanities',
         notes: updated.notes,
       };
-      copy[actualCls] = { ...copy[actualCls], grid };
+      copy[targetCls] = { ...copy[targetCls], grid };
       return copy;
     });
     setEditCell(null);

@@ -9,7 +9,7 @@ import 'jspdf-autotable';
 import {
   Download, FileText, CheckCircle, Clock, ShieldCheck, Check,
   Users, BookOpen, Award, AlertTriangle, Printer, RefreshCw, Search, Filter,
-  Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight
+  Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight, Calendar, Grid3x3, Zap
 } from 'lucide-react';
 
 // Corporate Dark Emerald Stat Card
@@ -435,6 +435,67 @@ export default function DosDashboard({ store, user }) {
             <Clock size={13} color="#6ee7b7" />
             {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
+        </div>
+      </div>
+
+      {/* ── TIMETABLE STUDIO QUICK ACCESS ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderLeft: '4px solid #047857',
+          borderRadius: 8,
+          padding: '14px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+          gap: 16,
+          flexWrap: 'wrap',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 260 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Grid3x3 size={22} color="#047857" />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.2px' }}>Timetable Studio</div>
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Build, edit and publish class &amp; teacher timetables · Full edit access</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', lineHeight: 1 }}>{Object.keys(timetables || {}).length}</div>
+              <div style={{ color: '#64748b', marginTop: 3 }}>Published</div>
+            </div>
+            <div style={{ width: 1, background: '#e2e8f0' }} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', lineHeight: 1 }}>{dynamicClasses.length}</div>
+              <div style={{ color: '#64748b', marginTop: 3 }}>Classes</div>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate && navigate('timetable')}
+            style={{
+              height: 38,
+              padding: '0 18px',
+              borderRadius: 6,
+              background: '#047857',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 700,
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.35)'
+            }}
+          >
+            <Zap size={14} /> Open Timetable Studio
+          </button>
         </div>
       </div>
 
