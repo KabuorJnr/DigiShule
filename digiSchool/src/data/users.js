@@ -545,7 +545,7 @@ export const ROLES = {
           { id: 'lessons', icon: 'file', label: 'Lesson Plans', view: 'lesson_plans' },
           { id: 'exams', icon: 'book', label: 'Exam Schedules', view: 'exams' },
           { id: 'teacher_resources', icon: 'folder', label: 'Assignments & Materials', view: 'teacher_resources' },
-          { id: 'elearning', icon: 'book', label: 'E-Learning', view: 'elearning' }
+          { id: 'elearning', icon: 'book', label: 'Live Classes', view: 'elearning' }
         ]
       },
       {
@@ -582,7 +582,7 @@ export const ROLES = {
         section: 'CORE',
         items: [
           { id: 'student', icon: 'student', label: 'My Portal', view: 'student' },
-          { id: 'elearning', icon: 'book', label: 'E-Learning', view: 'elearning' }
+          { id: 'elearning', icon: 'book', label: 'Live Classes', view: 'elearning' }
         ]
       },
       {
