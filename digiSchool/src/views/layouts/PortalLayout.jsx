@@ -221,14 +221,16 @@ export default function PortalLayout() {
             parent: ['attendance', 'contact', 'health', 'disciplinary'],
           };
 
+          let foundInLayout = false;
           for (const [layout, subs] of Object.entries(nestedSubRoutes)) {
             if (subs.includes(v)) {
               resolvedPath = `/portal/${layout}/${v}`;
+              foundInLayout = true;
               break;
             }
           }
 
-          if (p.tab) {
+          if (p.tab && !foundInLayout) {
             resolvedPath = `/portal/${v}/${p.tab}`;
           }
         }
@@ -288,11 +290,14 @@ export default function PortalLayout() {
       localStorage.setItem('eduone_school_id', sid);
     }
     setCurrentUser(profile);
-    // Only navigate to role default home on initial sign in greeting, preserving current route during session
+    // Only navigate to role default home on initial sign in, preserving current route during session or refresh
     if (greet) {
-      const newHome = ROLES[profile.role]?.home || 'overview';
-      setView(newHome);
-      navigateRouter(`/portal/${newHome}`);
+      const currentPath = window.location.pathname;
+      if (currentPath === '/portal' || currentPath === '/portal/') {
+        const newHome = ROLES[profile.role]?.home || 'overview';
+        setView(newHome);
+        navigateRouter(`/portal/${newHome}`, { replace: true });
+      }
     }
     if (greet) notify(`Welcome, ${profile.name}`, 'success', 'Signed In');
     await loadAllData();
