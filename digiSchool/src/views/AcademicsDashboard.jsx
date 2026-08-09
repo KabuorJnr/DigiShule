@@ -9,40 +9,28 @@ import MeritListModule from '../components/MeritListModule';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
-  const accent = color || '#047857';
   return (
-    <div 
-      style={{ 
+    <div
+      style={{
         background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: '14px 18px',
+        border: '1px solid #e5e7eb',
+        borderRadius: 10,
+        padding: '16px 18px',
         display: 'flex',
         flexDirection: 'column',
-        justify: 'space-between',
-        minHeight: 100,
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-        position: 'relative',
-        overflow: 'hidden'
+        gap: 10,
+        minHeight: 96,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          {label}
-        </span>
-        {IconComp && (
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${accent}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconComp size={15} color={accent} />
-          </div>
-        )}
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#6b7280' }}>{label}</span>
+        {IconComp && <IconComp size={16} color="#9ca3af" strokeWidth={1.75} />}
       </div>
-
-      <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', letterSpacing: '-0.5px', lineHeight: 1 }}>
         {value}
       </div>
-
-      {sub && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 500 }}>{sub}</div>}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accent }} />
+      {sub && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 'auto' }}>{sub}</div>}
+      <div style={{ display: 'none' }}>{color}</div>
     </div>
   );
 }
@@ -271,103 +259,34 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
   };
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 40 }}>
-      {/* ── TOP TOOLBAR ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+    <div style={{ background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
+      {/* ── PAGE HEADER ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-              Academic Merit & Performance Hub
-            </h1>
-            <span style={{ background: '#047857', color: '#ffffff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
-              Academic Office
-            </span>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#6b7280', marginBottom: 4 }}>
+            {settings?.name || 'School'} · Term 2 · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
-          <p style={{ margin: '2px 0 0 0', fontSize: 13, color: '#64748b' }}>
-            Merit list generation, subject performance analysis, marks verification & official result slips
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#111827', letterSpacing: '-0.4px' }}>
+            Academic Merit &amp; Performance
+          </h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
+            Merit list generation, subject performance analysis, marks verification &amp; official result slips.
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button 
+          <button
             onClick={() => navigate('gradebook')}
-            style={{ 
-              height: 36, 
-              padding: '0 14px', 
-              borderRadius: 6, 
-              background: '#ffffff', 
-              border: '1px solid #cbd5e1', 
-              fontSize: 13, 
-              fontWeight: 600, 
-              color: '#334155',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6,
-              cursor: 'pointer' 
-            }}
+            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#ffffff', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, color: '#374151', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
-            <BookOpen size={14} /> Open Gradebook
+            <BookOpen size={14} strokeWidth={1.75} /> Gradebook
           </button>
-          <button 
+          <button
             onClick={handleExportMeritListPDF}
-            style={{ 
-              height: 36, 
-              padding: '0 16px', 
-              borderRadius: 6, 
-              background: '#047857', 
-              border: 'none', 
-              fontSize: 13, 
-              fontWeight: 600, 
-              color: '#ffffff',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6,
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.3)' 
-            }}
+            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#111827', border: '1px solid #111827', fontSize: 13, fontWeight: 500, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
-            <Download size={14} /> Export Merit List (PDF)
+            <Download size={14} strokeWidth={1.75} /> Export Merit List
           </button>
-        </div>
-      </div>
-
-      {/* ── COMPACT EMERALD HEADER BANNER ── */}
-      <div 
-        style={{ 
-          background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', 
-          border: '1px solid #047857',
-          borderRadius: 8, 
-          padding: '14px 20px', 
-          display: 'flex', 
-          justify: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: 16,
-          color: '#ffffff',
-          flexWrap: 'wrap',
-          gap: 12
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 260 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-              {settings?.name || 'Academic Office'}
-            </span>
-            <span style={{ color: '#047857', fontSize: 10 }}>•</span>
-            <span style={{ fontSize: 11, color: '#a7f3d0' }}>Term 2 · 2026 Academic Year</span>
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
-            Academic Performance & Examination Analytics
-          </div>
-          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 2 }}>
-            Merit Ranking · Subject Means · Audit Register · Result Slips
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.08)', padding: '6px 12px', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
-            <Clock size={13} color="#6ee7b7" />
-            {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-          </div>
         </div>
       </div>
 
@@ -375,95 +294,71 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
       <div
         style={{
           background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderLeft: '4px solid #047857',
-          borderRadius: 8,
-          padding: '14px 18px',
+          border: '1px solid #e5e7eb',
+          borderRadius: 10,
+          padding: '16px 18px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 16,
+          marginBottom: 20,
           gap: 16,
           flexWrap: 'wrap',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 260 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Grid3x3 size={22} color="#047857" />
+          <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Grid3x3 size={18} color="#4b5563" strokeWidth={1.75} />
           </div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.2px' }}>Timetable Studio</div>
-            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Design, edit and publish class &amp; teacher timetables · Full edit access</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Timetable Studio</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Design, edit and publish class &amp; teacher timetables.</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', lineHeight: 1 }}>{Object.keys(store?.timetables || {}).length}</div>
-              <div style={{ color: '#64748b', marginTop: 3 }}>Published</div>
-            </div>
-            <div style={{ width: 1, background: '#e2e8f0' }} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', lineHeight: 1 }}>{dynamicClasses.length}</div>
-              <div style={{ color: '#64748b', marginTop: 3 }}>Classes</div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#6b7280' }}>
+            <div><span style={{ fontWeight: 600, color: '#111827' }}>{Object.keys(store?.timetables || {}).length}</span> published</div>
+            <div><span style={{ fontWeight: 600, color: '#111827' }}>{dynamicClasses.length}</span> classes</div>
           </div>
           <button
             onClick={() => navigate('timetable')}
-            style={{
-              height: 38,
-              padding: '0 18px',
-              borderRadius: 6,
-              background: '#047857',
-              border: 'none',
-              fontSize: 13,
-              fontWeight: 700,
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(4, 120, 87, 0.35)'
-            }}
+            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#ffffff', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
-            <Zap size={14} /> Open Timetable Studio
+            Open <span style={{ marginLeft: 2 }}>→</span>
           </button>
         </div>
       </div>
 
-      {/* ── CORPORATE EMERALD TAB NAVIGATION ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', marginBottom: 16, background: '#ffffff', borderRadius: '8px 8px 0 0', padding: '0 8px' }}>
+      {/* ── TAB NAVIGATION ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, gap: 4, flexWrap: 'wrap' }}>
         {[
-          { id: 'overview', label: 'Academic Summary', icon: Award },
-          { id: 'merit', label: 'Merit List & Performance', icon: Award, badge: meritList.length },
-          { id: 'audit', label: 'Marks Entry Audit', icon: CheckCircle2, badge: `${auditStats.overallPct}%` },
-          { id: 'slips', label: 'Result Slips & Cards', icon: Printer, badge: activeStudentsList.length },
+          { id: 'overview', label: 'Overview' },
+          { id: 'merit', label: 'Merit list', badge: meritList.length },
+          { id: 'audit', label: 'Marks audit', badge: `${auditStats.overallPct}%` },
+          { id: 'slips', label: 'Result slips', badge: activeStudentsList.length },
         ].map(t => {
           const isActive = activeTab === t.id;
           return (
-            <button 
-              key={t.id} 
+            <button
+              key={t.id}
               onClick={() => setActiveTab(t.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                padding: '12px 18px',
+                gap: 6,
+                padding: '10px 14px',
                 background: 'transparent',
                 border: 'none',
-                borderBottom: isActive ? '3px solid #047857' : '3px solid transparent',
-                color: isActive ? '#047857' : '#64748b',
-                fontWeight: isActive ? 700 : 600,
+                borderBottom: isActive ? '2px solid #111827' : '2px solid transparent',
+                color: isActive ? '#111827' : '#6b7280',
+                fontWeight: isActive ? 600 : 500,
                 fontSize: 13,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                marginBottom: -1,
               }}
             >
-              <t.icon size={15} color={isActive ? '#047857' : '#64748b'} />
               <span>{t.label}</span>
-              {t.badge !== undefined && (
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: isActive ? '#dcfce7' : '#f1f5f9', color: isActive ? '#047857' : '#475569' }}>
+              {t.badge !== undefined && t.badge !== 0 && (
+                <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 10, background: '#f3f4f6', color: '#4b5563' }}>
                   {t.badge}
                 </span>
               )}
