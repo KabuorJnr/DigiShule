@@ -47,9 +47,14 @@ export default function Timetable({ store, user }) {
   const [tab, setTab] = useState('class');
   const [teacherSel, setTeacherSel] = useState(teachers?.[0]?.name || '');
 
+  // NEW: Timetable Type (Standard vs Remedial)
+  const [ttType, setTtType] = useState('Standard');
+  const actualCls = ttType === 'Remedial' ? `${cls} (Remedial)` : cls;
+
   // ---- Typed timeslots ----------------------------------------------------
   const [timeslots, setTimeslots] = useState(() => {
-    const saved = settings?.timetable_timeslots;
+    const key = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+    const saved = settings?.[key];
     return Array.isArray(saved) && saved.length ? saved : patternTimeslots(settings?.timetable_schedule);
   });
   const annotated = useMemo(() => annotateTimeslots(timeslots), [timeslots]);
@@ -58,11 +63,17 @@ export default function Timetable({ store, user }) {
   const [timeslotModal, setTimeslotModal] = useState(false);
 
   // ---- Constraints --------------------------------------------------------
-  const [constraints, setConstraints] = useState(() => ({ ...defaultConstraints, ...(settings?.timetable_constraints || {}) }));
+  const [constraints, setConstraints] = useState(() => {
+    const key = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+    return { ...defaultConstraints, ...(settings?.[key] || {}) };
+  });
   const [constraintsModal, setConstraintsModal] = useState(false);
 
   // ---- Per-class assignments (singles + doubles) --------------------------
-  const [assignmentsByClass, setAssignmentsByClass] = useState(() => settings?.timetable_assignments || {});
+  const [assignmentsByClass, setAssignmentsByClass] = useState(() => {
+    const key = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+    return settings?.[key] || {};
+  });
   const [genClass, setGenClass] = useState(dynamicClasses[0] || '');
   const genAssignments = assignmentsByClass[genClass] || [];
   const setGenAssignments = (updater) =>
@@ -80,7 +91,7 @@ export default function Timetable({ store, user }) {
   const [unplaced, setUnplaced] = useState([]);
 
   const activeDays = DAYS.filter((_, i) => workingDays[i]);
-  const tt = timetables[cls];
+  const tt = timetables[actualCls];
   const hasGenerated = Object.keys(timetables).length > 0 && tt;
 
   const allConflicts = useMemo(() => {
@@ -88,7 +99,8 @@ export default function Timetable({ store, user }) {
     const confs = [];
     const seen = {};
     dynamicClasses.forEach((c) => {
-      const grid = timetables[c]?.grid;
+      const checkCls = ttType === 'Remedial' ? `${c} (Remedial)` : c;
+      const grid = timetables[checkCls]?.grid;
       if (!grid) return;
       grid.forEach((row, p) => {
         row.forEach((cell, d) => {
@@ -123,23 +135,38 @@ export default function Timetable({ store, user }) {
   useEffect(() => { if (!dynamicClasses.includes(cls)) setCls(dynamicClasses[0] || ''); }, [dynamicClasses, cls]);
   useEffect(() => { if (!dynamicClasses.includes(genClass)) setGenClass(dynamicClasses[0] || ''); }, [dynamicClasses, genClass]);
 
+  // Sync state when ttType changes
+  useEffect(() => {
+    const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+    const constrKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+    const assignKey = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+    
+    const savedTs = settings?.[tsKey];
+    setTimeslots(Array.isArray(savedTs) && savedTs.length ? savedTs : patternTimeslots(settings?.timetable_schedule));
+    setConstraints({ ...defaultConstraints, ...(settings?.[constrKey] || {}) });
+    setAssignmentsByClass(settings?.[assignKey] || {});
+  }, [ttType, settings]);
+
   async function persist(patch) {
     try { const { updateSettings } = await import('../lib/api'); await updateSettings(patch); }
     catch (e) { /* saved locally; server sync will retry */ }
   }
 
   // --- Auto-Save on Page Leave ---
-  const stateRef = useRef({ assignmentsByClass, constraints, timeslots });
+  const stateRef = useRef({ assignmentsByClass, constraints, timeslots, ttType });
   useEffect(() => {
-    stateRef.current = { assignmentsByClass, constraints, timeslots };
-  }, [assignmentsByClass, constraints, timeslots]);
+    stateRef.current = { assignmentsByClass, constraints, timeslots, ttType };
+  }, [assignmentsByClass, constraints, timeslots, ttType]);
 
   useEffect(() => {
     const doSave = () => {
-      const { assignmentsByClass: a, constraints: c, timeslots: t } = stateRef.current;
+      const { assignmentsByClass: a, constraints: c, timeslots: t, ttType: type } = stateRef.current;
+      const tsKey = type === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+      const constrKey = type === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+      const assignKey = type === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
       // We use fire-and-forget here because this might happen on unmount
       import('../lib/api').then(({ updateSettings }) => {
-        updateSettings({ timetable_assignments: a, timetable_constraints: c, timetable_timeslots: t }).catch(() => {});
+        updateSettings({ [assignKey]: a, [constrKey]: c, [tsKey]: t }).catch(() => {});
       }).catch(() => {});
     };
 
@@ -191,10 +218,22 @@ export default function Timetable({ store, user }) {
           constraints,
           term,
         });
-        setTimetables(result);
+        let finalResult = result;
+        if (ttType === 'Remedial') {
+          finalResult = {};
+          for (const key in result) {
+            finalResult[`${key} (Remedial)`] = result[key];
+          }
+        }
+        
+        setTimetables(prev => ({ ...prev, ...finalResult }));
         setUnplaced(missed);
         setGenerating(false);
-        persist({ timetable_assignments: assignmentsByClass, timetable_constraints: constraints, timetable_timeslots: timeslots });
+        
+        const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+        const constrKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+        const assignKey = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+        persist({ [assignKey]: assignmentsByClass, [constrKey]: constraints, [tsKey]: timeslots });
         if (missed.length) {
           const total = missed.reduce((n, m) => n + m.count, 0);
           notify(`Timetable generated, but ${total} lesson${total > 1 ? 's' : ''} could not be placed`, 'warning', 'Timetable');
@@ -209,7 +248,8 @@ export default function Timetable({ store, user }) {
     if (!cell || cell.type !== 'lesson') return false;
     return dynamicClasses.some((c) => {
       if (c === cls) return false;
-      const oc = timetables[c]?.grid[rowIdx]?.[dayIdx];
+      const checkCls = ttType === 'Remedial' ? `${c} (Remedial)` : c;
+      const oc = timetables[checkCls]?.grid[rowIdx]?.[dayIdx];
       return oc && oc.type === 'lesson' && oc.teacher === cell.teacher;
     });
   }
@@ -217,7 +257,7 @@ export default function Timetable({ store, user }) {
   function saveCell(updated) {
     setTimetables((prev) => {
       const copy = { ...prev };
-      const grid = copy[cls].grid.map((r) => r.slice());
+      const grid = copy[actualCls].grid.map((r) => r.slice());
       grid[editCell.p][editCell.d] = {
         type: 'lesson',
         subject: updated.subject,
@@ -225,7 +265,7 @@ export default function Timetable({ store, user }) {
         dept: DEPARTMENTS[updated.subject] || 'Humanities',
         notes: updated.notes,
       };
-      copy[cls] = { ...copy[cls], grid };
+      copy[actualCls] = { ...copy[actualCls], grid };
       return copy;
     });
     setEditCell(null);
@@ -237,7 +277,8 @@ export default function Timetable({ store, user }) {
     return annotated.map((slot, p) => activeDays.map((_, d) => {
       if (!slot.teaching) return { type: 'break', label: slot.label };
       for (const c of dynamicClasses) {
-        const cell = timetables[c]?.grid[p]?.[d];
+        const checkCls = ttType === 'Remedial' ? `${c} (Remedial)` : c;
+        const cell = timetables[checkCls]?.grid[p]?.[d];
         if (cell && cell.type === 'lesson' && cell.teacher === teacherSel) return { ...cell, cls: c };
       }
       return null;
@@ -272,11 +313,11 @@ export default function Timetable({ store, user }) {
     exportTimetableLandscapePDF({
       title: pdfTitle,
       schoolName,
-      classLabel: cls.replace(/\s+/g, ''),
+      classLabel: actualCls.replace(/\s+/g, ''),
       grid: tt.grid,
       days: tt.days,
       slots: annotated,
-      filename: `timetable-${cls}-${term}.pdf`,
+      filename: `timetable-${actualCls}-${term}.pdf`,
       variant: 'class',
       teacherAbbrOf: teacherAbbr,
     });
@@ -295,8 +336,8 @@ export default function Timetable({ store, user }) {
         aoa.push([annotated[p].label, ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} / ${c.teacher}` : ''))]);
       });
     }
-    const sheetName = tab === 'teacher' ? teacherSel.slice(0, 31) : `${cls}`.slice(0, 31);
-    const filename = tab === 'teacher' ? `timetable-${teacherSel}.xlsx` : `timetable-${cls}-${term}.xlsx`;
+    const sheetName = tab === 'teacher' ? teacherSel.slice(0, 31) : `${actualCls}`.slice(0, 31);
+    const filename = tab === 'teacher' ? `timetable-${teacherSel}.xlsx` : `timetable-${actualCls}-${term}.xlsx`;
     downloadExcel(filename, [{ name: sheetName, aoa }]);
     notify('Timetable exported as Excel', 'success', 'Export');
   }
@@ -356,6 +397,13 @@ export default function Timetable({ store, user }) {
       />
 
       <div className="toolbar">
+        <div>
+          <label className="field-label">Type</label>
+          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 4 }}>
+            <button className={`btn btn-sm ${ttType === 'Standard' ? 'btn-primary' : ''}`} style={{ background: ttType === 'Standard' ? '' : 'transparent', color: ttType === 'Standard' ? '#fff' : '#64748b', border: 'none', boxShadow: 'none' }} onClick={() => setTtType('Standard')}>Standard</button>
+            <button className={`btn btn-sm ${ttType === 'Remedial' ? 'btn-primary' : ''}`} style={{ background: ttType === 'Remedial' ? '' : 'transparent', color: ttType === 'Remedial' ? '#fff' : '#64748b', border: 'none', boxShadow: 'none' }} onClick={() => setTtType('Remedial')}>Remedial</button>
+          </div>
+        </div>
         <div>
           <label className="field-label">Term</label>
           <select className="select" value={term} onChange={(e) => setTerm(e.target.value)} style={{ width: 140 }}>
@@ -611,7 +659,10 @@ export default function Timetable({ store, user }) {
                     slot.teaching ? (
                       <tr key={p}>
                         <td className="tt-period-label" title={`${slot.start}–${slot.end}`}>{slot.label}</td>
-                        {dynamicClasses.map((c) => <MasterCell key={c} cell={timetables[c]?.grid[p]} />)}
+                        {dynamicClasses.map((c) => {
+                          const checkCls = ttType === 'Remedial' ? `${c} (Remedial)` : c;
+                          return <MasterCell key={c} cell={timetables[checkCls]?.grid[p]} />;
+                        })}
                       </tr>
                     ) : (
                       <tr key={p}>
@@ -720,7 +771,8 @@ export default function Timetable({ store, user }) {
           onSave={(next) => {
             setTimeslots(next);
             setTimeslotModal(false);
-            persist({ timetable_timeslots: next });
+            const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+            persist({ [tsKey]: next });
             notify('Timeslots saved', 'success', 'Timetable');
           }}
         />
@@ -736,7 +788,8 @@ export default function Timetable({ store, user }) {
           onSave={(next) => {
             setConstraints(next);
             setConstraintsModal(false);
-            persist({ timetable_constraints: next });
+            const constrKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+            persist({ [constrKey]: next });
             notify('Constraints saved', 'success', 'Timetable');
           }}
         />
