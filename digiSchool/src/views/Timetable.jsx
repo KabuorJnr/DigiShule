@@ -3,7 +3,7 @@ import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams } from '../data/seed';
-import { exportTablePDF, downloadExcel, exportTimetableLandscapePDF } from '../utils/exporters';
+import { downloadExcel, exportTimetableLandscapePDF } from '../utils/exporters';
 import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
   annotateTimeslots, buildEmptyGrid, generateAll,
@@ -16,6 +16,18 @@ export function formatTeacherFirstName(name) {
   if (!name || name === 'TBD' || name === '-') return '';
   const cleaned = name.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').trim();
   return cleaned.split(/\s+/)[0] || name;
+}
+
+// Compact teacher tag: first-name initial + surname (e.g. "Alan Otieno" -> "AOtieno").
+export function teacherAbbr(name) {
+  if (!name || name === 'TBD' || name === '-') return '';
+  const clean = name.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').trim();
+  const toks = clean.split(/\s+/).filter(Boolean);
+  if (toks.length >= 2) {
+    const surname = toks[toks.length - 1];
+    return toks[0][0].toUpperCase() + surname.charAt(0).toUpperCase() + surname.slice(1);
+  }
+  return clean.slice(0, 8);
 }
 
 // A translucent background derived from the subject colour.
@@ -186,35 +198,41 @@ export default function Timetable({ store, user }) {
     }));
   }
 
-  const rowTimes = annotated.map((a) => `${a.start}-\n${a.end}`);
-
   function exportPDF() {
     if (!tt) return notify('Generate a timetable first', 'warning');
-    // Class + Master both export the current class as a landscape grid.
-    if (tab !== 'teacher') {
+
+    const schoolName = settings?.name || 'School';
+    const year = settings?.academicYear || settings?.year || String(new Date().getFullYear());
+    const pdfTitle = `${schoolName} Timetable ${term}: ${year}`;
+
+    if (tab === 'teacher') {
+      // Teacher timetable: same page-filling landscape grid, class per cell.
+      const tgrid = teacherGrid().map((row) => row.map((c) => c || { type: 'empty' }));
       exportTimetableLandscapePDF({
-        title: `GRADE ${cls.replace(/[^0-9]/g, '')} ${term.toUpperCase()} TIMETABLE`,
-        grid: tt.grid,
-        days: tt.days,
-        times: rowTimes,
-        filename: `timetable-${cls}-${term}.pdf`,
+        title: pdfTitle,
+        schoolName,
+        classLabel: teacherSel,
+        grid: tgrid,
+        days: activeDays,
+        slots: annotated,
+        filename: `timetable-teacher-${teacherSel}.pdf`,
+        variant: 'teacher',
       });
-      notify('Timetable exported as PDF', 'success', 'Export');
+      notify('Teacher timetable exported as PDF', 'success', 'Export');
       return;
     }
 
-    const head = ['Period', ...activeDays];
-    const body = teacherGrid().map((row, p) => [
-      annotated[p].label,
-      ...row.map((c) => (c && c.type === 'lesson' ? `${c.subject} (Grade ${c.cls})` : c && c.type === 'break' ? c.label : '-')),
-    ]);
-    exportTablePDF({
-      school: settings,
-      title: `Teacher Timetable - ${teacherSel}`,
-      subtitle: `${term}  |  Generated ${new Date().toLocaleDateString()}`,
-      head,
-      body,
-      filename: `timetable-teacher-${teacherSel}.pdf`,
+    // Class + Master export the current class as a landscape grid.
+    exportTimetableLandscapePDF({
+      title: pdfTitle,
+      schoolName,
+      classLabel: cls.replace(/\s+/g, ''),
+      grid: tt.grid,
+      days: tt.days,
+      slots: annotated,
+      filename: `timetable-${cls}-${term}.pdf`,
+      variant: 'class',
+      teacherAbbrOf: teacherAbbr,
     });
     notify('Timetable exported as PDF', 'success', 'Export');
   }
@@ -503,7 +521,7 @@ export default function Timetable({ store, user }) {
                 return (
                   <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={s}>
                     <span style={{ width: 12, height: 12, borderRadius: 3, background: meta.color }} />
-                    {meta.code ? <><strong>{meta.code}</strong> {s}</> : s}
+                    <strong>{meta.short}</strong> {s}
                   </span>
                 );
               })}
@@ -545,62 +563,78 @@ export default function Timetable({ store, user }) {
             </div>
           )}
 
-          {/* CLASS + TEACHER VIEW */}
-          {tab !== 'master' && (
-            <div className="scroll-x">
-              <table className="tt-grid">
-                <thead>
-                  <tr>
-                    <th style={{ width: 70 }}>Period</th>
-                    {activeDays.map((d) => <th key={d}>{d}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {tab === 'class' && tt.grid.map((row, p) => (
-                    <tr key={p}>
-                      <td className="tt-period-label" title={`${annotated[p]?.start}–${annotated[p]?.end}`}>{annotated[p]?.label || `P${p + 1}`}</td>
-                      {row.map((cell, d) => {
-                        if (cell.type === 'break') return <td key={d} className="tt-break">{cell.label}</td>;
-                        if (cell.type === 'empty') {
-                          return <td key={d} className="tt-empty" onClick={() => isTimetableAdmin && setEditCell({ p, d, subject: SUBJECTS[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>+</td>;
-                        }
-                        const conflict = hasConflict(cell, p, d);
-                        return (
-                          <td key={d} className={conflict ? 'tt-conflict' : ''}
-                            style={{ ...cellStyle(cell), cursor: isTimetableAdmin ? 'pointer' : 'default' }}
-                            onClick={() => isTimetableAdmin && setEditCell({ p, d, ...cell })}
-                            title={conflict ? `Conflict: ${cell.teacher} double-booked` : (isTimetableAdmin ? 'Click to edit' : '')}>
-                            <div className="tt-cell-sub">
-                              {getSubjectMeta(cell.subject).code && <span title={`Subject code ${getSubjectMeta(cell.subject).code}`} style={{ fontSize: 9, color: '#64748b', fontWeight: 700, marginRight: 4 }}>{getSubjectMeta(cell.subject).code}</span>}
-                              {cell.subject}{cell.double && <span title="Double period" style={{ marginLeft: 4, fontSize: 9, color: '#64748b', fontWeight: 700 }}>‖</span>}
-                            </div>
-                            <div className="tt-cell-teacher">{formatTeacherFirstName(cell.teacher) ? `(${formatTeacherFirstName(cell.teacher)})` : (cell.teacher || '')}</div>
-                            {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-
-                  {tab === 'teacher' && teacherGrid().map((row, p) => (
-                    <tr key={p}>
-                      <td className="tt-period-label" title={`${annotated[p]?.start}–${annotated[p]?.end}`}>{annotated[p]?.label || `P${p + 1}`}</td>
-                      {row.map((cell, d) => (
-                        cell && cell.type === 'lesson' ? (
-                          <td key={d} style={cellStyle(cell)}>
-                            <div className="tt-cell-sub">{cell.subject}</div>
-                            <div className="tt-cell-teacher">Grade {cell.cls}</div>
-                          </td>
-                        ) : cell && cell.type === 'break' ? (
-                          <td key={d} className="tt-break">{cell.label}</td>
-                        ) : <td key={d} className="tt-empty">-</td>
+          {/* CLASS + TEACHER VIEW — horizontal (days as rows, periods as columns) */}
+          {tab !== 'master' && (() => {
+            const tGrid = tab === 'teacher' ? teacherGrid() : null;
+            return (
+              <div className="scroll-x">
+                <table className="tt-grid" style={{ width: '100%', tableLayout: 'fixed' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 52 }}></th>
+                      {annotated.map((slot, ci) => (
+                        <th key={ci} style={{ padding: '4px 2px' }}>
+                          {slot.teaching ? (
+                            <div>{slot.label}<div style={{ fontSize: 9, fontWeight: 400, color: '#94a3b8' }}>{slot.start}-{slot.end}</div></div>
+                          ) : slot.label}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {activeDays.map((day, d) => (
+                      <tr key={day}>
+                        <td className="tt-period-label" style={{ fontWeight: 700 }}>{day}</td>
+                        {annotated.map((slot, ci) => {
+                          // Break/lunch: one vertical spanning column, drawn on the first row only.
+                          if (!slot.teaching) {
+                            if (d !== 0) return null;
+                            return (
+                              <td key={ci} className="tt-break" rowSpan={activeDays.length} style={{ verticalAlign: 'middle' }}>
+                                <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-block' }}>{slot.label}</span>
+                              </td>
+                            );
+                          }
+                          const cell = tab === 'class' ? tt.grid[ci][d] : (tGrid[ci][d] || { type: 'empty' });
+                          if (!cell || cell.type === 'empty') {
+                            return (
+                              <td key={ci} className="tt-empty" style={{ height: 60 }}
+                                onClick={() => tab === 'class' && isTimetableAdmin && setEditCell({ p: ci, d, subject: SUBJECTS[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>
+                                {tab === 'class' && isTimetableAdmin ? '+' : ''}
+                              </td>
+                            );
+                          }
+                          const meta = getSubjectMeta(cell.subject);
+                          if (tab === 'class') {
+                            const conflict = hasConflict(cell, ci, d);
+                            return (
+                              <td key={ci} className={conflict ? 'tt-conflict' : ''}
+                                style={{ ...cellStyle(cell), cursor: isTimetableAdmin ? 'pointer' : 'default', position: 'relative', height: 60, textAlign: 'center' }}
+                                onClick={() => isTimetableAdmin && setEditCell({ p: ci, d, ...cell })}
+                                title={`${cell.subject}${cell.teacher ? ' — ' + cell.teacher : ''}${conflict ? ' (CONFLICT: double-booked)' : ''}`}>
+                                <div style={{ fontWeight: 700, fontSize: 13 }}>
+                                  {meta.short}
+                                  {cell.double && <span title="Double period" style={{ marginLeft: 3, fontSize: 9, color: '#64748b' }}>‖</span>}
+                                </div>
+                                <span style={{ position: 'absolute', right: 4, bottom: 2, fontSize: 9, fontWeight: 700, color: conflict ? 'var(--danger)' : '#475569' }}>{teacherAbbr(cell.teacher)}</span>
+                              </td>
+                            );
+                          }
+                          // Teacher view: class taught is the headline, subject abbr in the corner.
+                          return (
+                            <td key={ci} style={{ ...cellStyle(cell), position: 'relative', height: 60, textAlign: 'center' }} title={`${cell.subject} — Grade ${cell.cls}`}>
+                              <div style={{ fontWeight: 700, fontSize: 13 }}>{cell.cls}</div>
+                              <span style={{ position: 'absolute', left: 4, top: 2, fontSize: 9, fontWeight: 700, color: '#475569' }}>{meta.short}</span>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
