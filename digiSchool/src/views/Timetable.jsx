@@ -34,7 +34,7 @@ export function teacherAbbr(name) {
 const tint = (hex) => (hex || '#64748b') + '22';
 
 export default function Timetable({ store, user }) {
-  const isTimetableAdmin = user?.role === 'principal' || user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
+  const isTimetableAdmin = user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
   const { timetables, setTimetables, notify, settings, teachers } = store;
 
   const dynamicClasses = useMemo(() => {

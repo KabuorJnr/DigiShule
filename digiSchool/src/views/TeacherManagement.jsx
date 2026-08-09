@@ -379,6 +379,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
   }, [currentAssignments, assignFilter]);
 
   const handleAssignTeacher = async (assignmentId, teacherId) => {
+    if (user?.role === 'principal') return notify('Access Restricted: Principals have read-only access.', 'warning');
     const assignment = assignments.find(a => a.id === assignmentId);
     if (!assignment) return;
 
@@ -406,6 +407,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
   // Auto-assign algorithm
   const handleAutoAssign = async () => {
+    if (user?.role === 'principal') return notify('Access Restricted: Principals have read-only access.', 'warning');
     const unassigned = currentAssignments.filter(a => a.status !== 'assigned');
     if (unassigned.length === 0) { notify('All subjects already assigned!', 'info'); return; }
 
@@ -454,6 +456,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
   const selectedTeacherQuals = qualTeacher ? (teacherQualMap[qualTeacher] || []) : [];
 
   const handleAddQualification = async (subjectId, level = 'qualified') => {
+    if (user?.role === 'principal') return notify('Access Restricted: Principals have read-only access.', 'warning');
     if (!qualTeacher || !subjectId) return;
     const id = `qual_${qualTeacher}_${subjectId}`;
     const existing = qualifications.find(q => q.teacher_id === qualTeacher && q.subject_id === subjectId);
@@ -472,6 +475,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
   };
 
   const handleRemoveQualification = async (qualId) => {
+    if (user?.role === 'principal') return notify('Access Restricted: Principals have read-only access.', 'warning');
     try {
       const { supabase } = await import('../lib/supabaseClient');
       await supabase.from('teacher_subject_qualifications').delete().eq('id', qualId);

@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { fetchTable, upsertRow } from '../../lib/api';
 import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
@@ -23,7 +23,7 @@ export default function StaffLayout() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [jobApps, setJobApps] = useState([]);
 
-  const canApprove = user && (user.role === 'principal' || user.role === 'deputy_admin' || user.role === 'deputy_academic');
+  const canApprove = user && (user.role === 'deputy_admin' || user.role === 'deputy_academic');
 
   useEffect(() => {
     Promise.all([

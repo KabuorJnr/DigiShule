@@ -107,6 +107,7 @@ export function exportTablePDF({ school, title, subtitle, head, body, filename }
 export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', filename = 'report_cards.pdf' }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   
   const targetStudents = students.length > 0 ? students : [];
   
@@ -123,73 +124,90 @@ export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], studen
     });
     
     if (!r) return;
-    
     const is844 = r.systemType === '844';
-    let y = 40;
+    
+    // Outer Premium Border
+    doc.setDrawColor(15, 23, 42); // Deep Navy
+    doc.setLineWidth(2);
+    doc.roundedRect(20, 20, pageWidth - 40, pageHeight - 40, 8, 8, 'S');
+    
+    // Inner thin border
+    doc.setDrawColor(202, 138, 4); // Premium Gold
+    doc.setLineWidth(0.5);
+    doc.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 6, 6, 'S');
 
-    // Top Blue Line
-    doc.setDrawColor(29, 78, 216); // #1d4ed8
-    doc.setLineWidth(6);
-    doc.line(40, y, pageWidth - 40, y);
-    y += 24;
+    let y = 50;
 
     // Header Title Block
-    doc.setFontSize(22);
+    doc.setFontSize(26);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 41, 59); // #1e293b
-    doc.text(school.name || "Kinjau Junior Secondary", pageWidth / 2, y, { align: 'center' });
+    doc.setTextColor(15, 23, 42); 
+    doc.text((school.name || "Kinjau Junior Secondary").toUpperCase(), pageWidth / 2, y, { align: 'center' });
 
-    y += 14;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(100, 116, 139); // #64748b
-    doc.text(school.motto || "Excellence in Education", pageWidth / 2, y, { align: 'center' });
-
-    y += 18;
+    y += 16;
     doc.setFontSize(12);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 116, 139);
+    doc.text(school.motto || "Excellence in Education", pageWidth / 2, y, { align: 'center' });
+    
+    y += 8;
+    // Gold separator
+    doc.setDrawColor(202, 138, 4);
+    doc.setLineWidth(1.5);
+    doc.line(pageWidth / 2 - 100, y, pageWidth / 2 + 100, y);
+
+    y += 24;
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(29, 78, 216); // #1d4ed8
-    doc.text(is844 ? "SECONDARY SCHOOL ACADEMIC REPORT CARD" : "JUNIOR SECONDARY ASSESSMENT REPORT", pageWidth / 2, y, { align: 'center' });
+    doc.setTextColor(15, 23, 42);
+    doc.text(is844 ? "OFFICIAL ACADEMIC REPORT CARD" : "OFFICIAL ASSESSMENT REPORT", pageWidth / 2, y, { align: 'center' });
+    
+    y += 6;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(examTitle, pageWidth / 2, y + 10, { align: 'center' });
 
-    y += 20;
+    y += 30;
 
-    // Student Info Grid Layout (Bordered Box)
-    doc.setDrawColor(148, 163, 184); // #94a3b8
+    // Student Info Grid Layout (Rounded Bordered Box)
+    doc.setDrawColor(202, 138, 4); 
     doc.setLineWidth(1);
-    doc.setFillColor(248, 250, 252); // #f8fafc
-    doc.rect(40, y, pageWidth - 80, 24, 'FD');
+    doc.setFillColor(248, 250, 252); 
+    doc.roundedRect(40, y, pageWidth - 80, 28, 6, 6, 'FD');
 
     doc.setFontSize(10);
     doc.setTextColor(15, 23, 42);
 
-    let x = 45;
+    let x = 50;
     doc.setFont('helvetica', 'bold');
-    doc.text("Name:", x, y + 16);
+    doc.text("Name:", x, y + 18);
     doc.setFont('helvetica', 'normal');
-    doc.text(r.studentName, x + 35, y + 16);
+    doc.text(r.studentName.toUpperCase(), x + 35, y + 18);
 
     x += 160;
-    doc.line(x - 10, y, x - 10, y + 24); // vertical separator
+    doc.setDrawColor(226, 232, 240);
+    doc.line(x - 10, y + 4, x - 10, y + 24); // vertical separator
     doc.setFont('helvetica', 'bold');
-    doc.text("Adm No:", x, y + 16);
+    doc.text("Adm No:", x, y + 18);
     doc.setFont('helvetica', 'normal');
-    doc.text(String(r.admissionNo), x + 45, y + 16);
+    doc.text(String(r.admissionNo), x + 45, y + 18);
 
-    x += 120;
-    doc.line(x - 10, y, x - 10, y + 24);
+    x += 110;
+    doc.line(x - 10, y + 4, x - 10, y + 24);
     doc.setFont('helvetica', 'bold');
-    doc.text("Grade:", x, y + 16);
+    doc.text("Grade:", x, y + 18);
     doc.setFont('helvetica', 'normal');
-    doc.text(r.className, x + 35, y + 16);
+    doc.text(String(r.className).toUpperCase(), x + 35, y + 18);
 
-    x += 120;
-    doc.line(x - 10, y, x - 10, y + 24);
+    x += 110;
+    doc.line(x - 10, y + 4, x - 10, y + 24);
     doc.setFont('helvetica', 'bold');
-    doc.text("Term:", x, y + 16);
+    doc.text("Term:", x, y + 18);
     doc.setFont('helvetica', 'normal');
-    doc.text(r.termName, x + 35, y + 16);
+    doc.text(r.termName, x + 35, y + 18);
 
-    y += 34;
+    y += 44;
 
     // Subject Table
     const tableBody = r.subjectRows.map(s => [
@@ -203,151 +221,123 @@ export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], studen
 
     // Total / Mean Summary Row
     tableBody.push([
-      { content: `Total Points: ${r.totalPoints}/${is844 ? r.subjectRows.length * 12 : r.subjectRows.length * 4}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
-      { content: `Average (${r.subjectRows.length} ${is844 ? 'subjects' : 'learning areas'}): ${r.meanPercentageText}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
-      { content: `Mean Grade: ${r.meanGradeFull}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } }
+      { content: `TOTAL POINTS: ${r.totalPoints} / ${is844 ? r.subjectRows.length * 12 : r.subjectRows.length * 4}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [15,23,42] } },
+      { content: `AVERAGE (${r.subjectRows.length} ${is844 ? 'subjects' : 'learning areas'}): ${r.meanPercentageText}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [15,23,42] } },
+      { content: `MEAN GRADE: ${r.meanGradeFull}`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [202, 138, 4], textColor: [255,255,255] } }
     ]);
 
     autoTable(doc, {
-      head: [[is844 ? 'Subject' : 'Learning Area', 'Score', is844 ? '%' : 'Level', 'Pts', 'Remark', 'Teacher']],
+      head: [[is844 ? 'SUBJECT' : 'LEARNING AREA', 'SCORE', is844 ? '%' : 'LEVEL', 'PTS', 'REMARK', 'TEACHER']],
       body: tableBody,
       startY: y,
       theme: 'grid',
       styles: {
-        fontSize: 10,
+        fontSize: 9,
         cellPadding: 6,
         textColor: [15, 23, 42],
-        lineColor: [148, 163, 184],
-        lineWidth: 1,
+        lineColor: [203, 213, 225],
+        lineWidth: 0.5,
         valign: 'middle'
       },
       headStyles: {
         fontStyle: 'bold',
-        textColor: [15, 23, 42],
-        fillColor: [226, 232, 240] // #e2e8f0
+        textColor: [255, 255, 255],
+        fillColor: [15, 23, 42] // Deep Navy
       },
       columnStyles: {
-        0: { cellWidth: 120 },
-        1: { halign: 'center', cellWidth: 50 },
-        2: { halign: 'center', cellWidth: 70 },
-        3: { halign: 'center', fontStyle: 'bold', cellWidth: 40 },
+        0: { cellWidth: 120, fontStyle: 'bold' },
+        1: { halign: 'center', cellWidth: 45 },
+        2: { halign: 'center', cellWidth: 75 },
+        3: { halign: 'center', fontStyle: 'bold', cellWidth: 40, textColor: [202, 138, 4] },
         4: { cellWidth: 130 },
         5: { cellWidth: 105 }
       },
       margin: { left: 40, right: 40 }
     });
 
-    let finalY = doc.lastAutoTable.finalY;
+    let finalY = doc.lastAutoTable.finalY + 16;
 
     // Grading Key Footer
-    doc.setDrawColor(148, 163, 184); // #94a3b8
-    doc.setLineWidth(1);
-    doc.setFillColor(248, 250, 252); // #f8fafc
-    doc.rect(40, finalY, pageWidth - 80, 26, 'FD');
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(40, finalY, pageWidth - 80, 22, 4, 4, 'FD');
 
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text("KEY:", 45, finalY + 14);
+    
+    let keyX = 75;
+    if (is844) {
+      doc.setTextColor(29, 78, 216); doc.text("A=80-100%   A-=75-79%", keyX, finalY + 14); keyX += 110;
+      doc.setTextColor(22, 163, 74); doc.text("B+=70-74%   B=65-69%   B-=60-64%   C+=55-59%", keyX, finalY + 14); keyX += 200;
+      doc.setTextColor(217, 119, 6); doc.text("C=50-54%   C-=45-49%   D+=40-44%", keyX, finalY + 14); keyX += 150;
+      doc.setTextColor(220, 38, 38); doc.text("D=35-39%   D-=30-34%   E=0-29%", keyX, finalY + 14);
+    } else {
+      doc.setTextColor(29, 78, 216); doc.text("EE1=90-100%   EE2=75-89%", keyX, finalY + 14); keyX += 130;
+      doc.setTextColor(22, 163, 74); doc.text("ME1=58-74%   ME2=41-57%", keyX, finalY + 14); keyX += 130;
+      doc.setTextColor(217, 119, 6); doc.text("AE1=31-40%   AE2=21-30%", keyX, finalY + 14); keyX += 130;
+      doc.setTextColor(220, 38, 38); doc.text("BE1=11-20%   BE2=0-10%", keyX, finalY + 14);
+    }
+
+    finalY += 36;
+
+    const meanPct = r.totalMarks / (r.subjectRows.length * 100) * 100;
+    let teacherComment = ""; let principalComment = "";
+    if (is844) {
+      if (meanPct >= 70) { teacherComment = "An excellent performance. Keep up the high standard and maintain focus."; principalComment = "Outstanding result. Continue working hard to achieve even greater success."; }
+      else if (meanPct >= 50) { teacherComment = "A good effort, but there is room for improvement in weaker subjects."; principalComment = "Good work. With more dedication, you can achieve a much higher grade."; }
+      else { teacherComment = "Below average performance. You need to put in more effort and seek help in challenging areas."; principalComment = "Work harder and stay focused. Close monitoring by teachers and parents is advised."; }
+    } else {
+      if (meanPct >= 75) { teacherComment = "Exceeding expectations across most learning areas. Keep up the excellent work."; principalComment = "Outstanding performance. Keep maintaining this high level of excellence."; }
+      else if (meanPct >= 50) { teacherComment = "Meeting expectations in most areas. Work on the subjects where you are approaching expectation."; principalComment = "Good effort. Aim to exceed expectations in the upcoming assessments."; }
+      else { teacherComment = "Needs intensive support and remedial intervention across multiple learning areas. Immediate action is required."; principalComment = "Immediate intervention is required to improve your performance."; }
+    }
+
+    // Signatures and Comments Area
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(40, finalY, pageWidth - 80, 45, 4, 4, 'S');
+    
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.text("KEY:", 45, finalY + 16);
-    
-    doc.setFontSize(8);
-    let keyX = 80;
-    if (is844) {
-      doc.setTextColor(29, 78, 216); doc.text("A=80-100%   A-=75-79%", keyX, finalY + 16); keyX += 110;
-      doc.setTextColor(22, 163, 74); doc.text("B+=70-74%   B=65-69%   B-=60-64%   C+=55-59%", keyX, finalY + 16); keyX += 200;
-      doc.setTextColor(217, 119, 6); doc.text("C=50-54%   C-=45-49%   D+=40-44%", keyX, finalY + 16); keyX += 150;
-      doc.setTextColor(220, 38, 38); doc.text("D=35-39%   D-=30-34%   E=0-29%", keyX, finalY + 16);
-    } else {
-      doc.setTextColor(29, 78, 216); doc.text("EE1=90-100%   EE2=75-89%", keyX, finalY + 16); keyX += 130;
-      doc.setTextColor(22, 163, 74); doc.text("ME1=58-74%   ME2=41-57%", keyX, finalY + 16); keyX += 130;
-      doc.setTextColor(217, 119, 6); doc.text("AE1=31-40%   AE2=21-30%", keyX, finalY + 16); keyX += 130;
-      doc.setTextColor(220, 38, 38); doc.text("BE1=11-20%   BE2=0-10%", keyX, finalY + 16);
-    }
-
-    finalY += 40;
-
-    // Dynamic comment logic
-    const meanPct = r.totalMarks / (r.subjectRows.length * 100) * 100;
-    let teacherComment = "";
-    let principalComment = "";
-    
-    if (is844) {
-      if (meanPct >= 70) {
-        teacherComment = "An excellent performance. Keep up the high standard and maintain focus.";
-        principalComment = "Outstanding result. Continue working hard to achieve even greater success.";
-      } else if (meanPct >= 50) {
-        teacherComment = "A good effort, but there is room for improvement in weaker subjects.";
-        principalComment = "Good work. With more dedication, you can achieve a much higher grade.";
-      } else {
-        teacherComment = "Below average performance. You need to put in more effort and seek help in challenging areas.";
-        principalComment = "Work harder and stay focused. Close monitoring by teachers and parents is advised.";
-      }
-    } else {
-      if (meanPct >= 75) {
-        teacherComment = "Exceeding expectations across most learning areas. Keep up the excellent work.";
-        principalComment = "Outstanding performance. Keep maintaining this high level of excellence.";
-      } else if (meanPct >= 50) {
-        teacherComment = "Meeting expectations in most areas. Work on the subjects where you are approaching expectation.";
-        principalComment = "Good effort. Aim to exceed expectations in the upcoming assessments.";
-      } else {
-        teacherComment = "Needs intensive support and remedial intervention across multiple learning areas. Immediate action is required.";
-        principalComment = "Immediate intervention is required to improve your performance. The school will work closely with you and your parents to provide necessary support.";
-      }
-    }
-
-    // Teacher Comment Box
-    doc.setDrawColor(148, 163, 184); // #94a3b8
-    doc.setLineWidth(1);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(40, finalY, pageWidth - 80, 50);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
     doc.text("Class Teacher's Comment:", 45, finalY + 14);
-    
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(51, 65, 85);
-    doc.text(`${r.studentName} ${teacherComment}`, 45, finalY + 28);
-    
+    doc.setTextColor(71, 85, 105);
+    doc.text(`${r.studentName} ${teacherComment}`, 45, finalY + 26);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    doc.text("Name: __________________________   Signature: __________________________   Date: __________________________", 45, finalY + 44);
+    doc.text("Signature: __________________________   Date: __________________________", 45, finalY + 40);
 
-    finalY += 60;
+    finalY += 52;
 
-    // Principal Comment Box
-    doc.rect(40, finalY, pageWidth - 80, 50);
-    
+    doc.roundedRect(40, finalY, pageWidth - 80, 45, 4, 4, 'S');
     doc.setFont('helvetica', 'bold');
     doc.text("Principal's Comment:", 45, finalY + 14);
-    
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(51, 65, 85);
-    doc.text(`${r.studentName}, ${principalComment}`, 45, finalY + 28);
-    
+    doc.setTextColor(71, 85, 105);
+    doc.text(`${r.studentName}, ${principalComment}`, 45, finalY + 26);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    doc.text("Name: __________________________   Signature: __________________________   Date: __________________________", 45, finalY + 44);
+    doc.text("Signature: __________________________   Date: __________________________", 45, finalY + 40);
 
-    finalY += 60;
+    finalY += 52;
 
-    // Parent Comment & Stamp
-    doc.rect(40, finalY, pageWidth - 200, 50);
+    doc.roundedRect(40, finalY, pageWidth - 200, 45, 4, 4, 'S');
     doc.setFont('helvetica', 'bold');
     doc.text("Parent/Guardian Comment:", 45, finalY + 14);
     doc.setFont('helvetica', 'normal');
-    doc.text("Signature: __________________________   Date: __________________________", 45, finalY + 38);
+    doc.text("Signature: __________________________   Date: __________________________", 45, finalY + 32);
 
-    doc.setDrawColor(148, 163, 184);
-    doc.setLineDashPattern([4, 4], 0);
-    doc.rect(pageWidth - 150, finalY, 110, 50);
-    doc.setLineDashPattern([], 0); // reset
-    
+    // Official Stamp Box
+    doc.setDrawColor(202, 138, 4); // Gold stamp box
+    doc.setLineWidth(1);
+    doc.roundedRect(pageWidth - 150, finalY, 110, 45, 4, 4, 'S');
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(203, 213, 225);
-    doc.text("SCHOOL STAMP", pageWidth - 140, finalY + 28);
-
+    doc.setTextColor(202, 138, 4);
+    doc.text("OFFICIAL STAMP", pageWidth - 140, finalY + 26);
   });
 
   doc.save(filename);

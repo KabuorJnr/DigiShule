@@ -148,11 +148,12 @@ export default function SchoolCalendar({ store, user }) {
     // Find events for this day
     const dayEvents = events.filter(e => e.date === dateStr);
     
+    const canEdit = user?.role === 'deputy_admin' || user?.role === 'deputy_academic';
     cells.push(
       <div 
         key={day} 
         className={`calendar-cell ${isToday ? 'today' : ''}`}
-        onClick={() => isAdmin && openAddModal(dateStr)}
+        onClick={() => canEdit && openAddModal(dateStr)}
       >
         <div className="cell-header">
           <span className="day-number">{day}</span>

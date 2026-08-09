@@ -46,7 +46,8 @@ export default function Gradebook({ store }) {
 
   const canEditCurrentSubject = useMemo(() => {
     if (!user) return true;
-    if (user.role === 'dos' || user.role === 'principal' || user.role === 'deputy_academic' || user.role === 'admin' || user.dept === 'dos') return true;
+    if (user.role === 'principal') return false;
+    if (user.role === 'dos' || user.role === 'deputy_academic' || user.role === 'admin' || user.dept === 'dos') return true;
     if (user.role !== 'teacher') return true;
     return allowedSubjects.includes(subject);
   }, [user, allowedSubjects, subject]);
@@ -229,7 +230,7 @@ export default function Gradebook({ store }) {
         subtitle="Inspect, edit and analyse student performance"
         actions={
           <div style={{ display: 'flex', gap: 10 }}>
-            {(store.user?.role === 'deputy_academic' || store.user?.role === 'principal' || store.user?.role === 'dos') && (
+            {(store.user?.role === 'deputy_academic' || store.user?.role === 'dos') && (
               <button 
                 className={`btn ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
                 onClick={handleApproveResults}
@@ -238,7 +239,7 @@ export default function Gradebook({ store }) {
                 {settings?.results_approved ? 'Revoke Approval' : 'Approve Results'}
               </button>
             )}
-            {(store.user?.role === 'dos' || store.user?.role === 'principal') && settings?.results_approved && (
+            {(store.user?.role === 'dos') && settings?.results_approved && (
               <button 
                 className={`btn ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
                 onClick={handlePublishResults}
@@ -286,7 +287,14 @@ export default function Gradebook({ store }) {
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
           <strong>{selected.length} selected for report cards</strong>
-          <button className="btn btn-primary btn-sm" onClick={generateReportCards}><Icon name="print" size={16} style={{ marginRight: 6 }} /> Generate Report Cards</button>
+          <button 
+            className="btn btn-primary btn-sm" 
+            onClick={generateReportCards} 
+            disabled={user?.role === 'teacher' && !settings?.results_published} 
+            title={user?.role === 'teacher' && !settings?.results_published ? "Report cards must be published by Admin before generating" : ""}
+          >
+            <Icon name="print" size={16} style={{ marginRight: 6 }} /> Generate Report Cards
+          </button>
         </div>
         <div className="scroll-x">
           <table className="table">
