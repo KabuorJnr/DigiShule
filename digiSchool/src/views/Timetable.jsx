@@ -83,6 +83,29 @@ export default function Timetable({ store, user }) {
   const tt = timetables[cls];
   const hasGenerated = Object.keys(timetables).length > 0 && tt;
 
+  const allConflicts = useMemo(() => {
+    if (!hasGenerated) return [];
+    const confs = [];
+    const seen = {};
+    dynamicClasses.forEach((c) => {
+      const grid = timetables[c]?.grid;
+      if (!grid) return;
+      grid.forEach((row, p) => {
+        row.forEach((cell, d) => {
+          if (cell && cell.type === 'lesson' && cell.teacher !== 'TBD' && cell.teacher) {
+            const key = `${p}-${d}-${cell.teacher}`;
+            if (seen[key]) {
+              confs.push({ p, d, teacher: cell.teacher, classes: [seen[key], c] });
+            } else {
+              seen[key] = c;
+            }
+          }
+        });
+      });
+    });
+    return confs;
+  }, [timetables, dynamicClasses, hasGenerated]);
+
   // Seed a default assignment table for any class that doesn't have one yet.
   useEffect(() => {
     if (!teachers || teachers.length === 0 || dynamicClasses.length === 0) return;
@@ -104,6 +127,29 @@ export default function Timetable({ store, user }) {
     try { const { updateSettings } = await import('../lib/api'); await updateSettings(patch); }
     catch (e) { /* saved locally; server sync will retry */ }
   }
+
+  // --- Auto-Save on Page Leave ---
+  const stateRef = useRef({ assignmentsByClass, constraints, timeslots });
+  useEffect(() => {
+    stateRef.current = { assignmentsByClass, constraints, timeslots };
+  }, [assignmentsByClass, constraints, timeslots]);
+
+  useEffect(() => {
+    const doSave = () => {
+      const { assignmentsByClass: a, constraints: c, timeslots: t } = stateRef.current;
+      // We use fire-and-forget here because this might happen on unmount
+      import('../lib/api').then(({ updateSettings }) => {
+        updateSettings({ timetable_assignments: a, timetable_constraints: c, timetable_timeslots: t }).catch(() => {});
+      }).catch(() => {});
+    };
+
+    const handleBeforeUnload = () => doSave();
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      doSave();
+    };
+  }, []);
 
   function copyAssignmentsToAll() {
     setAssignmentsByClass((prev) => {
@@ -242,14 +288,14 @@ export default function Timetable({ store, user }) {
     const aoa = [['Period', ...activeDays]];
     if (tab === 'teacher') {
       teacherGrid().forEach((row, p) => {
-        aoa.push([annotated[p].label, ...row.map((c) => (c && c.type === 'lesson' ? `${c.subject} / Grade ${c.cls}` : c && c.type === 'break' ? c.label : ''))]);
+        aoa.push([annotated[p].label, ...row.map((c) => (c && c.type === 'lesson' ? `${c.subject} / ${c.cls}` : c && c.type === 'break' ? c.label : ''))]);
       });
     } else {
       tt.grid.forEach((row, p) => {
         aoa.push([annotated[p].label, ...row.map((c) => (c.type === 'break' ? c.label : c.type === 'lesson' ? `${c.subject} / ${c.teacher}` : ''))]);
       });
     }
-    const sheetName = tab === 'teacher' ? teacherSel.slice(0, 31) : `Grade ${cls}`.slice(0, 31);
+    const sheetName = tab === 'teacher' ? teacherSel.slice(0, 31) : `${cls}`.slice(0, 31);
     const filename = tab === 'teacher' ? `timetable-${teacherSel}.xlsx` : `timetable-${cls}-${term}.xlsx`;
     downloadExcel(filename, [{ name: sheetName, aoa }]);
     notify('Timetable exported as Excel', 'success', 'Export');
@@ -319,7 +365,7 @@ export default function Timetable({ store, user }) {
         <div>
           <label className="field-label">Class</label>
           <select className="select" value={cls} onChange={(e) => setCls(e.target.value)} style={{ width: 140 }}>
-            {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
+            {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>
@@ -398,7 +444,7 @@ export default function Timetable({ store, user }) {
                   <tbody>
                     {validation.map((v) => (
                       <tr key={v.cls}>
-                        <td style={{ padding: '4px 12px', fontWeight: 500 }}>Grade {v.cls}</td>
+                        <td style={{ padding: '4px 12px', fontWeight: 500 }}>{v.cls}</td>
                         <td style={{ padding: '4px 12px', textAlign: 'right' }}>{v.required} / {v.available}</td>
                         <td style={{ padding: '4px 12px', textAlign: 'right', color: v.ok ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{v.ok ? 'OK' : `+${v.required - v.available}`}</td>
                       </tr>
@@ -412,7 +458,7 @@ export default function Timetable({ store, user }) {
               <div style={{ flex: '1 1 200px' }}>
                 <label className="field-label">Lessons for class</label>
                 <select className="select" value={genClass} onChange={(e) => setGenClass(e.target.value)} style={{ maxWidth: 200 }}>
-                  {dynamicClasses.map((c) => <option key={c} value={c}>Grade {c}</option>)}
+                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={copyAssignmentsToAll} disabled={dynamicClasses.length < 2}>
@@ -488,7 +534,24 @@ export default function Timetable({ store, user }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {unplaced.map((m, i) => (
               <span key={i} style={{ fontSize: 12, background: '#fff', border: '1px solid #fcd34d', borderRadius: 6, padding: '4px 10px', color: '#92400e' }}>
-                Grade {m.cls}: {m.subject} ×{m.count} {m.kind === 'double' ? '(double)' : ''} ({formatTeacherFirstName(m.teacher) || m.teacher})
+                {m.cls}: {m.subject} ×{m.count} {m.kind === 'double' ? '(double)' : ''} ({formatTeacherFirstName(m.teacher) || m.teacher})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Conflicts report */}
+      {isTimetableAdmin && allConflicts.length > 0 && (
+        <div className="card card-pad" style={{ marginBottom: 20, background: '#fef2f2', border: '1px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#991b1b' }}>
+            <Icon name="warning" size={18} />
+            <strong style={{ fontSize: 14 }}>{allConflicts.length} double-booking conflict(s) detected</strong>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {allConflicts.map((c, i) => (
+              <span key={i} style={{ fontSize: 12, background: '#fff', border: '1px solid #fca5a5', borderRadius: 6, padding: '4px 10px', color: '#7f1d1d' }}>
+                {DAYS[c.d]} P{annotated[c.p]?.period || c.p + 1}: {formatTeacherFirstName(c.teacher)} ({c.classes.join(' & ')})
               </span>
             ))}
           </div>
@@ -540,7 +603,7 @@ export default function Timetable({ store, user }) {
                 <thead>
                   <tr>
                     <th style={{ width: 90 }}>Period</th>
-                    {dynamicClasses.map((c) => <th key={c}>Grade {c}</th>)}
+                    {dynamicClasses.map((c) => <th key={c}>{c}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -622,7 +685,7 @@ export default function Timetable({ store, user }) {
                           }
                           // Teacher view: class taught is the headline, subject abbr in the corner.
                           return (
-                            <td key={ci} style={{ ...cellStyle(cell), position: 'relative', height: 60, textAlign: 'center' }} title={`${cell.subject} — Grade ${cell.cls}`}>
+                            <td key={ci} style={{ ...cellStyle(cell), position: 'relative', height: 60, textAlign: 'center' }} title={`${cell.subject} — ${cell.cls}`}>
                               <div style={{ fontWeight: 700, fontSize: 13 }}>{cell.cls}</div>
                               <span style={{ position: 'absolute', left: 4, top: 2, fontSize: 9, fontWeight: 700, color: '#475569' }}>{meta.short}</span>
                             </td>
@@ -971,7 +1034,7 @@ function ImportModal({ onClose, onImport, dynamicClasses = [] }) {
             ))}
           </div>
           <p className="muted" style={{ fontSize: 12, marginBottom: 14 }}>
-            If no Class column is mapped, all rows import into <strong>Grade {dynamicClasses[0] || '—'}</strong>. Period accepts "1" or "P1".
+            If no Class column is mapped, all rows import into <strong>{dynamicClasses[0] || '—'}</strong>. Period accepts "1" or "P1".
           </p>
           <h4 style={{ marginBottom: 10 }}>Preview (first 5 rows)</h4>
           <div className="scroll-x">

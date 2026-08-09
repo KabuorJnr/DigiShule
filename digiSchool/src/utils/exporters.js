@@ -559,11 +559,11 @@ export function exportTimetableLandscapePDF({
           doc.setFontSize(11);
           doc.text(String(slot.period), cx, data.cell.y + (slot.start ? 13 : 18), { align: 'center' });
         } else {
-          // Narrow break/lunch column: small single-line label.
+          // Narrow break/lunch column: small single-line label, centered.
           doc.setFontSize(6);
-          doc.text(String(slot.label), cx, data.cell.y + (slot.start ? 12 : 16), { align: 'center' });
+          doc.text(String(slot.label), cx, data.cell.y + data.cell.height / 2 + 2, { align: 'center' });
         }
-        if (slot.start) {
+        if (slot.start && slot.teaching) {
           doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(90);
           doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 5, { align: 'center' });
           doc.setTextColor(0);

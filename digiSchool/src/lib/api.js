@@ -210,6 +210,17 @@ export async function saveConfig(patch) {
   if (error) throw error;
 }
 
+// Merge a partial settings patch into the existing settings and persist.
+// Used by Timetable to save assignments, constraints, and timeslots.
+export async function updateSettings(patch) {
+  if (!_schoolId) return;
+  // Read current settings so we can merge, not overwrite
+  const { data } = await supabase.from('app_config').select('settings').eq('school_id', _schoolId).maybeSingle();
+  const current = (data && data.settings) || {};
+  const merged = { ...current, ...patch };
+  await saveConfig({ settings: merged });
+}
+
 // ---- Profiles ---------------------------------------------------------------
 
 export async function updateProfile(id, patch) {
