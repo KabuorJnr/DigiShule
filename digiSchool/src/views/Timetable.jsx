@@ -421,6 +421,7 @@ export default function Timetable({ store, user }) {
                         <td style={{ padding: '6px 12px', fontWeight: 500 }}>
                           <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.color, marginRight: 8 }} />
                           {a.subject}
+                          {meta.code && <span style={{ marginLeft: 6, fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>({meta.code})</span>}
                         </td>
                         <td style={{ padding: '6px 12px' }}>
                           <select className="select" value={a.teacher} style={{ height: 32, fontSize: 13 }}
@@ -500,8 +501,9 @@ export default function Timetable({ store, user }) {
               {SUBJECTS.map((s) => {
                 const meta = getSubjectMeta(s);
                 return (
-                  <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: 3, background: meta.color }} /> {meta.initials}
+                  <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={s}>
+                    <span style={{ width: 12, height: 12, borderRadius: 3, background: meta.color }} />
+                    {meta.code ? <><strong>{meta.code}</strong> {s}</> : s}
                   </span>
                 );
               })}
@@ -568,7 +570,10 @@ export default function Timetable({ store, user }) {
                             style={{ ...cellStyle(cell), cursor: isTimetableAdmin ? 'pointer' : 'default' }}
                             onClick={() => isTimetableAdmin && setEditCell({ p, d, ...cell })}
                             title={conflict ? `Conflict: ${cell.teacher} double-booked` : (isTimetableAdmin ? 'Click to edit' : '')}>
-                            <div className="tt-cell-sub">{cell.subject}{cell.double && <span title="Double period" style={{ marginLeft: 4, fontSize: 9, color: '#64748b', fontWeight: 700 }}>‖</span>}</div>
+                            <div className="tt-cell-sub">
+                              {getSubjectMeta(cell.subject).code && <span title={`Subject code ${getSubjectMeta(cell.subject).code}`} style={{ fontSize: 9, color: '#64748b', fontWeight: 700, marginRight: 4 }}>{getSubjectMeta(cell.subject).code}</span>}
+                              {cell.subject}{cell.double && <span title="Double period" style={{ marginLeft: 4, fontSize: 9, color: '#64748b', fontWeight: 700 }}>‖</span>}
+                            </div>
                             <div className="tt-cell-teacher">{formatTeacherFirstName(cell.teacher) ? `(${formatTeacherFirstName(cell.teacher)})` : (cell.teacher || '')}</div>
                             {conflict && <div style={{ color: 'var(--danger)', fontSize: 10, fontWeight: 700 }}><Icon name="warning" size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />Conflict</div>}
                           </td>

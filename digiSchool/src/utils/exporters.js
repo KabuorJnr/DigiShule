@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { computeStudentReport } from './grading';
+import { getSubjectMeta } from '../data/seed';
 
 export function exportNemisCSV(students, filename = 'NEMIS_Export.csv') {
   // NEMIS Standard Format Columns
@@ -473,7 +474,9 @@ export function exportLessonPlanPDF({ school, plan, filename }) {
 
 export function exportTimetableLandscapePDF({ title, grid, days, filename, times }) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-  
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
   // Title
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
@@ -494,6 +497,7 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename, times
 
   const head = ['DAY', ...activeTimes.slice(0, grid.length)];
   const body = [];
+  const usedSubjects = new Map(); // subject name -> code (for the legend)
 
   for (let d = 0; d < days.length; d++) {
     const row = [{ content: days[d].toUpperCase(), styles: { fontStyle: 'bold', halign: 'center', valign: 'middle' } }];
@@ -516,16 +520,22 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename, times
           });
         }
       } else if (cell.type === 'lesson') {
-        let sub = cell.subject || '';
+        const sub = cell.subject || '';
+        const meta = sub ? getSubjectMeta(sub) : null;
+        const code = meta ? (meta.code || meta.initials) : '';
+        if (sub) usedSubjects.set(sub, code);
         let firstName = '';
         if (cell.teacher && cell.teacher !== 'TBD' && cell.teacher !== '-') {
           const cleaned = cell.teacher.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').trim();
           firstName = cleaned.split(/\s+/)[0] || cell.teacher;
         }
-        let txt = sub ? (firstName ? `${sub}\n(${firstName})` : sub) : '-';
-        row.push({ 
-          content: txt, 
-          styles: { halign: 'center', valign: 'middle', fontStyle: 'italic', fontSize: 10 } 
+        // Use the compact subject code in the cell (the legend below decodes it);
+        // this keeps columns narrow so the whole grid fits one A4 page.
+        const label = code || sub;
+        const txt = label ? (firstName ? `${label}\n(${firstName})` : label) : '-';
+        row.push({
+          content: txt,
+          styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' }
         });
       } else {
         row.push({ 
@@ -537,42 +547,82 @@ export function exportTimetableLandscapePDF({ title, grid, days, filename, times
     body.push(row);
   }
 
+  // Scale the type to the number of columns so the grid always fits one A4 page.
+  const colCount = grid.length + 1;
+  const bodyFont = colCount >= 12 ? 7 : colCount >= 10 ? 8 : colCount >= 8 ? 9 : 10;
+  const cellPad = colCount >= 12 ? 3 : colCount >= 10 ? 4 : 6;
+
+  // Stretch the rows so the grid fills the A4 height too (not just the top strip),
+  // reserving room at the bottom for the subject-code key and the signature line.
+  const tableTop = 60;
+  const legendLines = Math.max(1, Math.ceil(usedSubjects.size / 6));
+  const reserveBottom = 30 /* signatures */ + 24 /* key title + gap */ + legendLines * 12 + 20 /* padding */;
+  const headerH = Math.round(bodyFont * 2.6);
+  const availH = pageH - tableTop - reserveBottom;
+  const bodyMinH = Math.max(24, Math.floor((availH - headerH) / days.length));
+
   autoTable(doc, {
     head: [head],
     body: body,
-    startY: 60,
+    startY: tableTop,
     theme: 'grid',
-    styles: { 
-      fontSize: 10, 
-      cellPadding: 8, 
-      lineColor: [0, 0, 0], 
+    tableWidth: pageW - 80, // fill the printable width within the 40pt margins
+    styles: {
+      fontSize: bodyFont,
+      cellPadding: cellPad,
+      lineColor: [0, 0, 0],
       lineWidth: 1,
-      textColor: [0, 0, 0]
-    },
-    headStyles: { 
-      fillColor: [255, 255, 255], 
-      textColor: [0, 0, 0], 
-      fontStyle: 'bold', 
-      halign: 'center', 
+      textColor: [0, 0, 0],
+      halign: 'center',
       valign: 'middle',
+      overflow: 'linebreak',
+    },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle',
+      fontSize: Math.max(7, bodyFont - 1),
+      minCellHeight: headerH,
       lineWidth: 1,
-      lineColor: [0, 0, 0]
+      lineColor: [0, 0, 0],
     },
-    bodyStyles: {
-      fillColor: [255, 255, 255]
-    },
-    margin: { left: 40, right: 40 }
+    bodyStyles: { fillColor: [255, 255, 255], minCellHeight: bodyMinH },
+    columnStyles: { 0: { cellWidth: 40, fontStyle: 'bold' } },
+    margin: { left: 40, right: 40 },
+    rowPageBreak: 'avoid',
   });
 
-  const finalY = doc.lastAutoTable.finalY + 40;
-  
+  // Subject-code key so the compact cell codes can be read.
+  let y = doc.lastAutoTable.finalY + 22;
+  const codes = [...usedSubjects.entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1]), undefined, { numeric: true }));
+  if (codes.length) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SUBJECT CODES', 40, y);
+    y += 13;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const perRow = 6;
+    const colW = (pageW - 80) / perRow;
+    codes.forEach(([subject, code], i) => {
+      const col = i % perRow;
+      const rowI = Math.floor(i / perRow);
+      doc.text(`${code} = ${subject}`, 40 + col * colW, y + rowI * 12);
+    });
+    y += Math.ceil(codes.length / perRow) * 12 + 18;
+  }
+
+  // Keep signatures on the same page (clamp to just above the bottom margin).
+  const finalY = Math.min(y + 6, pageH - 28);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text('PREPARED BY ..............................................................', 40, finalY);
-  
+
   const rightText = 'SCHOOL STAMP ..............................................................';
   const rightWidth = doc.getTextWidth(rightText);
-  doc.text(rightText, doc.internal.pageSize.getWidth() - 40 - rightWidth, finalY);
+  doc.text(rightText, pageW - 40 - rightWidth, finalY);
 
   doc.save(filename);
 }
