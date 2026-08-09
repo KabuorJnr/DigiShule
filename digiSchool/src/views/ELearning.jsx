@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { Video, ExternalLink, Folder, Calendar } from 'lucide-react';
+import { Video, ExternalLink, Folder, Calendar, ClipboardCheck } from 'lucide-react';
 import { SUBJECTS, getSubjectMeta, expandClassesWithStreams } from '../data/seed';
 import * as elearning from '../lib/elearningStore';
 
@@ -31,7 +31,9 @@ export default function ELearning({ store, user }) {
   const [subject, setSubject] = useState('All');
   const [classFilter, setClassFilter] = useState('All');
   const [query, setQuery] = useState('');
+  
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [attendanceClass, setAttendanceClass] = useState(null); // Which liveClass to mark attendance for
 
   useEffect(() => {
     setCatalog(elearning.loadCatalog(schoolId));
@@ -140,6 +142,7 @@ export default function ELearning({ store, user }) {
               liveClass={liveClass}
               canManage={canManage}
               onDelete={() => handleDelete(liveClass)}
+              onMarkAttendance={() => setAttendanceClass(liveClass)}
             />
           ))}
         </div>
@@ -153,11 +156,19 @@ export default function ELearning({ store, user }) {
           onSave={handleScheduleClass}
         />
       )}
+
+      {attendanceClass && (
+        <LiveClassAttendanceModal
+          liveClass={attendanceClass}
+          store={store}
+          onClose={() => setAttendanceClass(null)}
+        />
+      )}
     </div>
   );
 }
 
-function LiveClassCard({ liveClass, canManage, onDelete }) {
+function LiveClassCard({ liveClass, canManage, onDelete, onMarkAttendance }) {
   const meta = getSubjectMeta(liveClass.subject);
   
   const formatTime = (timeStr) => {
@@ -200,6 +211,11 @@ function LiveClassCard({ liveClass, canManage, onDelete }) {
             <a href={liveClass.resourceLink} target="_blank" rel="noreferrer" className="btn" style={{ flex: 1, minWidth: 84, padding: '6px 10px', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <Folder size={14} /> Resources
             </a>
+          )}
+          {canManage && (
+            <button className="btn" style={{ padding: '6px 10px', fontSize: 13 }} onClick={onMarkAttendance} title="Mark Attendance">
+              <ClipboardCheck size={14} />
+            </button>
           )}
           {canManage && (
             <button className="btn" style={{ padding: '6px 10px', fontSize: 13, color: '#dc2626' }} onClick={onDelete} title="Delete class">
@@ -286,6 +302,106 @@ function ScheduleModal({ user, classes, onClose, onSave }) {
           <textarea className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What will be covered in this session?" rows={3} style={{ resize: 'vertical' }} />
         </div>
       </div>
+    </Modal>
+  );
+}
+
+function LiveClassAttendanceModal({ liveClass, store, onClose }) {
+  const schoolId = store?.schoolId || store?.settings?.school_id || 'default';
+  
+  const targetStudents = useMemo(() => {
+    const all = store.students || [];
+    if (liveClass.klass === 'All' || !liveClass.klass) return all;
+    return all.filter((s) => s.class === liveClass.klass);
+  }, [store.students, liveClass.klass]);
+
+  const [attendance, setAttendance] = useState({});
+
+  useEffect(() => {
+    setAttendance(elearning.getLiveAttendance(schoolId, liveClass.id));
+  }, [schoolId, liveClass.id]);
+
+  function handleSave() {
+    elearning.saveLiveAttendance(schoolId, liveClass.id, attendance);
+    if (store.notify) store.notify('Attendance saved!', 'success');
+    onClose();
+  }
+
+  function markAll(status) {
+    const next = { ...attendance };
+    targetStudents.forEach((s) => { next[s.adm] = status; });
+    setAttendance(next);
+  }
+
+  return (
+    <Modal title={`Attendance: ${liveClass.title}`} onClose={onClose} wide footer={
+      <>
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={handleSave}>Save Attendance</button>
+      </>
+    }>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+          {targetStudents.length} student{targetStudents.length !== 1 ? 's' : ''} in {liveClass.klass === 'All' ? 'all classes' : `Grade ${liveClass.klass}`}.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-sm" onClick={() => markAll('Present')} style={{ color: '#047857', borderColor: '#047857' }}>All Present</button>
+          <button className="btn btn-sm" onClick={() => markAll('Absent')} style={{ color: '#EF4444', borderColor: '#EF4444' }}>All Absent</button>
+        </div>
+      </div>
+
+      {targetStudents.length === 0 ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: 8 }}>
+          No students found for this class.
+        </div>
+      ) : (
+        <div className="scroll-x" style={{ maxHeight: 400, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+          <table className="table" style={{ margin: 0 }}>
+            <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>
+              <tr>
+                <th style={{ width: 80 }}>Adm</th>
+                <th>Name</th>
+                <th style={{ width: 180, textAlign: 'center' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {targetStudents.map((s) => {
+                const status = attendance[s.adm];
+                return (
+                  <tr key={s.adm}>
+                    <td className="muted" style={{ fontSize: 13 }}>{s.adm}</td>
+                    <td style={{ fontWeight: 500, fontSize: 14 }}>{s.name}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 20, padding: 4, gap: 4 }}>
+                        <button
+                          onClick={() => setAttendance({ ...attendance, [s.adm]: 'Present' })}
+                          style={{
+                            border: 'none', background: status === 'Present' ? '#10b981' : 'transparent',
+                            color: status === 'Present' ? '#fff' : '#64748b', borderRadius: 16, padding: '4px 12px',
+                            fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+                          }}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => setAttendance({ ...attendance, [s.adm]: 'Absent' })}
+                          style={{
+                            border: 'none', background: status === 'Absent' ? '#ef4444' : 'transparent',
+                            color: status === 'Absent' ? '#fff' : '#64748b', borderRadius: 16, padding: '4px 12px',
+                            fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+                          }}
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Modal>
   );
 }

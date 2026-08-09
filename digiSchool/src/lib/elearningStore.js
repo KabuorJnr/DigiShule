@@ -60,3 +60,20 @@ export async function deleteClass(id, schoolId) {
   saveCatalog(schoolId, updated);
   return updated;
 }
+
+// ---- Attendance -----------------------------------------------------------
+const attendanceKey = (schoolId, classId) => `eduone_elearning_att_${schoolId || 'default'}_${classId}`;
+
+export function getLiveAttendance(schoolId, classId) {
+  try {
+    const raw = localStorage.getItem(attendanceKey(schoolId, classId));
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return {};
+}
+
+export function saveLiveAttendance(schoolId, classId, attendanceMap) {
+  try {
+    localStorage.setItem(attendanceKey(schoolId, classId), JSON.stringify(attendanceMap));
+  } catch { /* quota */ }
+}
