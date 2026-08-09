@@ -1,10 +1,14 @@
 // CBC & 8-4-4 Dual Curriculum Grade computation helpers.
 
 export const CBC_BOUNDARIES = [
-  { min: 80, grade: 'EE', label: 'Exceeding Expectation (EE)', pts: 4, remark: 'Exceeding Expectations' },
-  { min: 50, grade: 'ME', label: 'Meeting Expectation (ME)', pts: 3, remark: 'Meeting Expectations' },
-  { min: 30, grade: 'AE', label: 'Approaching Expectation (AE)', pts: 2, remark: 'Approaching Expectations' },
-  { min: 0,  grade: 'BE', label: 'Below Expectation (BE)', pts: 1, remark: 'Below Expectations' },
+  { min: 90, grade: 'EE1', label: 'Exceeding Expectation (EE1)', pts: 8, remark: 'Exceeding Expectations' },
+  { min: 75, grade: 'EE2', label: 'Exceeding Expectation (EE2)', pts: 7, remark: 'Exceeding Expectations' },
+  { min: 58, grade: 'ME1', label: 'Meeting Expectation (ME1)', pts: 6, remark: 'Meeting Expectations' },
+  { min: 41, grade: 'ME2', label: 'Meeting Expectation (ME2)', pts: 5, remark: 'Meeting Expectations' },
+  { min: 31, grade: 'AE1', label: 'Approaching Expectation (AE1)', pts: 4, remark: 'Approaching Expectations' },
+  { min: 21, grade: 'AE2', label: 'Approaching Expectation (AE2)', pts: 3, remark: 'Approaching Expectations' },
+  { min: 11, grade: 'BE1', label: 'Below Expectation (BE1)', pts: 2, remark: 'Below Expectations' },
+  { min: 0,  grade: 'BE2', label: 'Below Expectation (BE2)', pts: 1, remark: 'Below Expectations' },
 ];
 
 export const KCSE_BOUNDARIES = [
@@ -89,12 +93,16 @@ export function gradeFor(average, boundaries, systemType = 'CBC') {
   if (num === 0) return fallback;
 
   if (systemType === 'CBC' || systemType === 'cbc') {
-    // Detect 1-4 rubric score scale and map to EE, ME, AE, BE
+    // Detect 1-4 rubric score scale and map to the 8-tier grades
     if (num > 0 && num <= 4) {
-      if (num >= 3.5) return 'EE'; // 4 -> EE
-      if (num >= 2.5) return 'ME'; // 3 -> ME
-      if (num >= 1.5) return 'AE'; // 2 -> AE
-      return 'BE';                 // 1 -> BE
+      if (num >= 3.5) return 'EE1';
+      if (num >= 3.0) return 'EE2';
+      if (num >= 2.5) return 'ME1';
+      if (num >= 2.0) return 'ME2';
+      if (num >= 1.5) return 'AE1';
+      if (num >= 1.0) return 'AE2';
+      if (num >= 0.5) return 'BE1';
+      return 'BE2';
     }
   }
 
@@ -141,17 +149,20 @@ export function pointsForGrade(grade, systemType = 'CBC') {
     }
   }
   
-  if (typeof grade === 'string' && grade.includes('EE')) return 4;
-  if (typeof grade === 'string' && grade.includes('ME')) return 3;
-  if (typeof grade === 'string' && grade.includes('AE')) return 2;
-  if (typeof grade === 'string' && grade.includes('BE')) return 1;
-  switch (grade) {
-    case 'EE': return 4;
-    case 'ME': return 3;
-    case 'AE': return 2;
-    case 'BE': return 1;
-    default: return 0;
-  }
+  if (typeof grade === 'string' && grade.includes('EE1')) return 8;
+  if (typeof grade === 'string' && grade.includes('EE2')) return 7;
+  if (typeof grade === 'string' && grade.includes('ME1')) return 6;
+  if (typeof grade === 'string' && grade.includes('ME2')) return 5;
+  if (typeof grade === 'string' && grade.includes('AE1')) return 4;
+  if (typeof grade === 'string' && grade.includes('AE2')) return 3;
+  if (typeof grade === 'string' && grade.includes('BE1')) return 2;
+  if (typeof grade === 'string' && grade.includes('BE2')) return 1;
+  // Fallbacks for older 4-tier format
+  if (typeof grade === 'string' && grade.includes('EE')) return 8;
+  if (typeof grade === 'string' && grade.includes('ME')) return 6;
+  if (typeof grade === 'string' && grade.includes('AE')) return 4;
+  if (typeof grade === 'string' && grade.includes('BE')) return 2;
+  return 0;
 }
 
 export function remarkFor(grade, systemType = 'CBC') {
@@ -159,13 +170,13 @@ export function remarkFor(grade, systemType = 'CBC') {
     const kcseMatch = KCSE_BOUNDARIES.find(b => b.grade === grade);
     return kcseMatch ? kcseMatch.remark : 'No Score';
   }
-  switch (grade) {
-    case 'EE': return 'Exceeding Expectations';
-    case 'ME': return 'Meeting Expectations';
-    case 'AE': return 'Approaching Expectations';
-    case 'BE': return 'Below Expectations';
-    default: return 'No Score';
+  if (typeof grade === 'string') {
+    if (grade.includes('EE')) return 'Exceeding Expectations';
+    if (grade.includes('ME')) return 'Meeting Expectations';
+    if (grade.includes('AE')) return 'Approaching Expectations';
+    if (grade.includes('BE')) return 'Below Expectations';
   }
+  return 'No Score';
 }
 
 // Compute per-subject average score for a student.
@@ -298,7 +309,7 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
     formattedClassName = `Grade ${formattedClassName}`;
   }
 
-  const pointsScaleMax = systemType === '844' ? 12 : 4;
+  const pointsScaleMax = systemType === '844' ? 12 : 8;
   const totalPointsText = systemType === '844'
     ? `${totalPoints} (${meanPoints.toFixed(1)} / ${pointsScaleMax} mean)`
     : `${totalPoints} (${meanPoints.toFixed(1)} mean)`;

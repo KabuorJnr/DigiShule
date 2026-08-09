@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
 import MediaManager from '../components/MediaManager';
-import { Download, UserPlus, Shield, CheckCircle2, Key } from 'lucide-react';
+import { Download, UserPlus, Shield, CheckCircle2, Key, Mail } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 
 function Stat({ label, value, color, sub }) {
