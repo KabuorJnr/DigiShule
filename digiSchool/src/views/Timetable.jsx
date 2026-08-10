@@ -135,17 +135,21 @@ export default function Timetable({ store, user }) {
   useEffect(() => { if (!dynamicClasses.includes(cls)) setCls(dynamicClasses[0] || ''); }, [dynamicClasses, cls]);
   useEffect(() => { if (!dynamicClasses.includes(genClass)) setGenClass(dynamicClasses[0] || ''); }, [dynamicClasses, genClass]);
 
-  // Sync state when ttType changes
+  // Sync state when ttType (or the specific settings slice for this type) changes.
+  // We depend on the individual slices, not the whole settings object — that
+  // avoids overwriting unsaved local edits whenever an unrelated settings key
+  // changes (e.g. a realtime refetch triggered by another module).
+  const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+  const constrKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+  const assignKey = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+  const savedTs = settings?.[tsKey];
+  const savedConstr = settings?.[constrKey];
+  const savedAssign = settings?.[assignKey];
   useEffect(() => {
-    const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
-    const constrKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
-    const assignKey = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
-    
-    const savedTs = settings?.[tsKey];
     setTimeslots(Array.isArray(savedTs) && savedTs.length ? savedTs : patternTimeslots(settings?.timetable_schedule));
-    setConstraints({ ...defaultConstraints, ...(settings?.[constrKey] || {}) });
-    setAssignmentsByClass(settings?.[assignKey] || {});
-  }, [ttType, settings]);
+    setConstraints({ ...defaultConstraints, ...(savedConstr || {}) });
+    if (savedAssign && Object.keys(savedAssign).length) setAssignmentsByClass(savedAssign);
+  }, [ttType, savedTs, savedConstr, savedAssign, settings?.timetable_schedule]);
 
   async function persist(patch) {
     try { const { updateSettings } = await import('../lib/api'); await updateSettings(patch); }
@@ -714,7 +718,10 @@ export default function Timetable({ store, user }) {
                               </td>
                             );
                           }
-                          const cell = tab === 'class' ? tt.grid[ci][d] : (tGrid[ci][d] || { type: 'empty' });
+                          // Guard against stale grids: if timeslots were edited after generation,
+                          // ci can be beyond the saved grid's rows — return empty rather than crash.
+                          const gridRow = tab === 'class' ? (tt?.grid?.[ci]) : (tGrid?.[ci]);
+                          const cell = (gridRow && gridRow[d]) || { type: 'empty' };
                           if (!cell || cell.type === 'empty') {
                             return (
                               <td key={ci} className="tt-empty" style={{ height: 60 }}

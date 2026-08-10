@@ -215,7 +215,11 @@ export default function PortalLayout() {
             finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
             registrar: ['enroll', 'transfers'],
             student: ['academics', 'records', 'resources', 'student_finance'],
-            teacher: ['classes', 'attendance', 'gradebook'],
+            // 'gradebook' intentionally NOT nested here — the standalone
+            // Gradebook route (VIEW_MAP.gradebook) is role-aware and is what
+            // Principal/DoS/Deputy Academics need. Teachers land there too;
+            // the component filters by their assigned subjects internally.
+            teacher: ['classes', 'attendance'],
             staff: ['leave', 'classes', 'recruitment'],
             procurement: ['procurement_dashboard', 'tenders_manager', 'purchase_orders'],
             parent: ['attendance', 'contact', 'health', 'disciplinary'],
