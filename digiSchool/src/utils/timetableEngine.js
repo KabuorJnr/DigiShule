@@ -28,15 +28,35 @@ export function buildNotToFollow(c) {
   return s;
 }
 
-export function defaultAssignments(teachers = [], subjects = SUBJECTS) {
+export function defaultAssignments(teachers = [], subjects = SUBJECTS, className = '') {
   if (teachers.length === 0) return [];
   const list = Array.isArray(subjects) && subjects.length ? subjects : SUBJECTS;
-  return list.map((sub, i) => ({
-    subject: sub,
-    teacher: teachers[i % teachers.length]?.name || 'TBD',
-    singles: sub === 'Mathematics' || sub === 'English' ? 5 : 4,
-    doubles: 0,
-  }));
+  
+  return list.map((sub, i) => {
+    // 1. Exact match: teacher teaches this subject AND this class
+    let t = teachers.find(t => {
+      const teachesSub = (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub];
+      const teachesClass = (t.classes || []).includes(className) || t.assignedClass === className || t.assigned_class === className;
+      return teachesSub && teachesClass;
+    });
+
+    // 2. Partial match: teacher teaches this subject (we'll just use the first one we find)
+    if (!t) {
+      t = teachers.find(t => (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub]);
+    }
+
+    // 3. Fallback: round-robin
+    if (!t) {
+      t = teachers[i % teachers.length];
+    }
+
+    return {
+      subject: sub,
+      teacher: t?.name || 'TBD',
+      singles: sub === 'Mathematics' || sub === 'English' ? 5 : 4,
+      doubles: 0,
+    };
+  });
 }
 
 // Build a typed-timeslot list from a simple schedule pattern (first-time setup helper).

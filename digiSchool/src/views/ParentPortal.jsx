@@ -11,6 +11,7 @@ import { listFiles } from '../lib/fileStore';
 import GalleryViewer from '../components/GalleryViewer';
 import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
+import { supabase } from '../lib/supabaseClient';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
@@ -57,7 +58,7 @@ export default function ParentPortal({ store, user }) {
   const [disciplinary, setDisciplinary] = useState([]);
   const [payments, setPayments] = useState([]);
   const [payModalOpen, setPayModalOpen] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', code: '' });
+  const [payForm, setPayForm] = useState({ amount: '', phone: user?.phone || '' });
   const [paywallSaving, setPaywallSaving] = useState(false);
   const [paywallError, setPaywallError] = useState('');
   
@@ -168,15 +169,22 @@ export default function ParentPortal({ store, user }) {
     if (!payForm.amount || Number(payForm.amount) <= 0) {
       return setPaywallError('Please enter a valid amount.');
     }
-    if (payForm.code.trim().length !== 10) {
-      return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
+    
+    let phoneToUse = payForm.phone.trim();
+    if (!phoneToUse) {
+      return setPaywallError('Phone number is required for M-Pesa STK Push.');
+    }
+    
+    // Convert to standard safaricom format (e.g. 2547XXXXXXXX)
+    if (phoneToUse.startsWith('0')) {
+      phoneToUse = '254' + phoneToUse.slice(1);
+    } else if (phoneToUse.startsWith('+254')) {
+      phoneToUse = phoneToUse.slice(1);
+    }
+    if (phoneToUse.length !== 12 || !phoneToUse.startsWith('254')) {
+      return setPaywallError('Invalid phone number format. Use 07XXXXXXXX or 2547XXXXXXXX.');
     }
 
-    // The finance_payments row MUST carry school_id (RLS blocks the insert
-    // otherwise — that was the silent failure). Also link the student/adm so
-    // the bursar's reconciliation query finds it, and mark it as pending
-    // verification: we can't trust a parent-entered code until the bursar
-    // matches it against the school's actual M-Pesa statement.
     const schoolId = child?.school_id || store?.schoolId || store?.settings?.id;
     if (!schoolId) {
       return setPaywallError('School context missing. Please reload the portal and try again.');
@@ -184,35 +192,29 @@ export default function ParentPortal({ store, user }) {
 
     setPaywallSaving(true);
     try {
-      const payment = {
-        id: `pay_${Date.now()}`,
-        school_id: schoolId,
-        student_id: child.id,
-        adm: child.adm || null,
-        amount: Number(payForm.amount),
-        method: 'M-Pesa',
-        ref: payForm.code.toUpperCase(),
-        status: 'pending_verification',
-        source: 'parent_portal',
-        date: new Date().toISOString().slice(0, 10),
-        created_at: new Date().toISOString(),
-      };
-      await upsertRow('financePayments', payment);
-      setPayments(prev => [...prev, payment]);
+      const { data, error } = await supabase.functions.invoke('mpesa-stk', {
+        body: {
+          phone: phoneToUse,
+          amount: Number(payForm.amount),
+          studentId: child.id,
+          invoiceId: `FEE-${child.adm || child.id.slice(0, 8)}-${Date.now()}`
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message || 'Server error initiating STK Push');
+      }
+
       store.notify(
-        `Payment of KES ${payment.amount.toLocaleString()} submitted. The bursar will confirm it against the M-Pesa statement.`,
+        `STK Push initiated to ${phoneToUse}. Please check your phone and enter your M-Pesa PIN to complete the payment.`,
         'success',
         'Fee Payment'
       );
       setPayModalOpen(false);
-      setPayForm({ amount: '', code: '' });
+      setPayForm({ amount: '', phone: user?.phone || '' });
     } catch (e) {
       reportError(e, 'parent.payFees', { school_id: schoolId, student_id: child?.id });
-      setPaywallError(
-        /row-level security|policy/i.test(String(e?.message))
-          ? 'Payment could not be recorded (permission denied by the server). Please contact the bursar.'
-          : `Payment could not be recorded: ${e?.message || 'unknown error'}. Please try again.`
-      );
+      setPaywallError(`Could not initiate payment: ${e?.message || 'unknown error'}. Please try again.`);
     } finally {
       setPaywallSaving(false);
     }
@@ -572,11 +574,10 @@ export default function ParentPortal({ store, user }) {
           
           <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#334155' }}>
-              <div>1. Open M-Pesa on your phone</div>
-              <div>2. Select <strong>Lipa na M-Pesa → Paybill</strong></div>
-              <div>3. Enter Business No: <strong>123456</strong></div>
-              <div>4. Enter Account No: <strong>{child?.adm || 'EDUONE'}</strong></div>
-              <div>5. Enter the amount you wish to pay</div>
+              <div>1. Enter the amount you wish to pay</div>
+              <div>2. Enter your M-Pesa registered phone number</div>
+              <div>3. Click <strong>Initiate Payment</strong></div>
+              <div>4. A prompt will appear on your phone asking for your M-Pesa PIN</div>
             </div>
           </div>
 
@@ -588,24 +589,24 @@ export default function ParentPortal({ store, user }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
             <div>
-              <label className="field-label">Amount Paid (KES)</label>
+              <label className="field-label">Amount to Pay (KES)</label>
               <input type="number" className="input" value={payForm.amount} onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))} placeholder="e.g. 15000" style={{ fontSize: 16, padding: '12px' }} />
             </div>
             <div>
-              <label className="field-label">M-Pesa Transaction Code</label>
-              <input type="text" className="input" value={payForm.code} onChange={e => setPayForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="e.g. SAJ1234XYZ" maxLength={10} style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600, fontSize: 16, padding: '12px' }} />
+              <label className="field-label">M-Pesa Phone Number</label>
+              <input type="tel" className="input" value={payForm.phone} onChange={e => setPayForm(f => ({ ...f, phone: e.target.value }))} placeholder="e.g. 07XXXXXXXX" style={{ fontSize: 16, padding: '12px', fontWeight: 500 }} />
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
             <button className="btn" style={{ flex: 1, padding: '12px' }} onClick={() => setPayModalOpen(false)}>Cancel</button>
             <button className="btn btn-primary" style={{ flex: 2, padding: '12px', background: '#047857', borderColor: '#047857' }} onClick={handlePayFees} disabled={paywallSaving}>
-              {paywallSaving ? 'Verifying Code...' : 'Verify & Complete Payment'}
+              {paywallSaving ? 'Sending Prompt to Phone...' : 'Initiate Payment'}
             </button>
           </div>
           
           <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#64748b', fontSize: 12 }}>
-            <Icon name="check" size={14} /> Payments are verified and synced instantly.
+            <Icon name="check" size={14} /> Payments are verified and synced instantly upon successful PIN entry.
           </div>
         </Modal>
       )}

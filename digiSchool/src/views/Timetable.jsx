@@ -108,6 +108,19 @@ export default function Timetable({ store, user }) {
   const [importOpen, setImportOpen] = useState(false);
   const [unplaced, setUnplaced] = useState([]);
 
+  // Sync state when ttType or settings change
+  useEffect(() => {
+    const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+    const savedTs = settings?.[tsKey];
+    setTimeslots(Array.isArray(savedTs) && savedTs.length ? savedTs : patternTimeslots(settings?.timetable_schedule));
+
+    const conKey = ttType === 'Remedial' ? 'remedial_timetable_constraints' : 'timetable_constraints';
+    setConstraints({ ...defaultConstraints, ...(settings?.[conKey] || {}) });
+
+    const assKey = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+    setAssignmentsByClass(settings?.[assKey] || {});
+  }, [ttType, settings]);
+
   const activeDays = DAYS.filter((_, i) => workingDays[i]);
   const tt = timetables[actualCls];
   const hasGenerated = Object.keys(timetables).length > 0 && tt;
@@ -147,7 +160,7 @@ export default function Timetable({ store, user }) {
       let changed = false;
       dynamicClasses.forEach((c) => {
         if (!next[c] || next[c].length === 0) {
-          next[c] = defaultAssignments(teachers, schoolSubjects);
+          next[c] = defaultAssignments(teachers, schoolSubjects, c);
           changed = true;
         } else {
           const existing = new Set(next[c].map((a) => a.subject));

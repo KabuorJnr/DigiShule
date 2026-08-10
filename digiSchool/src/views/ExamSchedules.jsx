@@ -29,8 +29,8 @@ export default function ExamSchedules({ store, params = {} }) {
     if (settings?.classes?.length) {
       return settings.classes.map(c => c.name);
     }
-    return [...new Set(getDynamicClasses(store.students).map(c => c.replace(/\s*[A-Z]$/, '')))];
-  }, [settings?.classes, store.students]);
+    return [];
+  }, [settings?.classes]);
 
   const flat = useMemo(() =>
     examSchedules.flatMap((s) =>
