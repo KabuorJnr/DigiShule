@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     })
-    const { data: { user }, error: userErr } = await userClient.auth.getUser()
-    if (userErr || !user) return json({ error: 'invalid_auth' }, 401)
+    const { data: { user }, error: userErr } = await userClient.auth.getUser(jwt)
+    if (userErr || !user) return json({ error: 'invalid_auth', details: userErr?.message }, 401)
 
     // (b) Look up profile: get school_id + role. Enforce admin-only.
     const { data: profile, error: profErr } = await userClient

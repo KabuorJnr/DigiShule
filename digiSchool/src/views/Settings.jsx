@@ -44,7 +44,17 @@ export default function Settings({ store, user }) {
     import('../lib/supabaseClient').then(({ supabase }) => {
       supabase.rpc('school_ai_status').then(({ data }) => {
         const row = Array.isArray(data) ? data[0] : data;
-        if (row) setAiStatus({ configured: !!row.configured, provider: row.provider || 'anthropic', model_override: row.model_override || '', updated_at: row.updated_at });
+        if (row) {
+          let model = row.model_override || '';
+          let baseUrl = '';
+          if (row.provider === 'custom' && model.includes('|')) {
+            const parts = model.split('|');
+            model = parts[0];
+            baseUrl = parts.length > 1 ? parts[1] : '';
+          }
+          setAiStatus({ configured: !!row.configured, provider: row.provider || 'anthropic', model_override: row.model_override || '', updated_at: row.updated_at });
+          setAiForm(f => ({ ...f, provider: row.provider || 'openai', model_override: model, base_url: baseUrl }));
+        }
       });
     });
   }, [tab, store.schoolId]);
@@ -704,18 +714,20 @@ export default function Settings({ store, user }) {
               >
                 <option value="openai">OpenAI (GPT)</option>
                 <option value="anthropic">Anthropic (Claude)</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="custom">Custom (Groq, OpenRouter, etc)</option>
               </select>
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
-                Both providers work equally well for these features. Pick the one you have an account with.
+                OpenAI, Anthropic, and Gemini work natively. Choose "Custom" for OpenAI-compatible APIs like Groq.
               </div>
             </div>
 
             <div>
-              <label className="field-label">{aiForm.provider === 'openai' ? 'OpenAI API Key' : 'Anthropic API Key'}</label>
+              <label className="field-label">API Key</label>
               <input
                 type="password"
                 className="input"
-                placeholder={aiStatus.configured ? '••••••••••  (paste a new key to rotate)' : (aiForm.provider === 'openai' ? 'sk-...' : 'sk-ant-...')}
+                placeholder={aiStatus.configured ? '••••••••••  (paste a new key to rotate)' : 'Paste API key here...'}
                 value={aiForm.api_key}
                 onChange={(e) => setAiForm(f => ({ ...f, api_key: e.target.value }))}
                 autoComplete="off"
@@ -723,25 +735,42 @@ export default function Settings({ store, user }) {
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
                 Get a key at{' '}
                 {aiForm.provider === 'openai' ? (
-                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>platform.openai.com/api-keys</a>
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>platform.openai.com</a>
+                ) : aiForm.provider === 'gemini' ? (
+                  <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>aistudio.google.com</a>
+                ) : aiForm.provider === 'custom' ? (
+                  <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>console.groq.com</a>
                 ) : (
                   <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>console.anthropic.com</a>
                 )}.
-                Costs are ~KES 0.15 per AI card (typical school &lt; KES 100/month).
               </div>
             </div>
+
+            {aiForm.provider === 'custom' && (
+              <div>
+                <label className="field-label">Custom Base URL</label>
+                <input
+                  className="input"
+                  placeholder="https://api.groq.com/openai/v1/chat/completions"
+                  value={aiForm.base_url || ''}
+                  onChange={(e) => setAiForm(f => ({ ...f, base_url: e.target.value }))}
+                />
+                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                  The full endpoint URL for the chat completions API.
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="field-label">Model Override (optional)</label>
               <input
                 className="input"
-                placeholder={aiForm.provider === 'openai' ? 'Leave blank to use gpt-4o-mini' : 'Leave blank to use claude-haiku-4-5'}
-                value={aiForm.model_override}
+                placeholder={aiForm.provider === 'openai' ? 'e.g. gpt-4o' : aiForm.provider === 'gemini' ? 'e.g. gemini-1.5-pro' : aiForm.provider === 'custom' ? 'e.g. llama3-8b-8192' : 'e.g. claude-3-5-sonnet'}
+                value={aiForm.model_override || ''}
                 onChange={(e) => setAiForm(f => ({ ...f, model_override: e.target.value }))}
               />
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
-                Advanced. Change only if you want higher-quality (and more expensive) output —
-                e.g. <code>{aiForm.provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-5'}</code>.
+                Advanced. Change only if you want higher-quality output, or if your custom provider requires a specific model name.
               </div>
             </div>
           </div>
@@ -759,14 +788,16 @@ export default function Settings({ store, user }) {
                     school_id: store.schoolId,
                     provider: aiForm.provider || 'openai',
                     api_key: aiForm.api_key.trim(),
-                    model_override: aiForm.model_override.trim() || null,
+                    model_override: (aiForm.provider === 'custom' && aiForm.base_url) 
+                      ? `${aiForm.model_override?.trim() || ''}|${aiForm.base_url.trim()}`
+                      : (aiForm.model_override?.trim() || null),
                     updated_at: new Date().toISOString(),
                   };
                   const { error } = await supabase.from('school_ai_credentials').upsert(payload, { onConflict: 'school_id' });
                   if (error) throw error;
                   notify('AI credentials saved securely. AI features are now live.', 'success');
-                  setAiStatus({ configured: true, provider: payload.provider, model_override: aiForm.model_override || null, updated_at: payload.updated_at });
-                  setAiForm({ provider: aiForm.provider, api_key: '', model_override: aiForm.model_override });
+                  setAiStatus({ configured: true, provider: payload.provider, model_override: payload.model_override, updated_at: payload.updated_at });
+                  setAiForm({ provider: aiForm.provider, api_key: '', model_override: aiForm.model_override, base_url: aiForm.base_url });
                 } catch (e) {
                   notify(`Could not save AI key: ${e.message}`, 'error');
                 } finally {

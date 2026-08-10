@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     })
-    const { data: { user }, error: userErr } = await supabase.auth.getUser()
-    if (userErr || !user) return json({ error: 'invalid_auth' }, 401)
+    const { data: { user }, error: userErr } = await supabase.auth.getUser(jwt)
+    if (userErr || !user) return json({ error: 'invalid_auth', details: userErr?.message }, 401)
 
     // ── Resolve the AI provider + key using the SAME pattern as finance:
     //     1. Look up caller's school → pull per-school row from
@@ -103,31 +103,34 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       const openaiKey = (Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPENAI_KEY') || '').trim()
       const anthropicKey = (Deno.env.get('ANTHROPIC_API_KEY') || '').trim()
+      const eduoneKey = (Deno.env.get('EDUONE_KEY') || '').trim()
+      
       if (openaiKey) { apiKey = openaiKey; provider = 'openai' }
       else if (anthropicKey) { apiKey = anthropicKey; provider = 'anthropic' }
+      else if (eduoneKey) { apiKey = eduoneKey; provider = 'custom' } // Default custom/Groq for EDUONE_KEY
     }
 
     if (!apiKey) return json({ error: 'ai_not_configured' }, 503)
-    const model = providerModelOverride || DEFAULT_MODELS[provider]
+    let model = providerModelOverride || DEFAULT_MODELS[provider] || ''
+    let baseUrl = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : ''
+
+    if (provider === 'custom') {
+      const parts = model.split('|')
+      model = parts[0]
+      baseUrl = parts.length > 1 ? parts[1] : 'https://api.openai.com/v1/chat/completions'
+      provider = 'openai' // Custom uses OpenAI SDK/format
+    }
 
     const body = await req.json().catch(() => ({}))
     const { kind = 'principal_weekly', payload = {}, school_name = 'the school' } = body || {}
-    const system = SYSTEM_PROMPTS[kind]
-    if (!system) return json({ error: 'unknown_kind', kind }, 400)
-
-    // Compose the user message: the concrete data + a short instruction.
-    const userMessage = [
-      `School: ${school_name}`,
-      `Metrics (JSON):`,
-      JSON.stringify(payload, null, 2),
-      '',
-      'Return the JSON described in your instructions. Do not include any text outside the JSON.',
-    ].join('\n')
+    const prompt = SYSTEM_PROMPTS[kind]
+    const metrics = payload
+    if (!prompt) return json({ error: 'unknown_kind', kind }, 400)
 
     // ── Provider dispatch ────────────────────────────────────────────────
     let aiRes: Response
     if (provider === 'openai') {
-      aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      aiRes = await fetch(baseUrl, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -138,10 +141,24 @@ Deno.serve(async (req) => {
           max_tokens: MAX_TOKENS,
           response_format: { type: 'json_object' },
           messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: userMessage },
+            { role: 'system', content: prompt },
+            { role: 'user', content: 'School: ' + school_name + '\nMetrics:\n' + JSON.stringify(metrics) },
           ],
         }),
+      })
+    } else if (provider === 'gemini') {
+      const geminiMessages = [{ role: 'user', parts: [{ text: 'School: ' + school_name + '\nMetrics:\n' + JSON.stringify(metrics) }] }]
+      
+      const payload: any = { 
+        contents: geminiMessages, 
+        systemInstruction: { parts: [{ text: prompt }] },
+        generationConfig: { maxOutputTokens: MAX_TOKENS, responseMimeType: 'application/json' } 
+      }
+
+      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
       })
     } else {
       aiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -166,9 +183,15 @@ Deno.serve(async (req) => {
     }
 
     const aiJson = await aiRes.json()
-    const text = (provider === 'openai'
-      ? aiJson?.choices?.[0]?.message?.content
-      : aiJson?.content?.[0]?.text)?.trim() || ''
+    let text = ''
+    if (provider === 'openai') {
+      text = aiJson?.choices?.[0]?.message?.content || ''
+    } else if (provider === 'gemini') {
+      text = aiJson?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    } else {
+      text = aiJson?.content?.[0]?.text || ''
+    }
+    text = text.trim()
 
     // Parse the strict-JSON response. If Claude drifts (rare with a good
     // system prompt), we return the raw text so the client can decide.

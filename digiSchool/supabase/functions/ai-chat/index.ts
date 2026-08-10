@@ -34,8 +34,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     })
-    const { data: { user }, error: userErr } = await supabase.auth.getUser()
-    if (userErr || !user) return json({ error: 'invalid_auth' }, 401)
+    const { data: { user }, error: userErr } = await supabase.auth.getUser(jwt)
+    if (userErr || !user) return json({ error: 'invalid_auth', details: userErr?.message }, 401)
 
     let provider: 'anthropic' | 'openai' = 'anthropic'
     let apiKey = ''
@@ -60,12 +60,23 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       const openaiKey = (Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPENAI_KEY') || '').trim()
       const anthropicKey = (Deno.env.get('ANTHROPIC_API_KEY') || '').trim()
+      const eduoneKey = (Deno.env.get('EDUONE_KEY') || '').trim()
+      
       if (openaiKey) { apiKey = openaiKey; provider = 'openai' }
       else if (anthropicKey) { apiKey = anthropicKey; provider = 'anthropic' }
+      else if (eduoneKey) { apiKey = eduoneKey; provider = 'custom' }
     }
 
     if (!apiKey) return json({ error: 'ai_not_configured' }, 503)
-    const model = providerModelOverride || DEFAULT_MODELS[provider]
+    let model = providerModelOverride || DEFAULT_MODELS[provider] || ''
+    let baseUrl = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : ''
+
+    if (provider === 'custom') {
+      const parts = model.split('|')
+      model = parts[0]
+      baseUrl = parts.length > 1 ? parts[1] : 'https://api.openai.com/v1/chat/completions'
+      provider = 'openai' // Custom uses OpenAI SDK/format
+    }
 
     const body = await req.json().catch(() => ({}))
     const { messages = [] } = body || {}
@@ -76,7 +87,7 @@ Deno.serve(async (req) => {
 
     let aiRes: Response
     if (provider === 'openai') {
-      aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      aiRes = await fetch(baseUrl, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -87,6 +98,23 @@ Deno.serve(async (req) => {
           max_tokens: MAX_TOKENS,
           messages,
         }),
+      })
+    } else if (provider === 'gemini') {
+      let system = ''
+      const geminiMessages = []
+      
+      for (const msg of messages) {
+        if (msg.role === 'system') system += msg.content + '\n'
+        else geminiMessages.push({ role: msg.role === 'assistant' ? 'model' : 'user', parts: [{ text: msg.content }] })
+      }
+      
+      const payload: any = { contents: geminiMessages, generationConfig: { maxOutputTokens: MAX_TOKENS } }
+      if (system) payload.systemInstruction = { parts: [{ text: system.trim() }] }
+
+      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
       })
     } else {
       // For Anthropic, we need to extract the system prompt (if any) and pass it separately
@@ -127,9 +155,15 @@ Deno.serve(async (req) => {
     }
 
     const aiJson = await aiRes.json()
-    const text = (provider === 'openai'
-      ? aiJson?.choices?.[0]?.message?.content
-      : aiJson?.content?.[0]?.text)?.trim() || ''
+    let text = ''
+    if (provider === 'openai') {
+      text = aiJson?.choices?.[0]?.message?.content || ''
+    } else if (provider === 'gemini') {
+      text = aiJson?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    } else {
+      text = aiJson?.content?.[0]?.text || ''
+    }
+    text = text.trim()
 
     return json({
       provider,

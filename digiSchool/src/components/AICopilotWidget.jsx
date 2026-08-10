@@ -47,22 +47,15 @@ Be concise, friendly, and helpful. Format your replies in plain text or simple m
         { role: 'user', content: userMsg.text }
       ];
 
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ messages: apiMessages }),
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { messages: apiMessages },
       });
 
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.detail || json.error || 'Failed to fetch AI response');
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch AI response');
       }
 
-      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: json.text }]);
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: data?.text || 'No response.' }]);
     } catch (e) {
       console.error(e);
       setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: `Sorry, I ran into an error: ${e.message}` }]);
