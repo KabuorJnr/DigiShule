@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       
       if (openaiKey) { apiKey = openaiKey; provider = 'openai' }
       else if (anthropicKey) { apiKey = anthropicKey; provider = 'anthropic' }
-      else if (eduoneKey) { apiKey = eduoneKey; provider = 'custom' } // Default custom/Groq for EDUONE_KEY
+      else if (eduoneKey) { apiKey = eduoneKey; provider = 'gemini' }
     }
 
     if (!apiKey) return json({ error: 'ai_not_configured' }, 503)
