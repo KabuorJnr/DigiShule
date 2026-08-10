@@ -3,18 +3,24 @@ import { computeRow, gradeFor, remarkFor, subjectAverage, studentOverall, is844C
 
 describe('grading calculations', () => {
   it('assigns correct CBC grade for standard thresholds and 1-4 rubric points', () => {
-    expect(gradeFor(85)).toBe('EE');
-    expect(gradeFor(65)).toBe('ME');
-    expect(gradeFor(40)).toBe('AE');
-    expect(gradeFor(15)).toBe('BE');
+    // 8-tier CBC scale: EE1/EE2/ME1/ME2/AE1/AE2/BE1/BE2
+    expect(gradeFor(95)).toBe('EE1'); // 90-100
+    expect(gradeFor(80)).toBe('EE2'); // 75-89
+    expect(gradeFor(65)).toBe('ME1'); // 58-74
+    expect(gradeFor(50)).toBe('ME2'); // 41-57
+    expect(gradeFor(35)).toBe('AE1'); // 31-40
+    expect(gradeFor(25)).toBe('AE2'); // 21-30
+    expect(gradeFor(15)).toBe('BE1'); // 11-20
+    expect(gradeFor(5)).toBe('BE2');  // 0-10
 
-    // 1, 2, 3, 4 Rubric Points Scale Detection
-    expect(gradeFor(4, null, 'CBC')).toBe('EE');
-    expect(gradeFor(3, null, 'CBC')).toBe('ME');
-    expect(gradeFor(2, null, 'CBC')).toBe('AE');
-    expect(gradeFor(1, null, 'CBC')).toBe('BE');
-    expect(gradeFor(3.8, null, 'CBC')).toBe('EE');
-    expect(gradeFor(2.8, null, 'CBC')).toBe('ME');
+    // 1, 2, 3, 4 rubric scale maps to the 8-tier grades in 0.5-point buckets.
+    // Buckets (>=): 3.5→EE1, 3.0→EE2, 2.5→ME1, 2.0→ME2, 1.5→AE1, 1.0→AE2, 0.5→BE1, else BE2
+    expect(gradeFor(4, null, 'CBC')).toBe('EE1');
+    expect(gradeFor(3, null, 'CBC')).toBe('EE2');
+    expect(gradeFor(2, null, 'CBC')).toBe('ME2');
+    expect(gradeFor(1, null, 'CBC')).toBe('AE2');
+    expect(gradeFor(3.8, null, 'CBC')).toBe('EE1');
+    expect(gradeFor(2.8, null, 'CBC')).toBe('ME1');
 
     expect(gradeFor(null)).toBe('-');
   });

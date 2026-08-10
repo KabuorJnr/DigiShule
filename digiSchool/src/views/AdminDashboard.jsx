@@ -8,6 +8,7 @@ import { exportTablePDF } from '../utils/exporters';
 import MediaManager from '../components/MediaManager';
 import { Download, UserPlus, Shield, CheckCircle2, Key, Mail } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
+import { reportError } from '../lib/errorReporter';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -75,11 +76,11 @@ export default function AdminDashboard({ store, user }) {
   };
 
   useEffect(() => {
-    fetchTable('expenses').then(setExpenses).catch(() => {});
-    fetchTable('staff').then(setDbStaff).catch(() => {});
-    fetchTable('facilities').then(setDbFacilities).catch(() => {});
-    fetchTable('disciplinaryRecords').then(setDbDiscipline).catch(() => {});
-    fetchTable('parentMeetingRequests').then(setMeetingRequests).catch(() => {});
+    fetchTable('expenses').then(setExpenses).catch((e) => reportError(e, 'views.AdminDashboard'));
+    fetchTable('staff').then(setDbStaff).catch((e) => reportError(e, 'views.AdminDashboard'));
+    fetchTable('facilities').then(setDbFacilities).catch((e) => reportError(e, 'views.AdminDashboard'));
+    fetchTable('disciplinaryRecords').then(setDbDiscipline).catch((e) => reportError(e, 'views.AdminDashboard'));
+    fetchTable('parentMeetingRequests').then(setMeetingRequests).catch((e) => reportError(e, 'views.AdminDashboard'));
   }, []);
 
   const activeStaffList = dbStaff.filter(s => s.status !== 'Inactive');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
+import { reportError } from '../lib/errorReporter';
 
 export default function EduOneWidget({ user, notify, settings, store }) {
   const _notify = notify || store?.notify || (() => {});
@@ -24,7 +25,7 @@ export default function EduOneWidget({ user, notify, settings, store }) {
         const myLog = (logs || []).find(l => l.staff_id === user.id && l.date === todayStr);
         if (myLog) setTodayLog(myLog);
       })
-      .catch(() => {})
+      .catch((e) => reportError(e, 'components.EduOneWidget'))
       .finally(() => setReady(true));
   }, [user?.id]);
 

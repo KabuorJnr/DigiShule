@@ -5,6 +5,7 @@ import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
 import { upsertRow } from '../../lib/api';
 import { Truck, Plus, Send } from 'lucide-react';
+import { reportError } from '../../lib/errorReporter';
 
 const useStyles = createUseStyles({
   veribidContainer: { fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif', color: '#1a1a2e' },
@@ -39,7 +40,7 @@ export default function PurchaseOrders() {
     };
     
     setPurchaseOrders(prev => [po, ...prev]);
-    upsertRow('purchase_orders', po).catch(() => {});
+    upsertRow('purchase_orders', po).catch((e) => reportError(e, 'views.procurement.PurchaseOrders'));
     addAuditLog('Created PO', `PO for ${po.vendor}`, po.amount);
     setNewPO({ vendor: '', items: '', amount: '' });
     setShowPOModal(false);

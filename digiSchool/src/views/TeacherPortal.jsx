@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 import PrintHeader from '../components/PrintHeader';
 import EduOneWidget from '../components/EduOneWidget';
+import { reportError } from '../lib/errorReporter';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
@@ -35,7 +36,7 @@ export default function TeacherPortal({ store, user }) {
       if (!active) return;
       const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
       setSubjectAssignments(myAssignments);
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'views.TeacherPortal'));
     return () => { active = false; };
   }, [teacherProfile.id, user?.id]);
 
@@ -100,7 +101,7 @@ export default function TeacherPortal({ store, user }) {
       if (!active) return;
       const myLeaves = (rows || []).filter(l => l.staff_name === teacherName || l.staff_id === user?.id);
       setLeaveRequests(myLeaves.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'views.TeacherPortal'));
   }, [teacherName, user?.id]);
 
   const [meetingRequests, setMeetingRequests] = useState([]);
@@ -110,7 +111,7 @@ export default function TeacherPortal({ store, user }) {
       if (!active) return;
       const myMeetings = (rows || []).filter(m => m.teacher_name === teacherName && m.status === 'Scheduled');
       setMeetingRequests(myMeetings.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)));
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'views.TeacherPortal'));
     return () => { active = false; };
   }, [teacherName]);
 

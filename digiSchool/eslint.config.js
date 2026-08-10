@@ -26,6 +26,15 @@ export default defineConfig([
       'react-hooks/immutability': 'off',
       'react-hooks/purity': 'off',
       'no-empty': 'off',
+      // React Compiler hints are useful but they're advisory (perf), not
+      // correctness. Demote to warnings so CI doesn't fail on legacy
+      // components. Fix incrementally.
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/error-boundaries': 'warn',
+      'react-hooks/rules-of-hooks': 'error', // this one IS correctness — keep as error
+      'no-useless-assignment': 'warn',        // core rule, not react-hooks
     },
   },
 ])

@@ -6,6 +6,22 @@ import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
 import './index.css'
 import App from './App.jsx'
+import { initErrorReporter, reportError } from './lib/errorReporter'
+import ErrorBoundary from './components/ErrorBoundary'
+
+// Wire Sentry early. Safe if the DSN isn't set — the module no-ops.
+initErrorReporter();
+
+// Catch unhandled promise rejections and top-level errors so we don't just
+// see a blank tab with nothing in Sentry.
+window.addEventListener('unhandledrejection', (e) => {
+  reportError(e.reason || new Error('unhandledrejection'), 'unhandledrejection');
+});
+window.addEventListener('error', (e) => {
+  // Filter out framework noise; the ErrorBoundary handles React render errors.
+  if (e?.message?.startsWith?.('ResizeObserver')) return;
+  reportError(e.error || new Error(e.message || 'window.error'), 'window.error');
+});
 
 // Register PWA Service Worker if supported
 if ('serviceWorker' in navigator) {
@@ -37,7 +53,7 @@ if ('serviceWorker' in navigator) {
         document.getElementById('pwa-close-btn').onclick = () => toast.remove();
       }
     });
-  }).catch(() => {});
+  }).catch((e) => reportError(e, 'pwa.register'));
 }
 
 import { BrowserRouter } from 'react-router-dom';
@@ -47,11 +63,13 @@ const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )
 

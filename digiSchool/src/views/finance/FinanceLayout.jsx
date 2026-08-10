@@ -2,6 +2,7 @@
 import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
+import { reportError } from '../../lib/errorReporter';
 
 const TABS = [
   { id: '', label: 'Dashboard', path: '.' },
@@ -81,7 +82,7 @@ export default function FinanceLayout() {
 
     // Persist to DB (fire and forget)
     import('../../lib/api').then(({ upsertRow }) => {
-      upsertRow('finance_audit_log', log).catch(() => {});
+      upsertRow('finance_audit_log', log).catch((e) => reportError(e, 'views.finance.FinanceLayout'));
     });
   }, [user?.name]);
 

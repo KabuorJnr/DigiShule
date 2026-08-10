@@ -3,6 +3,7 @@ import { Outlet, NavLink, useOutletContext, useLocation, useNavigate } from 'rea
 import { PageHeader } from '../../components/widgets';
 import { fetchTable } from '../../lib/api';
 import { FileText, ShoppingCart, Truck } from 'lucide-react';
+import { reportError } from '../../lib/errorReporter';
 
 const TABS = [
   { id: 'procurement_dashboard', label: 'Dashboard', icon: ShoppingCart },
@@ -52,7 +53,7 @@ export default function ProcurementLayout() {
     setAuditLogs(prev => [log, ...prev]);
 
     import('../../lib/api').then(({ upsertRow }) => {
-      upsertRow('finance_audit_log', log).catch(() => {});
+      upsertRow('finance_audit_log', log).catch((e) => reportError(e, 'views.procurement.ProcurementLayout'));
     });
   }, [user?.name]);
 

@@ -7,6 +7,7 @@ import RegistrationLoadingModal from '../components/RegistrationLoadingModal';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../utils/auth';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 import { exportTablePDF, downloadCSV } from '../utils/exporters';
+import { reportError } from '../lib/errorReporter';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -113,7 +114,7 @@ export default function StaffAttendance({ store, user }) {
       .then((rows) => {
         if (rows && rows.length > 0) setLeaveRequests(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       })
-      .catch(() => {});
+      .catch((e) => reportError(e, 'views.StaffAttendance'));
 
     // Poll staff + logs every 30 seconds for near real-time updates
     const pollId = setInterval(refreshStaffData, 30000);

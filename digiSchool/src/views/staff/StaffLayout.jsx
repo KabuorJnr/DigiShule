@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router
 import { fetchTable, upsertRow } from '../../lib/api';
 import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../../utils/auth';
+import { reportError } from '../../lib/errorReporter';
 
 export default function StaffLayout() {
   const { store, user, params } = useOutletContext();
@@ -72,7 +73,7 @@ export default function StaffLayout() {
       .then((rows) => {
         if (rows && rows.length > 0) setLeaveRequests(rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       })
-      .catch(() => {});
+      .catch((e) => reportError(e, 'views.staff.StaffLayout'));
   }, [notify]);
 
   const tabs = [

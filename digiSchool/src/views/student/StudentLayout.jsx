@@ -5,6 +5,7 @@ import { fetchClassRank, fetchStudentByQuery, fetchTable } from '../../lib/api';
 import { supabase } from '../../lib/supabaseClient';
 import { Award, AlertTriangle } from 'lucide-react';
 import { listFiles } from '../../lib/fileStore';
+import { reportError } from '../../lib/errorReporter';
 
 const TABS = [
   { id: '', label: 'Dashboard', path: '.' },
@@ -95,7 +96,7 @@ export default function StudentLayout() {
 
   useEffect(() => {
     let active = true;
-    fetchClassRank().then(r => { if (active) setRank(r); }).catch(() => {});
+    fetchClassRank().then(r => { if (active) setRank(r); }).catch((e) => reportError(e, 'views.student.StudentLayout'));
     return () => { active = false; };
   }, []);
 

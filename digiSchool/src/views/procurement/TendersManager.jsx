@@ -4,6 +4,7 @@ import { createUseStyles } from 'react-jss';
 import Modal from '../../components/Modal';
 import { upsertRow } from '../../lib/api';
 import { FileText, Plus, Send } from 'lucide-react';
+import { reportError } from '../../lib/errorReporter';
 
 const useStyles = createUseStyles({
   veribidContainer: { fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif', color: '#1a1a2e' },
@@ -33,7 +34,7 @@ export default function TendersManager() {
     };
     
     setTenders(prev => [tnd, ...prev]);
-    upsertRow('tenders', tnd).catch(() => {});
+    upsertRow('tenders', tnd).catch((e) => reportError(e, 'views.procurement.TendersManager'));
     addAuditLog('Created Tender', `Tender: ${tnd.title}`);
     setNewTender({ title: '', description: '', deadline: '', status: 'Open', published: false });
     setShowTenderModal(false);
@@ -43,7 +44,7 @@ export default function TendersManager() {
     setTenders(prev => prev.map(t => t.id === id ? { ...t, published: true } : t));
     const t = tenders.find(x => x.id === id);
     if(t) {
-      upsertRow('tenders', { ...t, published: true }).catch(() => {});
+      upsertRow('tenders', { ...t, published: true }).catch((e) => reportError(e, 'views.procurement.TendersManager'));
       addAuditLog('Published Tender', `Tender: ${t.title}`);
     }
   };

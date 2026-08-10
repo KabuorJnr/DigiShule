@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { PlaneTakeoff, MessageSquare, FolderOpen, Bell, Calendar, ClipboardList, BarChart3 } from 'lucide-react';
 import { fetchTable } from '../../lib/api';
+import { reportError } from '../../lib/errorReporter';
 
 export default function TeacherLayout() {
   const { store, user, params } = useOutletContext();
@@ -46,7 +47,7 @@ export default function TeacherLayout() {
       if (!active) return;
       const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
       setSubjectAssignments(myAssignments);
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'teacher.layout.fetch'));
     return () => { active = false; };
   }, [teacherProfile.id, user?.id]);
 
@@ -91,7 +92,7 @@ export default function TeacherLayout() {
         return false;
       });
       setMessages(myMsgs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'teacher.layout.fetch'));
     return () => { active = false; };
   }, [assignedClass, subject, teacherName]);
 
@@ -101,7 +102,7 @@ export default function TeacherLayout() {
       if (!active) return;
       const myLeaves = (rows || []).filter(l => l.staff_name === teacherName || l.staff_id === user?.id);
       setLeaveRequests(myLeaves.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'teacher.layout.fetch'));
     return () => { active = false; };
   }, [teacherName, user?.id]);
 
@@ -111,7 +112,7 @@ export default function TeacherLayout() {
       if (!active) return;
       const myMeetings = (rows || []).filter(m => m.teacher_name === teacherName && m.status === 'Scheduled');
       setMeetingRequests(myMeetings.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)));
-    }).catch(() => {});
+    }).catch((e) => reportError(e, 'teacher.layout.fetch'));
     return () => { active = false; };
   }, [teacherName]);
 

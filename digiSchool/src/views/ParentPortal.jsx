@@ -10,6 +10,7 @@ import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
 import GalleryViewer from '../components/GalleryViewer';
 import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
+import { reportError } from '../lib/errorReporter';
 
 const severityColor = (s) => (s === 'High' ? 'red' : s === 'Medium' ? 'amber' : 'blue');
 const statusColor = (s) => (s === 'Resolved' ? 'green' : 'amber');
@@ -91,7 +92,7 @@ export default function ParentPortal({ store, user }) {
         setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
         setCloudAssignments(assigns || []);
       })
-      .catch(() => {});
+      .catch((e) => reportError(e, 'views.ParentPortal'));
     return () => {
       active = false;
     };

@@ -7,6 +7,7 @@ import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/s
 import ReportCardModal from '../components/ReportCardModal';
 import MeritListModule from '../components/MeritListModule';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
+import { reportError } from '../lib/errorReporter';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
   return (
@@ -68,7 +69,7 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
 
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents }) => {
-      fetchStudents(0, 2000, { activeOnly: true }).then(r => setStudents(r.data || [])).catch(() => {});
+      fetchStudents(0, 2000, { activeOnly: true }).then(r => setStudents(r.data || [])).catch((e) => reportError(e, 'views.AcademicsDashboard'));
     });
 
     const fetchApprovals = async () => {

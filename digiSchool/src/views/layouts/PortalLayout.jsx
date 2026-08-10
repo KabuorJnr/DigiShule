@@ -3,6 +3,7 @@ import '../../App.css';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
+import { identifyUser, clearUser, reportError } from '../../lib/errorReporter';
 import * as api from '../../lib/api';
 import { setActiveSchoolId } from '../../lib/api';
 import { ROLES } from '../../data/users';
@@ -295,6 +296,7 @@ export default function PortalLayout() {
       localStorage.setItem('eduone_school_id', sid);
     }
     setCurrentUser(profile);
+    identifyUser(profile);
     // Only navigate to role default home on initial sign in, preserving current route during session or refresh
     if (greet) {
       const currentPath = window.location.pathname;
@@ -403,7 +405,9 @@ export default function PortalLayout() {
   }, [currentUser, loadAllData]);
 
   const handleLogout = async () => {
-    await signOutAll();
+    try { await signOutAll(); }
+    catch (e) { reportError(e, 'auth.signOut'); }
+    clearUser();
     setCurrentUser(null);
     setActiveRoleOverride(null);
     navigateRouter('/login', { replace: true });

@@ -8,6 +8,7 @@ import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
   annotateTimeslots, buildEmptyGrid, generateAll,
 } from '../utils/timetableEngine';
+import { reportError } from '../lib/errorReporter';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const TERMS = ['Term 1', 'Term 2', 'Term 3'];
@@ -170,8 +171,8 @@ export default function Timetable({ store, user }) {
       const assignKey = type === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
       // We use fire-and-forget here because this might happen on unmount
       import('../lib/api').then(({ updateSettings }) => {
-        updateSettings({ [assignKey]: a, [constrKey]: c, [tsKey]: t }).catch(() => {});
-      }).catch(() => {});
+        updateSettings({ [assignKey]: a, [constrKey]: c, [tsKey]: t }).catch((e) => reportError(e, 'views.Timetable'));
+      }).catch((e) => reportError(e, 'views.Timetable'));
     };
 
     const handleBeforeUnload = () => doSave();
