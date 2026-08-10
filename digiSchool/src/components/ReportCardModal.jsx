@@ -350,9 +350,9 @@ export default function ReportCardModal({
                 </div>
               </div>
             </div>
-
           </div>
         </div>
+      </div>
       </div>
     </Modal>
   );
