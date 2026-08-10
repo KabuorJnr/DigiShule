@@ -24,10 +24,14 @@ const AUDIENCE_OPTS = [
   { value: 'specific', label: 'Specific User' },
 ];
 
+// Map a role to the audience bucket a notice can address it under.
+// Only admin roles (who have oversight duty) default to the 'all' bucket.
+// Every other role gets a specific bucket so notices posted to another
+// audience never leak to them.
 const audienceMap = {
-  principal: 'all', deputy_academic: 'all', deputy_admin: 'all', finance: 'all',
+  principal: 'all', deputy_academic: 'all', deputy_admin: 'all', finance: 'all', dos: 'all',
   teacher: 'teachers', student: 'students', parent: 'parents',
-  nurse: 'staff', librarian: 'staff', registrar: 'staff',
+  nurse: 'staff', librarian: 'staff', registrar: 'staff', procurement: 'staff', accountant: 'staff',
 };
 
 export default function Notices({ store, user }) {
@@ -71,7 +75,10 @@ export default function Notices({ store, user }) {
   const [recipientUsers, setRecipientUsers] = useState([]);
 
   const canPost = user && CAN_POST.includes(user.role);
-  const myAudience = audienceMap[user?.role] || 'all';
+  // Fall back to the user's role code (not 'all') so unlisted roles don't
+  // silently receive every notice — they'll only see notices addressed to
+  // their exact role, their user id/email, or 'all'.
+  const myAudience = audienceMap[user?.role] || user?.role || 'staff';
 
   // ── Load notices: Supabase first, fall back to seed ──────────
   const loadNotices = useCallback(async () => {

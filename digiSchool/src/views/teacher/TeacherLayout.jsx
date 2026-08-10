@@ -75,10 +75,18 @@ export default function TeacherLayout() {
       if (!active) return;
       const allMsgs = res || [];
       const myMsgs = allMsgs.filter(m => {
+        // Preferred: id-based routing. Only the intended teacher matches.
+        if (m.recipient_id && user?.id) return String(m.recipient_id) === String(user.id);
+        // Fallback for legacy messages that only carried a role string.
+        // Kept intentionally narrow: only the class teacher of the message's
+        // student, or a name exact-match, so we don't broadcast to all subject
+        // teachers anymore.
         if (!m.recipient_role) return false;
         const role = String(m.recipient_role).toLowerCase().trim();
-        if (role === 'class teacher' && assignedClass) return true;
-        if (subject && role.includes(subject.toLowerCase().trim())) return true;
+        if (role === 'class teacher' && assignedClass && m.student_id) {
+          const stu = (store.students || []).find(s => s.id === m.student_id || s.adm === m.student_id);
+          if (stu && stu.class === assignedClass) return true;
+        }
         if (teacherName && role === teacherName.toLowerCase().trim()) return true;
         return false;
       });

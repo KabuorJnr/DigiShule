@@ -61,7 +61,7 @@ export default function ParentPortal({ store, user }) {
   const [paywallError, setPaywallError] = useState('');
   
   const [msgModalOpen, setMsgModalOpen] = useState(false);
-  const [msgForm, setMsgForm] = useState({ teacher: 'Class Teacher', subject: '', body: '' });
+  const [msgForm, setMsgForm] = useState({ teacher_id: '', teacher_name: '', teacher_role: '', subject: '', body: '' });
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ phone: '+254 700 000000', email: user?.email || '', emergencyContact: 'John Doe', emergencyPhone: '+254 711 111111' });
@@ -197,13 +197,16 @@ export default function ParentPortal({ store, user }) {
 
   const handleSendMessage = async () => {
     if (!msgForm.subject.trim() || !msgForm.body.trim()) return store.notify('Please fill all fields', 'warning');
-    
+    if (!msgForm.teacher_id) return store.notify('Choose a specific recipient', 'warning');
+
     try {
       const messagePayload = {
         id: `msg_${Date.now()}`,
         sender_id: user.id || 'parent',
         sender_name: user.name || 'Parent',
-        recipient_role: msgForm.teacher,
+        recipient_id: msgForm.teacher_id, // <-- ONE teacher, not a broadcast role string
+        recipient_name: msgForm.teacher_name || '',
+        recipient_role: msgForm.teacher_role || 'teacher',
         student_id: child.id,
         student_name: child.name,
         subject: msgForm.subject,
@@ -211,11 +214,11 @@ export default function ParentPortal({ store, user }) {
         status: 'Unread',
         created_at: new Date().toISOString()
       };
-      
+
       await upsertRow('messages', messagePayload);
-      store.notify(`Message sent to ${msgForm.teacher} successfully.`, 'success');
+      store.notify(`Message sent to ${msgForm.teacher_name} successfully.`, 'success');
       setMsgModalOpen(false);
-      setMsgForm({ teacher: 'Class Teacher', subject: '', body: '' });
+      setMsgForm({ teacher_id: '', teacher_name: '', teacher_role: '', subject: '', body: '' });
     } catch (e) {
       store.notify(`Failed to send message: ${e.message}`, 'error');
     }
@@ -594,12 +597,45 @@ export default function ParentPortal({ store, user }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <label className="field-label">Recipient</label>
-              <select className="select" value={msgForm.teacher} onChange={e => setMsgForm(f => ({ ...f, teacher: e.target.value }))}>
-                <option value="Class Teacher">{store.teachers?.find(t => t.assignedClass === child.class)?.name ? `${store.teachers.find(t => t.assignedClass === child.class).name} (Class Teacher)` : 'Class Teacher'}</option>
-                <option>Math Teacher</option>
-                <option>Science Teacher</option>
-                <option>Principal</option>
-              </select>
+              {(() => {
+                // Compose a specific-teacher recipient list from staff actually
+                // linked to this child's class. Each option is ONE teacher, so
+                // only the intended recipient sees the message on their side.
+                const allTeachers = store.teachers || [];
+                const classTeacher = allTeachers.find(t => t.assignedClass === child.class);
+                const subjectTeachers = allTeachers.filter(t => {
+                  if (!t) return false;
+                  const teaches = Array.isArray(t.subjects) ? t.subjects : (t.subject ? [t.subject] : []);
+                  const assignedClasses = Array.isArray(t.classes) ? t.classes : (t.assignedClass ? [t.assignedClass] : []);
+                  return teaches.length && assignedClasses.some(c => c === child.class);
+                });
+                const seen = new Set();
+                const options = [];
+                if (classTeacher) {
+                  options.push({ id: classTeacher.id, name: classTeacher.name, role: 'Class Teacher', label: `${classTeacher.name} — Class Teacher` });
+                  seen.add(classTeacher.id);
+                }
+                subjectTeachers.forEach(t => {
+                  if (seen.has(t.id)) return;
+                  const subj = Array.isArray(t.subjects) ? t.subjects.join(', ') : (t.subject || 'Subject Teacher');
+                  options.push({ id: t.id, name: t.name, role: subj, label: `${t.name} — ${subj}` });
+                  seen.add(t.id);
+                });
+                // Always allow contacting the principal as a fallback.
+                const principal = allTeachers.find(t => (t.role || '').toLowerCase() === 'principal');
+                if (principal && !seen.has(principal.id)) {
+                  options.push({ id: principal.id, name: principal.name, role: 'Principal', label: `${principal.name} — Principal` });
+                }
+                return (
+                  <select className="select" value={msgForm.teacher_id} onChange={e => {
+                    const opt = options.find(o => String(o.id) === e.target.value);
+                    setMsgForm(f => ({ ...f, teacher_id: opt?.id || '', teacher_name: opt?.name || '', teacher_role: opt?.role || '' }));
+                  }}>
+                    <option value="">— Select a specific teacher —</option>
+                    {options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                );
+              })()}
             </div>
             <div>
               <label className="field-label">Subject</label>
