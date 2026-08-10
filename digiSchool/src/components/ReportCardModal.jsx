@@ -50,13 +50,18 @@ export default function ReportCardModal({
     if (!el) return;
     const canvas = await html2canvas(el, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/png');
+    
+    // A4 dimensions in mm
     const pdf = new jsPDF({
       orientation: 'portrait',
-      unit: 'px',
-      format: [canvas.width / 2, canvas.height / 2]
+      unit: 'mm',
+      format: 'a4'
     });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-    pdf.save(`${report.studentName}_Report.pdf`);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${report.studentName.replace(/\s+/g, '_')}_Report.pdf`);
   };
 
   const handlePrint = () => {
@@ -102,10 +107,11 @@ export default function ReportCardModal({
 
         <div style={{ padding: 24, background: '#f8fafc', maxHeight: '75vh', overflowY: 'auto' }}>
         
-        {/* Printable Card Area */}
-        <div id="report-card-capture-area" style={{ background: '#fff', maxWidth: 800, margin: '0 auto', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
-          
-          {/* Header */}
+        {/* Printable Card Area - strictly A4 proportions (794x1123 px at 96 DPI) */}
+        <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
+          <div id="report-card-capture-area" style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+            
+            {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
             <div style={{ position: 'absolute', left: 24, top: 16 }}>
               {schoolSettings.logo ? (
@@ -352,6 +358,7 @@ export default function ReportCardModal({
             </div>
           </div>
         </div>
+      </div>
       </div>
       </div>
     </Modal>
