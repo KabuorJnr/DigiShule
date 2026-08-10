@@ -28,9 +28,10 @@ export function buildNotToFollow(c) {
   return s;
 }
 
-export function defaultAssignments(teachers = []) {
+export function defaultAssignments(teachers = [], subjects = SUBJECTS) {
   if (teachers.length === 0) return [];
-  return SUBJECTS.map((sub, i) => ({
+  const list = Array.isArray(subjects) && subjects.length ? subjects : SUBJECTS;
+  return list.map((sub, i) => ({
     subject: sub,
     teacher: teachers[i % teachers.length]?.name || 'TBD',
     singles: sub === 'Mathematics' || sub === 'English' ? 5 : 4,

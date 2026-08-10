@@ -119,8 +119,10 @@ export default function Gradebook({ store }) {
     }
     const target = loadedStudents.find((s) => s.id === id);
     if (!target) return;
-    const is844 = is844Class(target.class);
-    const maxScore = is844 ? 100 : 4;
+    // Marks are entered as PERCENTAGES (0–100) for every curriculum. CBC
+    // 8-tier grades (EE1 … BE2) are derived from the percentage downstream by
+    // grading.js — no rubric-scale entry any more.
+    const maxScore = 100;
     const v = field === 'remarks' ? value : Math.max(0, Math.min(maxScore, Number(value) || 0));
     if (target) {
       const currentScores = target.scores || {};
@@ -153,13 +155,13 @@ export default function Gradebook({ store }) {
   };
 
   function exportPDF() {
-    const head = ['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks'];
+    const head = ['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'Grade', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]);
     exportTablePDF({ school: settings, title: `Gradebook - Grade ${cls}  |  ${subject}`, subtitle: `${term}  |  ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
   function exportExcel() {
-    const aoa = [['#', 'Student', 'Adm No.', 'Ass. 1', 'Ass. 2', 'Ass. 3', 'Ass. 4', 'Avg Rubric', 'Competency', 'Remarks']];
+    const aoa = [['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'Grade', 'Remarks']];
     rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, r.average, r.grade, r.remarks]));
     downloadExcel(`gradebook-${cls}-${subject}.xlsx`, [{ name: `${cls} ${subject}`.slice(0, 31), aoa }]);
     notify('Gradebook exported as Excel', 'success', 'Export');
@@ -190,8 +192,12 @@ export default function Gradebook({ store }) {
         <td>
           <input
             className="score-input"
-            style={{ width: field === 'remarks' ? '120px' : '40px', padding: '0 4px' }}
+            style={{ width: field === 'remarks' ? '120px' : '48px', padding: '0 4px' }}
             type={field === 'remarks' ? "text" : "number"}
+            min={field === 'remarks' ? undefined : 0}
+            max={field === 'remarks' ? undefined : 100}
+            step={field === 'remarks' ? undefined : 1}
+            placeholder={field === 'remarks' ? '' : '0–100'}
             autoFocus
             defaultValue={r[field]}
             onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
@@ -305,8 +311,8 @@ export default function Gradebook({ store }) {
                     onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} />
                 </th>
                 <th>#</th><th>Student Name</th><th>Adm. No.</th>
-                <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
-                <th>Avg Rubric</th><th>Grade</th><th>Remarks</th>
+                <th>Ass. 1 (%)</th><th>Ass. 2 (%)</th><th>Ass. 3 (%)</th><th>Ass. 4 (%)</th>
+                <th>Avg (%)</th><th>Grade</th><th>Remarks</th>
               </tr>
             </thead>
             <tbody>

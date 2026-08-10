@@ -76,7 +76,7 @@ export default function WeeklyBrief({ store, user }) {
           title="AI service is not available right now"
           body={
             /not_configured/i.test(state.error)
-              ? 'Ask your IT administrator to set ANTHROPIC_API_KEY on the ai-brief edge function.'
+              ? 'Open Settings → AI Assistant to paste your Anthropic API key. Same secure model as M-Pesa — the key never touches the browser.'
               : 'We\'ll try again on the next refresh.'
           }
         />

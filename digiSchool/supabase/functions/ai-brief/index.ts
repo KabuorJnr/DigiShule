@@ -60,14 +60,39 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     })
     const { data: { user }, error: userErr } = await supabase.auth.getUser()
     if (userErr || !user) return json({ error: 'invalid_auth' }, 401)
 
-    // ── Anthropic key must be set as a function secret ───────────────────
-    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
+    // ── Resolve the AI key using the SAME pattern as finance:
+    //     1. Look up the caller's school_id from their profile.
+    //     2. Pull the school's own key from school_ai_credentials (service role).
+    //     3. Fall back to a platform-wide ANTHROPIC_API_KEY env if the school
+    //        hasn't set their own yet.
+    //     School admins manage this in-app; nobody has to run
+    //     `supabase secrets set`.
+    let anthropicKey = ''
+    let providerModelOverride = ''
+
+    if (serviceRoleKey) {
+      const svc = createClient(supabaseUrl, serviceRoleKey)
+      const { data: profile } = await svc.from('profiles').select('school_id').eq('id', user.id).maybeSingle()
+      if (profile?.school_id) {
+        const { data: creds } = await svc.from('school_ai_credentials')
+          .select('api_key, provider, model_override')
+          .eq('school_id', profile.school_id)
+          .maybeSingle()
+        if (creds?.api_key && (!creds.provider || creds.provider === 'anthropic')) {
+          anthropicKey = creds.api_key.trim()
+          providerModelOverride = (creds.model_override || '').trim()
+        }
+      }
+    }
+    // Platform fallback for early-stage single-tenant use.
+    if (!anthropicKey) anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || ''
     if (!anthropicKey) return json({ error: 'ai_not_configured' }, 503)
 
     const body = await req.json().catch(() => ({}))
@@ -92,7 +117,7 @@ Deno.serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: providerModelOverride || MODEL,
         max_tokens: MAX_TOKENS,
         system,
         messages: [{ role: 'user', content: userMessage }],

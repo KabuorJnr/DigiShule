@@ -43,6 +43,22 @@ export default function Timetable({ store, user }) {
     return saved.length ? saved : ['1A', '2A', '3A'];
   }, [store.settings]);
 
+  // The school's own subject list (from Settings → Academic). Falls back to
+  // the seed only if the school hasn't configured any yet. This is the ONE
+  // place the timetable pulls subject names from — everything else in this
+  // view (legends, edit-cell dropdowns, "not to follow" pairs) reads from
+  // `schoolSubjects`, so an admin adding "French" in Settings sees it here
+  // immediately.
+  const schoolSubjects = useMemo(() => {
+    const raw = store.settings?.subjects;
+    if (Array.isArray(raw) && raw.length) {
+      // Settings stores [{name, dept}] objects; extract names, unique + defined.
+      const names = raw.map((s) => (typeof s === 'string' ? s : s?.name)).filter(Boolean);
+      return names.length ? [...new Set(names)] : SUBJECTS;
+    }
+    return SUBJECTS;
+  }, [store.settings]);
+
   const [term, setTerm] = useState('Term 2');
   const [cls, setCls] = useState(dynamicClasses[0] || '');
   const [tab, setTab] = useState('class');
@@ -119,19 +135,38 @@ export default function Timetable({ store, user }) {
     return confs;
   }, [timetables, dynamicClasses, hasGenerated]);
 
-  // Seed a default assignment table for any class that doesn't have one yet.
+  // Seed a default assignment table for any class that doesn't have one yet,
+  // AND merge newly-added school subjects into existing assignment tables so
+  // adding "French" in Settings surfaces here immediately without wiping the
+  // rows the DoS already filled in.
   useEffect(() => {
     if (!teachers || teachers.length === 0 || dynamicClasses.length === 0) return;
     setAssignmentsByClass((prev) => {
       const next = { ...prev };
       let changed = false;
       dynamicClasses.forEach((c) => {
-        if (!next[c] || next[c].length === 0) { next[c] = defaultAssignments(teachers); changed = true; }
+        if (!next[c] || next[c].length === 0) {
+          next[c] = defaultAssignments(teachers, schoolSubjects);
+          changed = true;
+        } else {
+          const existing = new Set(next[c].map((a) => a.subject));
+          const missing = schoolSubjects.filter((s) => !existing.has(s));
+          if (missing.length) {
+            const extras = missing.map((sub, i) => ({
+              subject: sub,
+              teacher: teachers[(existing.size + i) % teachers.length]?.name || 'TBD',
+              singles: 4,
+              doubles: 0,
+            }));
+            next[c] = [...next[c], ...extras];
+            changed = true;
+          }
+        }
       });
       return changed ? next : prev;
     });
     setTeacherSel((prev) => prev || teachers[0].name);
-  }, [teachers, dynamicClasses]);
+  }, [teachers, dynamicClasses, schoolSubjects]);
 
   useEffect(() => { if (!dynamicClasses.includes(cls)) setCls(dynamicClasses[0] || ''); }, [dynamicClasses, cls]);
   useEffect(() => { if (!dynamicClasses.includes(genClass)) setGenClass(dynamicClasses[0] || ''); }, [dynamicClasses, genClass]);
@@ -637,7 +672,7 @@ export default function Timetable({ store, user }) {
           {/* Legend */}
           {tab !== 'master' && (
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
-              {SUBJECTS.map((s) => {
+              {schoolSubjects.map((s) => {
                 const meta = getSubjectMeta(s);
                 return (
                   <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={s}>
@@ -726,7 +761,7 @@ export default function Timetable({ store, user }) {
                           if (!cell || cell.type === 'empty') {
                             return (
                               <td key={ci} className="tt-empty" style={{ height: 60 }}
-                                onClick={() => tab === 'class' && isTimetableAdmin && setEditCell({ p: ci, d, subject: SUBJECTS[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>
+                                onClick={() => tab === 'class' && isTimetableAdmin && setEditCell({ p: ci, d, subject: schoolSubjects[0], teacher: (teachers?.[0]?.name || ''), notes: '' })}>
                                 {tab === 'class' && isTimetableAdmin ? '+' : ''}
                               </td>
                             );
@@ -773,7 +808,7 @@ export default function Timetable({ store, user }) {
         </div>
       )}
 
-      {editCell && <EditCellModal cell={editCell} onClose={() => setEditCell(null)} onSave={saveCell} teachers={teachers} />}
+      {editCell && <EditCellModal cell={editCell} onClose={() => setEditCell(null)} onSave={saveCell} teachers={teachers} subjects={schoolSubjects} />}
       {importOpen && <ImportModal onClose={() => setImportOpen(false)} onImport={importCsv} dynamicClasses={dynamicClasses} />}
 
       {timeslotModal && (
@@ -797,6 +832,7 @@ export default function Timetable({ store, user }) {
           teachers={teachers}
           teachingSlots={teachingSlots}
           days={activeDays}
+          subjects={schoolSubjects}
           onClose={() => setConstraintsModal(false)}
           onSave={(next) => {
             setConstraints(next);
@@ -902,10 +938,10 @@ function TimeslotsModal({ timeslots, schedule, onClose, onSave }) {
   );
 }
 
-function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose, onSave }) {
+function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose, onSave, subjects = SUBJECTS }) {
   const [form, setForm] = useState(() => ({ ...defaultConstraints, ...constraints, customPairs: [...(constraints.customPairs || [])], teacherTimeOff: { ...(constraints.teacherTimeOff || {}) } }));
-  const [pairA, setPairA] = useState(SUBJECTS[0]);
-  const [pairB, setPairB] = useState(SUBJECTS[1]);
+  const [pairA, setPairA] = useState(subjects[0]);
+  const [pairB, setPairB] = useState(subjects[1] || subjects[0]);
   const [toTeacher, setToTeacher] = useState(teachers?.[0]?.name || '');
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -942,9 +978,9 @@ function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose,
         <div>
           <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#475569' }}>Custom "not to follow" pairs</h4>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-            <select className="select" value={pairA} onChange={(e) => setPairA(e.target.value)} style={{ width: 150 }}>{SUBJECTS.map((s) => <option key={s}>{s}</option>)}</select>
+            <select className="select" value={pairA} onChange={(e) => setPairA(e.target.value)} style={{ width: 150 }}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
             <span className="muted">✕</span>
-            <select className="select" value={pairB} onChange={(e) => setPairB(e.target.value)} style={{ width: 150 }}>{SUBJECTS.map((s) => <option key={s}>{s}</option>)}</select>
+            <select className="select" value={pairB} onChange={(e) => setPairB(e.target.value)} style={{ width: 150 }}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
             <button className="btn btn-outline" onClick={addPair}><Icon name="plus" size={14} /> Add</button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -993,8 +1029,8 @@ function TimeOffCell({ day, slot, offSet, onToggle }) {
   );
 }
 
-function EditCellModal({ cell, onClose, onSave, teachers }) {
-  const [subject, setSubject] = useState(cell.subject || SUBJECTS[0]);
+function EditCellModal({ cell, onClose, onSave, teachers, subjects = SUBJECTS }) {
+  const [subject, setSubject] = useState(cell.subject || subjects[0]);
   const [teacher, setTeacher] = useState(cell.teacher || (teachers?.[0]?.name || ''));
   const [notes, setNotes] = useState(cell.notes || '');
   return (
@@ -1006,7 +1042,7 @@ function EditCellModal({ cell, onClose, onSave, teachers }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <label className="field-label">Subject</label>
-          <select className="select" value={subject} onChange={(e) => setSubject(e.target.value)}>{SUBJECTS.map((s) => <option key={s}>{s}</option>)}</select>
+          <select className="select" value={subject} onChange={(e) => setSubject(e.target.value)}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
         </div>
         <div>
           <label className="field-label">Teacher</label>

@@ -3,7 +3,7 @@ import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS } from '../data/seed';
 import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
-const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways'];
+const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];
 const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
 
 export default function Settings({ store, user }) {
@@ -32,6 +32,22 @@ export default function Settings({ store, user }) {
     client_secret: '',
     biller_code: ''
   });
+
+  // AI credentials — same pattern as payment gateways. School stores its
+  // own Anthropic key server-side; the raw key is never read back to the UI.
+  const [aiStatus, setAiStatus] = useState({ configured: false, provider: null, model_override: null, updated_at: null });
+  const [aiForm, setAiForm] = useState({ api_key: '', model_override: '' });
+  const [aiSaving, setAiSaving] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'AI Assistant' || !store.schoolId) return;
+    import('../lib/supabaseClient').then(({ supabase }) => {
+      supabase.rpc('school_ai_status').then(({ data }) => {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) setAiStatus({ configured: !!row.configured, provider: row.provider || 'anthropic', model_override: row.model_override || '', updated_at: row.updated_at });
+      });
+    });
+  }, [tab, store.schoolId]);
 
   useEffect(() => {
     // Check if gateway is configured
@@ -652,6 +668,111 @@ export default function Settings({ store, user }) {
                 notify(`Error saving KCB credentials: ${e.message}`, 'error');
               }
             }}>Save KCB Credentials</button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'AI Assistant' && (
+        <div className="card card-pad" style={{ maxWidth: 640 }}>
+          <h3 className="section-title" style={{ marginTop: 0 }}>AI Provider Credentials</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 20 }}>
+            EduOne's AI features (weekly brief, remarks, defaulter copilot) call your school's own AI provider.
+            Paste your Anthropic API key once and every AI card across the app starts working. Same secure model as M-Pesa:
+            the key is stored server-side and never read back to the browser.
+          </p>
+
+          {aiStatus.configured && (
+            <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #10b981', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#065f46' }}>AI Assistant is Configured</div>
+                <div style={{ fontSize: 12, color: '#047857' }}>
+                  Provider: {aiStatus.provider || 'anthropic'}
+                  {aiStatus.updated_at && ` · Updated ${new Date(aiStatus.updated_at).toLocaleDateString()}`}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+            <div>
+              <label className="field-label">Anthropic API Key</label>
+              <input
+                type="password"
+                className="input"
+                placeholder={aiStatus.configured ? '••••••••••  (paste a new key to rotate)' : 'sk-ant-...'}
+                value={aiForm.api_key}
+                onChange={(e) => setAiForm(f => ({ ...f, api_key: e.target.value }))}
+                autoComplete="off"
+              />
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>console.anthropic.com</a>.
+                Costs are ~KES 0.15 per AI card (typical school &lt; KES 100/month).
+              </div>
+            </div>
+
+            <div>
+              <label className="field-label">Model Override (optional)</label>
+              <input
+                className="input"
+                placeholder="Leave blank to use claude-haiku-4-5 (cheapest capable)"
+                value={aiForm.model_override}
+                onChange={(e) => setAiForm(f => ({ ...f, model_override: e.target.value }))}
+              />
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                Advanced. Change only if you want higher-quality (and more expensive) output — e.g. <code>claude-sonnet-5</code>.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 24, display: 'flex', gap: 10 }}>
+            <button
+              className="btn btn-primary"
+              disabled={aiSaving || !aiForm.api_key.trim()}
+              onClick={async () => {
+                if (!aiForm.api_key.trim()) { notify('Paste an API key first', 'warning'); return; }
+                setAiSaving(true);
+                try {
+                  const { supabase } = await import('../lib/supabaseClient');
+                  const payload = {
+                    school_id: store.schoolId,
+                    provider: 'anthropic',
+                    api_key: aiForm.api_key.trim(),
+                    model_override: aiForm.model_override.trim() || null,
+                    updated_at: new Date().toISOString(),
+                  };
+                  const { error } = await supabase.from('school_ai_credentials').upsert(payload, { onConflict: 'school_id' });
+                  if (error) throw error;
+                  notify('AI credentials saved securely. AI features are now live.', 'success');
+                  setAiStatus({ configured: true, provider: 'anthropic', model_override: aiForm.model_override || null, updated_at: payload.updated_at });
+                  setAiForm({ api_key: '', model_override: aiForm.model_override });
+                } catch (e) {
+                  notify(`Could not save AI key: ${e.message}`, 'error');
+                } finally {
+                  setAiSaving(false);
+                }
+              }}
+            >
+              {aiSaving ? 'Saving…' : (aiStatus.configured ? 'Update Key' : 'Enable AI Assistant')}
+            </button>
+            {aiStatus.configured && (
+              <button
+                className="btn"
+                onClick={async () => {
+                  if (!window.confirm('Disable the AI assistant? This removes the stored key for your school.')) return;
+                  try {
+                    const { supabase } = await import('../lib/supabaseClient');
+                    const { error } = await supabase.from('school_ai_credentials').delete().eq('school_id', store.schoolId);
+                    if (error) throw error;
+                    setAiStatus({ configured: false, provider: null, model_override: null, updated_at: null });
+                    setAiForm({ api_key: '', model_override: '' });
+                    notify('AI assistant disabled for your school.', 'info');
+                  } catch (e) { notify(`Error: ${e.message}`, 'error'); }
+                }}
+              >
+                Disable
+              </button>
+            )}
           </div>
         </div>
       )}
