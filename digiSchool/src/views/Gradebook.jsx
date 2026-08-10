@@ -69,10 +69,13 @@ export default function Gradebook({ store }) {
     return () => { active = false; };
   }, [cls]);
 
-  // Only classes an admin has explicitly added in Settings. No CLASSES fallback.
+  // Extract classes from students for a complete stream list, falling back to settings
   const dynamicClasses = useMemo(() => {
+    if (store.students && store.students.length > 0) {
+      return getDynamicClasses(store.students);
+    }
     return expandClassesWithStreams(settings?.classes || []);
-  }, [settings]);
+  }, [settings, store.students]);
 
   const classStudents = useMemo(
     () => loadedStudents.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),

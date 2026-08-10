@@ -1,7 +1,9 @@
 import React from 'react';
 import Modal from './Modal';
 import { computeStudentReport } from '../utils/grading';
-import { exportReportCardsPDF } from '../utils/exporters';
+import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Printer, Download, Award } from 'lucide-react';
 
 export default function ReportCardModal({
@@ -43,40 +45,33 @@ export default function ReportCardModal({
 
   const is844 = report.systemType === '844';
 
-  const handleDownloadPDF = () => {
-    exportReportCardsPDF({
-      school: schoolSettings,
-      gradeBoundaries,
-      students: [student],
-      subjects,
-      examTitle,
-      termName,
-      filename: `${student.name.replace(/\s+/g, '_')}_Report_Card.pdf`
+  const handleDownloadPDF = async () => {
+    const el = document.getElementById('report-card-capture-area');
+    if (!el) return;
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [canvas.width / 2, canvas.height / 2]
     });
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+    pdf.save(`${report.studentName}_Report.pdf`);
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  // Palette — a single quiet ink + muted palette shared with the PDF renderer.
   const INK = '#111827';
   const MUTED = '#6b7280';
-  const LINE = '#e5e7eb';
-  const SOFT = '#f9fafb';
   const maxPts = is844 ? 12 : 8;
 
-  const contact = [schoolSettings.address, schoolSettings.phone || schoolSettings.tel, schoolSettings.email].filter(Boolean).join('  ·  ');
-
-  // Check if student is in Senior School (Grade 10-12)
   const classStr = (report.className || '').toLowerCase();
   const isSenior = classStr.includes('10') || classStr.includes('11') || classStr.includes('12') || classStr.includes('form');
   const pathway = isSenior ? (student.pathway || 'STEM') : null;
   
-  // Calculate historical deviation for the subjects if possible, otherwise use difference from stream mean
-  // The user asked to show Student vs Class average graph.
   const subjectsGraphData = report.subjectRows.map(row => {
-    // Generate a pseudo-class average for now if real data is missing, typically 65% for demonstration
     const classAvg = 65; 
     return { name: row.subject.substring(0, 3).toUpperCase(), score: row.score, classAvg };
   });
@@ -105,8 +100,10 @@ export default function ReportCardModal({
           </div>
         </div>
 
+        <div style={{ padding: 24, background: '#f8fafc', maxHeight: '75vh', overflowY: 'auto' }}>
+        
         {/* Printable Card Area */}
-        <div className="report-card-container" style={{ background: '#fff', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc' }}>
+        <div id="report-card-capture-area" style={{ background: '#fff', maxWidth: 800, margin: '0 auto', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
           
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
@@ -287,13 +284,6 @@ export default function ReportCardModal({
                     </svg>
                   </div>
                 </div>
-                
-                {/* Rubber Stamp Mockup */}
-                <div style={{ position: 'absolute', right: 20, bottom: 20, border: '2px solid rgba(30, 58, 138, 0.6)', borderRadius: 4, padding: '4px 12px', transform: 'rotate(-5deg)', textAlign: 'center', color: 'rgba(30, 58, 138, 0.8)', zIndex: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800 }}>CHIEF PRINCIPAL</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, borderBottom: '1px solid rgba(30, 58, 138, 0.4)', paddingBottom: 2, marginBottom: 2 }}>{schoolSettings.name ? schoolSettings.name.toUpperCase() : 'HIGH SCHOOL'}</div>
-                  <div style={{ fontSize: 10, fontWeight: 600 }}>P.O. Box 00-00000</div>
-                </div>
               </div>
             </div>
 
@@ -350,23 +340,13 @@ export default function ReportCardModal({
 
             {/* Footer QR */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16 }}>
-              <div style={{ width: 48, height: 48, background: '#fff', border: '1px solid #cbd5e1', padding: 4 }}>
-                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
-                  <rect x="10" y="10" width="30" height="30" fill="none" stroke="#334155" strokeWidth="4"/>
-                  <rect x="15" y="15" width="20" height="20" fill="#334155"/>
-                  <rect x="60" y="10" width="30" height="30" fill="none" stroke="#334155" strokeWidth="4"/>
-                  <rect x="65" y="15" width="20" height="20" fill="#334155"/>
-                  <rect x="10" y="60" width="30" height="30" fill="none" stroke="#334155" strokeWidth="4"/>
-                  <rect x="15" y="65" width="20" height="20" fill="#334155"/>
-                  <rect x="60" y="60" width="10" height="10" fill="#334155"/>
-                  <rect x="80" y="60" width="10" height="10" fill="#334155"/>
-                  <rect x="60" y="80" width="10" height="10" fill="#334155"/>
-                </svg>
+              <div style={{ width: 64, height: 64, background: '#fff', border: '1px solid #cbd5e1', padding: 4, flexShrink: 0 }}>
+                <QRCodeSVG value={`https://digishule.com/verify?id=${report.id || report.admissionNo}&term=Term2`} size={54} level="M" />
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Verification Code: {report.admissionNo?.substring(0,6) || 'P6AK6F'}</div>
                 <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                  Scan to access your interactive student profile on DigiSchool Analytics.
+                  Scan to verify the authenticity of this document via DigiSchool.
                 </div>
               </div>
             </div>

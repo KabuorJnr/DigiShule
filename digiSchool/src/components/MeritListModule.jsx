@@ -43,7 +43,15 @@ export default function MeritListModule({
 
   // Extract dynamic class names
   const classOptions = useMemo(() => {
-    if (!students || students.length === 0) return classes.map(c => typeof c === 'string' ? c : c.name || '');
+    if (!students || students.length === 0) {
+      const expanded = classes.reduce((acc, c) => {
+        if (typeof c === 'string') return [...acc, c];
+        if (!c.streams) return [...acc, c.name];
+        const streams = c.streams.split(',').map(s => s.trim()).filter(Boolean);
+        return [...acc, ...(streams.length ? streams.map(s => `${c.name} ${s}`) : [c.name])];
+      }, []);
+      return ['All', ...expanded];
+    }
     const set = new Set(students.map(s => s.class).filter(Boolean));
     return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))];
   }, [students, classes]);
