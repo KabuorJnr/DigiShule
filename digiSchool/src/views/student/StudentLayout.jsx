@@ -135,9 +135,13 @@ export default function StudentLayout() {
     );
   }
 
+  const classStr = (me.class || '').toLowerCase();
+  const isSenior = classStr.includes('10') || classStr.includes('11') || classStr.includes('12') || classStr.includes('form');
+  const pathway = isSenior ? (me.pathway || 'STEM') : '';
+
   return (
     <div>
-      <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Grade ${me.class}`} />
+      <PageHeader title="Student Portal" subtitle={`${me.name} · ${me.adm} · Grade ${me.class}${pathway ? ` · Pathway: ${pathway}` : ''}`} />
 
       {user?.role === 'parent' && (
         <div style={{ background: '#e0e7ff', color: '#3730a3', padding: '12px 16px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>

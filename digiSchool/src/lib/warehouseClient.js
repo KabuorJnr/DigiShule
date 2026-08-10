@@ -13,19 +13,14 @@ import { reportError } from './errorReporter';
 
 const w = () => supabase.schema('warehouse');
 
-/**
- * Recent per-day rows for the caller's school. Reads via RLS — the caller
- * only sees their own school's rows.
- * @param {number} days  How many days back (default 30, max 180).
- */
 export async function fetchSchoolDaily(days = 30) {
-  const cap = Math.max(1, Math.min(180, days));
-  const from = new Date(Date.now() - (cap - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   try {
-    const { data, error } = await w().from('school_daily')
-      .select('*').gte('date', from).order('date', { ascending: true });
+    const { data, error } = await supabase.functions.invoke('warehouse-read', {
+      body: { target: 'school_daily', days_back: days }
+    });
     if (error) throw error;
-    return { rows: data || [], error: null };
+    if (data?.error) throw new Error(data.error);
+    return { rows: data?.data || [], error: null };
   } catch (e) {
     reportError(e, 'warehouse.fetchSchoolDaily');
     return { rows: [], error: e.message || String(e) };
@@ -37,10 +32,12 @@ export async function fetchSchoolDaily(days = 30) {
  */
 export async function fetchClassTerm() {
   try {
-    const { data, error } = await w().from('class_term')
-      .select('*').order('class', { ascending: true });
+    const { data, error } = await supabase.functions.invoke('warehouse-read', {
+      body: { target: 'class_term' }
+    });
     if (error) throw error;
-    return { rows: data || [], error: null };
+    if (data?.error) throw new Error(data.error);
+    return { rows: data?.data || [], error: null };
   } catch (e) {
     reportError(e, 'warehouse.fetchClassTerm');
     return { rows: [], error: e.message || String(e) };
@@ -52,9 +49,12 @@ export async function fetchClassTerm() {
  */
 export async function fetchTeacherTerm() {
   try {
-    const { data, error } = await w().from('teacher_term').select('*');
+    const { data, error } = await supabase.functions.invoke('warehouse-read', {
+      body: { target: 'teacher_term' }
+    });
     if (error) throw error;
-    return { rows: data || [], error: null };
+    if (data?.error) throw new Error(data.error);
+    return { rows: data?.data || [], error: null };
   } catch (e) {
     reportError(e, 'warehouse.fetchTeacherTerm');
     return { rows: [], error: e.message || String(e) };
@@ -67,10 +67,12 @@ export async function fetchTeacherTerm() {
  */
 export async function fetchLatestBenchmarks() {
   try {
-    const { data, error } = await w().from('benchmarks_daily')
-      .select('*').order('date', { ascending: false }).limit(1);
+    const { data, error } = await supabase.functions.invoke('warehouse-read', {
+      body: { target: 'benchmarks_daily' }
+    });
     if (error) throw error;
-    return { row: (data && data[0]) || null, error: null };
+    if (data?.error) throw new Error(data.error);
+    return { row: (data?.data && data.data[0]) || null, error: null };
   } catch (e) {
     reportError(e, 'warehouse.fetchBenchmarks');
     return { row: null, error: e.message || String(e) };

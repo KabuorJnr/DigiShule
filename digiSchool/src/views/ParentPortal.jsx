@@ -293,6 +293,10 @@ export default function ParentPortal({ store, user }) {
     );
   }
 
+  const classStr = (child?.class || '').toLowerCase();
+  const isSenior = classStr.includes('10') || classStr.includes('11') || classStr.includes('12') || classStr.includes('form');
+  const pathway = isSenior ? (child?.pathway || 'STEM') : '';
+
   return (
     <div>
       {children.length > 1 && (
@@ -311,7 +315,7 @@ export default function ParentPortal({ store, user }) {
         </div>
       )}
 
-      <PageHeader title={children.length > 1 ? "Student Portal" : "My Child"} subtitle={`${child.name} · ${child.adm} · Grade ${child.class}`} />
+      <PageHeader title={children.length > 1 ? "Student Portal" : "My Child"} subtitle={`${child.name} · ${child.adm} · Grade ${child.class}${pathway ? ` · Pathway: ${pathway}` : ''}`} />
 
       {/* Disciplinary Notice */}
       {disciplinary.filter(c => c.status !== 'Resolved').length > 0 && (
