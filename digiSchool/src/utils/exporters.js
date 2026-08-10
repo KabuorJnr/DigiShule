@@ -556,3 +556,128 @@ export function exportTimetableLandscapePDF({
 
   doc.save(filename);
 }
+
+// Bulk export all classes in one multi-page PDF
+export function exportAllTimetablesPDF({
+  schoolName, timetables, days, filename, slots, teacherAbbrOf, generatedLabel = 'EduOne Timetables'
+}) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const classes = Object.keys(timetables);
+  
+  if (classes.length === 0) return;
+
+  classes.forEach((cls, idx) => {
+    if (idx > 0) doc.addPage();
+    const tt = timetables[cls];
+    if (!tt || !tt.grid) return;
+    const grid = tt.grid;
+    
+    const cols = (slots && slots.length ? slots : grid.map((_, i) => ({ teaching: true, period: i + 1, label: String(i + 1), start: '', end: '' }))).slice(0, grid.length);
+    
+    doc.setTextColor(0);
+    if (schoolName) { doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.text(schoolName, 40, 22); }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text(`${schoolName ? schoolName + ' ' : ''}Class Timetable`, pageW / 2, 22, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text(cls, pageW / 2, 48, { align: 'center' });
+
+    const tableTop = 58;
+    const head = ['', ...cols.map(() => '')];
+    const body = [];
+    for (let d = 0; d < days.length; d++) {
+      const dayShort = days[d].slice(0, 2);
+      const row = [{ content: dayShort, styles: { fontStyle: 'bold', halign: 'center', valign: 'middle', fontSize: 15 } }];
+      for (let p = 0; p < grid.length; p++) {
+        const cell = grid[p][d];
+        const slot = cols[p] || { teaching: cell.type !== 'break' };
+        if (!slot.teaching || cell.type === 'break') {
+          if (d === 0) row.push({ content: '', rowSpan: days.length, styles: { halign: 'center', valign: 'middle' } });
+        } else if (cell.type === 'lesson') {
+          const meta = cell.subject ? getSubjectMeta(cell.subject) : null;
+          const main = meta ? meta.short : (cell.subject || '');
+          row.push({ content: main, styles: { halign: 'center', valign: 'middle', fontStyle: 'normal', fontSize: 11 } });
+        } else {
+          row.push({ content: '' });
+        }
+      }
+      body.push(row);
+    }
+
+    const colCount = grid.length + 1;
+    const cellPad = colCount >= 12 ? 3 : colCount >= 10 ? 4 : 5;
+    const marginBottom = 30;
+    const headerH = 38;
+    const availH = pageH - tableTop - marginBottom;
+    const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
+
+    const columnStyles = { 0: { cellWidth: 38, fontStyle: 'bold' } };
+    cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 22 }; });
+
+    autoTable(doc, {
+      head: [head],
+      body,
+      startY: tableTop,
+      theme: 'grid',
+      tableWidth: pageW - 80,
+      styles: { fontSize: 11, cellPadding: cellPad, lineColor: [0, 0, 0], lineWidth: 0.75, textColor: [0, 0, 0], halign: 'center', valign: 'middle', overflow: 'linebreak' },
+      headStyles: { fillColor: [255, 255, 255], minCellHeight: headerH, lineWidth: 0.75, lineColor: [0, 0, 0] },
+      bodyStyles: { fillColor: [255, 255, 255], minCellHeight: bodyMinH },
+      columnStyles,
+      margin: { left: 40, right: 40, top: tableTop, bottom: marginBottom },
+      rowPageBreak: 'avoid',
+      didDrawCell: (data) => {
+        const ci = data.column.index;
+        const ti = ci - 1;
+        const cx = data.cell.x + data.cell.width / 2;
+
+        if (data.section === 'head') {
+          if (ci === 0) return;
+          const slot = cols[ti];
+          if (!slot) return;
+          doc.setTextColor(0);
+          doc.setFillColor(255, 255, 255);
+          doc.rect(data.cell.x + 0.4, data.cell.y + 0.4, data.cell.width - 0.8, data.cell.height - 0.8, 'F');
+          doc.setFont('helvetica', 'bold');
+          if (slot.teaching) {
+            doc.setFontSize(11);
+            doc.text(String(slot.period), cx, data.cell.y + 14, { align: 'center' });
+            if (slot.start) {
+              doc.setFontSize(6.8); doc.setTextColor(60);
+              doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 7, { align: 'center' });
+              doc.setTextColor(0);
+            }
+          } else {
+            doc.setFontSize(6.5);
+            doc.text(String(slot.label), cx, data.cell.y + data.cell.height / 2 + 2, { align: 'center' });
+          }
+          return;
+        }
+        if (data.section !== 'body' || ci === 0) return;
+
+        const slot = cols[ti];
+        const gcell = grid[ti] && grid[ti][data.row.index];
+
+        if (slot && !slot.teaching) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
+          doc.text(String(slot.label), cx + 4, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+          return;
+        }
+
+        if (gcell && gcell.type === 'lesson') {
+          const corner = teacherAbbrOf ? teacherAbbrOf(gcell.teacher) : '';
+          if (!corner) return;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(70);
+          doc.text(corner, data.cell.x + data.cell.width - 3, data.cell.y + data.cell.height - 3, { align: 'right' });
+          doc.setTextColor(0);
+        }
+      },
+    });
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(70);
+    doc.text(`Timetable generated: ${new Date().toLocaleDateString('en-GB')}`, 40, pageH - 14);
+    doc.text(generatedLabel, pageW - 40, pageH - 14, { align: 'right' });
+    doc.setTextColor(0);
+  });
+
+  doc.save(filename);
+}

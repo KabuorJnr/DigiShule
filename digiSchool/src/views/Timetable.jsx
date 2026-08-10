@@ -3,7 +3,7 @@ import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
 import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDynamicClasses, CLASSES } from '../data/seed';
-import { downloadExcel, exportTimetableLandscapePDF } from '../utils/exporters';
+import { downloadExcel, exportTimetableLandscapePDF, exportAllTimetablesPDF } from '../utils/exporters';
 import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
   annotateTimeslots, buildEmptyGrid, generateAll,
@@ -390,6 +390,18 @@ export default function Timetable({ store, user }) {
     notify('Timetable exported as PDF', 'success', 'Export');
   }
 
+  function exportAllPDF() {
+    exportAllTimetablesPDF({
+      timetables,
+      days: activeDays,
+      slots: annotated,
+      teacherAbbrOf: teacherAbbr,
+      schoolName: settings?.name || 'DigiSchool',
+      filename: 'All_Classes_Timetables.pdf'
+    });
+    notify('All class timetables exported as PDF', 'success', 'Export');
+  }
+
   function exportExcel() {
     if (!tt) return notify('Generate a timetable first', 'warning');
     const aoa = [['Period', ...activeDays]];
@@ -456,6 +468,7 @@ export default function Timetable({ store, user }) {
           <>
             {isTimetableAdmin && <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}><Icon name="settings" size={16} /> Generate Timetable</button>}
             <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
+            <button className="btn" onClick={exportAllPDF}><Icon name="file" size={16} /> Bulk Export PDF</button>
             <button className="btn" onClick={exportExcel}><Icon name="chart" size={16} /> Export Excel</button>
             {isTimetableAdmin && <button className="btn" onClick={() => setImportOpen(true)}><Icon name="download" size={16} /> Import CSV</button>}
           </>
