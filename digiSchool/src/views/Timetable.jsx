@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDynamicClasses, CLASSES } from '../data/seed';
 import { downloadExcel, exportTimetableLandscapePDF } from '../utils/exporters';
 import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
@@ -39,10 +39,17 @@ export default function Timetable({ store, user }) {
   const { timetables, setTimetables, notify, settings, teachers } = store;
 
   // Only the classes an admin has explicitly added in Settings → Academic.
-  // No seed fallback — if the list is empty the UI prompts them to add some.
+  // Fallback to students' classes, then seed classes.
   const dynamicClasses = useMemo(() => {
-    return expandClassesWithStreams(store.settings?.classes || []);
-  }, [store.settings]);
+    let classes = expandClassesWithStreams(store.settings?.classes || []);
+    if (classes.length === 0 && store.students && store.students.length > 0) {
+      classes = getDynamicClasses(store.students);
+    }
+    if (classes.length === 0) {
+      classes = CLASSES;
+    }
+    return classes;
+  }, [store.settings, store.students]);
 
   // The school's own subject list (from Settings → Academic). Falls back to
   // the seed only if the school hasn't configured any yet. This is the ONE
@@ -471,9 +478,13 @@ export default function Timetable({ store, user }) {
         </div>
         <div>
           <label className="field-label">Class</label>
-          <select className="select" value={cls} onChange={(e) => setCls(e.target.value)} style={{ width: 140 }}>
-            {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+                <select className="select" value={cls} style={{ width: 140 }} onChange={(e) => {
+                  if (e.target.value === 'All Classes') setTab('master');
+                  else setCls(e.target.value);
+                }}>
+                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <option value="All Classes">All Classes (Master)</option>
+                </select>
         </div>
       </div>
 
