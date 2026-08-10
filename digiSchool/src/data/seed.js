@@ -9,11 +9,15 @@ export const expandClassesWithStreams = (classes = []) => {
   if (!classes || !classes.length) return [];
   const expanded = [];
   classes.forEach(c => {
+    if (typeof c === 'string') {
+      if (c.trim()) expanded.push(c.trim());
+      return;
+    }
     if (!c.streams || !c.streams.trim()) {
-      expanded.push(c.name);
+      if (c.name) expanded.push(c.name);
     } else {
       const streams = c.streams.split(',').map(s => s.trim()).filter(Boolean);
-      if (streams.length === 0) expanded.push(c.name);
+      if (streams.length === 0 && c.name) expanded.push(c.name);
       else streams.forEach(s => expanded.push(`${c.name} ${s}`));
     }
   });

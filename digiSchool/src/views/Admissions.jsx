@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader, KpiCard, Badge } from '../components/widgets';
 import Modal from '../components/Modal';
 import { getDynamicClasses } from '../data/seed';
@@ -19,7 +19,7 @@ export default function Admissions({ store }) {
   const [viewStudent, setViewStudent] = useState(null);
   // Only classes an admin has explicitly added in Settings.
   const dynamicClasses = useMemo(() => {
-    return (store.settings?.classes || []).map(c => c.name);
+    return (store.settings?.classes || []).map(c => typeof c === 'string' ? c : c.name).filter(Boolean);
   }, [store.settings]);
   const [form, setForm] = useState({
     name: '', kcpe: '', gender: 'M', Grade: '',

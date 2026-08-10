@@ -27,7 +27,7 @@ export default function ExamSchedules({ store, params = {} }) {
 
   const dynamicClasses = useMemo(() => {
     if (settings?.classes?.length) {
-      return settings.classes.map(c => c.name);
+      return settings.classes.map(c => typeof c === 'string' ? c : c.name).filter(Boolean);
     }
     return [];
   }, [settings?.classes]);

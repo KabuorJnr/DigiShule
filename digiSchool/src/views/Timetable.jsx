@@ -568,9 +568,22 @@ export default function Timetable({ store, user }) {
                   {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={copyAssignmentsToAll} disabled={dynamicClasses.length < 2}>
-                <Icon name="clipboard" size={14} /> Copy to all classes
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={() => {
+                  if (window.confirm(`Auto-assign teachers for ${genClass} based on their profile subjects and classes? This will overwrite current assignments for this class.`)) {
+                    setAssignmentsByClass(prev => ({
+                      ...prev,
+                      [genClass]: defaultAssignments(teachers, schoolSubjects, genClass)
+                    }));
+                    notify(`Auto-assigned teachers for ${genClass}`, 'success', 'Timetable');
+                  }
+                }}>
+                  <Icon name="users" size={14} /> Auto-Assign
+                </button>
+                <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={copyAssignmentsToAll} disabled={dynamicClasses.length < 2}>
+                  <Icon name="clipboard" size={14} /> Copy to all classes
+                </button>
+              </div>
             </div>
             <div className="scroll-x" style={{ border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>
               <table className="table" style={{ margin: 0 }}>

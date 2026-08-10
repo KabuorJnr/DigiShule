@@ -3,6 +3,7 @@ import '../../App.css';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
+import AICopilotWidget from '../../components/AICopilotWidget';
 import { identifyUser, clearUser, reportError } from '../../lib/errorReporter';
 import * as api from '../../lib/api';
 import { setActiveSchoolId } from '../../lib/api';
@@ -865,6 +866,9 @@ export default function PortalLayout() {
           notify={notify}
         />
       )}
+
+      {/* Universal AI Copilot Service */}
+      <AICopilotWidget store={store} user={currentUser} />
     </div>
   );
 }

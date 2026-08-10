@@ -13,7 +13,7 @@ export default function StudentFinanceTab() {
   const { feeStructure } = store;
 
   const levels = store.settings?.classes?.length > 0 
-    ? store.settings.classes.map(c => c.name) 
+    ? store.settings.classes.map(c => typeof c === 'string' ? c : c.name).filter(Boolean) 
     : (store.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
   const myLevel = levels.find(l => me.cls?.startsWith(l)) || me.cls || levels[0];
 

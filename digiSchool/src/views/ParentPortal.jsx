@@ -125,7 +125,7 @@ export default function ParentPortal({ store, user }) {
   const latestAtt = { rate: attPct || 0 };
 
   const levels = store.settings?.classes?.length > 0 
-    ? store.settings.classes.map(c => c.name) 
+    ? store.settings.classes.map(c => typeof c === 'string' ? c : c.name).filter(Boolean)
     : (store.settings?.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
   const myLevel = child ? (levels.find(l => child.cls?.startsWith(l)) || child.cls || levels[0]) : levels[0];
 
