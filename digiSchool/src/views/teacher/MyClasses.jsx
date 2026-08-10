@@ -116,8 +116,8 @@ export default function MyClasses() {
             className="btn btn-primary" 
             style={{ background: '#047857', borderColor: '#047857', display: 'flex', alignItems: 'center', gap: 6 }} 
             onClick={handleExportClassReportCards}
-            disabled={!settings?.results_published}
-            title={!settings?.results_published ? "Report cards must be published by Admin before generating" : ""}
+            disabled={!store.settings?.results_published}
+            title={!store.settings?.results_published ? "Report cards must be published by Admin before generating" : ""}
           >
             <FileText size={16} /> Print Report Books (PDF)
           </button>

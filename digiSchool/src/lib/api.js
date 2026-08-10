@@ -50,7 +50,9 @@ const TABLES = {
   departments: 'departments',
   subjects: 'subjects',
   teacherQualifications: 'teacher_subject_qualifications',
-  subjectAssignments: 'subject_assignments'
+  subjectAssignments: 'subject_assignments',
+  schemes_of_work: 'schemes_of_work',
+  lesson_plans: 'lesson_plans'
 };
 
 export async function fetchTable(key) {
