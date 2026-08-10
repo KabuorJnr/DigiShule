@@ -17,7 +17,7 @@ const corsHeaders = {
 const DEFAULT_MODELS = {
   anthropic: 'claude-3-haiku-20240307',
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-2.5-flash',
+  gemini: 'gemini-3.5-flash',
 }
 const MAX_TOKENS = 1500
 
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       const payload: any = { contents: geminiMessages, generationConfig: { maxOutputTokens: MAX_TOKENS } }
       if (system) payload.systemInstruction = { parts: [{ text: system.trim() }] }
 
-      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.5-flash'}:generateContent?key=${apiKey}`, {
+      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-3.5-flash'}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
