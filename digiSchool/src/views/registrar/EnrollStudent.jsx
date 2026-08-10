@@ -124,21 +124,37 @@ export default function EnrollStudent() {
         if (profileErr) throw new Error(`Student Profile Error: ${profileErr.message}`);
       }
       
-      if (captured.guardianEmail) {
-        const tempPassword = generateSecurePassword(10);
-        const username = await generateSequentialUsername('PRN');
-        
+      // ── Parent account: phone-as-both, forced change on first login ─────
+      // Product decision: parents log in with their phone number as both the
+      // username and initial password, then are FORCED to change it before
+      // they can use anything. The must_change_password flag lives on
+      // user_metadata so it survives without a schema migration.
+      const normalizedPhone = (captured.guardianPhone || '').replace(/\D/g, '');
+      if (normalizedPhone) {
+        const tempPassword = normalizedPhone;
+        const username = normalizedPhone;
+        // Synthesize a stable auth email — Supabase requires one but the
+        // parent never sees it. The phone is the identifier they know.
+        const parentAuthEmail = captured.guardianEmail
+          || `${normalizedPhone}.parent.${(store.schoolId || 'demo').split('-')[0]}@edu1app.tech`;
+
         let parentUserId = null;
-        
+
         const { error: signUpError, data: authData } = await secondaryAuthClient.auth.signUp({
-          email: captured.guardianEmail,
+          email: parentAuthEmail,
           password: tempPassword,
-          options: { data: { role: 'parent', full_name: captured.guardianName || 'Parent/Guardian', school_id: store.schoolId } }
+          options: { data: {
+            role: 'parent',
+            full_name: captured.guardianName || 'Parent/Guardian',
+            school_id: store.schoolId,
+            phone: normalizedPhone,
+            must_change_password: true,
+          } }
         });
-        
+
         const isExisting = signUpError && signUpError.message.toLowerCase().includes('already');
         if (isExisting) {
-          const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: captured.guardianEmail });
+          const { data: existingId, error: fetchErr } = await supabase.rpc('get_user_id_by_email', { p_email: parentAuthEmail });
           if (fetchErr) throw new Error(`Could not fetch existing parent: ${fetchErr.message}`);
           parentUserId = existingId;
         } else if (signUpError) {
@@ -151,36 +167,38 @@ export default function EnrollStudent() {
           if (isExisting) {
             const { error: updateErr } = await supabase.from('profiles').update({
               student_id: newStudent.id,
-              school_id: store.schoolId || null
+              school_id: store.schoolId || null,
             }).eq('id', parentUserId);
             if (updateErr) throw new Error(`Parent Profile Update Error: ${updateErr.message}`);
           } else {
             const { error: profileErr } = await supabase.from('profiles').insert({
               id: parentUserId,
-              username,
+              username,          // <-- phone number, used for signInWithUsername lookup
               full_name: captured.guardianName || 'Parent / Guardian',
               role: 'parent',
               student_id: newStudent.id,
-              school_id: store.schoolId || null
+              school_id: store.schoolId || null,
             });
             if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
           }
 
-          if (!isExisting) {
-            parentCredsRef.current = { username, password: tempPassword };
-          }
+          if (!isExisting) parentCredsRef.current = { username, password: tempPassword };
 
-          setProvisionStep('email');
-          await provisionAccount({
-            email: captured.guardianEmail,
-            username,
-            password: tempPassword,
-            name: captured.guardianName || 'Parent/Guardian',
-            role: 'parent',
-            schoolName: store.settings?.name || 'EduOne',
-            parentPin: newStudent.parentPin,
-            studentName: captured.name
-          });
+          // Only send an email if the parent actually gave us one — the phone
+          // credentials are enough for login and they'll be told at hand-off.
+          if (captured.guardianEmail) {
+            setProvisionStep('email');
+            await provisionAccount({
+              email: captured.guardianEmail,
+              username,
+              password: tempPassword,
+              name: captured.guardianName || 'Parent/Guardian',
+              role: 'parent',
+              schoolName: store.settings?.name || 'EduOne',
+              parentPin: newStudent.parentPin,
+              studentName: captured.name,
+            });
+          }
         }
 
         setProvisionStep('done');

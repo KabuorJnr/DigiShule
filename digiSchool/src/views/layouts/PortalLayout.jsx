@@ -36,6 +36,7 @@ export default function PortalLayout() {
   const [officeVisitWarning, setOfficeVisitWarning] = useState(null);
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   // Staff Activation state
   const [staffRecord, setStaffRecord] = useState(null);
@@ -341,12 +342,17 @@ export default function PortalLayout() {
       if (!active) return;
 
       if (session?.user) {
+        // Force a password change on first login if the account was provisioned
+        // with a well-known initial secret (e.g. parent's phone-as-password).
+        // The flag lives on user_metadata so no schema migration is needed.
+        setMustChangePassword(!!session.user.user_metadata?.must_change_password);
         // Only load profile on initial load or explicit SIGNED_IN event, avoiding resets on tab focus token refresh
         if (!currentUserRef.current || event === 'SIGNED_IN') {
           loadUser(session.user.id, event === 'SIGNED_IN');
         }
       } else {
         setCurrentUser(null);
+        setMustChangePassword(false);
         setView('login');
         setAuthChecked(true);
       }
@@ -845,10 +851,14 @@ export default function PortalLayout() {
 
 
 
-      {changePasswordOpen && (
-        <ChangePasswordModal 
-          onClose={() => setChangePasswordOpen(false)} 
-          notify={notify} 
+      {(changePasswordOpen || mustChangePassword) && (
+        <ChangePasswordModal
+          forced={mustChangePassword && !changePasswordOpen}
+          onClose={() => {
+            setChangePasswordOpen(false);
+            setMustChangePassword(false); // updateUser already cleared the metadata flag
+          }}
+          notify={notify}
         />
       )}
     </div>

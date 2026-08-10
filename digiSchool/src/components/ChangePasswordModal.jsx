@@ -3,8 +3,7 @@ import Modal from './Modal';
 import { supabase } from '../lib/supabaseClient';
 import { Lock } from 'lucide-react';
 
-export default function ChangePasswordModal({ onClose, notify }) {
-  const [currentPassword, setCurrentPassword] = useState('');
+export default function ChangePasswordModal({ onClose, notify, forced = false }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,9 +25,14 @@ export default function ChangePasswordModal({ onClose, notify }) {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      // Update both the password and the "must change" flag in user_metadata
+      // in a single call. The flag lets PortalLayout stop forcing this modal.
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        data: { must_change_password: false },
+      });
       if (error) throw error;
-      
+
       notify('Password updated successfully.', 'success', 'Security');
       onClose();
     } catch (err) {
@@ -39,13 +43,17 @@ export default function ChangePasswordModal({ onClose, notify }) {
   };
 
   return (
-    <Modal title="Change Password" onClose={onClose} width={400}>
+    <Modal title={forced ? 'Set your password' : 'Change Password'} onClose={forced ? undefined : onClose} width={400}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <div style={{ background: '#f8fafc', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
             <Lock size={24} color="#64748b" />
           </div>
-          <p style={{ margin: 0, color: '#475569', fontSize: 13 }}>Enter your new password below. You will remain logged in on this device.</p>
+          <p style={{ margin: 0, color: '#475569', fontSize: 13 }}>
+            {forced
+              ? 'For security, please replace the initial password (your phone number) with a private one before continuing.'
+              : 'Enter your new password below. You will remain logged in on this device.'}
+          </p>
         </div>
         
         <div>
@@ -71,9 +79,9 @@ export default function ChangePasswordModal({ onClose, notify }) {
         </div>
         
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-          <button type="button" className="btn" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          {!forced && <button type="button" className="btn" style={{ flex: 1 }} onClick={onClose}>Cancel</button>}
           <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? 'Updating...' : (forced ? 'Save & Continue' : 'Update Password')}
           </button>
         </div>
       </form>
