@@ -25,6 +25,7 @@ const corsHeaders = {
 const DEFAULT_MODELS = {
   anthropic: 'claude-haiku-4-5-20251001',
   openai: 'gpt-4o-mini',
+  gemini: 'gemini-2.5-flash',
 }
 const MAX_TOKENS = 900
 
@@ -155,7 +156,7 @@ Deno.serve(async (req) => {
         generationConfig: { maxOutputTokens: MAX_TOKENS, responseMimeType: 'application/json' } 
       }
 
-      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.5-flash'}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
