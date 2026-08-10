@@ -8,6 +8,7 @@ import ReportCardModal from '../components/ReportCardModal';
 import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
 import BenchmarkCard from '../components/BenchmarkCard';
+import StreamPerformanceGraph from '../components/StreamPerformanceGraph';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
@@ -392,6 +393,11 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
             <Stat icon={CheckCircle2} label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} Units`} color={auditStats.overallPct >= 80 ? '#047857' : '#d97706'} />
             <Stat icon={AlertTriangle} label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending Review" color={awaitingApprovalCount > 0 ? '#d97706' : '#047857'} />
             <Stat icon={BookOpen} label="Curriculum Subjects" value={SUBJECTS.length} sub="Active Subjects" color="#047857" />
+          </div>
+
+          {/* Stream Performance Graph */}
+          <div style={{ marginBottom: 16 }}>
+            <StreamPerformanceGraph students={activeStudentsList} />
           </div>
 
           {/* Quick Tools Grid */}
