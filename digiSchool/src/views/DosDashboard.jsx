@@ -142,11 +142,12 @@ export default function DosDashboard({ store, user }) {
     return staff || [];
   }, [store?.teachers, staff]);
 
+  // Only classes an admin has explicitly added in Settings. We used to
+  // union with getDynamicClasses(students) which surfaced stale class values
+  // on student records — the "phantom classes" problem.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(settings?.classes || []);
-    const dynamic = getDynamicClasses(activeStudents);
-    return [...new Set([...saved, ...dynamic])];
-  }, [activeStudents, settings]);
+    return expandClassesWithStreams(settings?.classes || []);
+  }, [settings]);
 
   const activeTeacherList = useMemo(() => {
     const list = teachers.length > 0 ? teachers : rawStaff;

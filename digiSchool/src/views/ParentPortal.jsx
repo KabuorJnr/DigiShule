@@ -171,26 +171,48 @@ export default function ParentPortal({ store, user }) {
     if (payForm.code.trim().length !== 10) {
       return setPaywallError('Invalid M-Pesa Transaction Code. Must be exactly 10 characters.');
     }
-    
+
+    // The finance_payments row MUST carry school_id (RLS blocks the insert
+    // otherwise — that was the silent failure). Also link the student/adm so
+    // the bursar's reconciliation query finds it, and mark it as pending
+    // verification: we can't trust a parent-entered code until the bursar
+    // matches it against the school's actual M-Pesa statement.
+    const schoolId = child?.school_id || store?.schoolId || store?.settings?.id;
+    if (!schoolId) {
+      return setPaywallError('School context missing. Please reload the portal and try again.');
+    }
+
     setPaywallSaving(true);
-    
     try {
       const payment = {
         id: `pay_${Date.now()}`,
+        school_id: schoolId,
         student_id: child.id,
+        adm: child.adm || null,
         amount: Number(payForm.amount),
         method: 'M-Pesa',
         ref: payForm.code.toUpperCase(),
+        status: 'pending_verification',
+        source: 'parent_portal',
         date: new Date().toISOString().slice(0, 10),
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
       await upsertRow('financePayments', payment);
       setPayments(prev => [...prev, payment]);
-      store.notify(`Payment of KES ${payment.amount} successful!`);
+      store.notify(
+        `Payment of KES ${payment.amount.toLocaleString()} submitted. The bursar will confirm it against the M-Pesa statement.`,
+        'success',
+        'Fee Payment'
+      );
       setPayModalOpen(false);
       setPayForm({ amount: '', code: '' });
     } catch (e) {
-      setPaywallError(`Payment processing failed: ${e.message}`);
+      reportError(e, 'parent.payFees', { school_id: schoolId, student_id: child?.id });
+      setPaywallError(
+        /row-level security|policy/i.test(String(e?.message))
+          ? 'Payment could not be recorded (permission denied by the server). Please contact the bursar.'
+          : `Payment could not be recorded: ${e?.message || 'unknown error'}. Please try again.`
+      );
     } finally {
       setPaywallSaving(false);
     }

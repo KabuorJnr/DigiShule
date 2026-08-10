@@ -36,7 +36,7 @@ export default function Settings({ store, user }) {
   // AI credentials — same pattern as payment gateways. School stores its
   // own Anthropic key server-side; the raw key is never read back to the UI.
   const [aiStatus, setAiStatus] = useState({ configured: false, provider: null, model_override: null, updated_at: null });
-  const [aiForm, setAiForm] = useState({ api_key: '', model_override: '' });
+  const [aiForm, setAiForm] = useState({ provider: 'openai', api_key: '', model_override: '' });
   const [aiSaving, setAiSaving] = useState(false);
 
   useEffect(() => {
@@ -696,17 +696,37 @@ export default function Settings({ store, user }) {
 
           <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
             <div>
-              <label className="field-label">Anthropic API Key</label>
+              <label className="field-label">Provider</label>
+              <select
+                className="select"
+                value={aiForm.provider}
+                onChange={(e) => setAiForm(f => ({ ...f, provider: e.target.value }))}
+              >
+                <option value="openai">OpenAI (GPT)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+              </select>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                Both providers work equally well for these features. Pick the one you have an account with.
+              </div>
+            </div>
+
+            <div>
+              <label className="field-label">{aiForm.provider === 'openai' ? 'OpenAI API Key' : 'Anthropic API Key'}</label>
               <input
                 type="password"
                 className="input"
-                placeholder={aiStatus.configured ? '••••••••••  (paste a new key to rotate)' : 'sk-ant-...'}
+                placeholder={aiStatus.configured ? '••••••••••  (paste a new key to rotate)' : (aiForm.provider === 'openai' ? 'sk-...' : 'sk-ant-...')}
                 value={aiForm.api_key}
                 onChange={(e) => setAiForm(f => ({ ...f, api_key: e.target.value }))}
                 autoComplete="off"
               />
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
-                Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>console.anthropic.com</a>.
+                Get a key at{' '}
+                {aiForm.provider === 'openai' ? (
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>platform.openai.com/api-keys</a>
+                ) : (
+                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>console.anthropic.com</a>
+                )}.
                 Costs are ~KES 0.15 per AI card (typical school &lt; KES 100/month).
               </div>
             </div>
@@ -715,12 +735,13 @@ export default function Settings({ store, user }) {
               <label className="field-label">Model Override (optional)</label>
               <input
                 className="input"
-                placeholder="Leave blank to use claude-haiku-4-5 (cheapest capable)"
+                placeholder={aiForm.provider === 'openai' ? 'Leave blank to use gpt-4o-mini' : 'Leave blank to use claude-haiku-4-5'}
                 value={aiForm.model_override}
                 onChange={(e) => setAiForm(f => ({ ...f, model_override: e.target.value }))}
               />
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
-                Advanced. Change only if you want higher-quality (and more expensive) output — e.g. <code>claude-sonnet-5</code>.
+                Advanced. Change only if you want higher-quality (and more expensive) output —
+                e.g. <code>{aiForm.provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-5'}</code>.
               </div>
             </div>
           </div>
@@ -736,7 +757,7 @@ export default function Settings({ store, user }) {
                   const { supabase } = await import('../lib/supabaseClient');
                   const payload = {
                     school_id: store.schoolId,
-                    provider: 'anthropic',
+                    provider: aiForm.provider || 'openai',
                     api_key: aiForm.api_key.trim(),
                     model_override: aiForm.model_override.trim() || null,
                     updated_at: new Date().toISOString(),
@@ -744,8 +765,8 @@ export default function Settings({ store, user }) {
                   const { error } = await supabase.from('school_ai_credentials').upsert(payload, { onConflict: 'school_id' });
                   if (error) throw error;
                   notify('AI credentials saved securely. AI features are now live.', 'success');
-                  setAiStatus({ configured: true, provider: 'anthropic', model_override: aiForm.model_override || null, updated_at: payload.updated_at });
-                  setAiForm({ api_key: '', model_override: aiForm.model_override });
+                  setAiStatus({ configured: true, provider: payload.provider, model_override: aiForm.model_override || null, updated_at: payload.updated_at });
+                  setAiForm({ provider: aiForm.provider, api_key: '', model_override: aiForm.model_override });
                 } catch (e) {
                   notify(`Could not save AI key: ${e.message}`, 'error');
                 } finally {

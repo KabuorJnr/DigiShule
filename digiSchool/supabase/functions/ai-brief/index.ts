@@ -21,7 +21,11 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const MODEL = 'claude-haiku-4-5-20251001' // cheapest capable Claude; upgrade if needed
+// Default models for each provider. Cheapest capable in each family.
+const DEFAULT_MODELS = {
+  anthropic: 'claude-haiku-4-5-20251001',
+  openai: 'gpt-4o-mini',
+}
 const MAX_TOKENS = 900
 
 // ── System prompts per feature ────────────────────────────────────────────
@@ -67,14 +71,15 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await supabase.auth.getUser()
     if (userErr || !user) return json({ error: 'invalid_auth' }, 401)
 
-    // ── Resolve the AI key using the SAME pattern as finance:
-    //     1. Look up the caller's school_id from their profile.
-    //     2. Pull the school's own key from school_ai_credentials (service role).
-    //     3. Fall back to a platform-wide ANTHROPIC_API_KEY env if the school
-    //        hasn't set their own yet.
-    //     School admins manage this in-app; nobody has to run
-    //     `supabase secrets set`.
-    let anthropicKey = ''
+    // ── Resolve the AI provider + key using the SAME pattern as finance:
+    //     1. Look up caller's school → pull per-school row from
+    //        school_ai_credentials (readable only by service_role).
+    //     2. Fall back to platform-wide env keys if the school hasn't set
+    //        one yet — supports both OPENAI_KEY (their naming) and the
+    //        canonical *_API_KEY names.
+    //     3. Auto-pick provider: prefer whatever key we actually have.
+    let provider: 'anthropic' | 'openai' = 'anthropic'
+    let apiKey = ''
     let providerModelOverride = ''
 
     if (serviceRoleKey) {
@@ -85,15 +90,25 @@ Deno.serve(async (req) => {
           .select('api_key, provider, model_override')
           .eq('school_id', profile.school_id)
           .maybeSingle()
-        if (creds?.api_key && (!creds.provider || creds.provider === 'anthropic')) {
-          anthropicKey = creds.api_key.trim()
+        if (creds?.api_key) {
+          apiKey = creds.api_key.trim()
+          provider = (creds.provider === 'openai') ? 'openai' : 'anthropic'
           providerModelOverride = (creds.model_override || '').trim()
         }
       }
     }
-    // Platform fallback for early-stage single-tenant use.
-    if (!anthropicKey) anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || ''
-    if (!anthropicKey) return json({ error: 'ai_not_configured' }, 503)
+
+    // Platform fallback. Try OpenAI first if OPENAI_KEY / OPENAI_API_KEY is
+    // set (matches the user's .env naming), otherwise Anthropic.
+    if (!apiKey) {
+      const openaiKey = (Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPENAI_KEY') || '').trim()
+      const anthropicKey = (Deno.env.get('ANTHROPIC_API_KEY') || '').trim()
+      if (openaiKey) { apiKey = openaiKey; provider = 'openai' }
+      else if (anthropicKey) { apiKey = anthropicKey; provider = 'anthropic' }
+    }
+
+    if (!apiKey) return json({ error: 'ai_not_configured' }, 503)
+    const model = providerModelOverride || DEFAULT_MODELS[provider]
 
     const body = await req.json().catch(() => ({}))
     const { kind = 'principal_weekly', payload = {}, school_name = 'the school' } = body || {}
@@ -109,28 +124,51 @@ Deno.serve(async (req) => {
       'Return the JSON described in your instructions. Do not include any text outside the JSON.',
     ].join('\n')
 
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: providerModelOverride || MODEL,
-        max_tokens: MAX_TOKENS,
-        system,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    })
+    // ── Provider dispatch ────────────────────────────────────────────────
+    let aiRes: Response
+    if (provider === 'openai') {
+      aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: MAX_TOKENS,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userMessage },
+          ],
+        }),
+      })
+    } else {
+      aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: MAX_TOKENS,
+          system,
+          messages: [{ role: 'user', content: userMessage }],
+        }),
+      })
+    }
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => '')
-      return json({ error: 'ai_upstream', status: aiRes.status, detail: errText.slice(0, 500) }, 502)
+      return json({ error: 'ai_upstream', provider, status: aiRes.status, detail: errText.slice(0, 500) }, 502)
     }
 
     const aiJson = await aiRes.json()
-    const text = aiJson?.content?.[0]?.text?.trim() || ''
+    const text = (provider === 'openai'
+      ? aiJson?.choices?.[0]?.message?.content
+      : aiJson?.content?.[0]?.text)?.trim() || ''
 
     // Parse the strict-JSON response. If Claude drifts (rare with a good
     // system prompt), we return the raw text so the client can decide.
@@ -143,7 +181,8 @@ Deno.serve(async (req) => {
 
     return json({
       kind,
-      model: MODEL,
+      provider,
+      model,
       parsed,
       raw: parsed ? undefined : text,
       usage: aiJson?.usage,

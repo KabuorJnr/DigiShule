@@ -63,11 +63,12 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
     return teachers || [];
   }, [store?.teachers, teachers]);
 
+  // Only classes an admin has explicitly added in Settings. We used to
+  // union with getDynamicClasses(students) which surfaced stale class values
+  // on student records — the "phantom classes" problem.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(settings?.classes || []);
-    const dynamic = getDynamicClasses(activeStudentsList);
-    return [...new Set([...saved, ...dynamic])];
-  }, [activeStudentsList, settings]);
+    return expandClassesWithStreams(settings?.classes || []);
+  }, [settings]);
 
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents }) => {

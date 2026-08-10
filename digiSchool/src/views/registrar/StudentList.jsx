@@ -36,11 +36,10 @@ export default function StudentList() {
   const localStudents = data?.data || [];
   const totalStudents = data?.count || 0;
 
+  // Only classes an admin has explicitly added in Settings.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(store.settings?.classes || []);
-    const dynamic = getDynamicClasses(localStudents);
-    return [...new Set([...saved, ...dynamic])];
-  }, [localStudents, store.settings]);
+    return expandClassesWithStreams(store.settings?.classes || []);
+  }, [store.settings]);
 
   const filtered = useMemo(() => {
     return localStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');

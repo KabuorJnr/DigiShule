@@ -12,9 +12,9 @@ const TABS = [
 
 export default function TeacherResources({ store, user }) {
   const { notify } = store;
+  // Only classes an admin has explicitly added in Settings.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(store.settings?.classes || []);
-    return saved.length ? saved : ['1A', '2A', '3A']; // Fallback
+    return expandClassesWithStreams(store.settings?.classes || []);
   }, [store.settings]);
   const [tab, setTab] = useState('assignments');
   const [files, setFiles] = useState([]);

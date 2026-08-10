@@ -17,11 +17,10 @@ export default function Admissions({ store }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewStudent, setViewStudent] = useState(null);
+  // Only classes an admin has explicitly added in Settings.
   const dynamicClasses = useMemo(() => {
-    const saved = (store.settings?.classes || []).map(c => c.name);
-    const dynamic = getDynamicClasses(students);
-    return [...new Set([...saved, ...dynamic])];
-  }, [students, store.settings]);
+    return (store.settings?.classes || []).map(c => c.name);
+  }, [store.settings]);
   const [form, setForm] = useState({
     name: '', kcpe: '', gender: 'M', Grade: '',
     dob: '', parentName: '', parentPhone: '', parentEmail: '', boardingStatus: 'Day',

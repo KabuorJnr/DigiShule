@@ -38,9 +38,10 @@ export default function Timetable({ store, user }) {
   const isTimetableAdmin = ['deputy_admin', 'deputy_academic', 'dos', 'principal'].includes(user?.role);
   const { timetables, setTimetables, notify, settings, teachers } = store;
 
+  // Only the classes an admin has explicitly added in Settings → Academic.
+  // No seed fallback — if the list is empty the UI prompts them to add some.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(store.settings?.classes || []);
-    return saved.length ? saved : ['1A', '2A', '3A'];
+    return expandClassesWithStreams(store.settings?.classes || []);
   }, [store.settings]);
 
   // The school's own subject list (from Settings → Academic). Falls back to

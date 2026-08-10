@@ -69,9 +69,9 @@ export default function Gradebook({ store }) {
     return () => { active = false; };
   }, [cls]);
 
+  // Only classes an admin has explicitly added in Settings. No CLASSES fallback.
   const dynamicClasses = useMemo(() => {
-    const saved = expandClassesWithStreams(settings?.classes || []);
-    return saved.length ? saved : CLASSES;
+    return expandClassesWithStreams(settings?.classes || []);
   }, [settings]);
 
   const classStudents = useMemo(

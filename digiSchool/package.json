@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint .",
+    "sync-secrets": "node scripts/sync-supabase-secrets.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
