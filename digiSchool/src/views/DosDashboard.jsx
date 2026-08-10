@@ -5,6 +5,7 @@ import { Badge, ProgressBar } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
+import BenchmarkCard from '../components/BenchmarkCard';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import {
@@ -390,9 +391,10 @@ export default function DosDashboard({ store, user }) {
         </div>
       </div>
 
-      {/* ── AI: WEEKLY BRIEF ── */}
-      <div style={{ marginBottom: 20 }}>
+      {/* ── AI: WEEKLY BRIEF + BENCHMARKS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16, marginBottom: 20 }}>
         <WeeklyBrief store={{ ...store, students: activeStudents, teachers: rawStaff, settings, examSchedules }} user={user} />
+        <BenchmarkCard user={user} />
       </div>
 
       {/* ── TAB NAVIGATION ── */}

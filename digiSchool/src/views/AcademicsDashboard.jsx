@@ -7,6 +7,7 @@ import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/s
 import ReportCardModal from '../components/ReportCardModal';
 import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
+import BenchmarkCard from '../components/BenchmarkCard';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
@@ -330,9 +331,10 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
         </div>
       </div>
 
-      {/* ── AI: WEEKLY BRIEF ── */}
-      <div style={{ marginBottom: 20 }}>
+      {/* ── AI: WEEKLY BRIEF + BENCHMARKS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16, marginBottom: 20 }}>
         <WeeklyBrief store={{ ...store, students: activeStudentsList, teachers: rawStaff, settings, examSchedules }} user={user} />
+        <BenchmarkCard user={user} />
       </div>
 
       {/* ── TAB NAVIGATION ── */}
