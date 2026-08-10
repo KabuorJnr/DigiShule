@@ -6,6 +6,7 @@ import { studentOverall, gradeFor, pointsForGrade, subjectAverage, is844Class } 
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import ReportCardModal from '../components/ReportCardModal';
 import MeritListModule from '../components/MeritListModule';
+import WeeklyBrief from '../components/WeeklyBrief';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
@@ -327,6 +328,11 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
             Open <span style={{ marginLeft: 2 }}>→</span>
           </button>
         </div>
+      </div>
+
+      {/* ── AI: WEEKLY BRIEF ── */}
+      <div style={{ marginBottom: 20 }}>
+        <WeeklyBrief store={{ ...store, students: activeStudentsList, teachers: rawStaff, settings, examSchedules }} user={user} />
       </div>
 
       {/* ── TAB NAVIGATION ── */}

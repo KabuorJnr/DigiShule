@@ -4,6 +4,7 @@ import { fetchStudents } from '../lib/api';
 import { Badge, ProgressBar } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import MeritListModule from '../components/MeritListModule';
+import WeeklyBrief from '../components/WeeklyBrief';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import {
@@ -387,6 +388,11 @@ export default function DosDashboard({ store, user }) {
             Open <ChevronRight size={14} strokeWidth={1.75} />
           </button>
         </div>
+      </div>
+
+      {/* ── AI: WEEKLY BRIEF ── */}
+      <div style={{ marginBottom: 20 }}>
+        <WeeklyBrief store={{ ...store, students: activeStudents, teachers: rawStaff, settings, examSchedules }} user={user} />
       </div>
 
       {/* ── TAB NAVIGATION ── */}
