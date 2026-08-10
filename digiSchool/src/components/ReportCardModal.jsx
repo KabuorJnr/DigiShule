@@ -59,181 +59,136 @@ export default function ReportCardModal({
     window.print();
   };
 
-  // Dynamic comment logic
-  const meanPct = report.totalMarks / (report.subjectRows.length * 100) * 100;
-  let teacherComment = "";
-  let principalComment = "";
-  
-  if (is844) {
-    if (meanPct >= 70) {
-      teacherComment = "An excellent performance. Keep up the high standard and maintain focus.";
-      principalComment = "Outstanding result. Continue working hard to achieve even greater success.";
-    } else if (meanPct >= 50) {
-      teacherComment = "A good effort, but there is room for improvement in weaker subjects.";
-      principalComment = "Good work. With more dedication, you can achieve a much higher grade.";
-    } else {
-      teacherComment = "Below average performance. You need to put in more effort and seek help in challenging areas.";
-      principalComment = "Work harder and stay focused. Close monitoring by teachers and parents is advised.";
-    }
-  } else {
-    if (meanPct >= 75) {
-      teacherComment = "Exceeding expectations across most learning areas. Keep up the excellent work.";
-      principalComment = "Outstanding performance. Keep maintaining this high level of excellence.";
-    } else if (meanPct >= 50) {
-      teacherComment = "Meeting expectations in most areas. Work on the subjects where you are approaching expectation.";
-      principalComment = "Good effort. Aim to exceed expectations in the upcoming assessments.";
-    } else {
-      teacherComment = "Needs intensive support and remedial intervention across multiple learning areas. Immediate action is required.";
-      principalComment = "Immediate intervention is required to improve your performance. The school will work closely with you and your parents to provide necessary support.";
-    }
-  }
+  // Palette — a single quiet ink + muted palette shared with the PDF renderer.
+  const INK = '#111827';
+  const MUTED = '#6b7280';
+  const LINE = '#e5e7eb';
+  const SOFT = '#f9fafb';
+  const maxPts = is844 ? 12 : 8;
+
+  const contact = [schoolSettings.address, schoolSettings.phone || schoolSettings.tel, schoolSettings.email].filter(Boolean).join('  ·  ');
 
   return (
     <Modal title="Student Report Card" onClose={onClose} width={840}>
-      <div style={{ padding: '8px 16px 24px 16px', background: '#fff', color: '#1e293b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ padding: '4px 16px 20px', background: '#fff', color: INK, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         {/* Action Toolbar */}
         <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: is844 ? '#eff6ff' : '#f0fdf4', color: is844 ? '#1d4ed8' : '#15803d', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-            <Award size={14} /> {is844 ? 'SYSTEM: 8-4-4 KCSE FORMAT' : 'SYSTEM: CBC CURRICULUM FORMAT'}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: MUTED }}>
+            <Award size={14} strokeWidth={1.75} /> {is844 ? '8-4-4 · KCSE' : 'CBC · 8-tier'}
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button className="btn" onClick={handlePrint} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Printer size={16} /> Print
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handlePrint}
+              style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#fff', border: `1px solid #d1d5db`, fontSize: 13, fontWeight: 500, color: '#374151', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+            >
+              <Printer size={14} strokeWidth={1.75} /> Print
             </button>
-            <button className="btn btn-primary" onClick={handleDownloadPDF} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Download size={16} /> Download PDF
+            <button
+              onClick={handleDownloadPDF}
+              style={{ height: 34, padding: '0 14px', borderRadius: 6, background: INK, border: `1px solid ${INK}`, fontSize: 13, fontWeight: 500, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+            >
+              <Download size={14} strokeWidth={1.75} /> Download PDF
             </button>
           </div>
         </div>
 
         {/* Printable Card Area */}
-        <div className="report-card-container" style={{ background: '#fff', padding: '0 0 20px 0', fontFamily: 'Arial, sans-serif', color: '#000' }}>
-          
-          <div style={{ borderTop: '6px solid #1d4ed8', paddingTop: 20, textAlign: 'center', marginBottom: 16 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 'bold', margin: '0 0 4px 0', color: '#1e293b' }}>
-              {schoolSettings.name || 'Kinjau Junior Secondary'}
-            </h1>
-            <div style={{ fontSize: 13, color: '#64748b', fontStyle: 'italic', marginBottom: 12 }}>
-              {schoolSettings.motto || 'Excellence in Education'}
+        <div className="report-card-container" style={{ background: '#fff', color: INK, fontFamily: 'Helvetica, Arial, sans-serif', fontSize: 13 }}>
+
+          {/* School header — nothing hardcoded, motto only if provided */}
+          <div style={{ textAlign: 'center', paddingBottom: 12, marginBottom: 16, borderBottom: `1px solid ${LINE}` }}>
+            {schoolSettings.name && (
+              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.3px', textTransform: 'uppercase' }}>
+                {schoolSettings.name}
+              </div>
+            )}
+            {contact && <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{contact}</div>}
+            {schoolSettings.motto && <div style={{ fontSize: 11, color: MUTED, fontStyle: 'italic', marginTop: 4 }}>{schoolSettings.motto}</div>}
+          </div>
+
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.5px' }}>
+              {is844 ? 'ACADEMIC REPORT' : 'LEARNER ASSESSMENT REPORT'}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1d4ed8', textTransform: 'uppercase' }}>
-              {is844 ? 'SECONDARY SCHOOL ACADEMIC REPORT CARD' : 'JUNIOR SECONDARY ASSESSMENT REPORT'}
+            <div style={{ fontSize: 12, color: MUTED, marginTop: 3 }}>
+              {report.examTitle} · {report.termName}
             </div>
           </div>
 
-          <div style={{ border: '1px solid #94a3b8', display: 'flex', flexWrap: 'wrap', fontSize: 13, background: '#f8fafc', marginBottom: 16 }}>
-            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1.5, minWidth: 200 }}><strong>Name:</strong> {report.studentName}</div>
-            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1, minWidth: 150 }}><strong>Adm No:</strong> {report.admissionNo}</div>
-            <div style={{ padding: '8px 12px', borderRight: '1px solid #94a3b8', flex: 1, minWidth: 150 }}><strong>Grade:</strong> {report.className}</div>
-            <div style={{ padding: '8px 12px', flex: 1, minWidth: 150 }}><strong>Term:</strong> {report.termName}</div>
+          {/* Student info — clean 4-column strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: `1px solid ${LINE}`, borderRadius: 6, background: SOFT, marginBottom: 20 }}>
+            {[
+              { k: 'Name', v: report.studentName || '—' },
+              { k: 'Adm No.', v: String(report.admissionNo || '—') },
+              { k: 'Class', v: String(report.className || '—') },
+              { k: 'Position', v: report.classPosition ? `${report.classPosition} of ${report.classSize}` : '—' },
+            ].map((f, i) => (
+              <div key={f.k} style={{ padding: '10px 14px', borderLeft: i === 0 ? 'none' : `1px solid ${LINE}` }}>
+                <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{f.k}</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{f.v}</div>
+              </div>
+            ))}
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', fontSize: 13 }}>
+          {/* Subject table */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${LINE}`, marginBottom: 14 }}>
             <thead>
-              <tr style={{ background: '#e2e8f0', borderBottom: '1px solid #94a3b8' }}>
-                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'left', fontWeight: 'bold' }}>{is844 ? 'Subject' : 'Learning Area'}</th>
-                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 60 }}>Score</th>
-                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 80 }}>{is844 ? '%' : 'Level'}</th>
-                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', width: 60 }}>Pts</th>
-                <th style={{ padding: '8px', borderRight: '1px solid #94a3b8', textAlign: 'left', fontWeight: 'bold' }}>Remarks</th>
-                <th style={{ padding: '8px', textAlign: 'left', fontWeight: 'bold', width: 120 }}>Teacher</th>
+              <tr style={{ background: INK, color: '#fff' }}>
+                <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, fontSize: 12 }}>{is844 ? 'Subject' : 'Learning Area'}</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 60 }}>Score</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 60 }}>%</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 70 }}>{is844 ? 'Grade' : 'Level'}</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 50 }}>Pts</th>
+                <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, fontSize: 12 }}>Remark</th>
               </tr>
             </thead>
             <tbody>
               {report.subjectRows.map(row => (
-                <tr key={row.subject} style={{ borderBottom: '1px solid #94a3b8' }}>
-                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8' }}>{row.subject}</td>
-                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center' }}>{row.scoreText}</td>
-                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center' }}>{is844 ? row.percentageText : row.gradeFull}</td>
-                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', textAlign: 'center', fontWeight: 'bold', color: '#0f172a' }}>{row.pts}</td>
-                  <td style={{ padding: '6px 8px', borderRight: '1px solid #94a3b8', fontSize: 12 }}>{row.remark}</td>
-                  <td style={{ padding: '6px 8px', fontSize: 12 }}></td>
+                <tr key={row.subject} style={{ borderTop: `1px solid ${LINE}` }}>
+                  <td style={{ padding: '7px 10px', fontWeight: 600 }}>{row.subject}</td>
+                  <td style={{ padding: '7px 10px', textAlign: 'center' }}>{row.scoreText || '—'}</td>
+                  <td style={{ padding: '7px 10px', textAlign: 'center' }}>{row.percentageText || (row.percentage != null ? `${row.percentage}%` : '—')}</td>
+                  <td style={{ padding: '7px 10px', textAlign: 'center', fontWeight: 600 }}>{row.gradeCode || row.gradeFull || '—'}</td>
+                  <td style={{ padding: '7px 10px', textAlign: 'center' }}>{row.pts != null ? row.pts : '—'}</td>
+                  <td style={{ padding: '7px 10px', color: MUTED, fontSize: 12 }}>{row.remark}</td>
                 </tr>
               ))}
-              <tr style={{ background: '#f8fafc', fontWeight: 'bold' }}>
-                <td colSpan={2} style={{ padding: '8px', borderRight: '1px solid #94a3b8' }}>
-                  Total Points: <span style={{ color: '#1d4ed8' }}>{report.totalPoints}/{is844 ? report.subjectRows.length * 12 : report.subjectRows.length * 4}</span>
-                </td>
-                <td colSpan={2} style={{ padding: '8px', borderRight: '1px solid #94a3b8' }}>
-                  Average ({report.subjectRows.length} {is844 ? 'subjects' : 'learning areas'}): {report.meanPercentageText}
-                </td>
-                <td colSpan={2} style={{ padding: '8px' }}>
-                  Mean Grade: <span style={{ color: '#dc2626' }}>{report.meanGradeFull}</span>
-                </td>
+              <tr style={{ background: SOFT, borderTop: `1px solid ${LINE}`, fontWeight: 600 }}>
+                <td style={{ padding: '9px 10px' }}>TOTAL / MEAN</td>
+                <td style={{ padding: '9px 10px' }}></td>
+                <td style={{ padding: '9px 10px', textAlign: 'center' }}>{report.meanPercentageText || '—'}</td>
+                <td style={{ padding: '9px 10px', textAlign: 'center' }}>{report.meanGradeCode || report.meanGradeFull || '—'}</td>
+                <td style={{ padding: '9px 10px', textAlign: 'center' }}>{report.totalPoints}/{report.subjectRows.length * maxPts}</td>
+                <td style={{ padding: '9px 10px' }}></td>
               </tr>
             </tbody>
           </table>
 
-          <div style={{ border: '1px solid #94a3b8', borderTop: 'none', display: 'flex', alignItems: 'center', fontSize: 11, background: '#f8fafc', marginBottom: 16 }}>
-            <div style={{ padding: '6px 12px', fontWeight: 'bold', borderRight: '1px solid #94a3b8' }}>KEY:</div>
-            <div style={{ padding: '6px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px 16px', flex: 1 }}>
-              {is844 ? (
-                <>
-                  <span style={{ color: '#1d4ed8' }}>A=80-100%</span>
-                  <span style={{ color: '#1d4ed8' }}>A-=75-79%</span>
-                  <span style={{ color: '#16a34a' }}>B+=70-74%</span>
-                  <span style={{ color: '#16a34a' }}>B=65-69%</span>
-                  <span style={{ color: '#16a34a' }}>B-=60-64%</span>
-                  <span style={{ color: '#16a34a' }}>C+=55-59%</span>
-                  <span style={{ color: '#d97706' }}>C=50-54%</span>
-                  <span style={{ color: '#d97706' }}>C-=45-49%</span>
-                  <span style={{ color: '#d97706' }}>D+=40-44%</span>
-                  <span style={{ color: '#dc2626' }}>D=35-39%</span>
-                  <span style={{ color: '#dc2626' }}>D-=30-34%</span>
-                  <span style={{ color: '#dc2626' }}>E=0-29%</span>
-                </>
-              ) : (
-                <>
-                  <span style={{ color: '#1d4ed8' }}>EE1=90-100%</span>
-                  <span style={{ color: '#1d4ed8' }}>EE2=75-89%</span>
-                  <span style={{ color: '#16a34a' }}>ME1=58-74%</span>
-                  <span style={{ color: '#16a34a' }}>ME2=41-57%</span>
-                  <span style={{ color: '#d97706' }}>AE1=31-40%</span>
-                  <span style={{ color: '#d97706' }}>AE2=21-30%</span>
-                  <span style={{ color: '#dc2626' }}>BE1=11-20%</span>
-                  <span style={{ color: '#dc2626' }}>BE2=0-10%</span>
-                </>
-              )}
+          {/* Grading key — one muted line, no rainbow */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Grading Key</div>
+            <div style={{ fontSize: 11, color: INK, lineHeight: 1.5 }}>
+              {is844
+                ? 'A 80–100  ·  A- 75–79  ·  B+ 70–74  ·  B 65–69  ·  B- 60–64  ·  C+ 55–59  ·  C 50–54  ·  C- 45–49  ·  D+ 40–44  ·  D 35–39  ·  D- 30–34  ·  E 0–29'
+                : 'EE1 90–100  ·  EE2 75–89  ·  ME1 58–74  ·  ME2 41–57  ·  AE1 31–40  ·  AE2 21–30  ·  BE1 11–20  ·  BE2 0–10'}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>
-            <div style={{ border: '1px solid #94a3b8', padding: '12px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: 6 }}>Class Teacher's Comment:</div>
-              <div style={{ fontStyle: 'italic', color: '#334155', marginBottom: 16 }}>
-                {report.studentName} {teacherComment}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                <div>Name: _______________________________</div>
-                <div>Signature: _______________________________</div>
-                <div>Date: _______________________________</div>
-              </div>
+          {/* Comments — blank lines to write on. No fake auto-generated remarks. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 24 }}>Class Teacher's Comment</div>
+              <div style={{ fontSize: 12, color: INK }}>Signature: ____________________  Date: ____________</div>
             </div>
+            <div style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 24 }}>Principal's Comment</div>
+              <div style={{ fontSize: 12, color: INK }}>Signature: ____________________  Date: ____________</div>
+            </div>
+          </div>
 
-            <div style={{ border: '1px solid #94a3b8', padding: '12px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: 6 }}>Principal's Comment:</div>
-              <div style={{ fontStyle: 'italic', color: '#334155', marginBottom: 16 }}>
-                {report.studentName}, {principalComment}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                <div>Name: _______________________________</div>
-                <div>Signature: _______________________________</div>
-                <div>Date: _______________________________</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ border: '1px solid #94a3b8', padding: '12px', flex: 1 }}>
-                <div style={{ fontWeight: 'bold', marginBottom: 20 }}>Parent/Guardian Comment:</div>
-                <div style={{ display: 'flex', gap: '40px' }}>
-                  <div>Signature: _______________________________</div>
-                  <div>Date: _______________________________</div>
-                </div>
-              </div>
-              <div style={{ width: 150, border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: 11, fontWeight: 'bold' }}>
-                SCHOOL STAMP
-              </div>
-            </div>
+          <div style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 16 }}>Parent / Guardian Comment</div>
+            <div style={{ fontSize: 12, color: INK }}>Signature: ____________________  Date: ____________</div>
           </div>
 
         </div>
