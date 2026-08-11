@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard } from '../components/widgets';
 import { Search, GraduationCap, Users, UserCheck } from 'lucide-react';
-import { expandClassesWithStreams } from '../data/seed';
+import { expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 
 export default function ClassTeachers(props) {
   const context = useOutletContext() || {};
@@ -19,8 +19,18 @@ export default function ClassTeachers(props) {
   };
 
   const classes = useMemo(() => {
-    return expandClassesWithStreams(settings.classes || []);
-  }, [settings.classes]);
+    const cls = settings.classes || [];
+    if (cls.length > 0) return expandClassesWithStreams(cls);
+    // Fallback: derive classes from students and timetables
+    const dClasses = new Set();
+    if (store?.timetables) {
+      Object.keys(store.timetables).forEach(k => dClasses.add(k));
+    }
+    if (store?.students?.length > 0) {
+      getDynamicClasses(store.students).forEach(c => dClasses.add(c));
+    }
+    return [...dClasses].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [settings.classes, store?.students, store?.timetables]);
 
   const assignedCount = classes.filter(cls => teachers.some(t => getTeacherClasses(t).includes(cls))).length;
 
