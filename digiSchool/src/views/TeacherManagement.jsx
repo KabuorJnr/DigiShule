@@ -178,18 +178,24 @@ export default function TeacherManagement({ store, user, params = {} }) {
   const [qualTeacher, setQualTeacher] = useState('');
   const [qualModal, setQualModal] = useState(false);
 
-  // Classes/streams derived from settings or fallback to students
+  // Classes/streams derived from settings or fallback to students/timetables
   const allClasses = useMemo(() => {
     let cls = settings?.classes || [];
-    if (cls.length === 0 && store?.students?.length > 0) {
-      const dClasses = getDynamicClasses(store.students);
+    if (cls.length === 0) {
+      const dClasses = new Set();
+      if (store?.timetables) {
+        Object.keys(store.timetables).forEach(k => dClasses.add(k));
+      }
+      if (store?.students?.length > 0) {
+        getDynamicClasses(store.students).forEach(c => dClasses.add(c));
+      }
       const grouped = {};
-      dClasses.forEach(c => {
+      [...dClasses].forEach(c => {
         const parts = c.split(' ');
         const stream = parts.length > 1 ? parts.pop() : '';
         const name = parts.join(' ');
         if (!grouped[name]) grouped[name] = [];
-        if (stream) grouped[name].push(stream);
+        if (stream && !grouped[name].includes(stream)) grouped[name].push(stream);
       });
       cls = Object.keys(grouped).map(name => ({ name, streams: grouped[name].join(',') }));
     }
@@ -197,15 +203,22 @@ export default function TeacherManagement({ store, user, params = {} }) {
       name: c.name,
       streams: c.streams ? c.streams.split(',').map(s => s.trim()).filter(Boolean) : []
     }));
-  }, [settings?.classes, store?.students]);
+  }, [settings?.classes, store?.students, store?.timetables]);
 
   const expandedClasses = useMemo(() => {
     let cls = settings?.classes || [];
-    if (cls.length === 0 && store?.students?.length > 0) {
-      return getDynamicClasses(store.students);
+    if (cls.length === 0) {
+      const dClasses = new Set();
+      if (store?.timetables) {
+        Object.keys(store.timetables).forEach(k => dClasses.add(k));
+      }
+      if (store?.students?.length > 0) {
+        getDynamicClasses(store.students).forEach(c => dClasses.add(c));
+      }
+      return [...dClasses].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     }
     return expandClassesWithStreams(cls);
-  }, [settings?.classes, store?.students]);
+  }, [settings?.classes, store?.students, store?.timetables]);
 
   // Load data
   const loadData = useCallback(async () => {
