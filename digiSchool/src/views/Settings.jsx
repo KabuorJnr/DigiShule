@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
-import { SUBJECTS, DEPARTMENTS } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS, DEFAULT_DEPARTMENTS, getDeptColor } from '../data/seed';
 import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
 const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];
-const DEPT_LIST = ['Sciences', 'Humanities', 'Languages', 'Math'];
 
 export default function Settings({ store, user }) {
   const { settings, setSettings, feeStructure, setFeeStructure, gradeBoundaries, setGradeBoundaries, notifToggles, setNotifToggles, notify } = store;
@@ -85,6 +84,8 @@ export default function Settings({ store, user }) {
   const [subjList, setSubjList] = useState(settings.subjects?.length > 0 ? settings.subjects : defaultSubjects);
   const [newSubj, setNewSubj] = useState('');
   const [newSubjDept, setNewSubjDept] = useState('Sciences');
+  const [deptList, setDeptList] = useState(settings.departments?.length > 0 ? settings.departments : DEFAULT_DEPARTMENTS);
+  const [newDept, setNewDept] = useState('');
   const [fees, setFees] = useState(feeStructure);
   const [bounds, setBounds] = useState(gradeBoundaries);
 
@@ -104,6 +105,10 @@ export default function Settings({ store, user }) {
   useEffect(() => {
     if (settings.subjects?.length > 0) setSubjList(settings.subjects);
   }, [settings.subjects]);
+
+  useEffect(() => {
+    if (settings.departments?.length > 0) setDeptList(settings.departments);
+  }, [settings.departments]);
 
   useEffect(() => {
     setForm(f => ({ ...f, ...settings, principal: settings.principal || f.principal }));
@@ -136,7 +141,7 @@ export default function Settings({ store, user }) {
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
-    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList }));
+    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList, departments: deptList }));
     notify('Academic settings saved successfully', 'success', 'Settings');
   }
   function saveFees() {
@@ -347,31 +352,93 @@ export default function Settings({ store, user }) {
             </div>
           </div>
 
+          {/* Departments Section */}
+          <div className="card card-pad">
+            <h3 className="section-title">Departments</h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              {deptList.map((d, i) => (
+                <span key={i} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+                  borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  background: getDeptColor(d) + '18', color: getDeptColor(d),
+                  border: `1.5px solid ${getDeptColor(d)}40`
+                }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 3, background: getDeptColor(d) }} />
+                  {d}
+                  {!DEFAULT_DEPARTMENTS.includes(d) && (
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 16, padding: 0, lineHeight: 1 }}
+                      title="Remove department"
+                      onClick={() => { setDeptList(dl => dl.filter((_, j) => j !== i)); notify(`Removed department: ${d}`, 'info', 'Settings'); }}>×</button>
+                  )}
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input className="input" placeholder="New department name (e.g. Technical)" value={newDept} style={{ maxWidth: 260 }}
+                onChange={(e) => setNewDept(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && newDept.trim()) { setDeptList(dl => [...dl, newDept.trim()]); setNewDept(''); notify(`Department "${newDept.trim()}" added`, 'success', 'Settings'); } }} />
+              <button className="btn btn-primary btn-sm" disabled={!newDept.trim() || deptList.includes(newDept.trim())}
+                onClick={() => { setDeptList(dl => [...dl, newDept.trim()]); setNewDept(''); notify(`Department "${newDept.trim()}" added`, 'success', 'Settings'); }}>+ Add Department</button>
+            </div>
+          </div>
+
+          {/* Subjects Section */}
           <div className="card card-pad">
             <h3 className="section-title">Subjects</h3>
             <div className="scroll-x">
               <table className="table">
                 <thead><tr><th>Subject</th><th>Department</th><th></th></tr></thead>
                 <tbody>
-                  {subjList.map((s, i) => (
-                    <tr key={i}>
-                      <td>{s.name}</td>
-                      <td>
-                        <select className="select" value={s.dept} style={{ height: 32, width: 150 }}
-                          onChange={(e) => setSubjList((sl) => sl.map((x, j) => (j === i ? { ...x, dept: e.target.value } : x)))}>
-                          {DEPT_LIST.map((d) => <option key={d}>{d}</option>)}
-                        </select>
-                      </td>
-                      <td><button className="btn btn-sm btn-danger" onClick={() => { setSubjList((sl) => sl.filter((_, j) => j !== i)); notify('Subject removed', 'success', 'Settings'); }}>Remove</button></td>
-                    </tr>
-                  ))}
+                  {deptList.map(dept => {
+                    const deptSubjects = subjList.map((s, i) => ({ ...s, _idx: i })).filter(s => s.dept === dept);
+                    if (deptSubjects.length === 0) return null;
+                    return [
+                      <tr key={`hdr-${dept}`}>
+                        <td colSpan={3} style={{ background: getDeptColor(dept) + '12', padding: '6px 12px', fontWeight: 700, fontSize: 13, color: getDeptColor(dept), borderLeft: `3px solid ${getDeptColor(dept)}` }}>
+                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: getDeptColor(dept), marginRight: 8 }} />
+                          {dept} ({deptSubjects.length})
+                        </td>
+                      </tr>,
+                      ...deptSubjects.map(s => (
+                        <tr key={s._idx}>
+                          <td style={{ paddingLeft: 24 }}>{s.name}</td>
+                          <td>
+                            <select className="select" value={s.dept} style={{ height: 32, width: 150 }}
+                              onChange={(e) => setSubjList((sl) => sl.map((x, j) => (j === s._idx ? { ...x, dept: e.target.value } : x)))}>
+                              {deptList.map((d) => <option key={d}>{d}</option>)}
+                            </select>
+                          </td>
+                          <td><button className="btn btn-sm btn-danger" onClick={() => { setSubjList((sl) => sl.filter((_, j) => j !== s._idx)); notify('Subject removed', 'success', 'Settings'); }}>Remove</button></td>
+                        </tr>
+                      ))
+                    ];
+                  })}
+                  {/* Subjects not in any known department */}
+                  {subjList.filter(s => !deptList.includes(s.dept)).length > 0 && (
+                    <>
+                      <tr><td colSpan={3} style={{ background: '#f1f5f9', padding: '6px 12px', fontWeight: 700, fontSize: 13, color: '#64748b', borderLeft: '3px solid #94a3b8' }}>Uncategorized</td></tr>
+                      {subjList.map((s, i) => ({ ...s, _idx: i })).filter(s => !deptList.includes(s.dept)).map(s => (
+                        <tr key={s._idx}>
+                          <td style={{ paddingLeft: 24 }}>{s.name}</td>
+                          <td>
+                            <select className="select" value={s.dept || ''} style={{ height: 32, width: 150 }}
+                              onChange={(e) => setSubjList((sl) => sl.map((x, j) => (j === s._idx ? { ...x, dept: e.target.value } : x)))}>
+                              <option value="">-- Select --</option>
+                              {deptList.map((d) => <option key={d}>{d}</option>)}
+                            </select>
+                          </td>
+                          <td><button className="btn btn-sm btn-danger" onClick={() => { setSubjList((sl) => sl.filter((_, j) => j !== s._idx)); notify('Subject removed', 'success', 'Settings'); }}>Remove</button></td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <input className="input" placeholder="New subject (e.g. Computer Science)" value={newSubj} style={{ maxWidth: 200 }} onChange={(e) => setNewSubj(e.target.value)} />
               <select className="select" value={newSubjDept} onChange={(e) => setNewSubjDept(e.target.value)}>
-                {DEPT_LIST.map((d) => <option key={d}>{d}</option>)}
+                {deptList.map((d) => <option key={d}>{d}</option>)}
               </select>
               <button className="btn btn-primary btn-sm" disabled={!newSubj} onClick={() => { setSubjList((sl) => [...sl, { name: newSubj, dept: newSubjDept }]); setNewSubj(''); notify('Subject added', 'success', 'Settings'); }}>+ Add Subject</button>
             </div>

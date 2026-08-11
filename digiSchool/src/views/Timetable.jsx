@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
-import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDynamicClasses, CLASSES } from '../data/seed';
+import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDynamicClasses, CLASSES, getDeptColor, DEFAULT_DEPARTMENTS } from '../data/seed';
 import { downloadExcel, exportTimetableLandscapePDF, exportAllTimetablesPDF } from '../utils/exporters';
 import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
@@ -66,6 +66,17 @@ export default function Timetable({ store, user }) {
     }
     return SUBJECTS;
   }, [store.settings]);
+
+  // Keep the raw [{name, dept}] array for department-aware lookups
+  const schoolSubjectsRaw = useMemo(() => {
+    const raw = store.settings?.subjects;
+    return Array.isArray(raw) && raw.length ? raw : null;
+  }, [store.settings]);
+
+  // Dynamic department list from settings
+  const schoolDepts = useMemo(() => {
+    return store.settings?.departments?.length > 0 ? store.settings.departments : DEFAULT_DEPARTMENTS;
+  }, [store.settings?.departments]);
 
   const [term, setTerm] = useState('Term 2');
   const [cls, setCls] = useState(dynamicClasses[0] || '');
@@ -455,7 +466,7 @@ export default function Timetable({ store, user }) {
   }
 
   const cellStyle = (cell) => {
-    const meta = getSubjectMeta(cell.subject);
+    const meta = getSubjectMeta(cell.subject, schoolSubjectsRaw);
     return { background: tint(meta.color), borderLeft: `3px solid ${meta.color}` };
   };
 
@@ -537,7 +548,7 @@ export default function Timetable({ store, user }) {
                 {constraints.mathSciNotFollow && <Chip>Math ✕ Science</Chip>}
                 {constraints.freeAfternoonOnly && <Chip>Free = afternoon</Chip>}
                 <Chip>Max {constraints.maxPerDay || '∞'}/day</Chip>
-                {(constraints.customPairs || []).map((p, i) => <Chip key={i}>{getSubjectMeta(p[0]).initials} ✕ {getSubjectMeta(p[1]).initials}</Chip>)}
+                {(constraints.customPairs || []).map((p, i) => <Chip key={i}>{getSubjectMeta(p[0], schoolSubjectsRaw).initials} ✕ {getSubjectMeta(p[1], schoolSubjectsRaw).initials}</Chip>)}
                 {Object.values(constraints.teacherTimeOff || {}).some((a) => a.length) && <Chip>Teacher time-off</Chip>}
               </div>
               <button className="btn btn-outline" style={{ width: '100%', marginTop: 14, color: '#7c3aed', borderColor: '#ddd6fe', background: '#fff' }} onClick={() => setConstraintsModal(true)}>
@@ -621,35 +632,75 @@ export default function Timetable({ store, user }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {genAssignments.map((a, i) => {
-                    const meta = getSubjectMeta(a.subject);
-                    const total = Number(a.singles || 0) + 2 * Number(a.doubles || 0);
-                    return (
-                      <tr key={a.subject}>
-                        <td style={{ padding: '6px 12px', fontWeight: 500 }}>
-                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.color, marginRight: 8 }} />
-                          {a.subject}
-                          {meta.code && <span style={{ marginLeft: 6, fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>({meta.code})</span>}
+                  {(() => {
+                    // Build department grouping from schoolSubjectsRaw
+                    const subjectDeptMap = {};
+                    if (schoolSubjectsRaw) {
+                      schoolSubjectsRaw.forEach(s => {
+                        const name = typeof s === 'string' ? s : s?.name;
+                        const dept = typeof s === 'string' ? null : s?.dept;
+                        if (name) subjectDeptMap[name] = dept;
+                      });
+                    }
+                    // Fallback to hardcoded DEPARTMENTS for known subjects
+                    genAssignments.forEach(a => {
+                      if (!subjectDeptMap[a.subject]) subjectDeptMap[a.subject] = DEPARTMENTS[a.subject] || null;
+                    });
+
+                    const grouped = {};
+                    genAssignments.forEach((a, i) => {
+                      const dept = subjectDeptMap[a.subject] || 'Other';
+                      if (!grouped[dept]) grouped[dept] = [];
+                      grouped[dept].push({ ...a, _idx: i });
+                    });
+
+                    // Order: known depts first, then 'Other'
+                    const orderedDepts = [...schoolDepts.filter(d => grouped[d]), ...Object.keys(grouped).filter(d => !schoolDepts.includes(d))];
+
+                    return orderedDepts.map(dept => [
+                      <tr key={`dept-${dept}`}>
+                        <td colSpan={5} style={{
+                          background: getDeptColor(dept) + '12',
+                          padding: '5px 12px', fontWeight: 700, fontSize: 12,
+                          color: getDeptColor(dept),
+                          borderLeft: `3px solid ${getDeptColor(dept)}`,
+                          letterSpacing: 0.3
+                        }}>
+                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: getDeptColor(dept), marginRight: 8 }} />
+                          {dept} ({grouped[dept].length})
                         </td>
-                        <td style={{ padding: '6px 12px' }}>
-                          <select className="select" value={a.teacher} style={{ height: 32, fontSize: 13 }}
-                            onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === i ? { ...x, teacher: e.target.value } : x)))}>
-                            <option value="">-- Select --</option>
-                            {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
-                          </select>
-                        </td>
-                        <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                          <input className="input" type="number" min="0" max="10" value={a.singles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
-                            onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === i ? { ...x, singles: e.target.value } : x)))} />
-                        </td>
-                        <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                          <input className="input" type="number" min="0" max="5" value={a.doubles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
-                            onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === i ? { ...x, doubles: e.target.value } : x)))} />
-                        </td>
-                        <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>{total}</td>
-                      </tr>
-                    );
-                  })}
+                      </tr>,
+                      ...grouped[dept].map(a => {
+                        const meta = getSubjectMeta(a.subject, schoolSubjectsRaw);
+                        const total = Number(a.singles || 0) + 2 * Number(a.doubles || 0);
+                        return (
+                          <tr key={a.subject}>
+                            <td style={{ padding: '6px 12px', paddingLeft: 24, fontWeight: 500 }}>
+                              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.color, marginRight: 8 }} />
+                              {a.subject}
+                              {meta.code && <span style={{ marginLeft: 6, fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>({meta.code})</span>}
+                            </td>
+                            <td style={{ padding: '6px 12px' }}>
+                              <select className="select" value={a.teacher} style={{ height: 32, fontSize: 13 }}
+                                onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, teacher: e.target.value } : x)))}>
+                                <option value="">-- Select --</option>
+                                {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                              <input className="input" type="number" min="0" max="10" value={a.singles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
+                                onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, singles: e.target.value } : x)))} />
+                            </td>
+                            <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                              <input className="input" type="number" min="0" max="5" value={a.doubles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
+                                onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, doubles: e.target.value } : x)))} />
+                            </td>
+                            <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>{total}</td>
+                          </tr>
+                        );
+                      })
+                    ]);
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -724,7 +775,7 @@ export default function Timetable({ store, user }) {
           {tab !== 'master' && (
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
               {schoolSubjects.map((s) => {
-                const meta = getSubjectMeta(s);
+                const meta = getSubjectMeta(s, schoolSubjectsRaw);
                 return (
                   <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={s}>
                     <span style={{ width: 12, height: 12, borderRadius: 3, background: meta.color }} />
@@ -817,7 +868,7 @@ export default function Timetable({ store, user }) {
                               </td>
                             );
                           }
-                          const meta = getSubjectMeta(cell.subject);
+                          const meta = getSubjectMeta(cell.subject, schoolSubjectsRaw);
                           if (tab === 'class') {
                             const conflict = hasConflict(cell, ci, d);
                             return (
@@ -919,7 +970,7 @@ function MasterCell({ cell }) {
       <div style={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
         {cell.map((c, i) => {
           if (!c || c.type !== 'lesson') return <span key={i} style={{ width: 24, height: 16, fontSize: 9, color: '#cbd5e1', textAlign: 'center' }}>·</span>;
-          const meta = getSubjectMeta(c.subject);
+          const meta = getSubjectMeta(c.subject, schoolSubjectsRaw);
           return <span key={i} title={`${DAYS[i]}: ${c.subject} (${c.teacher})`} style={{ width: 24, height: 16, fontSize: 9, fontWeight: 700, color: '#fff', background: meta.color, borderRadius: 2, textAlign: 'center', lineHeight: '16px' }}>{meta.initials.slice(0, 3)}</span>;
         })}
       </div>

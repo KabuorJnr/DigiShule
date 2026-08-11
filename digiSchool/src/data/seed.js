@@ -37,11 +37,30 @@ export const DEPARTMENTS = {
 
 export const SUBJECTS = Object.keys(DEPARTMENTS);
 
+// Default departments that ship with the system.
+export const DEFAULT_DEPARTMENTS = ['Sciences', 'Humanities', 'Languages', 'Math'];
+
 export const DEPT_COLORS = {
   Sciences: '#3B82F6',
   Humanities: '#10B981',
   Languages: '#8B5CF6',
   Math: '#F59E0B',
+};
+
+// Extra color pool for user-created departments (cycled through).
+const EXTRA_DEPT_COLORS = [
+  '#EC4899', '#F97316', '#14B8A6', '#6366F1', '#EF4444',
+  '#84CC16', '#06B6D4', '#A855F7', '#F43F5E', '#22D3EE',
+  '#D946EF', '#0EA5E9',
+];
+
+// Get a deterministic color for any department name (including custom ones).
+export const getDeptColor = (deptName) => {
+  if (DEPT_COLORS[deptName]) return DEPT_COLORS[deptName];
+  // Deterministic hash-based color from the extra pool
+  let hash = 0;
+  for (let i = 0; i < (deptName || '').length; i++) hash = ((hash << 5) - hash + deptName.charCodeAt(i)) | 0;
+  return EXTRA_DEPT_COLORS[Math.abs(hash) % EXTRA_DEPT_COLORS.length];
 };
 
 // Zeraki-style subject metadata: KNEC-ish code, short initials and a display colour.
@@ -57,9 +76,20 @@ export const SUBJECT_META = {
 };
 
 // Metadata for any subject, deriving sensible defaults for ones not in SUBJECT_META.
-export const getSubjectMeta = (name) => SUBJECT_META[name] || {
-  code: '',
-  initials: (name || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || '—',
-  short: (name || '').length <= 7 ? (name || '—') : `${name.slice(0, 6)}.`,
-  color: DEPT_COLORS[DEPARTMENTS[name]] || '#64748b',
+// Accepts an optional schoolSubjects array [{name, dept}] to derive colors from the
+// school's custom department assignments instead of the hardcoded DEPARTMENTS map.
+export const getSubjectMeta = (name, schoolSubjects) => {
+  if (SUBJECT_META[name]) return SUBJECT_META[name];
+  // Try to find department from school subjects first, then hardcoded fallback
+  let dept = DEPARTMENTS[name];
+  if (!dept && Array.isArray(schoolSubjects)) {
+    const match = schoolSubjects.find(s => (typeof s === 'string' ? s : s?.name) === name);
+    if (match && typeof match !== 'string') dept = match.dept;
+  }
+  return {
+    code: '',
+    initials: (name || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || '—',
+    short: (name || '').length <= 7 ? (name || '—') : `${name.slice(0, 6)}.`,
+    color: getDeptColor(dept) || '#64748b',
+  };
 };
