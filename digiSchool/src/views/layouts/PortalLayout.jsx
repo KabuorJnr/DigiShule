@@ -265,7 +265,37 @@ export default function PortalLayout() {
       ]);
       // Apply results only if they resolved successfully
       if (cfg.status === 'fulfilled') {
-        setSettings(cfg.value.settings);
+        const loadedSettings = cfg.value.settings || {};
+        
+        // Fallback for classes from timetables and students if settings.classes is empty
+        if (!loadedSettings.classes || loadedSettings.classes.length === 0) {
+          const ttVal = tt.status === 'fulfilled' ? (tt.value || {}) : {};
+          const stVal = st.status === 'fulfilled' ? (st.value || []) : [];
+          
+          const dClasses = new Set();
+          if (ttVal) Object.keys(ttVal).forEach(k => dClasses.add(k));
+          if (stVal && stVal.length > 0) {
+            stVal.map(s => s.class).filter(Boolean).forEach(c => dClasses.add(c));
+          }
+          
+          if (dClasses.size > 0) {
+            const grouped = {};
+            [...dClasses].forEach(c => {
+              const parts = c.split(' ');
+              const stream = parts.length > 1 ? parts.pop() : '';
+              const name = parts.join(' ');
+              if (!grouped[name]) grouped[name] = [];
+              if (stream && !grouped[name].includes(stream)) grouped[name].push(stream);
+            });
+            
+            loadedSettings.classes = Object.keys(grouped).map(name => ({ 
+              name, 
+              streams: grouped[name].sort().join(', ') 
+            }));
+          }
+        }
+
+        setSettings(loadedSettings);
         setGradeBoundaries(cfg.value.gradeBoundaries);
         setFeeStructure(cfg.value.feeStructure);
         setNotifToggles(cfg.value.notifToggles);
