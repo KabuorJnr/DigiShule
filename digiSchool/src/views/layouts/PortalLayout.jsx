@@ -273,9 +273,15 @@ export default function PortalLayout() {
         const stVal = st.status === 'fulfilled' ? (st.value || []) : [];
         
         const dClasses = new Set();
-        if (ttVal) Object.keys(ttVal).forEach(k => dClasses.add(k));
+        if (ttVal) {
+          Object.keys(ttVal).forEach(k => {
+            if (!k.includes('(Remedial)')) dClasses.add(k);
+          });
+        }
         if (stVal && stVal.length > 0) {
-          stVal.map(s => s.class).filter(Boolean).forEach(c => dClasses.add(c));
+          stVal.map(s => s.class).filter(Boolean).forEach(c => {
+            if (!c.includes('(Remedial)')) dClasses.add(c);
+          });
         }
         
         if (dClasses.size > 0 || existingClasses.length > 0) {
