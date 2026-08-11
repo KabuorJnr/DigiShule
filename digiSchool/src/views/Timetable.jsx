@@ -812,7 +812,7 @@ export default function Timetable({ store, user }) {
                         <td className="tt-period-label" title={`${slot.start}–${slot.end}`}>{slot.label}</td>
                         {dynamicClasses.map((c) => {
                           const checkCls = ttType === 'Remedial' ? `${c} (Remedial)` : c;
-                          return <MasterCell key={c} cell={timetables[checkCls]?.grid[p]} />;
+                          return <MasterCell key={c} cell={timetables[checkCls]?.grid[p]} schoolSubjectsRaw={schoolSubjectsRaw} />;
                         })}
                       </tr>
                     ) : (
@@ -971,13 +971,17 @@ function ToggleRow({ label, checked, onChange }) {
 }
 
 // A master-grid cell that stacks the week (Mon→Fri) initials for one class/period.
-function MasterCell({ cell }) {
+function MasterCell({ cell, schoolSubjectsRaw }) {
   if (!cell) return <td className="tt-empty">-</td>;
   return (
     <td style={{ padding: 2 }}>
       <div style={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
         {cell.map((c, i) => {
           if (!c || c.type !== 'lesson') return <span key={i} style={{ width: 24, height: 16, fontSize: 9, color: '#cbd5e1', textAlign: 'center' }}>·</span>;
+          if (c.isBlock) {
+             const color = getDeptColor(c.dept) || '#64748b';
+             return <span key={i} title={`${DAYS[i]}: ${c.dept} Block`} style={{ width: 24, height: 16, fontSize: 9, fontWeight: 700, color: '#fff', background: color, borderRadius: 2, textAlign: 'center', lineHeight: '16px' }}>BLK</span>;
+          }
           const meta = getSubjectMeta(c.subject, schoolSubjectsRaw);
           return <span key={i} title={`${DAYS[i]}: ${c.subject} (${c.teacher})`} style={{ width: 24, height: 16, fontSize: 9, fontWeight: 700, color: '#fff', background: meta.color, borderRadius: 2, textAlign: 'center', lineHeight: '16px' }}>{meta.initials.slice(0, 3)}</span>;
         })}

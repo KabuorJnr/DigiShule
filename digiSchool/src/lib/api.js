@@ -10,9 +10,38 @@ import { DEFAULT_SEED_STUDENTS } from '../data/seedStudents';
  */
 
 // Module-level school context — set once after login, used by all writes.
+// Vite HMR or a stale tab can wipe this variable while React state survives,
+// which turns every write into a silent no-op and looks to the user like
+// "settings don't persist across refreshes". resolveSchoolId() self-heals
+// by pulling from localStorage or the current auth session before we bail.
 let _schoolId = null;
-export function setActiveSchoolId(id) { _schoolId = id; }
+export function setActiveSchoolId(id) {
+  _schoolId = id;
+  try { if (id) localStorage.setItem('eduone_school_id', id); } catch { /* ignore quota */ }
+}
 export function getActiveSchoolId() { return _schoolId; }
+
+async function resolveSchoolId() {
+  if (_schoolId) return _schoolId;
+  // 1. Cached across refreshes and HMR.
+  try {
+    const cached = localStorage.getItem('eduone_school_id');
+    if (cached) { _schoolId = cached; return _schoolId; }
+  } catch { /* ignore */ }
+  // 2. Re-derive from the live auth profile.
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('school_id').eq('id', user.id).maybeSingle();
+      if (profile?.school_id) {
+        _schoolId = profile.school_id;
+        try { localStorage.setItem('eduone_school_id', _schoolId); } catch { /* ignore */ }
+        return _schoolId;
+      }
+    }
+  } catch { /* fall through */ }
+  return null;
+}
 
 // ---- School registration (called by SetupWizard) --------------------------
 export async function registerSchool({
@@ -199,9 +228,14 @@ export async function fetchConfig() {
 }
 
 export async function saveConfig(patch) {
-  if (!_schoolId) return; // safety guard
+  // FAIL LOUD, not silent. Previously we returned early when _schoolId was
+  // null, which turned every write into a no-op and made settings appear to
+  // "disappear on refresh". Now we self-heal (localStorage → auth profile)
+  // and throw a real error if we still can't find a school.
+  const sid = await resolveSchoolId();
+  if (!sid) throw new Error('No school context — please sign out and sign in again.');
   const args = {
-    p_school_id: _schoolId,
+    p_school_id: sid,
     p_settings: patch.settings ? JSON.parse(JSON.stringify(patch.settings)) : null,
     p_grade_boundaries: patch.gradeBoundaries ?? null,
     p_fee_structure: patch.feeStructure ?? null,
@@ -215,9 +249,10 @@ export async function saveConfig(patch) {
 // Merge a partial settings patch into the existing settings and persist.
 // Used by Timetable to save assignments, constraints, and timeslots.
 export async function updateSettings(patch) {
-  if (!_schoolId) return;
-  // Read current settings so we can merge, not overwrite
-  const { data } = await supabase.from('app_config').select('settings').eq('school_id', _schoolId).maybeSingle();
+  const sid = await resolveSchoolId();
+  if (!sid) throw new Error('No school context — please sign out and sign in again.');
+  // Read current settings so we can merge, not overwrite.
+  const { data } = await supabase.from('app_config').select('settings').eq('school_id', sid).maybeSingle();
   const current = (data && data.settings) || {};
   const merged = { ...current, ...patch };
   await saveConfig({ settings: merged });
