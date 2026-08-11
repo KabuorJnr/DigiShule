@@ -267,32 +267,40 @@ export default function PortalLayout() {
       if (cfg.status === 'fulfilled') {
         const loadedSettings = cfg.value.settings || {};
         
-        // Fallback for classes from timetables and students if settings.classes is empty
-        if (!loadedSettings.classes || loadedSettings.classes.length === 0) {
-          const ttVal = tt.status === 'fulfilled' ? (tt.value || {}) : {};
-          const stVal = st.status === 'fulfilled' ? (st.value || []) : [];
+        // Always merge classes from timetables and students to ensure no student is ever orphaned
+        const existingClasses = loadedSettings.classes || [];
+        const ttVal = tt.status === 'fulfilled' ? (tt.value || {}) : {};
+        const stVal = st.status === 'fulfilled' ? (st.value || []) : [];
+        
+        const dClasses = new Set();
+        if (ttVal) Object.keys(ttVal).forEach(k => dClasses.add(k));
+        if (stVal && stVal.length > 0) {
+          stVal.map(s => s.class).filter(Boolean).forEach(c => dClasses.add(c));
+        }
+        
+        if (dClasses.size > 0 || existingClasses.length > 0) {
+          const grouped = {};
           
-          const dClasses = new Set();
-          if (ttVal) Object.keys(ttVal).forEach(k => dClasses.add(k));
-          if (stVal && stVal.length > 0) {
-            stVal.map(s => s.class).filter(Boolean).forEach(c => dClasses.add(c));
-          }
+          // Pre-populate with explicitly defined settings
+          existingClasses.forEach(c => {
+            const name = typeof c === 'string' ? c : c.name;
+            const streams = typeof c === 'string' ? [] : (c.streams ? c.streams.split(',').map(s => s.trim()).filter(Boolean) : []);
+            if (name) grouped[name] = streams;
+          });
+
+          // Merge dynamic classes discovered in the database
+          [...dClasses].forEach(c => {
+            const parts = c.split(' ');
+            const stream = parts.length > 1 ? parts.pop() : '';
+            const name = parts.join(' ');
+            if (!grouped[name]) grouped[name] = [];
+            if (stream && !grouped[name].includes(stream)) grouped[name].push(stream);
+          });
           
-          if (dClasses.size > 0) {
-            const grouped = {};
-            [...dClasses].forEach(c => {
-              const parts = c.split(' ');
-              const stream = parts.length > 1 ? parts.pop() : '';
-              const name = parts.join(' ');
-              if (!grouped[name]) grouped[name] = [];
-              if (stream && !grouped[name].includes(stream)) grouped[name].push(stream);
-            });
-            
-            loadedSettings.classes = Object.keys(grouped).map(name => ({ 
-              name, 
-              streams: grouped[name].sort().join(', ') 
-            }));
-          }
+          loadedSettings.classes = Object.keys(grouped).map(name => ({ 
+            name, 
+            streams: grouped[name].sort().join(', ') 
+          }));
         }
 
         setSettings(loadedSettings);
