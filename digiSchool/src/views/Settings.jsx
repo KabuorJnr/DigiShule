@@ -155,6 +155,37 @@ export default function Settings({ store, user }) {
     notify('Grade boundaries updated - gradebook recalculated', 'success', 'Settings');
   }
 
+  function loadCbcDefaults() {
+    if (!window.confirm('This will add KICD Grade 10 Core Subjects and Departments to your settings. Are you sure?')) return;
+    
+    const coreDepts = ['Languages', 'Sciences', 'Humanities', 'Math', 'Technicals', 'Pastoral'];
+    const newDepts = [...deptList];
+    coreDepts.forEach(d => { if (!newDepts.includes(d)) newDepts.push(d); });
+    setDeptList(newDepts);
+
+    const cbcSubjects = [
+      { name: 'English', dept: 'Languages' },
+      { name: 'Kiswahili', dept: 'Languages' },
+      { name: 'Mathematics', dept: 'Math' },
+      { name: 'Community Service Learning', dept: 'Humanities' },
+      { name: 'Physical Education', dept: 'Humanities' },
+      { name: 'ICT Skills', dept: 'Technicals' },
+      { name: 'PPI', dept: 'Pastoral' },
+      { name: 'Learner Personal Study', dept: 'Humanities' }
+    ];
+
+    const newSubj = [...subjList];
+    let addedCount = 0;
+    cbcSubjects.forEach(cbcSubj => {
+      if (!newSubj.some(s => s.name === cbcSubj.name)) {
+        newSubj.push(cbcSubj);
+        addedCount++;
+      }
+    });
+    setSubjList(newSubj);
+    notify(`Added ${addedCount} CBC Core Subjects. Remember to Save Academic Settings!`, 'success', 'Settings');
+  }
+
   return (
     <div>
       <PageHeader title="School Settings" subtitle="Configure your institution" />
@@ -392,7 +423,12 @@ export default function Settings({ store, user }) {
 
           {/* Subjects Section */}
           <div className="card card-pad">
-            <h3 className="section-title">Subjects</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 className="section-title">Subjects</h3>
+              <button className="btn btn-outline btn-sm" onClick={loadCbcDefaults} style={{ color: '#2563eb', borderColor: '#bfdbfe', background: '#eff6ff' }}>
+                Load CBC Grade 10 Core Subjects
+              </button>
+            </div>
             <div className="scroll-x">
               <table className="table">
                 <thead><tr><th>Subject</th><th>Department</th><th></th></tr></thead>

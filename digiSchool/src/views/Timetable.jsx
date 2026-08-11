@@ -568,16 +568,32 @@ export default function Timetable({ store, user }) {
               {generating && <div className="muted" style={{ fontSize: 13 }}>Generating… {Math.round(progress)}%</div>}
             </div>
 
-            <div style={{ marginBottom: 18 }}>
-              <label className="field-label">Working Days</label>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingTop: 6 }}>
-                {DAYS.map((d, i) => (
-                  <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={workingDays[i]} onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))} />
-                    {d}
-                  </label>
-                ))}
+            <div style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <label className="field-label">Working Days</label>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingTop: 6 }}>
+                  {DAYS.map((d, i) => (
+                    <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={workingDays[i]} onChange={() => setWorkingDays((w) => w.map((x, j) => (j === i ? !x : x)))} />
+                      {d}
+                    </label>
+                  ))}
+                </div>
               </div>
+              
+              <button className="btn btn-outline btn-sm" style={{ color: '#2563eb', borderColor: '#bfdbfe', background: '#eff6ff' }} onClick={() => {
+                if (window.confirm('This will reset your timeslots to the CBC Grade 10 standard (8 periods x 40 mins). Are you sure?')) {
+                  const cbcPattern = { startTime: '08:00', periods: 8, duration: 40, breakAfter: 3, breakDuration: 20, lunchAfter: 6, lunchDuration: 50 };
+                  const ts = patternTimeslots(cbcPattern);
+                  setTimeslots(ts);
+                  setWorkingDays([true, true, true, true, true]);
+                  const tsKey = ttType === 'Remedial' ? 'remedial_timetable_timeslots' : 'timetable_timeslots';
+                  persist({ [tsKey]: ts });
+                  notify('CBC timeslots loaded (40 lessons/week)', 'success', 'Timetable');
+                }
+              }}>
+                Load CBC G10 Timeslots
+              </button>
             </div>
 
             {/* Validation summary */}
@@ -618,6 +634,51 @@ export default function Timetable({ store, user }) {
                   }
                 }}>
                   <Icon name="users" size={14} /> Auto-Assign
+                </button>
+                <button className="btn btn-outline" style={{ fontSize: 13, color: '#2563eb', borderColor: '#bfdbfe', background: '#eff6ff' }} onClick={() => {
+                  if (window.confirm(`Load strict KICD Grade 10 lesson allocations for ${genClass}?`)) {
+                    // KICD standard: 40 lessons total.
+                    const cbcCounts = {
+                      'English': 5,
+                      'Kiswahili': 5,
+                      'Mathematics': 5,
+                      'Community Service Learning': 3,
+                      'Physical Education': 3,
+                      'ICT Skills': 2,
+                      'PPI': 1,
+                      'Learner Personal Study': 1,
+                    };
+                    
+                    const newAssignments = schoolSubjects.map(sub => {
+                      const isElective = !Object.keys(cbcCounts).includes(sub);
+                      // Fallback electives to 5, as they usually take 3 electives * 5 = 15. 
+                      // If the school assigns more subjects to this class, they will default to 5, which might overbook, 
+                      // so we'll just set non-core subjects to 5 singles.
+                      const singles = cbcCounts[sub] !== undefined ? cbcCounts[sub] : 5;
+                      
+                      let t = teachers.find(t => {
+                        const teachesSub = (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub];
+                        const teachesClass = (t.classes || []).includes(genClass) || t.assignedClass === genClass || t.assigned_class === genClass;
+                        return teachesSub && teachesClass;
+                      });
+                      if (!t) t = teachers.find(t => (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub]);
+                      
+                      return {
+                        subject: sub,
+                        teacher: t?.name || 'TBD',
+                        singles: singles,
+                        doubles: 0,
+                      };
+                    });
+                    
+                    setAssignmentsByClass(prev => ({
+                      ...prev,
+                      [genClass]: newAssignments
+                    }));
+                    notify(`CBC Grade 10 allocations loaded for ${genClass}`, 'success', 'Timetable');
+                  }
+                }}>
+                  <Icon name="file-text" size={14} /> Load CBC G10
                 </button>
                 <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={copyAssignmentsToAll} disabled={dynamicClasses.length < 2}>
                   <Icon name="clipboard" size={14} /> Copy to all classes
