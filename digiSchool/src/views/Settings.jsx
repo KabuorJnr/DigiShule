@@ -156,22 +156,65 @@ export default function Settings({ store, user }) {
   }
 
   function loadCbcDefaults() {
-    if (!window.confirm('This will add KICD Grade 10 Core Subjects and Departments to your settings. Are you sure?')) return;
+    if (!window.confirm('This will add KICD Grade 10 Core Subjects, Pathways, and Departments to your settings. Are you sure?')) return;
     
-    const coreDepts = ['Languages', 'Sciences', 'Humanities', 'Math', 'Technicals', 'Pastoral'];
+    const coreDepts = ['Languages', 'Sciences', 'Humanities', 'Math', 'Technicals', 'Pastoral', 'Sports', 'Arts'];
     const newDepts = [...deptList];
     coreDepts.forEach(d => { if (!newDepts.includes(d)) newDepts.push(d); });
     setDeptList(newDepts);
 
     const cbcSubjects = [
+      // Core Subjects
       { name: 'English', dept: 'Languages' },
       { name: 'Kiswahili', dept: 'Languages' },
-      { name: 'Mathematics', dept: 'Math' },
+      { name: 'Kenya Sign Language', dept: 'Languages' },
+      { name: 'Mathematics - Core', dept: 'Math' },
+      { name: 'Mathematics - Essential', dept: 'Math' },
       { name: 'Community Service Learning', dept: 'Humanities' },
-      { name: 'Physical Education', dept: 'Humanities' },
+      { name: 'Physical Education', dept: 'Sports' },
       { name: 'ICT Skills', dept: 'Technicals' },
       { name: 'PPI', dept: 'Pastoral' },
-      { name: 'Learner Personal Study', dept: 'Humanities' }
+      { name: 'Learner Personal Study', dept: 'Humanities' },
+
+      // STEM Pathway
+      { name: 'Biology', dept: 'Sciences' },
+      { name: 'Chemistry', dept: 'Sciences' },
+      { name: 'Physics', dept: 'Sciences' },
+      { name: 'Agriculture', dept: 'Sciences' },
+      { name: 'Computer Studies', dept: 'Technicals' },
+      { name: 'Home Science', dept: 'Technicals' },
+      { name: 'Aviation Technology', dept: 'Technicals' },
+      { name: 'Building and Construction', dept: 'Technicals' },
+      { name: 'Electrical Technology', dept: 'Technicals' },
+      { name: 'Metal Technology', dept: 'Technicals' },
+      { name: 'Power Mechanics', dept: 'Technicals' },
+      { name: 'Wood Technology', dept: 'Technicals' },
+
+      // Social Sciences Pathway
+      { name: 'Advanced English', dept: 'Languages' },
+      { name: 'Literature in English', dept: 'Languages' },
+      { name: 'Indigenous Languages', dept: 'Languages' },
+      { name: 'Kiswahili Kipevu', dept: 'Languages' },
+      { name: 'Fasihi ya Kiswahili', dept: 'Languages' },
+      { name: 'Arabic', dept: 'Languages' },
+      { name: 'French', dept: 'Languages' },
+      { name: 'German', dept: 'Languages' },
+      { name: 'Mandarin Chinese', dept: 'Languages' },
+      { name: 'History and Citizenship', dept: 'Humanities' },
+      { name: 'Geography', dept: 'Humanities' },
+      { name: 'CRE', dept: 'Pastoral' },
+      { name: 'IRE', dept: 'Pastoral' },
+      { name: 'HRE', dept: 'Pastoral' },
+      { name: 'Business Studies', dept: 'Humanities' },
+
+      // Arts and Sports Science Pathway
+      { name: 'Sports and Recreation', dept: 'Sports' },
+      { name: 'Music', dept: 'Arts' },
+      { name: 'Dance', dept: 'Arts' },
+      { name: 'Theatre and Elocution', dept: 'Arts' },
+      { name: 'Fine Art', dept: 'Arts' },
+      { name: 'Applied Art', dept: 'Arts' },
+      { name: 'Time-Based Media', dept: 'Arts' }
     ];
 
     const newSubj = [...subjList];
@@ -183,7 +226,7 @@ export default function Settings({ store, user }) {
       }
     });
     setSubjList(newSubj);
-    notify(`Added ${addedCount} CBC Core Subjects. Remember to Save Academic Settings!`, 'success', 'Settings');
+    notify(`Added ${addedCount} CBC Subjects across all Pathways. Remember to Save Academic Settings!`, 'success', 'Settings');
   }
 
   return (

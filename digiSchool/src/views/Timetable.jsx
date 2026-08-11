@@ -641,7 +641,9 @@ export default function Timetable({ store, user }) {
                     const cbcCounts = {
                       'English': 5,
                       'Kiswahili': 5,
-                      'Mathematics': 5,
+                      'Kenya Sign Language': 5,
+                      'Mathematics - Core': 5,
+                      'Mathematics - Essential': 5,
                       'Community Service Learning': 3,
                       'Physical Education': 3,
                       'ICT Skills': 2,
