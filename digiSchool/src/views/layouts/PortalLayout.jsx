@@ -302,15 +302,14 @@ export default function PortalLayout() {
             streams: grouped[name].sort().join(', ') 
           }));
         }
-
-        setSettings(loadedSettings);
-        setGradeBoundaries(cfg.value.gradeBoundaries);
-        setFeeStructure(cfg.value.feeStructure);
-        setNotifToggles(cfg.value.notifToggles);
-        setVenues(cfg.value.venues);
+        setSettings(loadedSettings); settingsRef.current = loadedSettings;
+        setGradeBoundaries(cfg.value.gradeBoundaries); boundsRef.current = cfg.value.gradeBoundaries;
+        setFeeStructure(cfg.value.feeStructure); feeRef.current = cfg.value.feeStructure;
+        setNotifToggles(cfg.value.notifToggles); togglesRef.current = cfg.value.notifToggles;
+        setVenues(cfg.value.venues); venuesRef.current = cfg.value.venues;
       }
-      if (ex.status === 'fulfilled') setExamSchedules(ex.value);
-      if (tt.status === 'fulfilled') setTimetables(tt.value);
+      if (ex.status === 'fulfilled') { setExamSchedules(ex.value); examsRef.current = ex.value; }
+      if (tt.status === 'fulfilled') { setTimetables(tt.value); timetablesRef.current = tt.value; }
       if (st.status === 'fulfilled') setStudents(st.value || []);
       if (tch.status === 'fulfilled') setTeachers(tch.value || []);
       if (notifs.status === 'fulfilled') {
