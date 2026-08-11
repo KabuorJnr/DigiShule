@@ -117,26 +117,69 @@ export default function PortalLayout() {
   const resolve = (updater, current) => (typeof updater === 'function' ? updater(current) : updater);
 
   // ---- Persisted store setters ----
+  // These follow an optimistic-then-verify pattern:
+  //   1. Update React state + ref immediately (optimistic — UI feels fast).
+  //   2. Await the DB write.
+  //   3. If the write fails: roll back state + ref to the previous value AND
+  //      notify the user so their next save has a clean slate. Before this
+  //      change we did fire-and-forget writes, which silently no-op'd when
+  //      the school context was stale — that's what made saved settings
+  //      "disappear" after a page refresh.
+  const persistAndRollback = useCallback(async (call, apply, prev) => {
+    apply();
+    try {
+      await call();
+    } catch (e) {
+      apply(prev, /* isRollback */ true);
+      onSaveError(e);
+    }
+  }, [onSaveError]);
+
   const setSettingsP = useCallback((u) => {
-    const next = resolve(u, settingsRef.current); settingsRef.current = next; setSettings(next);
-    api.saveConfig({ settings: next }).catch(onSaveError);
-  }, [onSaveError]);
+    const prev = settingsRef.current;
+    const next = resolve(u, prev);
+    return persistAndRollback(
+      () => api.saveConfig({ settings: next }),
+      (rollbackTo) => { const val = rollbackTo || next; settingsRef.current = val; setSettings(val); },
+      prev,
+    );
+  }, [persistAndRollback]);
   const setFeeP = useCallback((u) => {
-    const next = resolve(u, feeRef.current); feeRef.current = next; setFeeStructure(next);
-    api.saveConfig({ feeStructure: next }).catch(onSaveError);
-  }, [onSaveError]);
+    const prev = feeRef.current;
+    const next = resolve(u, prev);
+    return persistAndRollback(
+      () => api.saveConfig({ feeStructure: next }),
+      (rollbackTo) => { const val = rollbackTo || next; feeRef.current = val; setFeeStructure(val); },
+      prev,
+    );
+  }, [persistAndRollback]);
   const setBoundsP = useCallback((u) => {
-    const next = resolve(u, boundsRef.current); boundsRef.current = next; setGradeBoundaries(next);
-    api.saveConfig({ gradeBoundaries: next }).catch(onSaveError);
-  }, [onSaveError]);
+    const prev = boundsRef.current;
+    const next = resolve(u, prev);
+    return persistAndRollback(
+      () => api.saveConfig({ gradeBoundaries: next }),
+      (rollbackTo) => { const val = rollbackTo || next; boundsRef.current = val; setGradeBoundaries(val); },
+      prev,
+    );
+  }, [persistAndRollback]);
   const setTogglesP = useCallback((u) => {
-    const next = resolve(u, togglesRef.current); togglesRef.current = next; setNotifToggles(next);
-    api.saveConfig({ notifToggles: next }).catch(onSaveError);
-  }, [onSaveError]);
+    const prev = togglesRef.current;
+    const next = resolve(u, prev);
+    return persistAndRollback(
+      () => api.saveConfig({ notifToggles: next }),
+      (rollbackTo) => { const val = rollbackTo || next; togglesRef.current = val; setNotifToggles(val); },
+      prev,
+    );
+  }, [persistAndRollback]);
   const setVenuesP = useCallback((u) => {
-    const next = resolve(u, venuesRef.current); venuesRef.current = next; setVenues(next);
-    api.saveConfig({ venues: next }).catch(onSaveError);
-  }, [onSaveError]);
+    const prev = venuesRef.current;
+    const next = resolve(u, prev);
+    return persistAndRollback(
+      () => api.saveConfig({ venues: next }),
+      (rollbackTo) => { const val = rollbackTo || next; venuesRef.current = val; setVenues(val); },
+      prev,
+    );
+  }, [persistAndRollback]);
   const setExamsP = useCallback((u) => {
     const next = resolve(u, examsRef.current); examsRef.current = next; setExamSchedules(next);
     api.replaceAllExams(next).catch(onSaveError);
