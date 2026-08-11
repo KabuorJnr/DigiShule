@@ -77,7 +77,7 @@ export default function Settings({ store, user }) {
 
   const [classList, setClassList] = useState(settings.classes || []);
   const savedClasses = settings.classes || [];
-  const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
+  const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']);
   
   const [newClass, setNewClass] = useState('');
   const defaultSubjects = SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] }));
@@ -307,7 +307,7 @@ export default function Settings({ store, user }) {
                     + {formName}
                   </button>
                 ))}
-                {['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].map(gradeName => (
+                {['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'].map(gradeName => (
                   <button
                     key={gradeName}
                     type="button"
