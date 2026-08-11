@@ -81,15 +81,33 @@ export default function Settings({ store, user }) {
   const levels = savedClasses.length > 0 ? savedClasses.map(c => c.name) : (settings.levels || ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10']);
   
   const [newClass, setNewClass] = useState('');
-  const [subjList, setSubjList] = useState(SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] })));
+  const defaultSubjects = SUBJECTS.map((s) => ({ name: s, dept: DEPARTMENTS[s] }));
+  const [subjList, setSubjList] = useState(settings.subjects?.length > 0 ? settings.subjects : defaultSubjects);
   const [newSubj, setNewSubj] = useState('');
   const [newSubjDept, setNewSubjDept] = useState('Sciences');
   const [fees, setFees] = useState(feeStructure);
   const [bounds, setBounds] = useState(gradeBoundaries);
 
+  // Sync local state when the global settings/store load asynchronously
   useEffect(() => {
     setFees(store.feeStructure || []);
   }, [store.feeStructure]);
+
+  useEffect(() => {
+    setBounds(store.gradeBoundaries || []);
+  }, [store.gradeBoundaries]);
+
+  useEffect(() => {
+    if (settings.classes?.length > 0) setClassList(settings.classes);
+  }, [settings.classes]);
+
+  useEffect(() => {
+    if (settings.subjects?.length > 0) setSubjList(settings.subjects);
+  }, [settings.subjects]);
+
+  useEffect(() => {
+    setForm(f => ({ ...f, ...settings, principal: settings.principal || f.principal }));
+  }, [settings]);
 
   const upForm = (patch) => setForm((f) => ({ ...f, ...patch }));
 
