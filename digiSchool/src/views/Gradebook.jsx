@@ -225,7 +225,7 @@ export default function Gradebook({ store }) {
           }
           setEditing({ id: r.id, field });
         }}
-        title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}` : `View only: Assigned to teach ${allowedSubjects.join(', ')}`}
+        title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(0-100%)'}` : `View only: Assigned to teach ${allowedSubjects.join(', ')}`}
       >
         {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
       </td>
