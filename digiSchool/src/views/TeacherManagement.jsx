@@ -141,7 +141,7 @@ const DEFAULT_DEPARTMENTS = ['Mathematics', 'Languages', 'Sciences', 'Humanities
 // MAIN COMPONENT
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
 export default function TeacherManagement({ store, user, params = {} }) {
-  const { teachers = [], settings = {}, notify, navigate } = store;
+  const { teachers = [], settings = {}, notify, navigate, updateTeacher } = store;
   const [activeTab, setActiveTab] = useState(params.tab || 'directory');
 
   useEffect(() => {
@@ -177,6 +177,10 @@ export default function TeacherManagement({ store, user, params = {} }) {
   // Qualification tab state
   const [qualTeacher, setQualTeacher] = useState('');
   const [qualModal, setQualModal] = useState(false);
+
+  // Role Management state
+  const [editRoleModal, setEditRoleModal] = useState(null);
+  const [roleForm, setRoleForm] = useState({ role: '', dept: '' });
 
   // Classes/streams derived from settings or fallback to students/timetables
   const allClasses = useMemo(() => {
@@ -518,6 +522,21 @@ export default function TeacherManagement({ store, user, params = {} }) {
     }
   };
 
+  const handleSaveRole = async () => {
+    if (!editRoleModal) return;
+    try {
+      updateTeacher(editRoleModal.id, { role: roleForm.role, department: roleForm.dept });
+      // Also update the backend api manually in case PortalLayout doesn't update staff table
+      const { supabase } = await import('../lib/supabaseClient');
+      await supabase.from('staff').update({ role: roleForm.role, department: roleForm.dept }).eq('id', editRoleModal.id);
+      
+      notify('Role updated successfully', 'success');
+      setEditRoleModal(null);
+    } catch (e) {
+      notify(`Failed to update role: ${e.message}`, 'error');
+    }
+  };
+
   // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
   // RENDER
   // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
@@ -701,10 +720,19 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       <span>{assigns.length} classes</span>
                       <span>{quals.length} subjects</span>
                     </div>
-                    <button className="btn btn-sm btn-primary" style={{ padding: '4px 14px', fontSize: 12 }}
-                      onClick={() => switchTab('assign')}>
-                      Assign
-                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-sm btn-outline" style={{ padding: '4px 10px', fontSize: 12 }}
+                        onClick={() => {
+                          setEditRoleModal(teacher);
+                          setRoleForm({ role: teacher.role || 'teacher', dept: teacher.department || '' });
+                        }}>
+                        Edit Role
+                      </button>
+                      <button className="btn btn-sm btn-primary" style={{ padding: '4px 14px', fontSize: 12 }}
+                        onClick={() => switchTab('assign')}>
+                        Assign
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -1057,6 +1085,44 @@ export default function TeacherManagement({ store, user, params = {} }) {
           </div>
         </div>
       )}
+
+      {editRoleModal && (
+        <Modal title={`Edit Role: ${editRoleModal.name}`} onClose={() => setEditRoleModal(null)} footer={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" onClick={() => setEditRoleModal(null)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSaveRole}>Save Changes</button>
+          </div>
+        }>
+          <div style={{ display: 'grid', gap: 16 }}>
+            <div>
+              <label className="field-label">Department</label>
+              <select className="select" value={roleForm.dept} onChange={e => setRoleForm(f => ({ ...f, dept: e.target.value }))}>
+                <option value="">No Department</option>
+                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">System Role</label>
+              <select className="select" value={roleForm.role} onChange={e => setRoleForm(f => ({ ...f, role: e.target.value }))}>
+                <option value="teacher">Teacher</option>
+                <option value="class teacher">Class Teacher</option>
+                <option value="dos">Director of Studies (DoS)</option>
+                <option value="deputy_academic">Deputy Principal (Academics)</option>
+                <option value="deputy_admin">Deputy Principal (Admin)</option>
+                <option value="principal">Principal</option>
+                <option value="librarian">Librarian</option>
+                <option value="clinic">Clinic / Nurse</option>
+                <option value="finance">Finance / Bursar</option>
+                <option value="registrar">Registrar</option>
+              </select>
+              <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Changing a user's role will affect what parts of the system they can access when they log in.
+              </p>
+            </div>
+          </div>
+        </Modal>
+      )}
+
     </div>
   );
 }
