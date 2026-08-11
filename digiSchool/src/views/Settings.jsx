@@ -505,7 +505,7 @@ export default function Settings({ store, user }) {
               onClick={() => {
                 const defaultCbc = CBC_BOUNDARIES.map(b => ({ grade: b.grade, min: b.min }));
                 setBounds(defaultCbc);
-                notify('Reset boundaries to official CBC percentage defaults (80%, 50%, 30%, 0%).', 'info');
+                notify('Reset boundaries to official CBC defaults.', 'info');
               }}
             >
               Reset Official Defaults
@@ -515,12 +515,12 @@ export default function Settings({ store, user }) {
           {/* System Boundary Selector */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
             <button
-              className={`btn btn-sm ${bounds.some(b => ['EE', 'ME', 'AE', 'BE'].includes(b.grade)) ? 'btn-primary' : ''}`}
+              className={`btn btn-sm ${bounds.some(b => ['EE1', 'ME1', 'AE1', 'BE1'].includes(b.grade)) ? 'btn-primary' : ''}`}
               onClick={() => {
                 setBounds(CBC_BOUNDARIES.map(b => ({ grade: b.grade, min: b.min })));
               }}
             >
-              CBC Curriculum Scale (Grade 1 - 10)
+              CBC Curriculum Scale (Grade 7 - 12)
             </button>
             <button
               className={`btn btn-sm ${bounds.some(b => ['A', 'B+', 'C+'].includes(b.grade)) ? 'btn-primary' : ''}`}
@@ -554,7 +554,7 @@ export default function Settings({ store, user }) {
                           type="number"
                           min="0"
                           max="100"
-                          value={b.min > 4 ? b.min : (b.grade === 'EE' ? 80 : b.grade === 'ME' ? 50 : b.grade === 'AE' ? 30 : 0)}
+                          value={b.min || 0}
                           style={{ width: 90, height: 32, textAlign: 'center', fontWeight: 600 }}
                           onChange={(e) => setBounds((bs) => bs.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) } : x)))}
                         />
