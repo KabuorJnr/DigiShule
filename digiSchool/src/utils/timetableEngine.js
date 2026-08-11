@@ -15,6 +15,7 @@ export const defaultConstraints = {
   freeAfternoonOnly: false,
   customPairs: [],        // [[subjectA, subjectB], ...]
   teacherTimeOff: {},     // { teacherName: ['<dayIdx>-<rowIdx>', ...] }
+  blockDepartments: [],   // ['Technicals', 'Humanities']
 };
 
 export function pairKey(a, b) { return [a, b].sort().join('|'); }
@@ -126,6 +127,108 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
 
   const prevTeachRow = (ri) => { const p = teachPos[ri]; return p > 0 ? teachRows[p - 1] : -1; };
   const nextTeachRow = (ri) => { const p = teachPos[ri]; return p < numTeach - 1 ? teachRows[p + 1] : -1; };
+
+  // --- BLOCK TIMETABLING LOGIC ---
+  const blockDepts = constraints?.blockDepartments || [];
+  if (blockDepts.length > 0) {
+    const cohorts = {};
+    classes.forEach(c => {
+      const cohort = (c.match(/^(Form \d+|Grade \d+|Class \d+|Year \d+)/i) || [c.split(' ')[0]])[0];
+      if (!cohorts[cohort]) cohorts[cohort] = [];
+      cohorts[cohort].push(c);
+    });
+
+    Object.keys(cohorts).forEach(cohort => {
+      const cohortClasses = cohorts[cohort];
+      
+      blockDepts.forEach(dept => {
+        let maxSingles = 0;
+        let maxDoubles = 0;
+        const blockSubjectsByClass = {};
+
+        cohortClasses.forEach(cls => {
+          if (!assignmentsByClass[cls]) return;
+          const deptAssigns = assignmentsByClass[cls].filter(a => DEPARTMENTS[a.subject] === dept || a.dept === dept);
+          if (deptAssigns.length > 0) {
+            blockSubjectsByClass[cls] = deptAssigns;
+            deptAssigns.forEach(a => {
+               maxSingles = Math.max(maxSingles, Number(a.singles) || 0);
+               maxDoubles = Math.max(maxDoubles, Number(a.doubles) || 0);
+            });
+            assignmentsByClass[cls] = assignmentsByClass[cls].filter(a => !deptAssigns.includes(a));
+          }
+        });
+
+        if (Object.keys(blockSubjectsByClass).length === 0) return;
+
+        const tryPlaceBlock = (d, span) => {
+          for (const cls of Object.keys(blockSubjectsByClass)) {
+            const grid = result[cls].grid;
+            for (const ri of span) {
+               if (grid[ri][d].type !== 'empty') return false;
+            }
+            for (const a of blockSubjectsByClass[cls]) {
+               const teacher = a.teacher;
+               if (teacher && teacher !== 'TBD') {
+                 for (const ri of span) {
+                   if (!free(teacher, d, ri)) return false;
+                 }
+                 if (cap && dayCount(teacher, d) + span.length > cap) return false;
+               }
+            }
+          }
+          for (const cls of Object.keys(blockSubjectsByClass)) {
+            const grid = result[cls].grid;
+            const subjects = blockSubjectsByClass[cls].map(a => a.subject).join(' / ');
+            const teachers = blockSubjectsByClass[cls].map(a => a.teacher).join(' / ');
+            
+            for (const ri of span) {
+               grid[ri][d] = { type: 'lesson', subject: subjects, teacher: teachers, dept, double: span.length === 2, isBlock: true };
+            }
+            for (const a of blockSubjectsByClass[cls]) {
+               const teacher = a.teacher;
+               if (teacher && teacher !== 'TBD') {
+                 for (const ri of span) mark(teacher, d, ri);
+               }
+            }
+          }
+          return true;
+        };
+
+        const placeBlockUnit = (size, avoid) => {
+          const dayOrder = Array.from({ length: numDays }, (_, d) => d).sort((a, b) => {
+            const av = avoid.has(a) ? 1 : 0, bv = avoid.has(b) ? 1 : 0;
+            if (av !== bv) return av - bv;
+            return Math.random() - 0.5;
+          });
+          for (const d of dayOrder) {
+            if (size === 2) {
+              for (let idx = 0; idx < numTeach - 1; idx++) {
+                const r = teachRows[idx], r2 = teachRows[idx + 1];
+                if (r2 !== r + 1) continue;
+                if (tryPlaceBlock(d, [r, r2])) return d;
+              }
+            } else {
+              for (const r of teachRows) { if (tryPlaceBlock(d, [r])) return d; }
+            }
+          }
+          return -1;
+        };
+
+        const avoid = new Set();
+        while (maxDoubles > 0) {
+          const d = placeBlockUnit(2, avoid);
+          if (d !== -1) avoid.add(d);
+          maxDoubles--;
+        }
+        while (maxSingles > 0) {
+          const d = placeBlockUnit(1, avoid);
+          if (d !== -1) avoid.add(d);
+          maxSingles--;
+        }
+      });
+    });
+  }
 
   function conflictsAdjacent(cls, d, startRow, endRow, subject) {
     if (notFollow.size === 0) return false;

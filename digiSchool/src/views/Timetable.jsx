@@ -287,7 +287,7 @@ export default function Timetable({ store, user }) {
           days: activeDays,
           timeslots,
           assignmentsByClass,
-          constraints,
+          constraints: { ...constraints, blockDepartments: settings?.block_departments || [] },
           term,
         });
         let finalResult = result;
@@ -466,6 +466,10 @@ export default function Timetable({ store, user }) {
   }
 
   const cellStyle = (cell) => {
+    if (cell.isBlock) {
+      const color = getDeptColor(cell.dept) || '#64748b';
+      return { background: tint(color), borderLeft: `3px solid ${color}` };
+    }
     const meta = getSubjectMeta(cell.subject, schoolSubjectsRaw);
     return { background: tint(meta.color), borderLeft: `3px solid ${meta.color}` };
   };
@@ -877,10 +881,12 @@ export default function Timetable({ store, user }) {
                                 onClick={() => isTimetableAdmin && setEditCell({ p: ci, d, ...cell })}
                                 title={`${cell.subject}${cell.teacher ? ' — ' + cell.teacher : ''}${conflict ? ' (CONFLICT: double-booked)' : ''}`}>
                                 <div style={{ fontWeight: 700, fontSize: 13 }}>
-                                  {meta.short}
+                                  {cell.isBlock ? `${cell.dept} Blk` : meta.short}
                                   {cell.double && <span title="Double period" style={{ marginLeft: 3, fontSize: 9, color: '#64748b' }}>‖</span>}
                                 </div>
-                                <span style={{ position: 'absolute', right: 4, bottom: 2, fontSize: 9, fontWeight: 700, color: conflict ? 'var(--danger)' : '#475569' }}>{teacherAbbr(cell.teacher)}</span>
+                                <span style={{ position: 'absolute', right: 4, bottom: 2, fontSize: 9, fontWeight: 700, color: conflict ? 'var(--danger)' : '#475569' }}>
+                                  {cell.isBlock ? `${cell.subject.split(' / ').length} subjs` : teacherAbbr(cell.teacher)}
+                                </span>
                               </td>
                             );
                           }
@@ -888,7 +894,9 @@ export default function Timetable({ store, user }) {
                           return (
                             <td key={ci} style={{ ...cellStyle(cell), position: 'relative', height: 60, textAlign: 'center' }} title={`${cell.subject} — ${cell.cls}`}>
                               <div style={{ fontWeight: 700, fontSize: 13 }}>{cell.cls}</div>
-                              <span style={{ position: 'absolute', left: 4, top: 2, fontSize: 9, fontWeight: 700, color: '#475569' }}>{meta.short}</span>
+                              <span style={{ position: 'absolute', left: 4, top: 2, fontSize: 9, fontWeight: 700, color: '#475569' }}>
+                                {cell.isBlock ? 'Block' : meta.short}
+                              </span>
                             </td>
                           );
                         })}

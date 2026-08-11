@@ -85,6 +85,7 @@ export default function Settings({ store, user }) {
   const [newSubj, setNewSubj] = useState('');
   const [newSubjDept, setNewSubjDept] = useState('Sciences');
   const [deptList, setDeptList] = useState(settings.departments?.length > 0 ? settings.departments : DEFAULT_DEPARTMENTS);
+  const [blockDepts, setBlockDepts] = useState(settings.block_departments || []);
   const [newDept, setNewDept] = useState('');
   const [fees, setFees] = useState(feeStructure);
   const [bounds, setBounds] = useState(gradeBoundaries);
@@ -108,7 +109,8 @@ export default function Settings({ store, user }) {
 
   useEffect(() => {
     if (settings.departments?.length > 0) setDeptList(settings.departments);
-  }, [settings.departments]);
+    if (settings.block_departments) setBlockDepts(settings.block_departments);
+  }, [settings.departments, settings.block_departments]);
 
   useEffect(() => {
     setForm(f => ({ ...f, ...settings, principal: settings.principal || f.principal }));
@@ -141,7 +143,7 @@ export default function Settings({ store, user }) {
     notify('School details saved', 'success', 'Settings');
   }
   function saveAcademic() {
-    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList, departments: deptList }));
+    setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList, departments: deptList, block_departments: blockDepts }));
     notify('Academic settings saved successfully', 'success', 'Settings');
   }
   function saveFees() {
@@ -365,10 +367,16 @@ export default function Settings({ store, user }) {
                 }}>
                   <span style={{ width: 10, height: 10, borderRadius: 3, background: getDeptColor(d) }} />
                   {d}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 8, fontSize: 11, cursor: 'pointer', fontWeight: 500, color: '#475569' }}>
+                    <input type="checkbox" checked={blockDepts.includes(d)} onChange={(e) => {
+                      if (e.target.checked) setBlockDepts(b => [...b, d]);
+                      else setBlockDepts(b => b.filter(x => x !== d));
+                    }} /> Block
+                  </label>
                   {!DEFAULT_DEPARTMENTS.includes(d) && (
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 16, padding: 0, lineHeight: 1 }}
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 16, padding: 0, lineHeight: 1, marginLeft: 4 }}
                       title="Remove department"
-                      onClick={() => { setDeptList(dl => dl.filter((_, j) => j !== i)); notify(`Removed department: ${d}`, 'info', 'Settings'); }}>×</button>
+                      onClick={() => { setDeptList(dl => dl.filter((_, j) => j !== i)); setBlockDepts(b => b.filter(x => x !== d)); notify(`Removed department: ${d}`, 'info', 'Settings'); }}>×</button>
                   )}
                 </span>
               ))}
