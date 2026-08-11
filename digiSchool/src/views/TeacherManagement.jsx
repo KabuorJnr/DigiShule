@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { fetchTable, upsertRow } from '../lib/api';
-import { expandClassesWithStreams, SUBJECTS, DEPARTMENTS, DEPT_COLORS } from '../data/seed';
+import { expandClassesWithStreams, SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
 import Modal from '../components/Modal';
 import {
   Users, UserCheck, Building2, BookOpen, ClipboardList, BarChart3,
@@ -178,16 +178,34 @@ export default function TeacherManagement({ store, user, params = {} }) {
   const [qualTeacher, setQualTeacher] = useState('');
   const [qualModal, setQualModal] = useState(false);
 
-  // Classes/streams derived from settings
+  // Classes/streams derived from settings or fallback to students
   const allClasses = useMemo(() => {
-    const cls = settings.classes || [];
+    let cls = settings?.classes || [];
+    if (cls.length === 0 && store?.students?.length > 0) {
+      const dClasses = getDynamicClasses(store.students);
+      const grouped = {};
+      dClasses.forEach(c => {
+        const parts = c.split(' ');
+        const stream = parts.length > 1 ? parts.pop() : '';
+        const name = parts.join(' ');
+        if (!grouped[name]) grouped[name] = [];
+        if (stream) grouped[name].push(stream);
+      });
+      cls = Object.keys(grouped).map(name => ({ name, streams: grouped[name].join(',') }));
+    }
     return cls.map(c => ({
       name: c.name,
       streams: c.streams ? c.streams.split(',').map(s => s.trim()).filter(Boolean) : []
     }));
-  }, [settings.classes]);
+  }, [settings?.classes, store?.students]);
 
-  const expandedClasses = useMemo(() => expandClassesWithStreams(settings.classes || []), [settings.classes]);
+  const expandedClasses = useMemo(() => {
+    let cls = settings?.classes || [];
+    if (cls.length === 0 && store?.students?.length > 0) {
+      return getDynamicClasses(store.students);
+    }
+    return expandClassesWithStreams(cls);
+  }, [settings?.classes, store?.students]);
 
   // Load data
   const loadData = useCallback(async () => {
