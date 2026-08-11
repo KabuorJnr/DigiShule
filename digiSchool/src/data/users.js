@@ -73,6 +73,7 @@ export const ROLES = {
               { id: 'teaching_staff', label: 'Staff Attendance', view: 'staff' },
               { id: 'leave_management', label: 'Leave Management', view: 'staff' },
               { id: 'teacher_mgmt_p', label: 'Teaching Staff', view: 'teacher_management' },
+              { id: 'class_teachers_p', label: 'Class Teachers', view: 'staff', tab: 'classes' },
               { id: 'assign_subjects_p', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
               { id: 'appraisal_p', label: 'Appraisal (TPAD)', view: 'appraisal' }
             ]
@@ -162,6 +163,7 @@ export const ROLES = {
         section: 'TEACHER MANAGEMENT',
         items: [
           { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'class_teachers', icon: 'user', label: 'Class Teachers', view: 'staff', tab: 'classes' },
           { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
           { id: 'qualifications', icon: 'exam', label: 'Qualifications', view: 'teacher_management', tab: 'qualifications' }
         ]
@@ -204,6 +206,7 @@ export const ROLES = {
           { id: 'timetable', icon: 'calendar', label: 'Timetable', view: 'timetable' },
           { id: 'registrar', icon: 'users', label: 'Class Lists', view: 'registrar' },
           { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'class_teachers', icon: 'user', label: 'Class Teachers', view: 'staff', tab: 'classes' },
           { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
           { id: 'staff', icon: 'users', label: 'Staff Attendance', view: 'staff_attendance' }
         ]
@@ -247,6 +250,7 @@ export const ROLES = {
         section: 'TEACHER MANAGEMENT',
         items: [
           { id: 'teacher_mgmt', icon: 'users', label: 'Teaching Staff', view: 'teacher_management' },
+          { id: 'class_teachers', icon: 'user', label: 'Class Teachers', view: 'staff', tab: 'classes' },
           { id: 'assign_subjects', icon: 'clipboard', label: 'Assign to Class', view: 'teacher_management', tab: 'assign' },
           { id: 'qualifications', icon: 'exam', label: 'Qualifications', view: 'teacher_management', tab: 'qualifications' },
           { id: 'appraisal', icon: 'award', label: 'Appraisal (TPAD)', view: 'appraisal' }
