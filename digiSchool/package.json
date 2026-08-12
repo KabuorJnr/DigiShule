@@ -15,6 +15,7 @@
     "mobile:assets": "capacitor-assets generate --iconBackgroundColor #0f172a --iconBackgroundColorDark #0f172a --splashBackgroundColor #0f172a --splashBackgroundColorDark #0f172a",
     "android:open": "cap open android",
     "android:run": "vite build && cap sync android && cap run android",
+    "android:bundle": "vite build && cap sync android && cd android && gradlew.bat bundleRelease",
     "ios:open": "cap open ios",
     "ios:run": "vite build && cap sync ios && cap run ios"
   },
