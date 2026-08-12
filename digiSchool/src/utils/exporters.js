@@ -111,7 +111,7 @@ export function exportTablePDF({ school, title, subtitle, head, body, filename }
 // attendance columns and a percentage column. Each stream prints on its own
 // page. Typeset in Times for a formal document feel; no heavy fill blocks.
 export function exportClassListPDF({ school = {}, term = '', year = '', groups = [], attendanceCols = 8, filename = 'class_lists.pdf' }) {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 42;
@@ -214,7 +214,7 @@ export function exportClassListPDF({ school = {}, term = '', year = '', groups =
     ]);
 
     const dateColStyles = {};
-    for (let i = 0; i < attendanceCols; i++) dateColStyles[4 + i] = { cellWidth: 32, halign: 'center' };
+    for (let i = 0; i < attendanceCols; i++) dateColStyles[4 + i] = { cellWidth: 28, halign: 'center' };
 
     autoTable(doc, {
       head: [head],
