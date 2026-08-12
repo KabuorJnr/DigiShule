@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { apiUrl } from '../lib/apiBase';
 
 export function generateSecurePassword(length = 10) {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -14,7 +15,7 @@ export async function provisionAccount({ email, username, password, name, role, 
   const token = data?.session?.access_token || '';
 
   // Call the Vercel API
-  const res = await fetch('/api/send-email', {
+  const res = await fetch(apiUrl('/api/send-email'), {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
@@ -33,7 +34,7 @@ export async function sendParentPinEmail({ email, parentName, studentName, admNu
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token || '';
 
-  const res = await fetch('/api/send-pin', {
+  const res = await fetch(apiUrl('/api/send-pin'), {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',

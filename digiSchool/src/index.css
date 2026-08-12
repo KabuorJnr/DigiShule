@@ -35,6 +35,23 @@ html, body, #root {
   height: 100%;
 }
 
+/* ── Native shell (Capacitor) only ──────────────────────────────────────────
+   `html.capacitor` is set at runtime by src/lib/native.js, so none of this
+   affects the web build. The status bar sits above the webview (overlay:false),
+   so the only inset we must honour in-app is the bottom (iOS home indicator)
+   plus the left/right for landscape notches. */
+html.capacitor body {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Stop iOS rubber-band overscroll revealing a white gap behind the app. */
+html.capacitor {
+  background: var(--surface);
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);

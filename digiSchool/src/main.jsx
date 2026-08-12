@@ -8,6 +8,7 @@ import './index.css'
 import App from './App.jsx'
 import { initErrorReporter, reportError } from './lib/errorReporter'
 import ErrorBoundary from './components/ErrorBoundary'
+import { initNative, isNative } from './lib/native'
 
 // Wire Sentry early. Safe if the DSN isn't set — the module no-ops.
 initErrorReporter();
@@ -23,8 +24,11 @@ window.addEventListener('error', (e) => {
   reportError(e.error || new Error(e.message || 'window.error'), 'window.error');
 });
 
-// Register PWA Service Worker if supported
-if ('serviceWorker' in navigator) {
+// Register PWA Service Worker if supported — but NOT inside the native shell,
+// where Capacitor already serves the bundled assets locally. A service worker
+// there just double-caches and surfaces "update available" prompts that make
+// no sense for an installed app.
+if ('serviceWorker' in navigator && !isNative()) {
   import('virtual:pwa-register').then(({ registerSW }) => {
     const updateSW = registerSW({
       onNeedRefresh() {
@@ -72,6 +76,9 @@ createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </StrictMode>,
 )
+
+// Configure the native iOS/Android shell (no-op on web).
+initNative().catch((e) => reportError(e, 'native.init'));
 
 
 

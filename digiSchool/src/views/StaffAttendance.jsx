@@ -8,6 +8,7 @@ import { generateSecurePassword, provisionAccount, generateSequentialUsername } 
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 import { exportTablePDF, downloadCSV } from '../utils/exporters';
 import { reportError } from '../lib/errorReporter';
+import { apiUrl } from '../lib/apiBase';
 
 const STATUS_COLOR = { Present: 'green', Absent: 'red', 'On Leave': 'amber' };
 const LEAVE_COLOR = { Approved: 'green', Pending: 'amber', Rejected: 'red' };
@@ -880,7 +881,7 @@ export default function StaffAttendance({ store, user }) {
                     const { data } = await supabase.auth.getSession();
                     const token = data?.session?.access_token || '';
 
-                    await fetch('/api/send-message', {
+                    await fetch(apiUrl('/api/send-message'), {
                       method: 'POST',
                       headers: { 
                         'Content-Type': 'application/json',

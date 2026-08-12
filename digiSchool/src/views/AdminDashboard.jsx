@@ -9,6 +9,7 @@ import MediaManager from '../components/MediaManager';
 import { Download, UserPlus, Shield, CheckCircle2, Key, Mail } from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 import { reportError } from '../lib/errorReporter';
+import { apiUrl } from '../lib/apiBase';
 
 function Stat({ label, value, color, sub }) {
   return (
@@ -266,7 +267,7 @@ export default function AdminDashboard({ store, user }) {
         schoolName: store.settings?.name || 'EduOne School Portal'
       };
 
-      const response = await fetch('/api/send-email', {
+      const response = await fetch(apiUrl('/api/send-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
