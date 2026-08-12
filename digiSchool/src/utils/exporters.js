@@ -105,78 +105,100 @@ export function exportTablePDF({ school, title, subtitle, head, body, filename }
 }
 
 // ── Class attendance register / class list, one register per stream ─────────
-// Modeled on a standard attendance register: a centred school letterhead
-// (from Settings, not a hardcoded institution), a meta strip, then a table of
-// # · ADM NO · STUDENT NAME · GENDER, a run of blank dated attendance columns
-// and a percentage column. Each stream prints on its own page.
+// A clean, professional register: the school's own letterhead (logo + name +
+// contacts + motto, all pulled from Settings), a compact meta strip, then a
+// light-ruled table of # · ADM NO · STUDENT NAME · SEX, a run of blank dated
+// attendance columns and a percentage column. Each stream prints on its own
+// page. Typeset in Times for a formal document feel; no heavy fill blocks.
 export function exportClassListPDF({ school = {}, term = '', year = '', groups = [], attendanceCols = 8, filename = 'class_lists.pdf' }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 42;
 
-  const INK = [17, 24, 39];      // #111827
-  const MUTED = [107, 114, 128]; // #6b7280
-  const LINE = [203, 213, 225];  // #cbd5e1
+  const INK = [31, 41, 55];      // #1f2937 – softer than pure black
+  const MUTED = [100, 116, 139]; // #64748b
+  const GRID = [214, 222, 232];  // light table rules
+  const RULE = [148, 163, 184];  // #94a3b8 – thin letterhead rule
+  const HEADBG = [241, 245, 249]; // #f1f5f9 – subtle header tint (no black bar)
 
   const validGroups = groups.filter(g => g && Array.isArray(g.students) && g.students.length > 0);
   if (validGroups.length === 0) return;
 
-  const printedOn = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const printedOn = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  // Resolve the logo format from its data-URL header (defaults to PNG).
+  const logo = school.logo || school.logo_url || '';
+  const logoFmt = (/^data:image\/(png|jpe?g|webp)/i.exec(logo)?.[1] || 'png').toUpperCase().replace('JPG', 'JPEG');
 
   validGroups.forEach((group, gi) => {
     if (gi > 0) doc.addPage();
 
-    // ── School letterhead (replaces any external institution header) ────────
+    // ── School letterhead ───────────────────────────────────────────────────
     const schoolName = (school.name || 'School').trim();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(17);
-    doc.setTextColor(...INK);
-    doc.text(schoolName.toUpperCase(), pageW / 2, 44, { align: 'center' });
+    let y = 30;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    const contactParts = [school.address, school.phone || school.tel, school.email].filter(Boolean);
-    if (contactParts.length) doc.text(contactParts.join('  ·  '), pageW / 2, 58, { align: 'center' });
-    if (school.motto) {
-      doc.setFont('helvetica', 'italic');
-      doc.text(`"${String(school.motto)}"`, pageW / 2, contactParts.length ? 70 : 58, { align: 'center' });
+    if (logo) {
+      const logoH = 40;
+      let logoW = logoH;
+      try {
+        const p = doc.getImageProperties(logo);
+        if (p?.width && p?.height) logoW = Math.min(logoH * (p.width / p.height), 150);
+        doc.addImage(logo, logoFmt, pageW / 2 - logoW / 2, y, logoW, logoH);
+        y += logoH + 12;
+      } catch { /* skip a logo that fails to decode */ }
     }
 
-    let y = (school.motto ? 82 : (contactParts.length ? 70 : 58));
+    doc.setFont('times', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(...INK);
+    doc.text(schoolName.toUpperCase(), pageW / 2, y, { align: 'center' });
+    y += 13;
 
-    // Divider
-    doc.setDrawColor(...INK);
-    doc.setLineWidth(1);
-    doc.line(40, y, pageW - 40, y);
-    y += 20;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    const contactParts = [school.address, school.phone || school.tel, school.email].filter(Boolean);
+    if (contactParts.length) { doc.text(contactParts.join('   ·   '), pageW / 2, y, { align: 'center' }); y += 11; }
+    if (school.motto) {
+      doc.setFont('times', 'italic');
+      doc.text(`"${String(school.motto)}"`, pageW / 2, y, { align: 'center' });
+      y += 11;
+    }
+
+    // Thin letterhead rule (not a black bar)
+    y += 3;
+    doc.setDrawColor(...RULE);
+    doc.setLineWidth(0.75);
+    doc.line(marginX, y, pageW - marginX, y);
+    y += 16;
 
     // ── Register title ──────────────────────────────────────────────────────
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(11);
     doc.setTextColor(...INK);
     doc.text('CLASS ATTENDANCE REGISTER', pageW / 2, y, { align: 'center' });
-    y += 20;
+    y += 17;
 
-    // ── Meta strip: class/stream + term on the left, printed-on + total right ─
+    // ── Meta strip: class/stream + term left, printed-on + total right ───────
     const periodLabel = [term, year].filter(Boolean).join(' ');
-    doc.setFontSize(9.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...INK);
-    doc.text('CLASS: ', 40, y);
-    const clsLabelW = doc.getTextWidth('CLASS: ');
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(group.label || '—').toUpperCase(), 40 + clsLabelW, y);
-    doc.text(`PRINTED ON: ${printedOn}`, pageW - 40, y, { align: 'right' });
-
-    y += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('TERM: ', 40, y);
-    const termLabelW = doc.getTextWidth('TERM: ');
-    doc.setFont('helvetica', 'normal');
-    doc.text(periodLabel || '—', 40 + termLabelW, y);
-    doc.text(`TOTAL STUDENTS: ${group.students.length}`, pageW - 40, y, { align: 'right' });
-    y += 12;
+    const metaLine = (label, value, ry) => {
+      doc.setFont('times', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...INK);
+      doc.text(label, marginX, ry);
+      const labelW = doc.getTextWidth(label);
+      doc.setFont('times', 'normal');
+      doc.text(String(value || '—'), marginX + labelW + 4, ry);
+    };
+    metaLine('Class: ', String(group.label || '—').toUpperCase(), y);
+    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+    doc.text(`Printed: ${printedOn}`, pageW - marginX, y, { align: 'right' });
+    y += 13;
+    metaLine('Term: ', periodLabel, y);
+    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+    doc.text(`Total students: ${group.students.length}`, pageW - marginX, y, { align: 'right' });
+    y += 10;
 
     // ── Register table ──────────────────────────────────────────────────────
     const dateHead = Array.from({ length: attendanceCols }, () => '__/__');
@@ -192,45 +214,44 @@ export function exportClassListPDF({ school = {}, term = '', year = '', groups =
     ]);
 
     const dateColStyles = {};
-    for (let i = 0; i < attendanceCols; i++) dateColStyles[4 + i] = { cellWidth: 22, halign: 'center' };
+    for (let i = 0; i < attendanceCols; i++) dateColStyles[4 + i] = { cellWidth: 21, halign: 'center' };
 
     autoTable(doc, {
       head: [head],
       body,
       startY: y,
       theme: 'grid',
-      styles: { fontSize: 8.5, cellPadding: 4, textColor: INK, lineColor: LINE, lineWidth: 0.5, valign: 'middle' },
-      headStyles: { fontStyle: 'bold', fillColor: INK, textColor: [255, 255, 255], halign: 'center', fontSize: 7.5 },
+      styles: { font: 'times', fontSize: 8, cellPadding: 3, textColor: INK, lineColor: GRID, lineWidth: 0.5, valign: 'middle', minCellHeight: 15 },
+      headStyles: { font: 'times', fontStyle: 'bold', fillColor: HEADBG, textColor: INK, halign: 'center', fontSize: 8, lineColor: GRID, lineWidth: 0.5 },
       columnStyles: {
-        0: { cellWidth: 22, halign: 'center' },
-        1: { cellWidth: 66 },
-        2: { cellWidth: 'auto', fontStyle: 'bold' },
-        3: { cellWidth: 26, halign: 'center' },
+        0: { cellWidth: 20, halign: 'center' },
+        1: { cellWidth: 64 },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 24, halign: 'center' },
         ...dateColStyles,
-        [4 + attendanceCols]: { cellWidth: 30, halign: 'center' },
+        [4 + attendanceCols]: { cellWidth: 28, halign: 'center' },
       },
-      margin: { left: 40, right: 40 },
+      margin: { left: marginX, right: marginX },
       didParseCell: (data) => {
-        if (data.section === 'head' && data.column.index === 2) data.cell.styles.halign = 'left';
-        if (data.section === 'head' && data.column.index === 1) data.cell.styles.halign = 'left';
+        if (data.section === 'head' && (data.column.index === 1 || data.column.index === 2)) data.cell.styles.halign = 'left';
       },
     });
 
-    // ── Signature footer ────────────────────────────────────────────────────
-    let fy = doc.lastAutoTable.finalY + 28;
-    if (fy > pageH - 60) { doc.addPage(); fy = 60; }
+    // ── Signature line ──────────────────────────────────────────────────────
+    let fy = doc.lastAutoTable.finalY + 26;
+    if (fy > pageH - 50) { doc.addPage(); fy = 60; }
+    doc.setFont('times', 'normal');
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...INK);
-    const colW = (pageW - 80) / 2;
-    doc.text('CLASS TEACHER: ______________________________', 40, fy);
-    doc.text('SIGN: ____________  DATE: ____________', 40 + colW, fy);
+    doc.text('Class Teacher: ______________________________', marginX, fy);
+    doc.text('Signature: ____________   Date: ____________', pageW - marginX, fy, { align: 'right' });
 
     // ── Page footer ─────────────────────────────────────────────────────────
-    doc.setFontSize(7);
+    doc.setFont('times', 'normal');
+    doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
-    doc.text(`Generated ${new Date().toLocaleDateString('en-GB')}`, 40, pageH - 22);
-    doc.text(`Page ${gi + 1} of ${validGroups.length}`, pageW - 40, pageH - 22, { align: 'right' });
+    doc.text(`Generated ${new Date().toLocaleDateString('en-GB')}`, marginX, pageH - 24);
+    doc.text(`Page ${gi + 1} of ${validGroups.length}`, pageW - marginX, pageH - 24, { align: 'right' });
   });
 
   doc.save(filename);
