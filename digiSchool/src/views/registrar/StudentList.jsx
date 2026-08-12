@@ -6,7 +6,7 @@ import { fetchStudents, upsertStudent, deleteStudent } from '../../lib/api';
 import { sendParentPinEmail } from '../../utils/auth';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
-import { exportReportCardsPDF, exportNemisCSV, exportTablePDF } from '../../utils/exporters';
+import { exportReportCardsPDF, exportNemisCSV, exportClassListPDF } from '../../utils/exporters';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../../data/seed';
 
 export default function StudentList() {
@@ -141,26 +141,29 @@ export default function StudentList() {
 
   const handlePrintClassListPDF = () => {
     if (filtered.length === 0) return notify('No students in current view', 'warning');
-    const head = ['#', 'Adm No', 'Student Name', 'Gender', 'Class', 'Guardian Name', 'Phone'];
-    const body = filtered.map((s, idx) => [
-      idx + 1,
-      s.adm || s.admission_no || '-',
-      s.name || '-',
-      s.gender || '-',
-      s.class || '-',
-      s.guardianName || s.guardian_name || '-',
-      s.guardianPhone || s.guardian_phone || '-'
-    ]);
 
-    exportTablePDF({
+    // One attendance register per stream. Group by the student's class/stream
+    // label (e.g. "Grade 10 East"), sort names within each, and order streams.
+    const groupMap = {};
+    filtered.forEach(s => { (groupMap[s.class || 'Unassigned'] ||= []).push(s); });
+    const groups = Object.entries(groupMap)
+      .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+      .map(([label, students]) => ({
+        label,
+        students: [...students].sort((a, b) =>
+          (a.adm || '').localeCompare(b.adm || '', undefined, { numeric: true }) ||
+          (a.name || '').localeCompare(b.name || '')
+        ),
+      }));
+
+    exportClassListPDF({
       school: store.settings,
-      title: `CLASS REGISTER / ROSTER - ${classFilter === 'All' ? 'ALL CLASSES' : classFilter.toUpperCase()}`,
-      subtitle: `Total Students: ${filtered.length} | Date: ${new Date().toLocaleDateString()}`,
-      head,
-      body,
-      filename: `class_list_${classFilter === 'All' ? 'school' : classFilter.replace(/\s+/g, '_')}.pdf`
+      term: store.settings?.currentTerm || '',
+      year: store.settings?.academicYear || store.settings?.year || '',
+      groups,
+      filename: `class_list_${classFilter === 'All' ? 'all_streams' : classFilter.replace(/\s+/g, '_')}.pdf`,
     });
-    notify(`Class List PDF generated for ${filtered.length} student(s)`, 'success');
+    notify(`Class register generated: ${groups.length} stream${groups.length !== 1 ? 's' : ''}, ${filtered.length} student(s)`, 'success');
   };
 
   const handleDownloadReportCards = () => {
@@ -181,7 +184,7 @@ export default function StudentList() {
     <>
       {/* Exporter Toolbar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        <button className="btn btn-primary" style={{ gap: 6 }} onClick={handlePrintClassListPDF}><Printer size={15} /> Printable Class List (PDF)</button>
+        <button className="btn btn-primary" style={{ gap: 6 }} onClick={handlePrintClassListPDF}><Printer size={15} /> Class Registers by Stream (PDF)</button>
         <button className="btn" style={{ gap: 6 }} onClick={exportCSV}><Download size={15} /> Student Roster (CSV)</button>
         <button className="btn" style={{ gap: 6 }} onClick={exportContactsCSV}><Download size={15} /> Parent Contacts</button>
         <button className="btn btn-outline" style={{ gap: 6, borderColor: '#0ea5e9', color: '#0ea5e9' }} onClick={exportNEMIS}><Download size={15} /> NEMIS Export</button>

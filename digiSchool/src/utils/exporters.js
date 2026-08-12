@@ -104,6 +104,138 @@ export function exportTablePDF({ school, title, subtitle, head, body, filename }
   doc.save(filename);
 }
 
+// ── Class attendance register / class list, one register per stream ─────────
+// Modeled on a standard attendance register: a centred school letterhead
+// (from Settings, not a hardcoded institution), a meta strip, then a table of
+// # · ADM NO · STUDENT NAME · GENDER, a run of blank dated attendance columns
+// and a percentage column. Each stream prints on its own page.
+export function exportClassListPDF({ school = {}, term = '', year = '', groups = [], attendanceCols = 8, filename = 'class_lists.pdf' }) {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  const INK = [17, 24, 39];      // #111827
+  const MUTED = [107, 114, 128]; // #6b7280
+  const LINE = [203, 213, 225];  // #cbd5e1
+
+  const validGroups = groups.filter(g => g && Array.isArray(g.students) && g.students.length > 0);
+  if (validGroups.length === 0) return;
+
+  const printedOn = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+  validGroups.forEach((group, gi) => {
+    if (gi > 0) doc.addPage();
+
+    // ── School letterhead (replaces any external institution header) ────────
+    const schoolName = (school.name || 'School').trim();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(...INK);
+    doc.text(schoolName.toUpperCase(), pageW / 2, 44, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    const contactParts = [school.address, school.phone || school.tel, school.email].filter(Boolean);
+    if (contactParts.length) doc.text(contactParts.join('  ·  '), pageW / 2, 58, { align: 'center' });
+    if (school.motto) {
+      doc.setFont('helvetica', 'italic');
+      doc.text(`"${String(school.motto)}"`, pageW / 2, contactParts.length ? 70 : 58, { align: 'center' });
+    }
+
+    let y = (school.motto ? 82 : (contactParts.length ? 70 : 58));
+
+    // Divider
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(1);
+    doc.line(40, y, pageW - 40, y);
+    y += 20;
+
+    // ── Register title ──────────────────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...INK);
+    doc.text('CLASS ATTENDANCE REGISTER', pageW / 2, y, { align: 'center' });
+    y += 20;
+
+    // ── Meta strip: class/stream + term on the left, printed-on + total right ─
+    const periodLabel = [term, year].filter(Boolean).join(' ');
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...INK);
+    doc.text('CLASS: ', 40, y);
+    const clsLabelW = doc.getTextWidth('CLASS: ');
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(group.label || '—').toUpperCase(), 40 + clsLabelW, y);
+    doc.text(`PRINTED ON: ${printedOn}`, pageW - 40, y, { align: 'right' });
+
+    y += 15;
+    doc.setFont('helvetica', 'bold');
+    doc.text('TERM: ', 40, y);
+    const termLabelW = doc.getTextWidth('TERM: ');
+    doc.setFont('helvetica', 'normal');
+    doc.text(periodLabel || '—', 40 + termLabelW, y);
+    doc.text(`TOTAL STUDENTS: ${group.students.length}`, pageW - 40, y, { align: 'right' });
+    y += 12;
+
+    // ── Register table ──────────────────────────────────────────────────────
+    const dateHead = Array.from({ length: attendanceCols }, () => '__/__');
+    const head = ['#', 'ADM NO', 'STUDENT NAME', 'SEX', ...dateHead, '%'];
+
+    const body = group.students.map((s, idx) => [
+      idx + 1,
+      s.adm || s.admission_no || '—',
+      (s.name || '—').toUpperCase(),
+      (s.gender || '-').charAt(0).toUpperCase(),
+      ...Array.from({ length: attendanceCols }, () => ''),
+      '',
+    ]);
+
+    const dateColStyles = {};
+    for (let i = 0; i < attendanceCols; i++) dateColStyles[4 + i] = { cellWidth: 22, halign: 'center' };
+
+    autoTable(doc, {
+      head: [head],
+      body,
+      startY: y,
+      theme: 'grid',
+      styles: { fontSize: 8.5, cellPadding: 4, textColor: INK, lineColor: LINE, lineWidth: 0.5, valign: 'middle' },
+      headStyles: { fontStyle: 'bold', fillColor: INK, textColor: [255, 255, 255], halign: 'center', fontSize: 7.5 },
+      columnStyles: {
+        0: { cellWidth: 22, halign: 'center' },
+        1: { cellWidth: 66 },
+        2: { cellWidth: 'auto', fontStyle: 'bold' },
+        3: { cellWidth: 26, halign: 'center' },
+        ...dateColStyles,
+        [4 + attendanceCols]: { cellWidth: 30, halign: 'center' },
+      },
+      margin: { left: 40, right: 40 },
+      didParseCell: (data) => {
+        if (data.section === 'head' && data.column.index === 2) data.cell.styles.halign = 'left';
+        if (data.section === 'head' && data.column.index === 1) data.cell.styles.halign = 'left';
+      },
+    });
+
+    // ── Signature footer ────────────────────────────────────────────────────
+    let fy = doc.lastAutoTable.finalY + 28;
+    if (fy > pageH - 60) { doc.addPage(); fy = 60; }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...INK);
+    const colW = (pageW - 80) / 2;
+    doc.text('CLASS TEACHER: ______________________________', 40, fy);
+    doc.text('SIGN: ____________  DATE: ____________', 40 + colW, fy);
+
+    // ── Page footer ─────────────────────────────────────────────────────────
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text(`Generated ${new Date().toLocaleDateString('en-GB')}`, 40, pageH - 22);
+    doc.text(`Page ${gi + 1} of ${validGroups.length}`, pageW - 40, pageH - 22, { align: 'right' });
+  });
+
+  doc.save(filename);
+}
+
 export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', filename = 'report_cards.pdf' }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
