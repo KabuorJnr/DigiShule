@@ -322,7 +322,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
   // Departments
   const departments = useMemo(() => {
-    const depts = new Set(activeTeachers.map(t => t.department).filter(Boolean));
+    const depts = new Set(activeTeachers.map(t => t.department || t.role || t.dept).filter(Boolean));
     subjects.forEach(s => { if (s.department) depts.add(s.department); });
     return [...depts].sort();
   }, [activeTeachers, subjects]);
@@ -338,7 +338,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
             !(t.emp_id || '').toLowerCase().includes(q) &&
             !(t.phone || '').toLowerCase().includes(q)) return false;
       }
-      if (deptFilter && t.department !== deptFilter) return false;
+      const teacherDept = t.department || t.role || t.dept;
+      if (deptFilter && teacherDept !== deptFilter) return false;
       if (statusFilter === 'assigned' && !(teacherAssignMap[t.id]?.length > 0)) return false;
       if (statusFilter === 'unassigned' && (teacherAssignMap[t.id]?.length > 0)) return false;
       return true;
@@ -675,8 +676,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       <div style={{ fontSize: 12, color: '#64748b' }}>
                         {teacher.emp_id || 'No ID'} · {teacher.phone || 'No phone'}
                       </div>
-                      {teacher.department && (
-                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 600, marginTop: 2 }}>{teacher.department}</div>
+                      {(teacher.department || teacher.role || teacher.dept) && (
+                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 600, marginTop: 2 }}>{teacher.department || teacher.role || teacher.dept}</div>
                       )}
                     </div>
                   </div>

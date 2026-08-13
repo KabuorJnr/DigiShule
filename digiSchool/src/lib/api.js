@@ -242,6 +242,20 @@ export async function saveConfig(patch) {
   // and throw a real error if we still can't find a school.
   const sid = await resolveSchoolId();
   if (!sid) throw new Error('No school context — please sign out and sign in again.');
+  
+  // Sync core school fields back to the primary schools table so that the 
+  // topbar and other profile queries reflect the updated school name on refresh.
+  if (patch.settings) {
+    const schoolUpdate = {};
+    if (patch.settings.name !== undefined) schoolUpdate.name = patch.settings.name;
+    if (patch.settings.motto !== undefined) schoolUpdate.motto = patch.settings.motto;
+    if (patch.settings.county !== undefined) schoolUpdate.county = patch.settings.county;
+    
+    if (Object.keys(schoolUpdate).length > 0) {
+      await supabase.from('schools').update(schoolUpdate).eq('id', sid);
+    }
+  }
+
   const args = {
     p_school_id: sid,
     p_settings: patch.settings ? JSON.parse(JSON.stringify(patch.settings)) : null,

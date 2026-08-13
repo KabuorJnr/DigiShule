@@ -9,6 +9,7 @@ import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
 import BenchmarkCard from '../components/BenchmarkCard';
 import StreamPerformanceGraph from '../components/StreamPerformanceGraph';
+import AcademicAnalytics from '../components/AcademicAnalytics';
 import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
@@ -398,6 +399,11 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
           {/* Stream Performance Graph */}
           <div style={{ marginBottom: 16 }}>
             <StreamPerformanceGraph students={activeStudentsList} />
+          </div>
+
+          {/* Grade distribution + subject-performance analytics (Recharts) */}
+          <div style={{ marginBottom: 16 }}>
+            <AcademicAnalytics students={activeStudentsList} gradeBoundaries={store?.gradeBoundaries} />
           </div>
 
           {/* Quick Tools Grid */}
