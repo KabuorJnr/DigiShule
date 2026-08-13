@@ -34,6 +34,12 @@ export function teacherAbbr(name) {
 // A translucent background derived from the subject colour.
 const tint = (hex) => (hex || '#64748b') + '22';
 
+// A subject is "offered" by a class when it carries at least one lesson.
+const isOfferedAssignment = (a) => Number(a?.singles || 0) > 0 || Number(a?.doubles || 0) > 0;
+// Sensible weekly singles to seed when a subject is switched ON (mirrors the
+// auto-assigner: core languages/maths get 5, everything else 4).
+const defaultSinglesFor = (sub = '') => (/math|english|kiswahili/i.test(sub) ? 5 : 4);
+
 // Guarantee a class's assignment table has a row for EVERY school subject.
 // Existing rows (teacher / singles / doubles the DoS filled in) are preserved
 // verbatim; only the missing subjects are appended. An empty/absent table is
@@ -671,9 +677,24 @@ export default function Timetable({ store, user }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 200px' }}>
                 <label className="field-label">Lessons for class</label>
-                <select className="select" value={genClass} onChange={(e) => setGenClass(e.target.value)} style={{ maxWidth: 200 }}>
-                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <select className="select" value={genClass} onChange={(e) => setGenClass(e.target.value)} style={{ maxWidth: 200 }}>
+                    {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  {(() => {
+                    const total = genAssignments.reduce((n, a) => n + Number(a.singles || 0) + 2 * Number(a.doubles || 0), 0);
+                    const avail = teachingSlots.length * activeDays.length;
+                    const offered = genAssignments.filter(isOfferedAssignment).length;
+                    const ok = total <= avail;
+                    return (
+                      <span title="Subjects offered · this class's total weekly lessons vs available teaching slots"
+                        style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 14, whiteSpace: 'nowrap',
+                          background: ok ? '#f0fdf4' : '#fef2f2', color: ok ? '#15803d' : '#b91c1c', border: `1px solid ${ok ? '#bbf7d0' : '#fecaca'}` }}>
+                        {offered} subjects · {total}/{avail} {ok ? '✓ fits' : `over by ${total - avail}`}
+                      </span>
+                    );
+                  })()}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={() => {
@@ -723,12 +744,21 @@ export default function Timetable({ store, user }) {
                 <button className="btn btn-outline" style={{ fontSize: 13 }} onClick={copyAssignmentsToAll} disabled={dynamicClasses.length < 2}>
                   <Icon name="clipboard" size={14} /> Copy to all classes
                 </button>
+                <button className="btn btn-outline" style={{ fontSize: 13, color: '#b91c1c', borderColor: '#fecaca', background: '#fef2f2' }} onClick={() => {
+                  if (window.confirm(`Switch OFF every subject for ${genClass}? This sets all lessons to 0 so you can turn on just the subjects this class actually offers.`)) {
+                    setGenAssignments((as) => as.map((x) => ({ ...x, singles: 0, doubles: 0 })));
+                    notify(`All subjects switched off for ${genClass} — tick the ones it offers`, 'success', 'Timetable');
+                  }
+                }}>
+                  <Icon name="close" size={14} /> Clear all
+                </button>
               </div>
             </div>
             <div className="scroll-x" style={{ border: '1px solid #e2e8f0', borderRadius: 8, maxHeight: 300, overflowY: 'auto' }}>
               <table className="table" style={{ margin: 0 }}>
                 <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
                   <tr>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }} title="Does this class offer this subject? Unticked subjects get no lessons.">Offered</th>
                     <th style={{ padding: '8px 12px' }}>Subject</th>
                     <th style={{ padding: '8px 12px' }}>Assigned Teacher</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center' }} title="Single periods / week">Singles</th>
@@ -764,7 +794,7 @@ export default function Timetable({ store, user }) {
 
                     return orderedDepts.map(dept => [
                       <tr key={`dept-${dept}`}>
-                        <td colSpan={5} style={{
+                        <td colSpan={6} style={{
                           background: getDeptColor(dept) + '12',
                           padding: '5px 12px', fontWeight: 700, fontSize: 12,
                           color: getDeptColor(dept),
@@ -778,26 +808,36 @@ export default function Timetable({ store, user }) {
                       ...grouped[dept].map(a => {
                         const meta = getSubjectMeta(a.subject, schoolSubjectsRaw);
                         const total = Number(a.singles || 0) + 2 * Number(a.doubles || 0);
+                        const offered = isOfferedAssignment(a);
                         return (
-                          <tr key={a.subject}>
-                            <td style={{ padding: '6px 12px', paddingLeft: 24, fontWeight: 500 }}>
+                          <tr key={a.subject} style={{ background: offered ? undefined : '#f8fafc' }}>
+                            <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                              <input type="checkbox" checked={offered} title={offered ? 'Offered — untick to give this class no lessons in this subject' : 'Not offered — tick to add it to this class'}
+                                onChange={(e) => setGenAssignments((as) => as.map((x, j) => {
+                                  if (j !== a._idx) return x;
+                                  return e.target.checked
+                                    ? { ...x, singles: defaultSinglesFor(x.subject), doubles: 0 }
+                                    : { ...x, singles: 0, doubles: 0 };
+                                }))} />
+                            </td>
+                            <td style={{ padding: '6px 12px', paddingLeft: 12, fontWeight: 500, opacity: offered ? 1 : 0.5 }}>
                               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: meta.color, marginRight: 8 }} />
                               {a.subject}
                               {meta.code && <span style={{ marginLeft: 6, fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>({meta.code})</span>}
                             </td>
                             <td style={{ padding: '6px 12px' }}>
-                              <select className="select" value={a.teacher} style={{ height: 32, fontSize: 13 }}
+                              <select className="select" value={a.teacher} disabled={!offered} style={{ height: 32, fontSize: 13, opacity: offered ? 1 : 0.5 }}
                                 onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, teacher: e.target.value } : x)))}>
                                 <option value="">-- Select --</option>
                                 {(teachers || []).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
                               </select>
                             </td>
                             <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                              <input className="input" type="number" min="0" max="10" value={a.singles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
+                              <input className="input" type="number" min="0" max="10" value={a.singles} disabled={!offered} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13, opacity: offered ? 1 : 0.5 }}
                                 onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, singles: e.target.value } : x)))} />
                             </td>
                             <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                              <input className="input" type="number" min="0" max="5" value={a.doubles} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13 }}
+                              <input className="input" type="number" min="0" max="5" value={a.doubles} disabled={!offered} style={{ width: 54, height: 32, textAlign: 'center', fontSize: 13, opacity: offered ? 1 : 0.5 }}
                                 onChange={(e) => setGenAssignments((as) => as.map((x, j) => (j === a._idx ? { ...x, doubles: e.target.value } : x)))} />
                             </td>
                             <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>{total}</td>
