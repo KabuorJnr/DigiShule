@@ -226,20 +226,28 @@ export default function Timetable({ store, user }) {
   const savedTs = settings?.[tsKey];
   const savedConstr = settings?.[constrKey];
   const savedAssign = settings?.[assignKey];
+  // Records which Type's lesson table we've already loaded from the saved copy,
+  // so we DON'T reload it on every background settings refetch. Reloading on
+  // each refetch overwrote unsaved inline edits — e.g. a "Clear all" that hadn't
+  // been generated/saved yet would "pop back" to its old lesson counts.
+  const loadedAssignTypeRef = useRef(null);
   useEffect(() => {
     setTimeslots(Array.isArray(savedTs) && savedTs.length ? savedTs : patternTimeslots(settings?.timetable_schedule));
     setConstraints({ ...defaultConstraints, ...(savedConstr || {}) });
-    if (savedAssign && Object.keys(savedAssign).length) {
-      // Reloading the saved table must NOT drop subjects added in Settings after
-      // the assignments were last saved. Complete every class against the current
-      // school subject list before applying, otherwise this reload would clobber
-      // the subject-merge above and only the saved subjects would ever show.
+
+    // Load the per-class lesson table from the saved copy only when the Type
+    // changes or on the first load for this Type — never on a plain refetch.
+    // Subjects added in Settings afterwards are merged in idempotently by the
+    // seed/merge effect above, so gating here doesn't hide new subjects.
+    const hasSaved = savedAssign && Object.keys(savedAssign).length;
+    if (hasSaved && loadedAssignTypeRef.current !== ttType) {
+      loadedAssignTypeRef.current = ttType;
       const completed = {};
       Object.keys(savedAssign).forEach((c) => {
         completed[c] = completeAssignments(savedAssign[c], schoolSubjects, teachers, c);
       });
-      // Also seed any settings-class that has no saved table yet, so switching
-      // Type never leaves a class with an empty subject list.
+      // Seed any settings-class that has no saved table yet, so switching Type
+      // never leaves a class with an empty subject list.
       dynamicClasses.forEach((c) => {
         if (!completed[c]) completed[c] = completeAssignments(null, schoolSubjects, teachers, c);
       });
@@ -279,12 +287,12 @@ export default function Timetable({ store, user }) {
   }, []);
 
   function copyAssignmentsToAll() {
-    setAssignmentsByClass((prev) => {
-      const source = prev[genClass] || [];
-      const next = { ...prev };
-      dynamicClasses.forEach((c) => { next[c] = source.map((a) => ({ ...a })); });
-      return next;
-    });
+    const source = assignmentsByClass[genClass] || [];
+    const next = { ...assignmentsByClass };
+    dynamicClasses.forEach((c) => { next[c] = source.map((a) => ({ ...a })); });
+    setAssignmentsByClass(next);
+    const key = ttType === 'Remedial' ? 'remedial_timetable_assignments' : 'timetable_assignments';
+    persist({ [key]: next }); // save now so a background refresh can't restore old counts
     notify(`Assignments copied to all ${dynamicClasses.length} classes`, 'success', 'Timetable');
   }
 
@@ -746,7 +754,10 @@ export default function Timetable({ store, user }) {
                 </button>
                 <button className="btn btn-outline" style={{ fontSize: 13, color: '#b91c1c', borderColor: '#fecaca', background: '#fef2f2' }} onClick={() => {
                   if (window.confirm(`Switch OFF every subject for ${genClass}? This sets all lessons to 0 so you can turn on just the subjects this class actually offers.`)) {
-                    setGenAssignments((as) => as.map((x) => ({ ...x, singles: 0, doubles: 0 })));
+                    const cleared = (assignmentsByClass[genClass] || []).map((x) => ({ ...x, singles: 0, doubles: 0 }));
+                    const next = { ...assignmentsByClass, [genClass]: cleared };
+                    setAssignmentsByClass(next);
+                    persist({ [assignKey]: next }); // save now so a background refresh can't restore old counts
                     notify(`All subjects switched off for ${genClass} — tick the ones it offers`, 'success', 'Timetable');
                   }
                 }}>
