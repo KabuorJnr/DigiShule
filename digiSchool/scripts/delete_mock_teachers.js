@@ -61,7 +61,15 @@ async function run() {
     .like('id', 'mock_teacher_%');
   console.log(`  ${e2 ? '⚠ ' + e2.message : '✅ Done'}\n`);
 
-  // 3. Delete teachers
+  // 3. Delete staff records
+  console.log('🗑️  Deleting mock staff records...');
+  const { error: e3s } = await supabase
+    .from('staff')
+    .delete()
+    .like('id', 'mock_teacher_%');
+  console.log(`  ${e3s ? '⚠ ' + e3s.message : '✅ Done'}\n`);
+
+  // 4. Delete teachers
   console.log('🗑️  Deleting mock teachers...');
   const { error: e3 } = await supabase
     .from('teachers')
@@ -69,7 +77,7 @@ async function run() {
     .like('id', 'mock_teacher_%');
   console.log(`  ${e3 ? '⚠ ' + e3.message : '✅ Done'}\n`);
 
-  // 4. Delete mock subjects
+  // 5. Delete mock subjects
   console.log('🗑️  Deleting mock subjects...');
   const { error: e4 } = await supabase
     .from('subjects')

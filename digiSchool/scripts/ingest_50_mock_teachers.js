@@ -157,6 +157,9 @@ async function run() {
   
   const { error: delTeachErr } = await supabase.from('teachers').delete().like('id', 'mock_teacher_%');
   if (delTeachErr) console.warn('  ⚠ Could not clean teachers:', delTeachErr.message);
+
+  const { error: delStaffErr } = await supabase.from('staff').delete().like('id', 'mock_teacher_%');
+  if (delStaffErr) console.warn('  ⚠ Could not clean staff:', delStaffErr.message);
   
   console.log('  ✅ Cleanup complete.\n');
 
@@ -200,6 +203,25 @@ async function run() {
   const { error: teachErr } = await supabase.from('teachers').insert(teacherRows);
   if (teachErr) throw new Error(`Failed to insert teachers: ${teachErr.message}`);
   console.log(`  ✅ ${teacherRows.length} teachers inserted.\n`);
+
+  // 4b. Also insert into staff table (Staff Management view reads from this table)
+  console.log('👥 Inserting into staff table...');
+  const staffRows = MOCK_TEACHERS.map(t => {
+    const primarySubject = t.subjects[0];
+    const dept = SUBJECTS.find(s => s.name === primarySubject)?.dept || 'General';
+    return {
+      id: `mock_teacher_${String(t.idx).padStart(3, '0')}`,
+      name: t.name,
+      role: 'teacher',
+      dept: dept,
+      status: 'Absent',
+      school_id: schoolId,
+    };
+  });
+
+  const { error: staffErr } = await supabase.from('staff').insert(staffRows);
+  if (staffErr) console.warn('  ⚠ Staff insert warning:', staffErr.message);
+  else console.log(`  ✅ ${staffRows.length} staff records inserted.\n`);
 
   // 5. Create teacher-subject qualifications
   console.log('🎓 Creating teacher-subject qualifications...');
