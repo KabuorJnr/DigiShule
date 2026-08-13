@@ -181,9 +181,17 @@ export async function fetchProfiles(userId) {
 
 // ---- App config (school-scoped) -------------------------------------------
 export async function fetchConfig() {
+  // Resolve the school the SAME way writes do (setActiveSchoolId → localStorage →
+  // auth profile). This used to read the raw _schoolId and, whenever it was
+  // momentarily null on a refresh, fall back to "first school" (.limit(1)). That
+  // meant a refresh could load a DIFFERENT (or empty) school's config while
+  // saveConfig had written to the correct one — which is exactly what made saved
+  // Academic settings (classes, subjects…) "disappear on refresh". Reading and
+  // writing through the same resolved id keeps them consistent.
+  const sid = await resolveSchoolId();
   let query = supabase.from('app_config').select('*');
-  if (_schoolId) query = query.eq('school_id', _schoolId);
-  else query = query.limit(1); // Fallback to first school if single-tenant
+  if (sid) query = query.eq('school_id', sid);
+  else query = query.limit(1); // genuine last resort: no school context at all
 
   const { data, error } = await query.maybeSingle();
   let cbcFallback = [
@@ -201,8 +209,8 @@ export async function fetchConfig() {
   }
 
   let schoolData = {};
-  if (_schoolId) {
-    const { data: sData } = await supabase.from('schools').select('name, motto, county').eq('id', _schoolId).single();
+  if (sid) {
+    const { data: sData } = await supabase.from('schools').select('name, motto, county').eq('id', sid).single();
     if (sData) schoolData = sData;
   }
 
