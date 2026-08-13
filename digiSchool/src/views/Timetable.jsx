@@ -34,6 +34,28 @@ export function teacherAbbr(name) {
 // A translucent background derived from the subject colour.
 const tint = (hex) => (hex || '#64748b') + '22';
 
+// Guarantee a class's assignment table has a row for EVERY school subject.
+// Existing rows (teacher / singles / doubles the DoS filled in) are preserved
+// verbatim; only the missing subjects are appended. An empty/absent table is
+// seeded from scratch. This is the single source of truth used by every effect
+// that (re)loads assignments, so a subject added in Settings can never be
+// silently dropped when saved assignments are reloaded.
+function completeAssignments(table, subjects, teachers, className) {
+  const base = Array.isArray(table) ? table : [];
+  if (base.length === 0) return defaultAssignments(teachers, subjects, className);
+  const existing = new Set(base.map((a) => a.subject));
+  const missing = (subjects || []).filter((s) => !existing.has(s));
+  if (missing.length === 0) return base;
+  const pool = teachers && teachers.length ? teachers : [];
+  const extras = missing.map((sub, i) => ({
+    subject: sub,
+    teacher: pool.length ? pool[(existing.size + i) % pool.length].name : 'TBD',
+    singles: 4,
+    doubles: 0,
+  }));
+  return [...base, ...extras];
+}
+
 export default function Timetable({ store, user }) {
   const isTimetableAdmin = ['deputy_admin', 'deputy_academic', 'dos', 'principal'].includes(user?.role);
   const { timetables, setTimetables, notify, settings, teachers } = store;
@@ -177,23 +199,8 @@ export default function Timetable({ store, user }) {
       const next = { ...prev };
       let changed = false;
       dynamicClasses.forEach((c) => {
-        if (!next[c] || next[c].length === 0) {
-          next[c] = defaultAssignments(teachers, schoolSubjects, c);
-          changed = true;
-        } else {
-          const existing = new Set(next[c].map((a) => a.subject));
-          const missing = schoolSubjects.filter((s) => !existing.has(s));
-          if (missing.length) {
-            const extras = missing.map((sub, i) => ({
-              subject: sub,
-              teacher: teachers[(existing.size + i) % teachers.length]?.name || 'TBD',
-              singles: 4,
-              doubles: 0,
-            }));
-            next[c] = [...next[c], ...extras];
-            changed = true;
-          }
-        }
+        const completed = completeAssignments(next[c], schoolSubjects, teachers, c);
+        if (completed !== next[c]) { next[c] = completed; changed = true; }
       });
       return changed ? next : prev;
     });
@@ -216,8 +223,23 @@ export default function Timetable({ store, user }) {
   useEffect(() => {
     setTimeslots(Array.isArray(savedTs) && savedTs.length ? savedTs : patternTimeslots(settings?.timetable_schedule));
     setConstraints({ ...defaultConstraints, ...(savedConstr || {}) });
-    if (savedAssign && Object.keys(savedAssign).length) setAssignmentsByClass(savedAssign);
-  }, [ttType, savedTs, savedConstr, savedAssign, settings?.timetable_schedule]);
+    if (savedAssign && Object.keys(savedAssign).length) {
+      // Reloading the saved table must NOT drop subjects added in Settings after
+      // the assignments were last saved. Complete every class against the current
+      // school subject list before applying, otherwise this reload would clobber
+      // the subject-merge above and only the saved subjects would ever show.
+      const completed = {};
+      Object.keys(savedAssign).forEach((c) => {
+        completed[c] = completeAssignments(savedAssign[c], schoolSubjects, teachers, c);
+      });
+      // Also seed any settings-class that has no saved table yet, so switching
+      // Type never leaves a class with an empty subject list.
+      dynamicClasses.forEach((c) => {
+        if (!completed[c]) completed[c] = completeAssignments(null, schoolSubjects, teachers, c);
+      });
+      setAssignmentsByClass(completed);
+    }
+  }, [ttType, savedTs, savedConstr, savedAssign, schoolSubjects, teachers, dynamicClasses, settings?.timetable_schedule]);
 
   async function persist(patch) {
     try { const { updateSettings } = await import('../lib/api'); await updateSettings(patch); }
