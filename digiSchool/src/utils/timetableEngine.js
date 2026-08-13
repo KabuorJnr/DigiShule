@@ -29,34 +29,51 @@ export function buildNotToFollow(c) {
   return s;
 }
 
-export function defaultAssignments(teachers = [], subjects = SUBJECTS, className = '') {
+// Does this teacher teach `sub`? Strong signals first (explicit subject list /
+// field), then a DEPARTMENT match — but ONLY when both sides are defined. The
+// old check compared `t.dept === DEPARTMENTS[sub]`, and for a custom subject
+// (Arabic, French, …) DEPARTMENTS[sub] is undefined, so any teacher with a
+// missing dept matched EVERY custom subject (undefined === undefined). That,
+// plus always taking the first match, dumped 100+ subjects on one teacher.
+function teacherTeaches(t, sub) {
+  if ((t.subjects || []).includes(sub)) return true;
+  if (t.subject === sub) return true;
+  const subDept = DEPARTMENTS[sub];
+  return !!subDept && !!t.dept && t.dept === subDept;
+}
+
+function teacherTeachesClass(t, className) {
+  if (!className) return true;
+  return (t.classes || []).includes(className) || t.assignedClass === className || t.assigned_class === className;
+}
+
+export function defaultAssignments(teachers = [], subjects = SUBJECTS, className = '', singlesFor = null) {
   if (teachers.length === 0) return [];
   const list = Array.isArray(subjects) && subjects.length ? subjects : SUBJECTS;
-  
-  return list.map((sub, i) => {
-    // 1. Exact match: teacher teaches this subject AND this class
-    let t = teachers.find(t => {
-      const teachesSub = (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub];
-      const teachesClass = (t.classes || []).includes(className) || t.assignedClass === className || t.assigned_class === className;
-      return teachesSub && teachesClass;
-    });
 
-    // 2. Partial match: teacher teaches this subject (we'll just use the first one we find)
-    if (!t) {
-      t = teachers.find(t => (t.subjects || []).includes(sub) || t.subject === sub || t.dept === DEPARTMENTS[sub]);
+  // Spread the workload across the whole staff instead of piling every subject
+  // on the first match: among the valid candidates for a subject, always pick
+  // the one currently carrying the fewest subjects (ties keep staff order).
+  const load = new Map();
+  teachers.forEach((t) => load.set(t, 0));
+  const leastLoaded = (candidates) => {
+    let best = null;
+    for (const t of candidates) {
+      if (best === null || (load.get(t) || 0) < (load.get(best) || 0)) best = t;
     }
+    if (best) load.set(best, (load.get(best) || 0) + 1);
+    return best;
+  };
 
-    // 3. Fallback: round-robin
-    if (!t) {
-      t = teachers[i % teachers.length];
-    }
+  return list.map((sub) => {
+    // 1. Teaches this subject AND this class. 2. Teaches this subject (any class).
+    // 3. Anyone (least-loaded) so the subject is never left unassigned.
+    let t = leastLoaded(teachers.filter((x) => teacherTeaches(x, sub) && teacherTeachesClass(x, className)));
+    if (!t) t = leastLoaded(teachers.filter((x) => teacherTeaches(x, sub)));
+    if (!t) t = leastLoaded(teachers);
 
-    return {
-      subject: sub,
-      teacher: t?.name || 'TBD',
-      singles: sub === 'Mathematics' || sub === 'English' ? 5 : 4,
-      doubles: 0,
-    };
+    const singles = singlesFor ? singlesFor(sub) : (sub === 'Mathematics' || sub === 'English' ? 5 : 4);
+    return { subject: sub, teacher: t?.name || 'TBD', singles, doubles: 0 };
   });
 }
 
