@@ -16,6 +16,7 @@ export const defaultConstraints = {
   customPairs: [],        // [[subjectA, subjectB], ...]
   teacherTimeOff: {},     // { teacherName: ['<dayIdx>-<rowIdx>', ...] }
   blockDepartments: [],   // ['Technicals', 'Humanities']
+  subjectRules: {},       // { subject: { time:'any'|'am'|'pm', maxPerDay:0, days:[dayIdx] } }
 };
 
 export function pairKey(a, b) { return [a, b].sort().join('|'); }
@@ -109,8 +110,36 @@ export function buildEmptyGrid(rows, numDays) {
   return rows.map((r) => Array.from({ length: numDays }, () => (r.teaching ? { type: 'empty' } : { type: 'break', label: r.label })));
 }
 
+// Resolve a subject/assignment's department. Assignments don't carry a dept, so
+// we look it up in the school's subject→dept map (from Settings), falling back
+// to the hardcoded map. Custom subjects (French, Computer…) only resolve via the
+// passed map, which is why block-department matching needs it.
+export function deptForSubject(subject, subjectDept = {}) {
+  return subjectDept[subject] || DEPARTMENTS[subject] || null;
+}
+
+// Block-aware weekly lesson total for one class's assignments. Subjects in a
+// "block" (concurrent) department share the same periods, so the block counts
+// ONCE — the max singles/doubles among its subjects — instead of summing them.
+export function requiredLessons(assignments = [], blockDepts = [], subjectDept = {}) {
+  const blocks = {}; // dept -> { s, d }
+  let total = 0;
+  (assignments || []).forEach((a) => {
+    const s = Number(a.singles) || 0, d = Number(a.doubles) || 0;
+    const dept = deptForSubject(a.subject, subjectDept) || a.dept;
+    if (dept && blockDepts.includes(dept)) {
+      const b = (blocks[dept] || (blocks[dept] = { s: 0, d: 0 }));
+      b.s = Math.max(b.s, s); b.d = Math.max(b.d, d);
+    } else {
+      total += s + 2 * d;
+    }
+  });
+  Object.values(blocks).forEach((b) => { total += b.s + 2 * b.d; });
+  return total;
+}
+
 // Generate timetables for all classes. Returns { result, unplaced }.
-export function generateAll({ classes, days, timeslots, assignmentsByClass, constraints, term }) {
+export function generateAll({ classes, days, timeslots, assignmentsByClass, constraints, term, subjectDept = {} }) {
   const rows = annotateTimeslots(timeslots);
   const numDays = days.length;
   const cap = Number(constraints?.maxPerDay) || 0;
@@ -123,11 +152,18 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
   const timeOff = constraints?.teacherTimeOff || {};
   const mathMorning = !!constraints?.mathInMorning;
   const freeAfternoon = !!constraints?.freeAfternoonOnly;
+  const subjectRules = constraints?.subjectRules || {}; // { subject: { time, maxPerDay, days:[dayIdx] } }
+  const deptOf = (a) => a.dept || deptForSubject(a.subject, subjectDept);
 
   const teacherBusy = {};  // teacher -> Set('<day>-<row>')
   const teacherDay = {};   // teacher -> { day: count }
+  const subjDay = {};      // '<cls>|<subject>|<day>' -> count (for per-subject daily caps)
   const result = {};
   const unplaced = [];
+
+  // Work on a clone so we never mutate the caller's React assignment state.
+  const byClass = {};
+  classes.forEach((c) => { byClass[c] = [...(assignmentsByClass[c] || [])]; });
 
   const isOff = (t, d, r) => (timeOff[t] || []).includes(`${d}-${r}`);
   const free = (t, d, r) => (!teacherBusy[t] || !teacherBusy[t].has(`${d}-${r}`)) && !isOff(t, d, r);
@@ -145,70 +181,46 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
   const prevTeachRow = (ri) => { const p = teachPos[ri]; return p > 0 ? teachRows[p - 1] : -1; };
   const nextTeachRow = (ri) => { const p = teachPos[ri]; return p < numTeach - 1 ? teachRows[p + 1] : -1; };
 
-  // --- BLOCK TIMETABLING LOGIC ---
+  // --- OPTION-BLOCK TIMETABLING ---
+  // Subjects in a "block" (concurrent) department are taught at the SAME time —
+  // a learner picks one option. We place them as a single block span PER STREAM,
+  // independently (streams are NOT synced to the same slot, so they differ), and
+  // mark EVERY option's teacher busy globally so a teacher can't be double-booked
+  // across streams. Each option keeps its own teacher; the cell shows the options
+  // joined (e.g. "French / German / Mandarin").
   const blockDepts = constraints?.blockDepartments || [];
   if (blockDepts.length > 0) {
-    const cohorts = {};
-    classes.forEach(c => {
-      const cohort = (c.match(/^(Form \d+|Grade \d+|Class \d+|Year \d+)/i) || [c.split(' ')[0]])[0];
-      if (!cohorts[cohort]) cohorts[cohort] = [];
-      cohorts[cohort].push(c);
-    });
+    classes.forEach((cls) => {
+      const grid = result[cls].grid;
+      blockDepts.forEach((dept) => {
+        const options = (byClass[cls] || []).filter((a) =>
+          deptOf(a) === dept && a.teacher && a.teacher !== 'TBD' &&
+          (Number(a.singles) > 0 || Number(a.doubles) > 0));
+        if (options.length === 0) return;
 
-    Object.keys(cohorts).forEach(cohort => {
-      const cohortClasses = cohorts[cohort];
-      
-      blockDepts.forEach(dept => {
-        let maxSingles = 0;
-        let maxDoubles = 0;
-        const blockSubjectsByClass = {};
+        // Pull the options out of normal (independent) placement for this stream.
+        byClass[cls] = byClass[cls].filter((a) => !options.includes(a));
 
-        cohortClasses.forEach(cls => {
-          if (!assignmentsByClass[cls]) return;
-          const deptAssigns = assignmentsByClass[cls].filter(a => DEPARTMENTS[a.subject] === dept || a.dept === dept);
-          if (deptAssigns.length > 0) {
-            blockSubjectsByClass[cls] = deptAssigns;
-            deptAssigns.forEach(a => {
-               maxSingles = Math.max(maxSingles, Number(a.singles) || 0);
-               maxDoubles = Math.max(maxDoubles, Number(a.doubles) || 0);
-            });
-            assignmentsByClass[cls] = assignmentsByClass[cls].filter(a => !deptAssigns.includes(a));
-          }
+        // Footprint of the concurrent block = the largest option within it.
+        let maxSingles = 0, maxDoubles = 0;
+        options.forEach((a) => {
+          maxSingles = Math.max(maxSingles, Number(a.singles) || 0);
+          maxDoubles = Math.max(maxDoubles, Number(a.doubles) || 0);
         });
-
-        if (Object.keys(blockSubjectsByClass).length === 0) return;
+        const teachersInBlock = options.map((o) => o.teacher).filter((t) => t && t !== 'TBD');
+        const subjectsLabel = options.map((o) => o.subject).join(' / ');
+        const teachersLabel = options.map((o) => o.teacher).join(' / ');
 
         const tryPlaceBlock = (d, span) => {
-          for (const cls of Object.keys(blockSubjectsByClass)) {
-            const grid = result[cls].grid;
-            for (const ri of span) {
-               if (grid[ri][d].type !== 'empty') return false;
-            }
-            for (const a of blockSubjectsByClass[cls]) {
-               const teacher = a.teacher;
-               if (teacher && teacher !== 'TBD') {
-                 for (const ri of span) {
-                   if (!free(teacher, d, ri)) return false;
-                 }
-                 if (cap && dayCount(teacher, d) + span.length > cap) return false;
-               }
-            }
+          for (const ri of span) if (grid[ri][d].type !== 'empty') return false;
+          for (const t of teachersInBlock) {
+            for (const ri of span) if (!free(t, d, ri)) return false;
+            if (cap && dayCount(t, d) + span.length > cap) return false;
           }
-          for (const cls of Object.keys(blockSubjectsByClass)) {
-            const grid = result[cls].grid;
-            const subjects = blockSubjectsByClass[cls].map(a => a.subject).join(' / ');
-            const teachers = blockSubjectsByClass[cls].map(a => a.teacher).join(' / ');
-            
-            for (const ri of span) {
-               grid[ri][d] = { type: 'lesson', subject: subjects, teacher: teachers, dept, double: span.length === 2, isBlock: true };
-            }
-            for (const a of blockSubjectsByClass[cls]) {
-               const teacher = a.teacher;
-               if (teacher && teacher !== 'TBD') {
-                 for (const ri of span) mark(teacher, d, ri);
-               }
-            }
+          for (const ri of span) {
+            grid[ri][d] = { type: 'lesson', subject: subjectsLabel, teacher: teachersLabel, dept, double: span.length === 2, isBlock: true };
           }
+          for (const t of teachersInBlock) for (const ri of span) mark(t, d, ri);
           return true;
         };
 
@@ -233,15 +245,17 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
         };
 
         const avoid = new Set();
-        while (maxDoubles > 0) {
+        let dbl = maxDoubles;
+        while (dbl > 0) {
           const d = placeBlockUnit(2, avoid);
-          if (d !== -1) avoid.add(d);
-          maxDoubles--;
+          if (d === -1) { unplaced.push({ cls, subject: subjectsLabel, teacher: teachersLabel, count: 2, kind: 'block-double' }); break; }
+          avoid.add(d); dbl--;
         }
-        while (maxSingles > 0) {
+        let sng = maxSingles;
+        while (sng > 0) {
           const d = placeBlockUnit(1, avoid);
-          if (d !== -1) avoid.add(d);
-          maxSingles--;
+          if (d === -1) { unplaced.push({ cls, subject: subjectsLabel, teacher: teachersLabel, count: sng, kind: 'block' }); break; }
+          avoid.add(d); sng--;
         }
       });
     });
@@ -260,14 +274,27 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
 
   function tryPlace(cls, subject, teacher, d, span) {
     const grid = result[cls].grid;
-    if (mathMorning && subject === 'Mathematics' && rows[span[span.length - 1]].period > morningCut) return false;
+    const lastPeriod = rows[span[span.length - 1]].period;
+    const firstPeriod = rows[span[0]].period;
+    // Built-in math-in-morning (kept for back-compat).
+    if (mathMorning && subject === 'Mathematics' && lastPeriod > morningCut) return false;
+    // Editable per-subject custom rules (time-of-day / excluded days / daily cap).
+    const rule = subjectRules[subject];
+    if (rule) {
+      if (rule.time === 'am' && lastPeriod > morningCut) return false;
+      if (rule.time === 'pm' && firstPeriod <= morningCut) return false;
+      if (Array.isArray(rule.days) && rule.days.includes(d)) return false;
+      const sc = subjDay[`${cls}|${subject}|${d}`] || 0;
+      if (Number(rule.maxPerDay) > 0 && sc + span.length > Number(rule.maxPerDay)) return false;
+    }
     for (const ri of span) { if (grid[ri][d].type !== 'empty' || !free(teacher, d, ri)) return false; }
     if (cap && dayCount(teacher, d) + span.length > cap) return false;
     if (conflictsAdjacent(cls, d, span[0], span[span.length - 1], subject)) return false;
     for (const ri of span) {
-      grid[ri][d] = { type: 'lesson', subject, teacher, dept: DEPARTMENTS[subject] || 'Humanities', double: span.length === 2, notes: '' };
+      grid[ri][d] = { type: 'lesson', subject, teacher, dept: deptForSubject(subject, subjectDept) || 'Humanities', double: span.length === 2, notes: '' };
       mark(teacher, d, ri);
     }
+    subjDay[`${cls}|${subject}|${d}`] = (subjDay[`${cls}|${subject}|${d}`] || 0) + span.length;
     return true;
   }
 
@@ -304,7 +331,7 @@ export function generateAll({ classes, days, timeslots, assignmentsByClass, cons
   }
 
   classes.forEach((cls) => {
-    const assignments = (assignmentsByClass[cls] || [])
+    const assignments = (byClass[cls] || [])
       .filter((a) => a.teacher && a.teacher !== 'TBD' && (Number(a.singles) > 0 || Number(a.doubles) > 0))
       .sort((a, b) => (Number(b.singles) + 2 * Number(b.doubles)) - (Number(a.singles) + 2 * Number(a.doubles)));
 

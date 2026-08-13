@@ -6,7 +6,7 @@ import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDyn
 import { downloadExcel, exportTimetableLandscapePDF, exportAllTimetablesPDF } from '../utils/exporters';
 import {
   TIMESLOT_TYPES, defaultConstraints, defaultAssignments, patternTimeslots,
-  annotateTimeslots, buildEmptyGrid, generateAll,
+  annotateTimeslots, buildEmptyGrid, generateAll, requiredLessons,
 } from '../utils/timetableEngine';
 import { reportError } from '../lib/errorReporter';
 
@@ -100,6 +100,21 @@ export default function Timetable({ store, user }) {
     const raw = store.settings?.subjects;
     return Array.isArray(raw) && raw.length ? raw : null;
   }, [store.settings]);
+
+  // subject -> department map (needed so the engine can recognise which custom
+  // subjects belong to a concurrent "block" department).
+  const subjectDeptMap = useMemo(() => {
+    const m = {};
+    (schoolSubjectsRaw || []).forEach((s) => {
+      const name = typeof s === 'string' ? s : s?.name;
+      const dept = typeof s === 'string' ? null : s?.dept;
+      if (name && dept) m[name] = dept;
+    });
+    return m;
+  }, [schoolSubjectsRaw]);
+
+  // Departments taught concurrently (option blocks), e.g. Elective Languages.
+  const blockDepts = useMemo(() => store.settings?.block_departments || [], [store.settings?.block_departments]);
 
   // Dynamic department list from settings
   const schoolDepts = useMemo(() => {
@@ -301,10 +316,11 @@ export default function Timetable({ store, user }) {
     const available = teachingSlots.length * activeDays.length;
     return dynamicClasses.map((c) => {
       const rows = assignmentsByClass[c] || [];
-      const required = rows.reduce((n, a) => n + Number(a.singles || 0) + 2 * Number(a.doubles || 0), 0);
+      // Block departments (concurrent) count once, not per subject.
+      const required = requiredLessons(rows, blockDepts, subjectDeptMap);
       return { cls: c, required, available, ok: required <= available };
     });
-  }, [dynamicClasses, assignmentsByClass, teachingSlots, activeDays]);
+  }, [dynamicClasses, assignmentsByClass, teachingSlots, activeDays, blockDepts, subjectDeptMap]);
   const anyOverbooked = validation.some((v) => !v.ok);
 
   function handleGenerate() {
@@ -325,6 +341,7 @@ export default function Timetable({ store, user }) {
           assignmentsByClass,
           constraints: { ...constraints, blockDepartments: settings?.block_departments || [] },
           term,
+          subjectDept: subjectDeptMap,
         });
         let finalResult = result;
         if (ttType === 'Remedial') {
@@ -690,7 +707,7 @@ export default function Timetable({ store, user }) {
                     {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                   {(() => {
-                    const total = genAssignments.reduce((n, a) => n + Number(a.singles || 0) + 2 * Number(a.doubles || 0), 0);
+                    const total = requiredLessons(genAssignments, blockDepts, subjectDeptMap);
                     const avail = teachingSlots.length * activeDays.length;
                     const offered = genAssignments.filter(isOfferedAssignment).length;
                     const ok = total <= avail;
@@ -1205,14 +1222,21 @@ function TimeslotsModal({ timeslots, schedule, onClose, onSave }) {
 }
 
 function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose, onSave, subjects = SUBJECTS }) {
-  const [form, setForm] = useState(() => ({ ...defaultConstraints, ...constraints, customPairs: [...(constraints.customPairs || [])], teacherTimeOff: { ...(constraints.teacherTimeOff || {}) } }));
+  const [form, setForm] = useState(() => ({ ...defaultConstraints, ...constraints, customPairs: [...(constraints.customPairs || [])], teacherTimeOff: { ...(constraints.teacherTimeOff || {}) }, subjectRules: { ...(constraints.subjectRules || {}) } }));
   const [pairA, setPairA] = useState(subjects[0]);
   const [pairB, setPairB] = useState(subjects[1] || subjects[0]);
   const [toTeacher, setToTeacher] = useState(teachers?.[0]?.name || '');
+  const [ruleSubject, setRuleSubject] = useState(subjects[0]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const addPair = () => { if (pairA && pairB && pairA !== pairB) set({ customPairs: [...form.customPairs, [pairA, pairB]] }); };
   const delPair = (i) => set({ customPairs: form.customPairs.filter((_, j) => j !== i) });
+
+  // ---- Editable per-subject rules (time-of-day / daily cap / excluded days) ----
+  const setRule = (sub, patch) => set({ subjectRules: { ...form.subjectRules, [sub]: { time: 'any', maxPerDay: 0, days: [], ...(form.subjectRules[sub] || {}), ...patch } } });
+  const addRule = () => { if (ruleSubject && !form.subjectRules[ruleSubject]) setRule(ruleSubject, {}); };
+  const delRule = (sub) => { const next = { ...form.subjectRules }; delete next[sub]; set({ subjectRules: next }); };
+  const toggleRuleDay = (sub, di) => { const cur = new Set(form.subjectRules[sub]?.days || []); cur.has(di) ? cur.delete(di) : cur.add(di); setRule(sub, { days: [...cur] }); };
 
   const offSet = new Set(form.teacherTimeOff[toTeacher] || []);
   const toggleOff = (d, rowIdx) => {
@@ -1256,6 +1280,40 @@ function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose,
               </span>
             ))}
             {form.customPairs.length === 0 && <span className="muted" style={{ fontSize: 12 }}>None</span>}
+          </div>
+        </div>
+
+        <div>
+          <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#475569' }}>Per-subject rules</h4>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+            <select className="select" value={ruleSubject} onChange={(e) => setRuleSubject(e.target.value)} style={{ width: 200 }}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
+            <button className="btn btn-outline" onClick={addRule}><Icon name="plus" size={14} /> Add rule</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {Object.keys(form.subjectRules).length === 0 && <span className="muted" style={{ fontSize: 12 }}>No custom rules — subjects can go anywhere.</span>}
+            {Object.entries(form.subjectRules).map(([sub, r]) => (
+              <div key={sub} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+                <strong style={{ fontSize: 13, minWidth: 120 }}>{sub}</strong>
+                <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>Time
+                  <select className="select" value={r.time || 'any'} style={{ height: 30, fontSize: 12 }} onChange={(e) => setRule(sub, { time: e.target.value })}>
+                    <option value="any">Any time</option>
+                    <option value="am">Morning only</option>
+                    <option value="pm">Afternoon only</option>
+                  </select>
+                </label>
+                <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>Max/day
+                  <input className="input" type="number" min="0" max="10" value={r.maxPerDay || 0} style={{ width: 56, height: 30, fontSize: 12 }} title="0 = no limit" onChange={(e) => setRule(sub, { maxPerDay: parseInt(e.target.value) || 0 })} />
+                </label>
+                <span style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>Not on:
+                  {days.map((d, di) => (
+                    <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={(r.days || []).includes(di)} onChange={() => toggleRuleDay(sub, di)} />{d}
+                    </label>
+                  ))}
+                </span>
+                <button className="btn" style={{ padding: '2px 8px', color: '#dc2626', marginLeft: 'auto' }} onClick={() => delRule(sub)}><Icon name="close" size={14} /></button>
+              </div>
+            ))}
           </div>
         </div>
 
