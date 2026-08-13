@@ -297,8 +297,23 @@ export default function Timetable({ store, user }) {
             finalResult[`${key} (Remedial)`] = result[key];
           }
         }
-        
-        setTimetables(prev => ({ ...prev, ...finalResult }));
+
+        // Prune stale grids: drop any previously-saved timetable of the type we're
+        // generating whose class is no longer in the school's settings (e.g. a class
+        // that was removed after an earlier generation). The OTHER type is left
+        // untouched, so generating Standard never wipes saved Remedial grids.
+        const REMEDIAL_SUFFIX = ' (Remedial)';
+        setTimetables(prev => {
+          const kept = {};
+          for (const key of Object.keys(prev)) {
+            const isRemedial = key.endsWith(REMEDIAL_SUFFIX);
+            const base = isRemedial ? key.slice(0, -REMEDIAL_SUFFIX.length) : key;
+            const sameType = (ttType === 'Remedial') === isRemedial;
+            if (sameType && !dynamicClasses.includes(base)) continue; // stale — drop
+            kept[key] = prev[key];
+          }
+          return { ...kept, ...finalResult };
+        });
         setUnplaced(missed);
         setGenerating(false);
         
@@ -402,15 +417,30 @@ export default function Timetable({ store, user }) {
   }
 
   function exportAllPDF() {
+    // Only export the classes that exist in the school's settings, and only the
+    // timetable TYPE that's currently selected. Remedial grids are excluded from a
+    // Standard bulk export (and vice-versa) — switching the Type toggle to Remedial
+    // is the explicit opt-in for exporting remedial timetables. This also drops any
+    // stale grids for classes that are no longer in Settings.
+    const subset = {};
+    dynamicClasses.forEach((c) => {
+      const key = ttType === 'Remedial' ? `${c} (Remedial)` : c;
+      if (timetables[key]?.grid) subset[key] = timetables[key];
+    });
+
+    if (Object.keys(subset).length === 0) {
+      return notify(`No ${ttType.toLowerCase()} timetables to export — generate them first`, 'warning', 'Export');
+    }
+
     exportAllTimetablesPDF({
-      timetables,
+      timetables: subset,
       days: activeDays,
       slots: annotated,
       teacherAbbrOf: teacherAbbr,
       schoolName: settings?.name || 'DigiSchool',
-      filename: 'All_Classes_Timetables.pdf'
+      filename: ttType === 'Remedial' ? 'All_Classes_Remedial_Timetables.pdf' : 'All_Classes_Timetables.pdf',
     });
-    notify('All class timetables exported as PDF', 'success', 'Export');
+    notify(`All ${ttType.toLowerCase()} class timetables exported as PDF`, 'success', 'Export');
   }
 
   function exportExcel() {
@@ -483,7 +513,7 @@ export default function Timetable({ store, user }) {
           <>
             {isTimetableAdmin && <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}><Icon name="settings" size={16} /> Generate Timetable</button>}
             <button className="btn" onClick={exportPDF}><Icon name="file" size={16} /> Export PDF</button>
-            <button className="btn" onClick={exportAllPDF}><Icon name="file" size={16} /> Bulk Export PDF</button>
+            <button className="btn" onClick={exportAllPDF} title={`Export every ${ttType} class timetable in the school`}><Icon name="file" size={16} /> Bulk Export {ttType === 'Remedial' ? 'Remedial ' : ''}PDF</button>
             <button className="btn" onClick={exportExcel}><Icon name="chart" size={16} /> Export Excel</button>
             {isTimetableAdmin && <button className="btn" onClick={() => setImportOpen(true)}><Icon name="download" size={16} /> Import CSV</button>}
           </>
@@ -506,12 +536,12 @@ export default function Timetable({ store, user }) {
         </div>
         <div>
           <label className="field-label">Class</label>
-                <select className="select" value={cls} style={{ width: 140 }} onChange={(e) => {
+                <select className="select" value={tab === 'master' ? 'All Classes' : cls} style={{ width: 140 }} onChange={(e) => {
                   if (e.target.value === 'All Classes') setTab('master');
-                  else setCls(e.target.value);
+                  else { setCls(e.target.value); if (tab === 'master') setTab('class'); }
                 }}>
-                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                   <option value="All Classes">All Classes (Master)</option>
+                  {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
         </div>
       </div>
