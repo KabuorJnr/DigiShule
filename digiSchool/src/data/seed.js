@@ -24,6 +24,62 @@ export const expandClassesWithStreams = (classes = []) => {
   return expanded;
 };
 
+// Normalise a class label for case/space-insensitive comparison.
+const normClassLabel = (s) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+// Parse a flat class label (e.g. "GRADE 10 A") into a level name + optional
+// stream — the inverse of how expandClassesWithStreams joins them with a space.
+// A trailing purely-alphabetic token counts as the stream only when an earlier
+// token carries a digit (the level number), so "Grade 10 A" -> { name: "Grade
+// 10", stream: "A" } while "Grade 10" (no stream) stays whole.
+export const parseClassString = (str) => {
+  const s = String(str || '').trim().replace(/\s+/g, ' ');
+  if (!s) return { name: '', stream: '' };
+  const tokens = s.split(' ');
+  if (tokens.length >= 2) {
+    const last = tokens[tokens.length - 1];
+    const rest = tokens.slice(0, -1);
+    if (/^[A-Za-z]+$/.test(last) && rest.some((t) => /\d/.test(t))) {
+      return { name: rest.join(' '), stream: last };
+    }
+  }
+  return { name: s, stream: '' };
+};
+
+// Ensure the admin's [{name, streams}] class list represents every label in
+// `usedClasses` (flat strings actually in use — e.g. from student records).
+// Non-destructive: only ADDS a missing class or stream, never removes what the
+// admin configured. Returns { classes, changed, added } so callers can persist
+// only when something actually changed. Used to keep School Settings the single
+// source of truth the timetable reads from, across every school.
+export const reconcileClassesWithUsed = (settingsClasses = [], usedClasses = []) => {
+  const classes = (settingsClasses || []).map((c) =>
+    typeof c === 'string' ? { name: c, streams: '' } : { ...c }
+  );
+  const covered = new Set(expandClassesWithStreams(settingsClasses).map(normClassLabel));
+  const added = [];
+
+  usedClasses.forEach((raw) => {
+    const label = String(raw || '').trim().replace(/\s+/g, ' ');
+    if (!label || covered.has(normClassLabel(label))) return;
+    const { name, stream } = parseClassString(label);
+    const entry = classes.find((c) => normClassLabel(c.name) === normClassLabel(name));
+    if (entry) {
+      if (!stream) return; // can't represent a streamless label under a streamed level
+      const streams = (entry.streams || '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (streams.some((x) => normClassLabel(x) === normClassLabel(stream))) return;
+      streams.push(stream);
+      entry.streams = streams.join(', ');
+    } else {
+      classes.push({ name, streams: stream });
+    }
+    covered.add(normClassLabel(label));
+    added.push(label);
+  });
+
+  return { classes, changed: added.length > 0, added };
+};
+
 export const DEPARTMENTS = {
   Mathematics: 'Math',
   English: 'Languages',

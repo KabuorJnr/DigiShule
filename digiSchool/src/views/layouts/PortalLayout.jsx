@@ -8,6 +8,7 @@ import { identifyUser, clearUser, reportError } from '../../lib/errorReporter';
 import * as api from '../../lib/api';
 import { setActiveSchoolId } from '../../lib/api';
 import { ROLES } from '../../data/users';
+import { getDynamicClasses, reconcileClassesWithUsed } from '../../data/seed';
 
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
@@ -322,6 +323,28 @@ export default function PortalLayout() {
       if (tch.status === 'fulfilled') setTeachers(tch.value || []);
       if (notifs.status === 'fulfilled') {
         setNotifications((notifs.value || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+      }
+
+      // ---- Backfill in-use classes into School Settings ----
+      // The timetable is settings-first: it only builds classes the admin has
+      // added under Settings → Academic. Any class a school actually uses (from
+      // student records) but that isn't in that list would be invisible there.
+      // Reconcile once here — non-destructively add every missing class/stream
+      // to the settings list and persist it — so, for EVERY school, the saved
+      // settings become the single source of truth the timetable reads from.
+      if (cfg.status === 'fulfilled' && st.status === 'fulfilled') {
+        try {
+          const loaded = cfg.value.settings || {};
+          const used = getDynamicClasses(st.value || []);
+          const { classes: mergedClasses, changed } = reconcileClassesWithUsed(loaded.classes || [], used);
+          if (changed) {
+            const mergedSettings = { ...loaded, classes: mergedClasses };
+            setSettings(mergedSettings); settingsRef.current = mergedSettings;
+            await api.saveConfig({ settings: mergedSettings });
+          }
+        } catch (e) {
+          reportError(e, 'PortalLayout.reconcileClasses');
+        }
       }
     } catch (e) {
       // Only show error for truly unexpected failures
