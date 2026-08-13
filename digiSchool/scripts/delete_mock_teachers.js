@@ -45,20 +45,33 @@ async function run() {
   if (authErr) throw new Error(`Auth failed: ${authErr.message}`);
   console.log(`  ✅ Signed in.\n`);
 
-  // 1. Delete subject assignments
-  console.log('🗑️  Deleting subject assignments...');
-  const { error: e1, count: c1 } = await supabase
-    .from('subject_assignments')
-    .delete({ count: 'exact' })
-    .like('teacher_id', 'mock_teacher_%');
-  console.log(`  ${e1 ? '⚠ ' + e1.message : '✅ Done'}\n`);
+  // 1. Get school_id from admin profile
+  const { data: adminProfile, error: profErr } = await supabase
+    .from('profiles')
+    .select('school_id')
+    .eq('id', authData.user.id)
+    .limit(1)
+    .single();
+  if (profErr) throw new Error(`Profile fetch failed: ${profErr.message}`);
+  const schoolId = adminProfile.school_id;
+  if (!schoolId) throw new Error('Admin has no school_id. Register a school first.');
 
-  // 2. Delete qualifications
-  console.log('🗑️  Deleting teacher qualifications...');
-  const { error: e2 } = await supabase
+  const MOCK_PREFIX = `mock_${schoolId.substring(0,8)}_`;
+
+  // 1. Delete mock qualifications
+  console.log('🗑️  Deleting mock qualifications...');
+  const { error: e1 } = await supabase
     .from('teacher_subject_qualifications')
     .delete()
-    .like('id', 'mock_teacher_%');
+    .like('id', `${MOCK_PREFIX}%`);
+  console.log(`  ${e1 ? '⚠ ' + e1.message : '✅ Done'}\n`);
+
+  // 2. Delete mock assignments
+  console.log('🗑️  Deleting mock subject assignments...');
+  const { error: e2 } = await supabase
+    .from('subject_assignments')
+    .delete()
+    .like('teacher_id', `${MOCK_PREFIX}%`);
   console.log(`  ${e2 ? '⚠ ' + e2.message : '✅ Done'}\n`);
 
   // 3. Delete staff records
@@ -66,7 +79,7 @@ async function run() {
   const { error: e3s } = await supabase
     .from('staff')
     .delete()
-    .like('id', 'mock_teacher_%');
+    .like('id', `${MOCK_PREFIX}%`);
   console.log(`  ${e3s ? '⚠ ' + e3s.message : '✅ Done'}\n`);
 
   // 4. Delete teachers
@@ -74,7 +87,7 @@ async function run() {
   const { error: e3 } = await supabase
     .from('teachers')
     .delete()
-    .like('id', 'mock_teacher_%');
+    .like('id', `${MOCK_PREFIX}%`);
   console.log(`  ${e3 ? '⚠ ' + e3.message : '✅ Done'}\n`);
 
   // 5. Delete mock subjects
@@ -82,7 +95,7 @@ async function run() {
   const { error: e4 } = await supabase
     .from('subjects')
     .delete()
-    .like('id', 'mock_subj_%');
+    .like('id', `${MOCK_PREFIX}%`);
   console.log(`  ${e4 ? '⚠ ' + e4.message : '✅ Done'}\n`);
 
   console.log('═══════════════════════════════════════════════════════════');

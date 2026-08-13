@@ -147,18 +147,20 @@ async function run() {
   const { data: schoolData } = await supabase.from('schools').select('name').eq('id', schoolId).single();
   console.log(`📌 School: "${schoolData?.name || 'Unknown'}" (${schoolId})\n`);
 
+  const MOCK_PREFIX = `mock_${schoolId.substring(0,8)}_`;
+  
   // 2. Clean up any previous mock teachers (idempotent re-runs)
   console.log('🧹 Cleaning up any previous mock teachers...');
-  const { error: delQualErr } = await supabase.from('teacher_subject_qualifications').delete().like('id', 'mock_teacher_%');
+  const { error: delQualErr } = await supabase.from('teacher_subject_qualifications').delete().like('id', `${MOCK_PREFIX}%`);
   if (delQualErr) console.warn('  ⚠ Could not clean qualifications:', delQualErr.message);
   
-  const { error: delAssignErr } = await supabase.from('subject_assignments').delete().like('teacher_id', 'mock_teacher_%');
+  const { error: delAssignErr } = await supabase.from('subject_assignments').delete().like('teacher_id', `${MOCK_PREFIX}%`);
   if (delAssignErr) console.warn('  ⚠ Could not clean assignments:', delAssignErr.message);
   
-  const { error: delTeachErr } = await supabase.from('teachers').delete().like('id', 'mock_teacher_%');
+  const { error: delTeachErr } = await supabase.from('teachers').delete().like('id', `${MOCK_PREFIX}%`);
   if (delTeachErr) console.warn('  ⚠ Could not clean teachers:', delTeachErr.message);
 
-  const { error: delStaffErr } = await supabase.from('staff').delete().like('id', 'mock_teacher_%');
+  const { error: delStaffErr } = await supabase.from('staff').delete().like('id', `${MOCK_PREFIX}%`);
   if (delStaffErr) console.warn('  ⚠ Could not clean staff:', delStaffErr.message);
   
   console.log('  ✅ Cleanup complete.\n');
@@ -166,7 +168,7 @@ async function run() {
   // 3. Ensure subjects exist in the subjects table
   console.log('📚 Ensuring subjects exist in catalog...');
   const subjectRows = SUBJECTS.map(s => ({
-    id: `mock_subj_${s.code}`,
+    id: `${MOCK_PREFIX}subj_${s.code}`,
     code: s.code,
     name: s.name,
     is_core: s.isCore,
@@ -188,7 +190,7 @@ async function run() {
     const primarySubject = t.subjects[0];
     const dept = SUBJECTS.find(s => s.name === primarySubject)?.dept || 'General';
     return {
-      id: `mock_teacher_${String(t.idx).padStart(3, '0')}`,
+      id: `${MOCK_PREFIX}t_${String(t.idx).padStart(3, '0')}`,
       name: t.name,
       subject: primarySubject,
       role: dept,
@@ -210,7 +212,7 @@ async function run() {
     const primarySubject = t.subjects[0];
     const dept = SUBJECTS.find(s => s.name === primarySubject)?.dept || 'General';
     return {
-      id: `mock_teacher_${String(t.idx).padStart(3, '0')}`,
+      id: `${MOCK_PREFIX}t_${String(t.idx).padStart(3, '0')}`,
       name: t.name,
       role: 'teacher',
       dept: dept,
@@ -231,9 +233,9 @@ async function run() {
       const subjectDef = SUBJECTS.find(s => s.name === subjectName);
       if (!subjectDef) return;
       qualRows.push({
-        id: `mock_teacher_qual_${String(t.idx).padStart(3, '0')}_${subjectDef.code}`,
-        teacher_id: `mock_teacher_${String(t.idx).padStart(3, '0')}`,
-        subject_id: `mock_subj_${subjectDef.code}`,
+        id: `${MOCK_PREFIX}qual_${String(t.idx).padStart(3, '0')}_${subjectDef.code}`,
+        teacher_id: `${MOCK_PREFIX}t_${String(t.idx).padStart(3, '0')}`,
+        subject_id: `${MOCK_PREFIX}subj_${subjectDef.code}`,
         qualification_level: si === 0 ? 'primary' : 'qualified',
         school_id: schoolId,
       });
@@ -297,7 +299,7 @@ async function run() {
   console.log(`   Subjects:       ${subjectRows.length}`);
   console.log(`   Qualifications: ${qualRows.length}`);
   console.log(`   Assignments:    ${assignRows.length}`);
-  console.log('\n🔑 All IDs are prefixed with "mock_teacher_" for easy deletion.');
+  console.log('\n🔑 All IDs are prefixed with "${MOCK_PREFIX}" for easy deletion.');
   console.log('   To delete all mock teachers, run: node scripts/delete_mock_teachers.js');
   console.log('');
 
