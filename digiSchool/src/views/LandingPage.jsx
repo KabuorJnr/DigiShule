@@ -5,7 +5,7 @@ import './LandingPage.css';
 export default function LandingPage() {
   const navigate = useNavigate();
   const [showAnnounce, setShowAnnounce] = useState(true);
-  const [feeTab, setFeeTab] = useState('pro');
+  const [billing, setBilling] = useState('annual');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeCell, setActiveCell] = useState(-1);
   const [ttNow, setTtNow] = useState('-');
@@ -14,6 +14,70 @@ export default function LandingPage() {
   const contactPhone = "+254 701 402265";
   const contactPhoneLink = "+254701402265";
   const contactEmail = "veribidapp@gmail.com";
+
+  // Subscription packages - flat per-school pricing (KES), no per-student billing.
+  // Annual = 10x monthly (2 months free). Deliberately priced well under
+  // per-student products like Zeraki so whole-school automation stays affordable.
+  const packages = [
+    {
+      id: 'starter',
+      name: 'Starter',
+      tagline: 'For small schools going digital for the first time.',
+      monthly: 3000,
+      annual: 30000,
+      limit: 'Up to 250 learners',
+      cta: 'Start free trial',
+      features: [
+        { t: 'Principal & admin dashboard', on: true },
+        { t: 'Gradebook & automated CBC reports', on: true },
+        { t: 'Fee invoicing, receipts & statements', on: true },
+        { t: 'Timetable generator', on: true },
+        { t: 'Offline-first — works without internet', on: true },
+        { t: 'Email support', on: true },
+        { t: 'SMS notifications', on: false },
+        { t: 'Parent & student portals', on: false },
+      ],
+    },
+    {
+      id: 'standard',
+      name: 'Standard',
+      tagline: 'Everything a busy school needs to run day-to-day.',
+      monthly: 6500,
+      annual: 65000,
+      limit: 'Up to 800 learners',
+      cta: 'Start free trial',
+      popular: true,
+      features: [
+        { t: 'Everything in Starter', on: true, strong: true },
+        { t: 'Bulk SMS — fees, results & absences', on: true },
+        { t: 'Parent & student mobile portals', on: true },
+        { t: 'M-PESA / mobile-money reconciliation', on: true },
+        { t: 'Staff HR, attendance & payroll', on: true },
+        { t: 'Admissions & registrar workflows', on: true },
+        { t: 'Priority support', on: true },
+      ],
+    },
+    {
+      id: 'premium',
+      name: 'Premium',
+      tagline: 'The full suite for large & multi-stream schools.',
+      monthly: 12000,
+      annual: 120000,
+      limit: 'Unlimited learners',
+      cta: 'Talk to sales',
+      features: [
+        { t: 'Everything in Standard', on: true, strong: true },
+        { t: 'E-learning & CBC resource library', on: true },
+        { t: 'Performance analytics & insights', on: true },
+        { t: 'Clinic & library modules', on: true },
+        { t: 'Custom domain (portal.yourschool.com)', on: true },
+        { t: 'On-site staff training', on: true },
+        { t: 'Dedicated account manager', on: true },
+      ],
+    },
+  ];
+
+  const fmtKES = (n) => 'KES ' + n.toLocaleString('en-KE');
 
   // Build the live system module activity logic
   const days = ['FINANCE', 'ACADEMIC', 'REGISTRAR', 'STAFF', 'PORTAL'];
@@ -66,7 +130,7 @@ export default function LandingPage() {
   };
 
   return (
-    <>
+    <div className="landing-page-root">
       <div className="bg-blobs">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
@@ -288,12 +352,12 @@ export default function LandingPage() {
               <h2>Why top-tier schools run on EduOne.</h2>
             </div>
             <div className="features">
-              <div className="feat"><span className="mark">â—†</span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Everything syncs perfectly the moment they reconnect.</p></div>
-              <div className="feat"><span className="mark">â—†</span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements. Keep them in the loop automatically.</p></div>
-              <div className="feat"><span className="mark">â—†</span><h3>Automated CBC Reporting</h3><p>Say goodbye to weekend grading. Generate fully compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
-              <div className="feat"><span className="mark">â—†</span><h3>Automated Billing</h3><p>Generate bulk invoices, track mobile money payments, and auto-issue digital receipts without touching a single spreadsheet.</p></div>
-              <div className="feat"><span className="mark">â—†</span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes, parents only see their specific children, and your data is locked down tight.</p></div>
-              <div className="feat"><span className="mark">â—†</span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources directly to their phones.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Offline-First Engine</h3><p>Teachers can log attendance and grades even when the school's internet goes down. Everything syncs perfectly the moment they reconnect.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Real-Time SMS</h3><p>Parents receive instant text messages for fee balances, exam results, absences, and general school announcements. Keep them in the loop automatically.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Automated CBC Reporting</h3><p>Say goodbye to weekend grading. Generate fully compliant CBC assessment reports and standard academic transcripts with a single click.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Automated Billing</h3><p>Generate bulk invoices, track mobile money payments, and auto-issue digital receipts without touching a single spreadsheet.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Bank-Grade Security</h3><p>Strict role-level security ensures teachers only see their classes, parents only see their specific children, and your data is locked down tight.</p></div>
+              <div className="feat"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" /></svg></span><h3>Dedicated Parent App</h3><p>Parents have their own secure portal to track academic progress, view financial statements, and download resources directly to their phones.</p></div>
             </div>
           </div>
         </section>
@@ -302,55 +366,63 @@ export default function LandingPage() {
         <section className="sec" id="fees">
           <div className="wrap">
             <div className="sec-head">
-              <div className="eyebrow">SaaS Pricing</div>
-              <h2>Transparent pricing. Infinite value.</h2>
-              <p>Select a plan that fits your school's size. All plans include automated backups, bank-grade encryption, and world-class support.</p>
+              <div className="eyebrow">Simple Pricing</div>
+              <h2>One flat fee for your whole school.</h2>
+              <p>No per-student charges, no hidden add-ons. Pick a package for your size and get every module for one predictable price - a fraction of what per-student platforms cost.</p>
             </div>
 
-            <div className="fee-tabs">
-              <button className={`fee-tab ${feeTab === 'basic' ? 'active' : ''}`} onClick={() => setFeeTab('basic')}>Basic Plan</button>
-              <button className={`fee-tab ${feeTab === 'pro' ? 'active' : ''}`} onClick={() => setFeeTab('pro')}>Pro Plan (Best Value)</button>
-              <button className={`fee-tab ${feeTab === 'enterprise' ? 'active' : ''}`} onClick={() => setFeeTab('enterprise')}>Enterprise</button>
+            <div className="billing-toggle" role="tablist" aria-label="Billing cycle">
+              <button
+                role="tab"
+                aria-selected={billing === 'monthly'}
+                className={`bt-opt ${billing === 'monthly' ? 'active' : ''}`}
+                onClick={() => setBilling('monthly')}
+              >Monthly</button>
+              <button
+                role="tab"
+                aria-selected={billing === 'annual'}
+                className={`bt-opt ${billing === 'annual' ? 'active' : ''}`}
+                onClick={() => setBilling('annual')}
+              >Annual <span className="save-pill">2 months free</span></button>
             </div>
 
-            <div className={`fee-panel ${feeTab === 'basic' ? 'active' : ''}`}>
-              <div className="ledger">
-                <div className="ledger-head"><h3>Basic Plan</h3><span>MONTHLY</span></div>
-                <div className="ledger-row"><span className="item">Student Limit</span><span className="val">Up to 300</span></div>
-                <div className="ledger-row"><span className="item">Core Modules (Admin, Teacher, Registrar)</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Automated Billing &amp; Invoicing</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Offline-First Capability</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">SMS Notifications</span><span className="val opt">Not Included</span></div>
-                <div className="ledger-total"><span>Subscription</span><span className="val">KES 5,000 / mo</span></div>
-              </div>
-              <p className="fee-note">Perfect for small growing schools looking to ditch paper records and digitize operations efficiently.</p>
+            <div className="pkg-grid">
+              {packages.map((pkg) => {
+                const price = billing === 'annual' ? pkg.annual : pkg.monthly;
+                const suffix = billing === 'annual' ? '/ year' : '/ month';
+                return (
+                  <div key={pkg.id} className={`pkg-card ${pkg.popular ? 'popular' : ''}`}>
+                    {pkg.popular && <div className="pkg-ribbon">Most Popular</div>}
+                    <div className="pkg-name">{pkg.name}</div>
+                    <p className="pkg-tagline">{pkg.tagline}</p>
+                    <div className="pkg-price">
+                      <span className="amount">{fmtKES(price)}</span>
+                      <span className="suffix">{suffix}</span>
+                    </div>
+                    {billing === 'annual'
+                      ? <div className="pkg-sub">Just {fmtKES(Math.round(pkg.annual / 12))}/mo, billed yearly</div>
+                      : <div className="pkg-sub">Switch to annual and save {fmtKES(pkg.monthly * 12 - pkg.annual)}</div>}
+                    <div className="pkg-limit">{pkg.limit}</div>
+                    <button
+                      onClick={() => navigate(pkg.id === 'premium' ? '/signup' : '/signup')}
+                      className={`btn ${pkg.popular ? 'btn-primary' : 'btn-ghost'} pkg-cta`}
+                    >{pkg.cta}</button>
+                    <ul className="pkg-feats">
+                      {pkg.features.map((f, i) => (
+                        <li key={i} className={`${f.on ? 'yes' : 'no'} ${f.strong ? 'strong' : ''}`}>
+                          {f.on
+                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>}
+                          <span>{f.t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className={`fee-panel ${feeTab === 'pro' ? 'active' : ''}`}>
-              <div className="ledger">
-                <div className="ledger-head"><h3>Pro Plan</h3><span>MONTHLY</span></div>
-                <div className="ledger-row"><span className="item">Student Limit</span><span className="val">Unlimited</span></div>
-                <div className="ledger-row"><span className="item">All Basic Plan Features</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Integrated SMS Gateway</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Parent &amp; Student Portals</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Priority 24/7 Support</span><span className="val">Included</span></div>
-                <div className="ledger-total"><span>Subscription</span><span className="val">KES 10,000 / mo</span></div>
-              </div>
-              <p className="fee-note">Our most popular tier. Everything you need to fully automate communication and management for a thriving school.</p>
-            </div>
-
-            <div className={`fee-panel ${feeTab === 'enterprise' ? 'active' : ''}`}>
-              <div className="ledger">
-                <div className="ledger-head"><h3>Enterprise Plan</h3><span>ANNUAL</span></div>
-                <div className="ledger-row"><span className="item">Student Limit</span><span className="val">Unlimited</span></div>
-                <div className="ledger-row"><span className="item">Custom Domain Name (e.g., portal.yourschool.com)</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">On-Site Staff Training</span><span className="val">Included</span></div>
-                <div className="ledger-row"><span className="item">Custom API Integrations (e.g., Accounting software)</span><span className="val">Available</span></div>
-                <div className="ledger-row"><span className="item">Dedicated Account Manager</span><span className="val">Included</span></div>
-                <div className="ledger-total"><span>Subscription</span><span className="val">Custom Quote</span></div>
-              </div>
-              <p className="fee-note">For large groups of schools or institutions requiring bespoke integrations and high-touch dedicated onboarding.</p>
-            </div>
+            <p className="fee-note pkg-foot">All packages include automated backups, bank-grade encryption, free onboarding &amp; data migration, and a 14-day free trial - no card required. Running a group of schools?  <a href="#enroll">Talk to us</a> about a multi-school plan.</p>
           </div>
         </section>
 
@@ -438,7 +510,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="foot-bottom">
-            <span>Â© 2026 EduOne SaaS. All rights reserved.</span>
+            <span>© 2026 EduOne SaaS. All rights reserved.</span>
             <span>Offline-First · CBC Compliant · Secure</span>
           </div>
         </div>
@@ -447,7 +519,7 @@ export default function LandingPage() {
       <button className={`scroll-top ${showScrollTop ? 'show' : ''}`} id="scrollTop" aria-label="Back to top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
       </button>
-    </>
+    </div>
   );
 }
 
