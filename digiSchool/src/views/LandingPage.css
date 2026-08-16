@@ -371,3 +371,45 @@
 @media (prefers-reduced-motion: reduce) {
   .eo *, .eo *::before, .eo *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- book a demo page ---------- */
+.eo-demohdr { position: sticky; top: 0; z-index: 60; background: rgba(255,255,255,.96); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+.eo-demohdr-right { display: flex; align-items: center; gap: 16px; }
+.eo-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; color: var(--slate); }
+.eo-back:hover { color: var(--blue); }
+
+.eo-demo-hero {
+  padding: 56px 0 68px; min-height: calc(100vh - 69px); display: flex; align-items: center;
+  background:
+    linear-gradient(103deg, rgba(9,15,28,.94) 0%, rgba(12,26,66,.82) 40%, rgba(30,64,175,.5) 78%, rgba(37,99,235,.3) 100%),
+    linear-gradient(rgba(9,15,28,.12), rgba(9,15,28,.12)),
+    url('/gallery_2.png') center 30% / cover no-repeat;
+}
+.eo-demo-hero::after { display: none; }
+.eo-demo-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr; gap: 40px; width: 100%; }
+@media (min-width: 940px) { .eo-demo-grid { grid-template-columns: 1.05fr 464px; gap: 56px; align-items: center; } }
+.eo-demo-list { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.eo-demo-list li { display: flex; gap: 13px; }
+.eo-demo-list svg { width: 22px; height: 22px; color: #5eead4; flex-shrink: 0; margin-top: 2px; }
+.eo-demo-list b { display: block; color: #fff; font-weight: 700; font-size: 0.98rem; }
+.eo-demo-list span { color: rgba(255,255,255,.78); font-size: 0.9rem; }
+
+.eo-formcard { background: #fff; border-radius: 22px; box-shadow: var(--shadow-lg); padding: 30px; }
+.eo-formcard h2 { font-family: var(--font-display); font-size: 1.42rem; font-weight: 800; }
+.eo-formcard-sub { color: var(--muted); font-size: 0.92rem; margin-top: 6px; }
+.eo-form { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.eo-field { display: flex; flex-direction: column; gap: 6px; }
+.eo-field.full { grid-column: 1 / -1; }
+.eo-field label { font-size: 0.8rem; font-weight: 700; color: var(--slate); }
+.eo-field input, .eo-field select, .eo-field textarea { width: 100%; font-family: var(--font-body); font-size: 0.95rem; padding: 11px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: #fff; color: var(--ink); transition: border-color .15s ease, box-shadow .15s ease; }
+.eo-field input:focus, .eo-field select:focus, .eo-field textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.14); }
+.eo-field textarea { resize: vertical; min-height: 84px; }
+.eo-form > .eo-btn { grid-column: 1 / -1; width: 100%; margin-top: 4px; }
+.eo-form-note { grid-column: 1 / -1; text-align: center; font-size: 0.78rem; color: var(--muted); }
+@media (max-width: 480px) { .eo-form { grid-template-columns: 1fr; } }
+
+.eo-demo-success { text-align: center; padding: 26px 6px; }
+.eo-success-ico { display: grid; place-items: center; width: 66px; height: 66px; border-radius: 50%; background: #eafaef; color: var(--ok); margin: 0 auto 18px; }
+.eo-success-ico svg { width: 32px; height: 32px; }
+.eo-demo-success h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
+.eo-demo-success p { color: var(--muted); margin-top: 10px; }

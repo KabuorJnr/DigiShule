@@ -229,7 +229,7 @@ export default function LandingPage() {
                 <button className="eo-btn eo-btn-primary eo-btn-lg" onClick={() => go('/signup')}>
                   Start 14-day free trial <Icon name="arrow" className="eo-i-sm" />
                 </button>
-                <a href="#demo" className="eo-btn eo-btn-ghost eo-btn-lg">Book a live demo</a>
+                <button className="eo-btn eo-btn-ghost eo-btn-lg" onClick={() => go('/book-demo')}>Book a live demo</button>
               </div>
               <ul className="eo-hero-chips">
                 <li><Icon name="check" className="eo-i-xs" /> No credit card</li>
@@ -410,7 +410,7 @@ export default function LandingPage() {
                 );
               })}
             </div>
-            <p className="eo-pkg-foot">All packages include automated backups, encryption, free onboarding &amp; data migration, and a 14-day free trial - no card required. Running a group of schools? <a href="#demo">Talk to us</a> about a multi-school plan.</p>
+            <p className="eo-pkg-foot">All packages include automated backups, encryption, free onboarding &amp; data migration, and a 14-day free trial - no card required. Running a group of schools? <a href="/book-demo" onClick={(e) => { e.preventDefault(); go('/book-demo'); }}>Talk to us</a> about a multi-school plan.</p>
           </div>
         </section>
 
@@ -444,7 +444,7 @@ export default function LandingPage() {
             <div className="eo-sec-head eo-left">
               <div className="eo-eyebrow"><span className="eo-dot" /> Questions</div>
               <h2>Frequently asked.</h2>
-              <p>Everything you need to know before you start. Still curious? <a href="#demo">Talk to our team</a>.</p>
+              <p>Everything you need to know before you start. Still curious? <a href="/book-demo" onClick={(e) => { e.preventDefault(); go('/book-demo'); }}>Talk to our team</a>.</p>
             </div>
             <div className="eo-faq">
               {faqs.map((f, i) => (
@@ -469,7 +469,7 @@ export default function LandingPage() {
             </div>
             <div className="eo-cta-actions">
               <button className="eo-btn eo-btn-white eo-btn-lg" onClick={() => go('/signup')}>Create free account</button>
-              <a href={`tel:${contactPhoneLink}`} className="eo-btn eo-btn-outline eo-btn-lg">Talk to sales</a>
+              <button className="eo-btn eo-btn-outline eo-btn-lg" onClick={() => go('/book-demo')}>Book a demo</button>
             </div>
           </div>
         </section>
@@ -496,7 +496,7 @@ export default function LandingPage() {
               <h4>Company</h4>
               <a href="#how">How it works</a>
               <a href="#stories">Success stories</a>
-              <a href="#demo">Book a demo</a>
+              <a href="/book-demo" onClick={(e) => { e.preventDefault(); go('/book-demo'); }}>Book a demo</a>
               <a href="#" onClick={(e) => { e.preventDefault(); go('/login'); }}>Login</a>
             </div>
             <div className="eo-foot-col">
