@@ -59,6 +59,34 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Scroll-reveal: fade/slide elements in as they enter the viewport,
+  // staggered within each group. Applied in JS so markup stays clean.
+  useEffect(() => {
+    const sel = '.eo-sec-head, .eo-tile, .eo-portal, .eo-step, .eo-pkg, .eo-quote, .eo-faq-item, .eo-stat, .eo-hero-copy, .eo-hero-visual, .eo-trustline, .eo-cta-inner > *, .eo-billing, .eo-pkg-foot';
+    const els = Array.from(document.querySelectorAll(sel));
+    els.forEach((el) => el.classList.add('eo-reveal'));
+    els.forEach((el) => {
+      const sibs = Array.from(el.parentElement.children).filter((c) => c.classList.contains('eo-reveal'));
+      el.style.setProperty('--i', Math.max(0, sibs.indexOf(el)));
+    });
+    const reveal = (el) => el.classList.add('in');
+    // Animate whatever is already in view on the very next frame.
+    const raf = requestAnimationFrame(() => {
+      els.forEach((el) => { if (el.getBoundingClientRect().top < window.innerHeight * 0.92) reveal(el); });
+    });
+    let io;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); } }),
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+      );
+      els.forEach((el) => io.observe(el));
+    }
+    // Safety net: never leave anything hidden, even if the observer never fires.
+    const failsafe = setTimeout(() => els.forEach(reveal), 1600);
+    return () => { cancelAnimationFrame(raf); clearTimeout(failsafe); if (io) io.disconnect(); };
+  }, []);
+
   const go = (path) => { setMenuOpen(false); navigate(path); };
 
   /* -------- data -------- */
