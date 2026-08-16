@@ -35,7 +35,7 @@
 }
 .eo *, .eo *::before, .eo *::after { box-sizing: border-box; }
 .eo h1, .eo h2, .eo h3, .eo h4 { font-family: var(--font-display); letter-spacing: -0.025em; line-height: 1.1; margin: 0; }
-.eo p { margin: 0; }
+.eo :where(p) { margin: 0; }
 .eo a { color: inherit; text-decoration: none; }
 .eo img, .eo svg { display: block; }
 .eo :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
@@ -308,7 +308,7 @@
 .eo-feat-ico { flex-shrink: 0; margin-top: 3px; }
 .eo-pkg-feats li.yes .eo-feat-ico { color: var(--ok); }
 .eo-pkg-feats li.no .eo-feat-ico { color: var(--border-strong); transform: rotate(-90deg); }
-.eo-pkg-foot { text-align: center; max-width: 68ch; margin: 34px auto 0; font-size: 0.9rem; color: var(--muted); }
+.eo-pkg-foot { text-align: center; max-width: 68ch; margin: 56px auto 0; font-size: 0.9rem; color: var(--muted); }
 .eo-pkg-foot a { color: var(--blue); font-weight: 700; }
 
 /* ---------- testimonials ---------- */
