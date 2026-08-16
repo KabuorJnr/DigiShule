@@ -191,9 +191,8 @@ export default function LandingPage() {
       {/* ---------- NAV ---------- */}
       <header className={`eo-header ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="eo-wrap eo-nav">
-          <a href="#top" className="eo-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <span className="eo-logo-mark">E</span>
-            EduOne
+          <a href="#top" className="eo-logo" aria-label="EduOne home" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/logo.png" alt="EduOne" className="eo-logo-img" />
           </a>
           <nav className={`eo-nav-links ${menuOpen ? 'is-open' : ''}`}>
             <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
@@ -481,8 +480,8 @@ export default function LandingPage() {
         <div className="eo-wrap">
           <div className="eo-foot-grid">
             <div className="eo-foot-brand">
-              <a href="#top" className="eo-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                <span className="eo-logo-mark">E</span> EduOne
+              <a href="#top" className="eo-logo eo-logo-foot" aria-label="EduOne home" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <img src="/logo.png" alt="EduOne" className="eo-logo-img" />
               </a>
               <p>The next-generation school management platform empowering educators, parents and students across Africa.</p>
             </div>
