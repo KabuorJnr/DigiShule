@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { isNative } from './lib/native';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
+import SuperAdminPortal from './views/SuperAdminPortal';
 import PublicSchoolLanding from './views/PublicSchoolLanding';
 import Login from './views/Login';
 import PublicApplication from './views/PublicApplication';
@@ -75,6 +76,7 @@ export default function App() {
           and redirects everyone else to /login. The web keeps the landing page. */}
       <Route path="/" element={isNative() ? <Navigate to="/portal" replace /> : <LandingPage />} />
       <Route path="/book-demo" element={<BookDemo />} />
+      <Route path="/admin" element={<SuperAdminPortal />} />
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
       <Route path="/login" element={<Login />} />
       <Route path="/apply" element={<PublicApplication />} />

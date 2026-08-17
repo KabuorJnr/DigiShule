@@ -1,27 +1,24 @@
-﻿import { useState } from 'react';
-import { Building, Settings, CheckCircle2, User, CreditCard, Loader, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
-import { registerSchool } from '../lib/api';
+import { useState } from 'react';
+import { Building, CheckCircle2, User, Shield, Sparkles } from 'lucide-react';
+import { addOnboardingRequest, PLANS } from '../lib/superadmin';
 
 export default function SignupWizard({ onComplete, onCancel }) {
   const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  
+
   // School Profile
   const [school, setSchool] = useState({
     name: '', motto: '', logo: '', phone: '', email: '', levels: 'JSS, Senior Secondary'
   });
-  
+
   // Principal Profile
   const [principal, setPrincipal] = useState({
     name: '', email: '', password: ''
   });
 
-  // Payment Verification
-  const [payment, setPayment] = useState({
-    transactionCode: ''
-  });
+  // Selected subscription plan. No payment is taken now — an EduOne administrator
+  // reviews the request and onboards (or rejects) the school.
+  const [selectedPlan, setSelectedPlan] = useState('standard');
 
   const nextStep = () => {
     setError('');
@@ -35,124 +32,53 @@ export default function SignupWizard({ onComplete, onCancel }) {
     }
   };
 
-  const handleVerifyPayment = () => {
+  const submitRequest = () => {
     setError('');
-    if (payment.transactionCode.trim().length < 8) {
-      return setError('Invalid M-Pesa Transaction Code. Must be at least 8 characters.');
-    }
-    // Simulate payment verification success
-    setStep(4);
-    provisionAccount();
-  };
-
-  const provisionAccount = async () => {
-    setSaving(true);
-    setError('');
-    
     try {
-      // 1. Create Principal Auth Account First (so we have auth.uid() for the RPC)
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: principal.email,
-        password: principal.password,
-        options: {
-          data: { role: 'principal', full_name: principal.name }
-        }
-      });
-      
-      if (authErr) {
-        if (authErr.message.includes('already registered')) {
-          throw new Error('An account with this email is already registered.');
-        }
-        throw new Error(`Auth Error: ${authErr.message}`);
-      }
-      
-      if (!authData?.user) throw new Error('Failed to create authentication credentials.');
-
-      // 2. Register the School Record (calls RPC with the new auth.uid)
-      const parsedLevels = school.levels.split(',').map(s => s.trim()).filter(Boolean);
-      
-      const schoolId = await registerSchool({
+      addOnboardingRequest({
         name: school.name,
-        motto: school.motto,
-        type: null,
-        county: null,
-        address: null,
+        principal: principal.name,
+        email: principal.email,
         phone: school.phone,
-        email: school.email,
-        website: null,
-        logoUrl: school.logo
+        plan: selectedPlan,
+        students: 0,
+        county: null,
       });
-      
-      if (!schoolId) throw new Error('Failed to commission school in database.');
-
-      // Also persist to localStorage for the App's legacy fallback config
-      const config = {
-        school: {
-          name: school.name, motto: school.motto, logo: school.logo, phone: school.phone, email: school.email,
-          levels: parsedLevels.length > 0 ? parsedLevels : ['Grade 7', 'Grade 8']
-        }
-      };
-      localStorage.setItem('eduone_school_config', JSON.stringify(config));
-      localStorage.setItem('eduone_school_id', schoolId);
-
-      // 3. Create/Update Principal Profile
-      const { error: profileErr } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        username: principal.email, // using email as username for principal
-        full_name: principal.name,
-        role: 'principal',
-        school_id: schoolId
-      });
-
-      if (profileErr) {
-        throw new Error(`Profile creation failed. RLS might be enabled. Error: ${profileErr.message}`);
-      }
-
-      // Success! Complete wizard and log them in
-      setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        } else {
-          window.location.href = '/portal';
-        }
-      }, 1500);
-
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'An unexpected error occurred during provisioning.');
-      setStep(3); // push back to payment screen so they can retry without paying again
-    } finally {
-      setSaving(false);
+      setStep(4);
+    } catch {
+      setError('Could not submit your request. Please try again.');
     }
   };
+
+  const planBlurb = { starter: 'Up to 250 learners', standard: 'Up to 800 learners', premium: 'Unlimited learners' };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="card" style={{ maxWidth: 600, width: '100%', background: '#fff', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-        
-        <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#fff', padding: '30px 40px', position: 'relative' }}>
-          <button 
-            onClick={onCancel}
+
+        <div style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)', color: '#fff', padding: '30px 40px', position: 'relative' }}>
+          <button
+            onClick={() => (onCancel ? onCancel() : (window.location.href = '/'))}
             style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', color: '#fff', opacity: 0.7, cursor: 'pointer' }}
           >
             Cancel
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <Building size={32} color="#047857" />
+            <Building size={32} color="#bfdbfe" />
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Commission Your School</h1>
           </div>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: 14 }}>Join <img src="/eduone-logo.png" alt="EduOne" style={{ height: '3.5em', verticalAlign: 'middle', background: 'white', borderRadius: 8, padding: '2px 4px' }} /> and digitize your institution in minutes.</p>
+          <p style={{ margin: 0, opacity: 0.85, fontSize: 14 }}>Join EduOne and digitize your institution in minutes — no upfront payment.</p>
         </div>
 
         <div style={{ padding: '40px' }}>
           {/* Progress Indicator */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, position: 'relative' }}>
             <div style={{ position: 'absolute', top: 12, left: 20, right: 20, height: 2, background: '#e2e8f0', zIndex: 0 }} />
-            <div style={{ position: 'absolute', top: 12, left: 20, width: `${(step - 1) * 33}%`, height: 2, background: '#047857', zIndex: 0, transition: '0.3s' }} />
-            
+            <div style={{ position: 'absolute', top: 12, left: 20, width: `${(step - 1) * 33}%`, height: 2, background: '#2563eb', zIndex: 0, transition: '0.3s' }} />
+
             {[1, 2, 3, 4].map(s => (
-              <div key={s} style={{ 
-                width: 26, height: 26, borderRadius: '50%', background: step >= s ? '#047857' : '#e2e8f0', 
+              <div key={s} style={{
+                width: 26, height: 26, borderRadius: '50%', background: step >= s ? '#2563eb' : '#e2e8f0',
                 color: step >= s ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 zIndex: 1, fontSize: 12, fontWeight: 600, transition: '0.3s'
               }}>
@@ -170,33 +96,33 @@ export default function SignupWizard({ onComplete, onCancel }) {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Building size={20} color="#047857" /> Institutional Profile
+                <Building size={20} color="#2563eb" /> Institutional Profile
               </h3>
-              
+
               <div>
                 <label className="field-label">Institution Name *</label>
-                <input className="input" value={school.name} onChange={e => setSchool({...school, name: e.target.value})} placeholder="e.g. Alliance High School" />
+                <input className="input" value={school.name} onChange={e => setSchool({ ...school, name: e.target.value })} placeholder="e.g. Alliance High School" />
               </div>
-              
+
               <div>
                 <label className="field-label">Institution Motto</label>
-                <input className="input" value={school.motto} onChange={e => setSchool({...school, motto: e.target.value})} placeholder="e.g. Strong to Serve" />
+                <input className="input" value={school.motto} onChange={e => setSchool({ ...school, motto: e.target.value })} placeholder="e.g. Strong to Serve" />
               </div>
 
               <div>
                 <label className="field-label">Levels / Grades Offered *</label>
-                <input className="input" value={school.levels} onChange={e => setSchool({...school, levels: e.target.value})} placeholder="e.g. JSS, Senior Secondary" />
+                <input className="input" value={school.levels} onChange={e => setSchool({ ...school, levels: e.target.value })} placeholder="e.g. JSS, Senior Secondary" />
                 <p style={{ margin: '4px 0 0 0', fontSize: 12, color: '#64748b' }}>Comma separated.</p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <label className="field-label">Official Phone</label>
-                  <input className="input" value={school.phone} onChange={e => setSchool({...school, phone: e.target.value})} />
+                  <input className="input" value={school.phone} onChange={e => setSchool({ ...school, phone: e.target.value })} />
                 </div>
                 <div>
                   <label className="field-label">Official Email</label>
-                  <input className="input" value={school.email} onChange={e => setSchool({...school, email: e.target.value})} />
+                  <input className="input" value={school.email} onChange={e => setSchool({ ...school, email: e.target.value })} />
                 </div>
               </div>
 
@@ -209,28 +135,28 @@ export default function SignupWizard({ onComplete, onCancel }) {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <User size={20} color="#047857" /> Principal's Administrator Account
+                <User size={20} color="#2563eb" /> Principal's Administrator Account
               </h3>
               <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>This account will be the master administrator for {school.name || 'your school'}.</p>
-              
+
               <div>
                 <label className="field-label">Full Name *</label>
-                <input className="input" value={principal.name} onChange={e => setPrincipal({...principal, name: e.target.value})} placeholder="e.g. Jane Doe" />
+                <input className="input" value={principal.name} onChange={e => setPrincipal({ ...principal, name: e.target.value })} placeholder="e.g. Jane Doe" />
               </div>
 
               <div>
                 <label className="field-label">Email Address (Username) *</label>
-                <input className="input" type="email" value={principal.email} onChange={e => setPrincipal({...principal, email: e.target.value})} placeholder="principal@school.com" />
+                <input className="input" type="email" value={principal.email} onChange={e => setPrincipal({ ...principal, email: e.target.value })} placeholder="principal@school.com" />
               </div>
-              
+
               <div>
                 <label className="field-label">Secure Password *</label>
-                <input className="input" type="password" value={principal.password} onChange={e => setPrincipal({...principal, password: e.target.value})} placeholder="Minimum 6 characters" />
+                <input className="input" type="password" value={principal.password} onChange={e => setPrincipal({ ...principal, password: e.target.value })} placeholder="Minimum 6 characters" />
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>â† Back</button>
-                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment →</button>
+                <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>← Back</button>
+                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Choose a plan →</button>
               </div>
             </div>
           )}
@@ -238,70 +164,71 @@ export default function SignupWizard({ onComplete, onCancel }) {
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
               <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CreditCard size={20} color="#047857" /> Commissioning Payment
+                <Sparkles size={20} color="#2563eb" /> Choose your plan
               </h3>
-              
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 14, color: '#166534', fontWeight: 600, marginBottom: 8 }}>ACCOUNT ACTIVATION FEE</div>
-                <div style={{ fontSize: 32, fontWeight: 800, color: '#14532d', marginBottom: 16 }}>KES 5,000</div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534' }}>
-                  <div>1. Go to M-Pesa on your phone</div>
-                  <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
-                  <div>3. Enter Business Number: <strong style={{ fontSize: 18, color: '#000' }}>123456</strong></div>
-                  <div>4. Enter Account Number: <strong style={{ fontSize: 18, color: '#000' }}>EDUONE</strong></div>
-                  <div>5. Enter Amount: <strong>5000</strong></div>
-                </div>
+              <p style={{ margin: '-10px 0 0 0', fontSize: 14, color: '#64748b' }}>
+                No payment now. Pick the plan that fits your school — our team reviews every application and onboards you, usually within a day.
+              </p>
+
+              <div style={{ display: 'grid', gap: 12 }}>
+                {Object.values(PLANS).map(p => {
+                  const active = selectedPlan === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlan(p.id)}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left',
+                        border: active ? '2px solid #2563eb' : '1px solid #e2e8f0', background: active ? '#eff4ff' : '#fff',
+                        borderRadius: 12, padding: '16px 18px', cursor: 'pointer'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{p.name}</div>
+                        <div style={{ fontSize: 13, color: '#64748b' }}>{planBlurb[p.id]}</div>
+                      </div>
+                      <div style={{ fontWeight: 800, color: '#0f172a' }}>
+                        KES {p.price.toLocaleString()}<span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>/mo</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div style={{ marginTop: 10 }}>
-                <label className="field-label">Enter M-Pesa Transaction Code *</label>
-                <input 
-                  className="input" 
-                  value={payment.transactionCode} 
-                  onChange={e => setPayment({...payment, transactionCode: e.target.value.toUpperCase()})} 
-                  placeholder="e.g. SAJ1234XYZ" 
-                  style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}
-                />
-              </div>
-
-              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>â† Back</button>
-                <button type="button" className="btn btn-primary" onClick={handleVerifyPayment} disabled={saving} style={{ background: '#047857', borderColor: '#047857', padding: '12px 24px', color: '#fff' }}>
-                  {saving ? 'Verifying...' : 'Verify Payment & Commission'}
+              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
+                <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>← Back</button>
+                <button type="button" className="btn btn-primary" onClick={submitRequest} style={{ background: '#2563eb', borderColor: '#2563eb', padding: '12px 24px', color: '#fff' }}>
+                  Submit for onboarding →
                 </button>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', justifyContent: 'center', padding: '40px 0', animation: 'fadeIn 0.3s ease', textAlign: 'center' }}>
-              {saving ? (
-                <>
-                  <Loader size={48} color="#047857" className="spin" style={{ margin: '20px 0' }} />
-                  <h3 style={{ margin: 0 }}>Commissioning School...</h3>
-                  <p className="muted">Please wait while we provision your secure multi-tenant environment.</p>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={64} color="#047857" style={{ margin: '20px 0' }} />
-                  <h2 style={{ margin: 0, color: '#0f172a' }}>School Commissioned Successfully!</h2>
-                  <p className="muted" style={{ marginBottom: 20 }}>Your Principal account has been created and your school is now active on <img src="/eduone-logo.png" alt="EduOne" style={{ height: '3.5em', verticalAlign: 'middle', background: 'white', borderRadius: 8, padding: '2px 4px' }} />.</p>
-                  <p className="muted" style={{ fontSize: 14 }}>Redirecting to your dashboard...</p>
-                </>
-              )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', justifyContent: 'center', padding: '30px 0', animation: 'fadeIn 0.3s ease', textAlign: 'center' }}>
+              <CheckCircle2 size={64} color="#16a34a" style={{ margin: '10px 0' }} />
+              <h2 style={{ margin: 0, color: '#0f172a' }}>Request submitted!</h2>
+              <p className="muted" style={{ marginBottom: 6 }}>
+                Thank you. <strong>{school.name}</strong> has been sent to the EduOne team for onboarding on the <strong>{PLANS[selectedPlan].name}</strong> plan
+                (KES {PLANS[selectedPlan].price.toLocaleString()}/mo).
+              </p>
+              <p className="muted" style={{ fontSize: 14 }}>We&apos;ll review and activate your account shortly — you&apos;ll be notified at {principal.email || 'your email'}.</p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => (onComplete ? onComplete() : (window.location.href = '/'))}
+                style={{ background: '#2563eb', borderColor: '#2563eb', color: '#fff', padding: '12px 24px', marginTop: 10 }}
+              >
+                Done
+              </button>
             </div>
           )}
         </div>
       </div>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
 }
-
-
-

@@ -91,17 +91,23 @@ export default function Login() {
     setError('');
     setBusy(true);
     const { data, error: signInError } = await signInWithUsername(username.trim(), password.trim());
-    setBusy(false);
-
-    console.log('[Login] signInWithUsername returned:', { data, signInError });
 
     if (signInError) {
+      setBusy(false);
       setError(signInError.message || 'Invalid credentials. Please try again.');
       return;
     }
 
-    console.log('[Login] Real Supabase user detected. Redirecting to portal...');
-    navigate('/portal');
+    // Platform super-admins go to the admin console; everyone else to their portal.
+    let role = null;
+    try {
+      const { data: prof } = await supabase
+        .from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+      role = prof?.role;
+    } catch { /* default to portal */ }
+    setBusy(false);
+
+    navigate(role === 'super_admin' ? '/admin' : '/portal');
   };
 
   // Social sign-in / sign-up via Supabase OAuth. The provider must be enabled
@@ -130,13 +136,12 @@ export default function Login() {
       <a href="/" className="lg-back" onClick={goHome}><ArrowLeft size={16} /> Back to site</a>
 
       <div className="lg-shell">
-        <a href="/" className="lg-brandmark" onClick={goHome} aria-label="EduOne home">
-          {schoolLogo
-            ? <img src={schoolLogo} alt="School logo" className="lg-school-logo" />
-            : <img src="/logo.png" alt="EduOne" className="lg-eduone-logo" />}
-        </a>
-
         <div className="lg-card">
+          <a href="/" className="lg-brandmark" onClick={goHome} aria-label="EduOne home">
+            {schoolLogo
+              ? <img src={schoolLogo} alt="School logo" className="lg-school-logo" />
+              : <img src="/logo.png" alt="EduOne" className="lg-eduone-logo" />}
+          </a>
           <div className="lg-head">
             <h1>Welcome back</h1>
             <p>{isCustomSchool ? `Sign in to ${schoolName}` : 'Sign in to your EduOne account'}</p>
