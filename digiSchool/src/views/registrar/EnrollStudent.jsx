@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { UserPlus, FileText, Upload } from 'lucide-react';
 import { fetchTable, upsertStudent } from '../../lib/api';
@@ -20,7 +20,7 @@ export default function EnrollStudent() {
   const { notify } = store;
   const navigate = useNavigate();
 
-  const parentCredsRef = useRef(null);
+  const [parentCreds, setParentCreds] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [provisionStep, setProvisionStep] = useState(null);
@@ -182,7 +182,7 @@ export default function EnrollStudent() {
             if (profileErr) throw new Error(`Parent Profile Error: ${profileErr.message}`);
           }
 
-          if (!isExisting) parentCredsRef.current = { username, password: tempPassword };
+          if (!isExisting) setParentCreds({ username, password: tempPassword });
 
           // Only send an email if the parent actually gave us one — the phone
           // credentials are enough for login and they'll be told at hand-off.
@@ -355,7 +355,7 @@ export default function EnrollStudent() {
           isOpen={true} 
           step={provisionStep}
           studentName={form.name} 
-          parentCreds={parentCredsRef.current} 
+          parentCreds={parentCreds}
         />
       )}
     </>
