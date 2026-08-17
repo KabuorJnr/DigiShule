@@ -312,12 +312,23 @@
 .eo-pkg-foot { text-align: center; max-width: 68ch; margin: 56px auto 0; font-size: 0.9rem; color: var(--muted); }
 .eo-pkg-foot a { color: var(--blue); font-weight: 700; }
 
-/* ---------- testimonials ---------- */
-.eo-quotes { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media (min-width: 820px) { .eo-quotes { grid-template-columns: repeat(3, 1fr); } }
-.eo-quote { display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: 30px; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: var(--shadow-sm); transition: transform .25s ease, box-shadow .25s ease; }
-.eo-quote:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
-.eo-quote > p { font-family: var(--font-display); font-weight: 500; font-size: 1.08rem; line-height: 1.55; color: var(--ink); }
+/* ---------- testimonials carousel ---------- */
+.eo-carousel { position: relative; max-width: 760px; margin: 0 auto; }
+.eo-car-viewport { overflow: hidden; padding: 12px; margin: -12px; }
+.eo-car-track { display: flex; transition: transform .6s cubic-bezier(.16,1,.3,1); }
+.eo-slide { flex: 0 0 100%; min-width: 0; }
+.eo-car-arrow { position: absolute; top: 42%; transform: translateY(-50%); z-index: 2; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-strong); background: #fff; color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-sm); transition: color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.eo-car-arrow svg { width: 20px; height: 20px; }
+.eo-car-arrow:hover { color: var(--blue); border-color: var(--blue); box-shadow: var(--shadow-md); }
+.eo-car-arrow.prev { left: -14px; }
+.eo-car-arrow.next { right: -14px; }
+@media (max-width: 860px) { .eo-car-arrow.prev { left: 2px; } .eo-car-arrow.next { right: 2px; } }
+.eo-car-dots { display: flex; justify-content: center; gap: 8px; margin-top: 26px; }
+.eo-car-dot { width: 9px; height: 9px; padding: 0; border: none; border-radius: 50%; background: var(--border-strong); cursor: pointer; transition: width .25s ease, background .2s ease; }
+.eo-car-dot:hover { background: var(--accent-dim); }
+.eo-car-dot.active { width: 26px; border-radius: 5px; background: var(--grad); }
+.eo-quote { display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: 34px; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: var(--shadow-md); min-height: 214px; }
+.eo-quote > p { font-family: var(--font-display); font-weight: 500; font-size: 1.12rem; line-height: 1.55; color: var(--ink); }
 .eo-who { display: flex; align-items: center; gap: 12px; }
 .eo-avatar.lg { width: 42px; height: 42px; font-size: 0.85rem; }
 .eo-who b { display: block; font-weight: 700; font-size: 0.92rem; }

@@ -45,10 +45,12 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeQuote, setActiveQuote] = useState(0);
+  const [quotePaused, setQuotePaused] = useState(false);
 
   const contactPhone = '+254 701 402265';
   const contactPhoneLink = '+254701402265';
-  const contactEmail = 'veribidapp@gmail.com';
+  const contactEmail = 'sales@edu1app.tech';
 
   useEffect(() => {
     const onScroll = () => {
@@ -87,6 +89,16 @@ export default function LandingPage() {
     return () => { cancelAnimationFrame(raf); clearTimeout(failsafe); if (io) io.disconnect(); };
   }, []);
 
+  // Testimonials autoplay: advance every 5.5s, pause on hover/focus, and
+  // stay put entirely for visitors who prefer reduced motion.
+  useEffect(() => {
+    if (quotePaused) return undefined;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return undefined;
+    const id = setInterval(() => setActiveQuote((i) => (i + 1) % 3), 5500);
+    return () => clearInterval(id);
+  }, [quotePaused]);
+
   const go = (path) => { setMenuOpen(false); navigate(path); };
 
   /* -------- data -------- */
@@ -114,6 +126,17 @@ export default function LandingPage() {
     { icon: 'phone2', name: 'Parent', desc: 'Progress, statements, receipts and announcements on any phone.' },
     { icon: 'book', name: 'Student', desc: 'Timetable, resources, e-learning materials and results.' },
   ];
+
+  // NOTE: placeholder testimonials - replace with real, attributable quotes
+  // (or soften the "Real results from real schools" heading) before launch.
+  const testimonials = [
+    { quote: 'End-of-term reports used to take us three weeks. With EduOne it’s 30 minutes. Our teachers have their weekends back.', initials: 'SO', name: 'Mrs. Omondi', role: 'Principal · Nairobi' },
+    { quote: 'I grade offline on the bus home and it syncs when I get WiFi. A total game changer for my workflow.', initials: 'JK', name: 'Mr. Kamau', role: 'Senior Teacher · Nakuru' },
+    { quote: 'I see my daughter’s progress and download her report card from my phone. No more queuing at the office.', initials: 'DO', name: 'D. Owino', role: 'Parent · Kisumu' },
+  ];
+  const quoteCount = testimonials.length;
+  const prevQuote = () => setActiveQuote((i) => (i - 1 + quoteCount) % quoteCount);
+  const nextQuote = () => setActiveQuote((i) => (i + 1) % quoteCount);
 
   const steps = [
     { n: '01', title: 'Create your school', body: 'Sign up and get a secure, dedicated cloud space for your institution in minutes.' },
@@ -421,18 +444,39 @@ export default function LandingPage() {
               <div className="eo-eyebrow eo-center"><span className="eo-dot" /> Loved by educators</div>
               <h2>Real results from real schools.</h2>
             </div>
-            <div className="eo-quotes">
-              <div className="eo-quote">
-                <p>&ldquo;End-of-term reports used to take us three weeks. With EduOne it&apos;s 30 minutes. Our teachers have their weekends back.&rdquo;</p>
-                <div className="eo-who"><span className="eo-avatar lg">SO</span><div><b>Mrs. Omondi</b><span>Principal · Nairobi</span></div></div>
+            <div
+              className="eo-carousel"
+              role="region"
+              aria-roledescription="carousel"
+              aria-label="What schools say about EduOne"
+              onMouseEnter={() => setQuotePaused(true)}
+              onMouseLeave={() => setQuotePaused(false)}
+              onFocusCapture={() => setQuotePaused(true)}
+              onBlurCapture={() => setQuotePaused(false)}
+              onKeyDown={(e) => { if (e.key === 'ArrowLeft') prevQuote(); else if (e.key === 'ArrowRight') nextQuote(); }}
+            >
+              <button type="button" className="eo-car-arrow prev" onClick={prevQuote} aria-label="Previous testimonial">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <div className="eo-car-viewport">
+                <div className="eo-car-track" style={{ transform: `translateX(-${activeQuote * 100}%)` }} aria-live="polite">
+                  {testimonials.map((t, i) => (
+                    <div key={i} className="eo-slide" role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${quoteCount}`} aria-hidden={i !== activeQuote}>
+                      <div className="eo-quote">
+                        <p>&ldquo;{t.quote}&rdquo;</p>
+                        <div className="eo-who"><span className="eo-avatar lg">{t.initials}</span><div><b>{t.name}</b><span>{t.role}</span></div></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="eo-quote">
-                <p>&ldquo;I grade offline on the bus home and it syncs when I get WiFi. A total game changer for my workflow.&rdquo;</p>
-                <div className="eo-who"><span className="eo-avatar lg">JK</span><div><b>Mr. Kamau</b><span>Senior Teacher · Nakuru</span></div></div>
-              </div>
-              <div className="eo-quote">
-                <p>&ldquo;I see my daughter&apos;s progress and download her report card from my phone. No more queuing at the office.&rdquo;</p>
-                <div className="eo-who"><span className="eo-avatar lg">DO</span><div><b>D. Owino</b><span>Parent · Kisumu</span></div></div>
+              <button type="button" className="eo-car-arrow next" onClick={nextQuote} aria-label="Next testimonial">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+              <div className="eo-car-dots" role="tablist" aria-label="Choose testimonial">
+                {testimonials.map((_, i) => (
+                  <button key={i} type="button" role="tab" aria-selected={i === activeQuote} aria-label={`Go to testimonial ${i + 1}`} className={`eo-car-dot ${i === activeQuote ? 'active' : ''}`} onClick={() => setActiveQuote(i)} />
+                ))}
               </div>
             </div>
           </div>
