@@ -39,7 +39,6 @@ function Icon({ name, className }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [showAnnounce, setShowAnnounce] = useState(true);
   const [billing, setBilling] = useState('annual');
   const [openFaq, setOpenFaq] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -201,16 +200,6 @@ export default function LandingPage() {
 
   return (
     <div className="eo">
-      {/* ---------- ANNOUNCEMENT ---------- */}
-      {showAnnounce && (
-        <div className="eo-announce">
-          <span className="eo-announce-badge">NEW</span>
-          <span>Get 2 months free on any annual plan - plus a 14-day free trial.</span>
-          <a href="#pricing">See pricing <Icon name="arrow" className="eo-i-xs" /></a>
-          <button className="eo-announce-close" onClick={() => setShowAnnounce(false)} aria-label="Dismiss">✕</button>
-        </div>
-      )}
-
       {/* ---------- NAV ---------- */}
       <header className={`eo-header ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="eo-wrap eo-nav">
@@ -232,7 +221,7 @@ export default function LandingPage() {
             <button className="eo-btn eo-btn-ghost" onClick={() => go('/login')}>Login</button>
             <button className="eo-btn eo-btn-primary" onClick={() => go('/signup')}>Start free trial</button>
           </div>
-          <button className="eo-burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu" aria-expanded={menuOpen}>
+          <button className={`eo-burger ${menuOpen ? 'is-open' : ''}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu" aria-expanded={menuOpen}>
             <span /><span /><span />
           </button>
         </div>
