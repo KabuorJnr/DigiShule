@@ -51,13 +51,16 @@ begin
   end if;
 
   -- Login needs a profiles row; use any valid enum value (admin access comes
-  -- from platform_admins, not from this role).
-  insert into public.profiles (id, username, full_name, role)
-  values (uid, admin_email, 'Platform Super Admin', (enum_range(null::app_role))[1])
-  on conflict (id) do nothing;
+  -- from platform_admins, not from this role). Guard with IF NOT EXISTS since
+  -- profiles may not have a unique constraint usable by ON CONFLICT.
+  if not exists (select 1 from public.profiles where id = uid) then
+    insert into public.profiles (id, username, full_name, role)
+    values (uid, admin_email, 'Platform Super Admin', (enum_range(null::app_role))[1]);
+  end if;
 
-  insert into public.platform_admins (user_id) values (uid)
-  on conflict (user_id) do nothing;
+  if not exists (select 1 from public.platform_admins where user_id = uid) then
+    insert into public.platform_admins (user_id) values (uid);
+  end if;
 end $$;
 
 -- verify (expect one row, is_super_admin = true):
