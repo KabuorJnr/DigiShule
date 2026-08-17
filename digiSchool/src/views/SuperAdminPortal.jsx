@@ -48,8 +48,8 @@ export default function SuperAdminPortal() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('no session');
-        const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-        if (prof?.role !== 'super_admin') throw new Error('not a super admin');
+        const { data: adminRow } = await supabase.from('platform_admins').select('user_id').eq('user_id', user.id).maybeSingle();
+        if (!adminRow) throw new Error('not a super admin');
         if (active) { setData(getMetrics()); setChecking(false); }
       } catch {
         navigate('/login');

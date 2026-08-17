@@ -2,31 +2,28 @@
 --  EduOne — Platform Super-Admin setup (Supabase SQL editor)
 -- =============================================================================
 --  Replaces the old hardcoded admin/admin123 login with a real Supabase account.
---  The app routes anyone whose profiles.role = 'super_admin' to the /admin
---  console after a normal sign-in.
+--  Platform-admin status lives in its own table (public.platform_admins), so we
+--  never touch the app_role enum. The app sends anyone in that table to /admin
+--  after a normal sign-in; everyone else goes to their portal.
 --
---  Credentials created below (change the password after first login):
+--  Paste this whole file and run it once. Credentials created:
 --      email / username : superadmin@edu1app.tech
---      password         : EduOne@Sup3r2026
---
---  profiles.role is an enum (app_role), so 'super_admin' must be added to the
---  enum FIRST — and Postgres will not let you add an enum value and use it in
---  the same transaction. Run STEP 1 on its own, then run STEP 2.
+--      password         : EduOne@Sup3r2026   (change it after first login)
 -- =============================================================================
 
-
--- ─────────────────────────────────────────────────────────────────────────────
--- STEP 1 — run this line by itself first.
--- ─────────────────────────────────────────────────────────────────────────────
-alter type app_role add value if not exists 'super_admin';
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- STEP 2 — run after STEP 1 succeeds.
--- Creates the auth user (idempotent) and grants the super_admin role.
--- ─────────────────────────────────────────────────────────────────────────────
 create extension if not exists pgcrypto;
 
+-- 1. Who is allowed into /admin. Not self-serve — you add rows here yourself.
+create table if not exists public.platform_admins (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz default now()
+);
+alter table public.platform_admins enable row level security;
+drop policy if exists "read own admin row" on public.platform_admins;
+create policy "read own admin row" on public.platform_admins
+  for select using (user_id = auth.uid());
+
+-- 2. Create the super-admin auth user (idempotent) and mark it as a platform admin.
 do $$
 declare
   uid uuid;
@@ -44,7 +41,7 @@ begin
     values (uid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
             admin_email, crypt(admin_pass, gen_salt('bf')), now(), now(), now(),
             '{"provider":"email","providers":["email"]}'::jsonb,
-            '{"full_name":"Platform Super Admin","role":"super_admin"}'::jsonb);
+            '{"full_name":"Platform Super Admin"}'::jsonb);
 
     insert into auth.identities (id, user_id, identity_data, provider, provider_id,
                                 last_sign_in_at, created_at, updated_at)
@@ -53,24 +50,24 @@ begin
             'email', admin_email, now(), now(), now());
   end if;
 
+  -- Login needs a profiles row; use any valid enum value (admin access comes
+  -- from platform_admins, not from this role).
   insert into public.profiles (id, username, full_name, role)
-  values (uid, admin_email, 'Platform Super Admin', 'super_admin')
-  on conflict (id) do update set role = 'super_admin';
+  values (uid, admin_email, 'Platform Super Admin', (enum_range(null::app_role))[1])
+  on conflict (id) do nothing;
+
+  insert into public.platform_admins (user_id) values (uid)
+  on conflict (user_id) do nothing;
 end $$;
 
--- verify (expect one row, role = super_admin):
-select u.email, p.role
+-- verify (expect one row, is_super_admin = true):
+select u.email, (pa.user_id is not null) as is_super_admin
 from auth.users u
-join public.profiles p on p.id = u.id
+left join public.platform_admins pa on pa.user_id = u.id
 where u.email = 'superadmin@edu1app.tech';
 
-
 -- ─────────────────────────────────────────────────────────────────────────────
--- Fallbacks
---   • If STEP 2 errors on "provider_id ... does not exist" (older Supabase):
---     create the user via Dashboard → Authentication → Users → Add user
---     (tick Auto Confirm), then run ONLY the `insert into public.profiles …
---     on conflict … set role = 'super_admin';` statement above.
---   • If it errors "null value in column … profiles": your profiles table has
---     an extra NOT NULL column (e.g. school_id) — add it to that insert.
+-- Fallback: if the auth.identities insert errors on "provider_id" (older
+-- Supabase), create the user via Dashboard → Authentication → Add user
+-- (Auto Confirm), then re-run just the two inserts inside the DO block above.
 -- ─────────────────────────────────────────────────────────────────────────────

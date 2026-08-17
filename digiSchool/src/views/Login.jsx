@@ -99,15 +99,15 @@ export default function Login() {
     }
 
     // Platform super-admins go to the admin console; everyone else to their portal.
-    let role = null;
+    let isAdmin = false;
     try {
-      const { data: prof } = await supabase
-        .from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-      role = prof?.role;
+      const { data: adminRow } = await supabase
+        .from('platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
+      isAdmin = !!adminRow;
     } catch { /* default to portal */ }
     setBusy(false);
 
-    navigate(role === 'super_admin' ? '/admin' : '/portal');
+    navigate(isAdmin ? '/admin' : '/portal');
   };
 
   // Social sign-in / sign-up via Supabase OAuth. The provider must be enabled
