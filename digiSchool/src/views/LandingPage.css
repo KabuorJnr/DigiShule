@@ -70,9 +70,9 @@
 .eo-btn-ghost { background: #fff; color: var(--ink); border-color: var(--border-strong); }
 .eo-btn-ghost:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .eo-btn-white { background: #fff; color: var(--blue-700); }
-.eo-btn-white:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.eo-btn-white:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(0,0,0,.24); }
 .eo-btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
-.eo-btn-outline:hover { background: rgba(255,255,255,.12); border-color: #fff; }
+.eo-btn-outline:hover { transform: translateY(-2px); background: rgba(255,255,255,.16); border-color: #fff; box-shadow: 0 12px 26px rgba(0,0,0,.2); }
 
 /* ---------- announcement ---------- */
 .eo-announce {
