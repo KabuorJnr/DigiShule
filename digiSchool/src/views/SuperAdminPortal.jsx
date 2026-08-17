@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { School, Users, Wallet, Clock, TrendingUp, CheckCircle2, XCircle, LogOut, Building2 } from 'lucide-react';
 import { supabase, signOutAll } from '../lib/supabaseClient';
-import { getMetrics, approveSchool, rejectSchool, PLANS, planName, planPrice, collectedFor } from '../lib/superadmin';
+import { getMetrics, computeMetrics, approveSchool, rejectSchool, PLANS, planName, planPrice, collectedFor } from '../lib/superadmin';
 
 const kes = (n) => 'KES ' + Math.round(n).toLocaleString('en-KE');
 const kesShort = (n) => (n >= 1e6 ? 'KES ' + (n / 1e6).toFixed(2) + 'M' : kes(n));
@@ -41,26 +41,38 @@ export default function SuperAdminPortal() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('no session');
+        if (!user) { navigate('/login'); return; }
         const { data: adminRow } = await supabase.from('platform_admins').select('user_id').eq('user_id', user.id).maybeSingle();
-        if (!adminRow) throw new Error('not a super admin');
-        if (active) { setData(getMetrics()); setChecking(false); }
+        if (!adminRow) { navigate('/login'); return; }
       } catch {
         navigate('/login');
+        return;
+      }
+      if (!active) return;
+      setChecking(false);
+      try {
+        const m = await getMetrics();
+        if (active) setData(m);
+      } catch (e) {
+        if (active) { setLoadError(e.message || 'Failed to load platform data.'); setData(computeMetrics([])); }
       }
     })();
     return () => { active = false; };
   }, [navigate]);
 
-  const refresh = () => setData(getMetrics());
-  const onApprove = (id) => { approveSchool(id); refresh(); };
-  const onReject = (id) => { rejectSchool(id); refresh(); };
+  const refresh = async () => {
+    try { setData(await getMetrics()); setLoadError(''); }
+    catch (e) { setLoadError(e.message || 'Failed to refresh.'); }
+  };
+  const onApprove = async (id) => { try { await approveSchool(id); await refresh(); } catch (e) { setLoadError(e.message); } };
+  const onReject = async (id) => { try { await rejectSchool(id); await refresh(); } catch (e) { setLoadError(e.message); } };
   const logout = async () => { await signOutAll(); navigate('/login'); };
 
   if (checking || !data) return null;
@@ -85,6 +97,10 @@ export default function SuperAdminPortal() {
           <h1>Platform overview</h1>
           <p>Every school on EduOne, their plan, activity and the revenue they generate.</p>
         </div>
+
+        {loadError && (
+          <div className="sa-alert">⚠ {loadError} — make sure <code>supabase/platform_schools.sql</code> has been run, then reload.</div>
+        )}
 
         {/* KPIs */}
         <div className="sa-kpis">
@@ -197,7 +213,7 @@ export default function SuperAdminPortal() {
           </div>
         </section>
 
-        <p className="sa-note">Prototype data is stored locally in this browser. Onboarding a school from the signup flow adds it to the queue above.</p>
+        <p className="sa-note">Live data from Supabase. New sign-ups appear as pending onboarding requests; onboarding a school activates its subscription.</p>
       </main>
 
       <style>{`
@@ -277,6 +293,8 @@ export default function SuperAdminPortal() {
         .sa-status.rejected { color:#b91c1c; background:#fef2f2; }
         .sa-table tfoot td { font-weight:800; font-family:'Outfit',sans-serif; border-bottom:none; padding-top:14px; }
 
+        .sa-alert { background:#fef4e2; color:#b45309; border:1px solid #fbd9a5; border-radius:12px; padding:12px 16px; font-size:.9rem; margin-bottom:20px; }
+        .sa-alert code { background:rgba(180,83,9,.12); padding:1px 6px; border-radius:5px; font-size:.86em; }
         .sa-note { font-size:.8rem; color:var(--muted); margin-top:6px; }
         @media (prefers-reduced-motion: reduce){ .sa-bar-fill{ transition:none; } }
       `}</style>

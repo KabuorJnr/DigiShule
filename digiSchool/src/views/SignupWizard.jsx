@@ -5,6 +5,7 @@ import { addOnboardingRequest, PLANS } from '../lib/superadmin';
 export default function SignupWizard({ onComplete, onCancel }) {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // School Profile
   const [school, setSchool] = useState({
@@ -32,10 +33,11 @@ export default function SignupWizard({ onComplete, onCancel }) {
     }
   };
 
-  const submitRequest = () => {
+  const submitRequest = async () => {
     setError('');
+    setSaving(true);
     try {
-      addOnboardingRequest({
+      await addOnboardingRequest({
         name: school.name,
         principal: principal.name,
         email: principal.email,
@@ -45,8 +47,10 @@ export default function SignupWizard({ onComplete, onCancel }) {
         county: null,
       });
       setStep(4);
-    } catch {
-      setError('Could not submit your request. Please try again.');
+    } catch (e) {
+      setError(e.message || 'Could not submit your request. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -198,8 +202,8 @@ export default function SignupWizard({ onComplete, onCancel }) {
 
               <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
                 <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={submitRequest} style={{ background: '#2563eb', borderColor: '#2563eb', padding: '12px 24px', color: '#fff' }}>
-                  Submit for onboarding →
+                <button type="button" className="btn btn-primary" onClick={submitRequest} disabled={saving} style={{ background: '#2563eb', borderColor: '#2563eb', padding: '12px 24px', color: '#fff', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Submitting…' : 'Submit for onboarding →'}
                 </button>
               </div>
             </div>
