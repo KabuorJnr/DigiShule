@@ -5,6 +5,9 @@ import { addOnboardingRequest, PLANS } from '../lib/superadmin';
 
 const STEPS = ['School', 'Administrator', 'Plan', 'Confirm'];
 
+// Africa-themed background: the generated Kenyan-classroom illustration.
+const SIGNUP_BG = '/login-classroom.svg';
+
 export default function SignupWizard({ onComplete, onCancel }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -54,31 +57,15 @@ export default function SignupWizard({ onComplete, onCancel }) {
 
   return (
     <div className="su">
-      {/* Brand panel */}
-      <aside className="su-brand">
-        <div className="su-brand-inner">
-          <a href="/" className="su-brand-logo" onClick={goHome} aria-label="EduOne home">
+      <div className="su-bg" aria-hidden="true" />
+      <a href="/" className="su-back" onClick={goHome}><ArrowLeft size={16} /> Back to site</a>
+
+      <div className="su-shell">
+        <div className="su-card">
+          <a href="/" className="su-brandmark" onClick={goHome} aria-label="EduOne home">
             <img src="/logo.png" alt="EduOne" />
           </a>
-          <div className="su-brand-body">
-            <h2>Bring your school online.</h2>
-            <p>Join hundreds of schools running fees, CBC grading and parent communication on one platform — set up in a day, no upfront payment.</p>
-            <ul className="su-points">
-              <li><CheckCircle2 size={18} /> Free onboarding &amp; data migration</li>
-              <li><CheckCircle2 size={18} /> 14-day free trial, no card required</li>
-              <li><CheckCircle2 size={18} /> Works offline, syncs automatically</li>
-              <li><CheckCircle2 size={18} /> Reviewed &amp; activated by our team</li>
-            </ul>
-          </div>
-          <div className="su-brand-foot">© 2026 EduOne · Offline-first · CBC compliant</div>
-        </div>
-      </aside>
 
-      {/* Wizard */}
-      <main className="su-main">
-        <a href="/" className="su-back" onClick={goHome}><ArrowLeft size={16} /> Back to site</a>
-
-        <div className="su-card">
           <div className="su-head">
             <h1>Commission your school</h1>
             <p>A few details and our team will onboard you — usually within a day.</p>
@@ -200,7 +187,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
@@ -209,35 +196,30 @@ export default function SignupWizard({ onComplete, onCancel }) {
           --grad: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
           --ink:#0b1220; --slate:#475569; --muted:#64748b;
           --border:#e6eaf1; --border-strong:#d7deea;
-          display:flex; min-height:100vh; background:#fff; color:var(--ink);
-          font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+          position:relative; min-height:100vh; display:flex; align-items:center; justify-content:center;
+          padding:56px 20px; overflow:hidden;
+          background:#0b1220 url('${SIGNUP_BG}') center / cover no-repeat;
+          font-family:'Inter',system-ui,sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased;
         }
         .su * { box-sizing:border-box; }
+        .su-bg { position:absolute; inset:0; z-index:0; pointer-events:none;
+          background: linear-gradient(135deg, rgba(9,15,28,.82) 0%, rgba(19,44,108,.7) 55%, rgba(37,99,235,.5) 100%); }
+        .su-bg::after { content:''; position:absolute; inset:0; opacity:.4;
+          -webkit-mask-image:linear-gradient(to bottom,#000,transparent 78%); mask-image:linear-gradient(to bottom,#000,transparent 78%);
+          background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px); background-size:46px 46px; }
+        .su-back { position:absolute; top:22px; left:22px; z-index:3; display:inline-flex; align-items:center; gap:6px; font-size:.88rem; font-weight:600; color:rgba(255,255,255,.9); text-shadow:0 1px 8px rgba(0,0,0,.4); text-decoration:none; cursor:pointer; }
+        .su-back:hover { color:#fff; }
 
-        /* brand panel */
-        .su-brand { display:none; position:relative; flex:1; overflow:hidden;
-          background: linear-gradient(160deg, rgba(9,15,28,.9) 0%, rgba(23,54,138,.8) 55%, rgba(37,99,235,.6) 100%), url('/gallery_1.png') center/cover no-repeat; }
-        @media (min-width:960px){ .su-brand{ display:block; flex:0 0 42%; } }
-        .su-brand-inner { position:relative; z-index:1; height:100%; display:flex; flex-direction:column; justify-content:space-between; padding:48px; color:#fff; }
-        .su-brand-logo img { height:34px; background:#fff; border-radius:10px; padding:6px 12px; box-shadow:0 10px 30px rgba(0,0,0,.22); }
-        .su-brand-body h2 { font-family:'Outfit',sans-serif; font-size:clamp(2rem,2.6vw,2.7rem); font-weight:800; letter-spacing:-0.03em; line-height:1.05; margin:0 0 16px; max-width:14ch; }
-        .su-brand-body p { font-size:1.02rem; color:rgba(255,255,255,.85); line-height:1.55; margin:0 0 26px; max-width:38ch; }
-        .su-points { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:13px; }
-        .su-points li { display:flex; align-items:center; gap:10px; font-weight:600; font-size:.95rem; color:rgba(255,255,255,.94); }
-        .su-points svg { color:#5eead4; flex-shrink:0; }
-        .su-brand-foot { font-size:.8rem; color:rgba(255,255,255,.7); }
-
-        /* wizard */
-        .su-main { position:relative; flex:1; display:flex; align-items:center; justify-content:center; padding:56px 24px; background:#f6f8fc; }
-        .su-back { position:absolute; top:22px; left:22px; display:inline-flex; align-items:center; gap:6px; font-size:.88rem; font-weight:600; color:var(--muted); text-decoration:none; cursor:pointer; }
-        .su-back:hover { color:var(--blue); }
-        .su-card { width:100%; max-width:520px; background:#fff; border:1px solid var(--border); border-radius:22px; padding:32px 34px; box-shadow:0 1px 2px rgba(16,24,40,.04), 0 24px 60px rgba(16,24,40,.10); }
-        .su-head { margin-bottom:24px; }
-        .su-head h1 { font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:800; letter-spacing:-0.02em; margin:0 0 6px; }
-        .su-head p { color:var(--muted); font-size:.95rem; margin:0; }
+        .su-shell { position:relative; z-index:1; width:100%; max-width:520px; }
+        .su-card { background:#fff; border:1px solid var(--border); border-radius:22px; padding:30px 32px; box-shadow:0 1px 2px rgba(16,24,40,.04), 0 24px 60px rgba(16,24,40,.18); }
+        .su-brandmark { display:flex; justify-content:center; margin-bottom:18px; }
+        .su-brandmark img { height:34px; width:auto; display:block; }
+        .su-head { text-align:center; margin-bottom:22px; }
+        .su-head h1 { font-family:'Outfit',sans-serif; font-size:1.55rem; font-weight:800; letter-spacing:-0.02em; margin:0 0 6px; }
+        .su-head p { color:var(--muted); font-size:.93rem; margin:0; }
 
         /* stepper */
-        .su-steps { position:relative; display:flex; justify-content:space-between; margin-bottom:28px; }
+        .su-steps { position:relative; display:flex; justify-content:space-between; margin-bottom:26px; }
         .su-steps-track, .su-steps-fill { position:absolute; top:15px; left:16px; right:16px; height:2px; background:var(--border); border-radius:2px; }
         .su-steps-fill { right:auto; background:var(--grad); transition:width .35s cubic-bezier(.16,1,.3,1); }
         .su-stepitem { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:7px; flex:1; }
@@ -252,9 +234,9 @@ export default function SignupWizard({ onComplete, onCancel }) {
 
         .su-step { animation:suIn .3s ease; }
         @keyframes suIn { from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
-        .su-step h3 { display:flex; align-items:center; gap:8px; font-family:'Outfit',sans-serif; font-size:1.12rem; font-weight:700; margin:0 0 4px; }
+        .su-step h3 { display:flex; align-items:center; gap:8px; font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:700; margin:0 0 14px; }
         .su-step h3 svg { color:var(--blue); }
-        .su-substep { color:var(--muted); font-size:.9rem; margin:0 0 18px; }
+        .su-substep { color:var(--muted); font-size:.9rem; margin:-8px 0 18px; }
         .su-field { margin-bottom:15px; }
         .su-field label { display:block; font-size:.82rem; font-weight:700; color:var(--slate); margin-bottom:7px; }
         .su-input { width:100%; font-family:inherit; font-size:.95rem; color:var(--ink); padding:12px 14px; border:1px solid var(--border-strong); border-radius:11px; background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
@@ -263,10 +245,9 @@ export default function SignupWizard({ onComplete, onCancel }) {
         .su-hint { display:block; font-size:.76rem; color:var(--muted); margin-top:5px; }
         .su-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
         @media (max-width:460px){ .su-grid2{ grid-template-columns:1fr; } }
-        .su-step:first-of-type h3 { margin-bottom:16px; }
 
         /* plan cards */
-        .su-plans { display:flex; flex-direction:column; gap:11px; margin-top:6px; }
+        .su-plans { display:flex; flex-direction:column; gap:11px; margin-top:2px; }
         .su-plan { display:flex; align-items:center; gap:14px; text-align:left; width:100%; padding:15px 16px; border:1px solid var(--border-strong); border-radius:13px; background:#fff; cursor:pointer; transition:border-color .15s ease, background .15s ease, box-shadow .15s ease; }
         .su-plan:hover { border-color:#b9c4d6; }
         .su-plan.active { border:2px solid var(--blue); background:#eff4ff; box-shadow:0 6px 18px rgba(37,99,235,.12); }
@@ -288,7 +269,7 @@ export default function SignupWizard({ onComplete, onCancel }) {
         .su-btn-ghost:hover { border-color:var(--blue); color:var(--blue); }
 
         /* done */
-        .su-done { text-align:center; padding:12px 0 6px; }
+        .su-done { text-align:center; padding:6px 0; }
         .su-done-ico { display:grid; place-items:center; width:74px; height:74px; border-radius:50%; background:#eafaef; color:#16a34a; margin:6px auto 16px; }
         .su-done h2 { font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:800; margin:0 0 10px; }
         .su-done p { color:var(--slate); font-size:.95rem; margin:0 auto 6px; max-width:42ch; }
