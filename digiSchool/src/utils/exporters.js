@@ -625,12 +625,17 @@ export function exportTimetableLandscapePDF({
   const colCount = grid.length + 1;
   const cellPad = colCount >= 12 ? 3 : colCount >= 10 ? 4 : 5;
   const marginBottom = 30; // leaves room for the footer line
-  const headerH = 38; // taller header so period # and time don't overlap
+  const headerH = 52; // tall enough for the vertical break/lunch time labels to fit
   const availH = pageH - tableTop - marginBottom;
   const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
 
   const columnStyles = { 0: { cellWidth: 38, fontStyle: 'bold' } };
-  cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 18 }; });
+  cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 22 }; });
+
+  // Break/lunch NAMES are collected here during the table draw and painted
+  // afterwards: drawing them inside didDrawCell lets autoTable overpaint the
+  // spanning cell white on later rows, which is why they used to vanish.
+  const breakGeom = [];
 
   autoTable(doc, {
     head: [head],
@@ -671,11 +676,10 @@ export function exportTimetableLandscapePDF({
           }
         } else if (slot.start) {
           // Break/lunch: show the time range in the header, in the same place as
-          // period times, drawn vertically so it fits the narrow column. The
-          // break NAME is the vertical label in the body cell below, so every
-          // break reads exactly the same way as Lunch.
-          doc.setFontSize(6); doc.setTextColor(60);
-          doc.text(`${slot.start}-${slot.end}`, cx, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+          // period times, drawn vertically (bottom-anchored) so it fits the
+          // narrow column. The break NAME is the big vertical body label.
+          doc.setFontSize(6.5); doc.setTextColor(60);
+          doc.text(`${slot.start} - ${slot.end}`, cx + 2, data.cell.y + data.cell.height - 4, { angle: 90 });
           doc.setTextColor(0);
         }
         return;
@@ -685,10 +689,10 @@ export function exportTimetableLandscapePDF({
       const slot = cols[ti];
       const gcell = grid[ti] && grid[ti][data.row.index];
 
-      // Break / lunch: big vertical rotated label in the spanning cell.
+      // Break / lunch: remember where to paint the big vertical name (drawn
+      // after the table so it isn't overpainted — see breakGeom above).
       if (slot && !slot.teaching) {
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
-        doc.text(String(slot.label), cx + 4, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+        breakGeom.push({ label: slot.label, cx, yc: data.cell.y + data.cell.height / 2 });
         return;
       }
 
@@ -703,6 +707,15 @@ export function exportTimetableLandscapePDF({
         doc.setTextColor(0);
       }
     },
+  });
+
+  // Break/lunch names: big, bold, capitalised, vertical, centred in their
+  // column — the same way Lunch reads. Painted after the table so autoTable
+  // can't overwrite them.
+  breakGeom.forEach(({ label, cx, yc }) => {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
+    const w = doc.getTextWidth(String(label));
+    doc.text(String(label), cx + 4.5, yc + w / 2, { angle: 90 });
   });
 
   // ---- Footer --------------------------------------------------------------
@@ -763,12 +776,16 @@ export function exportAllTimetablesPDF({
     const colCount = grid.length + 1;
     const cellPad = colCount >= 12 ? 3 : colCount >= 10 ? 4 : 5;
     const marginBottom = 30;
-    const headerH = 38;
+    const headerH = 52; // tall enough for the vertical break/lunch time labels to fit
     const availH = pageH - tableTop - marginBottom;
     const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
 
     const columnStyles = { 0: { cellWidth: 38, fontStyle: 'bold' } };
-    cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 18 }; });
+    cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 22 }; });
+
+    // Break/lunch names are painted after the table (see the single-class export
+    // for why) — collected here during the draw.
+    const breakGeom = [];
 
     autoTable(doc, {
       head: [head],
@@ -804,11 +821,11 @@ export function exportAllTimetablesPDF({
               doc.setTextColor(0);
             }
           } else if (slot.start) {
-            // Break/lunch: time range in the header (same place as period times),
-            // drawn vertically to fit the narrow column. The break NAME is the
-            // vertical label in the body cell below — identical to Lunch.
-            doc.setFontSize(6); doc.setTextColor(60);
-            doc.text(`${slot.start}-${slot.end}`, cx, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+            // Break/lunch: time range in the header, drawn vertically
+            // (bottom-anchored) to fit the narrow column. The break NAME is the
+            // big vertical body label.
+            doc.setFontSize(6.5); doc.setTextColor(60);
+            doc.text(`${slot.start} - ${slot.end}`, cx + 2, data.cell.y + data.cell.height - 4, { angle: 90 });
             doc.setTextColor(0);
           }
           return;
@@ -819,8 +836,7 @@ export function exportAllTimetablesPDF({
         const gcell = grid[ti] && grid[ti][data.row.index];
 
         if (slot && !slot.teaching) {
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
-          doc.text(String(slot.label), cx + 4, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+          breakGeom.push({ label: slot.label, cx, yc: data.cell.y + data.cell.height / 2 });
           return;
         }
 
@@ -832,6 +848,13 @@ export function exportAllTimetablesPDF({
           doc.setTextColor(0);
         }
       },
+    });
+
+    // Break/lunch names: big, bold, capitalised, vertical, centred — like Lunch.
+    breakGeom.forEach(({ label, cx, yc }) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
+      const w = doc.getTextWidth(String(label));
+      doc.text(String(label), cx + 4.5, yc + w / 2, { angle: 90 });
     });
 
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(70);
