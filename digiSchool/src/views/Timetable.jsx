@@ -1010,7 +1010,12 @@ export default function Timetable({ store, user }) {
                         <th key={ci} style={{ padding: '4px 2px' }}>
                           {slot.teaching ? (
                             <div>{slot.label}<div style={{ fontSize: 9, fontWeight: 400, color: '#94a3b8' }}>{slot.start}-{slot.end}</div></div>
-                          ) : slot.label}
+                          ) : (
+                            // Break/lunch: show the time range here (where period times sit);
+                            // the break NAME is the vertical label in the body cell below —
+                            // so breaks read the same way as the PDF export.
+                            <div style={{ fontSize: 9, fontWeight: 400, color: '#94a3b8' }}>{slot.start}-{slot.end}</div>
+                          )}
                         </th>
                       ))}
                     </tr>
