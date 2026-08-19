@@ -1216,6 +1216,11 @@ function TimeslotsModal({ timeslots, schedule, onClose, onSave }) {
         </table>
       </div>
       <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={addRow}><Icon name="plus" size={14} /> Add slot</button>
+      {rows.filter((r) => r.type === 'LunchBreak').length > 1 && (
+        <p style={{ fontSize: 12, marginTop: 10, padding: '8px 12px', borderRadius: 6, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
+          ⚠ You have <strong>{rows.filter((r) => r.type === 'LunchBreak').length} Lunch slots</strong>. Most schools use a single lunch — delete the extra rows above unless this is intentional.
+        </p>
+      )}
       <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>Only <strong>Normal</strong> slots hold lessons. Breaks, Lunch, Preps and Games are shown as fixed rows.</p>
     </Modal>
   );

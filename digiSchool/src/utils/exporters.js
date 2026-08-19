@@ -630,7 +630,7 @@ export function exportTimetableLandscapePDF({
   const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
 
   const columnStyles = { 0: { cellWidth: 38, fontStyle: 'bold' } };
-  cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 22 }; });
+  cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 18 }; });
 
   autoTable(doc, {
     head: [head],
@@ -670,9 +670,8 @@ export function exportTimetableLandscapePDF({
             doc.setTextColor(0);
           }
         } else {
-          // Narrow break/lunch column: small bold label, centered.
-          doc.setFontSize(6.5);
-          doc.text(String(slot.label), cx, data.cell.y + data.cell.height / 2 + 2, { align: 'center' });
+          // Break/lunch columns are labelled once — vertically in the body cell —
+          // so the header stays blank and long names ("Long Break") never clip.
         }
         return;
       }
@@ -764,7 +763,7 @@ export function exportAllTimetablesPDF({
     const bodyMinH = Math.max(28, Math.floor((availH - headerH) / days.length));
 
     const columnStyles = { 0: { cellWidth: 38, fontStyle: 'bold' } };
-    cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 22 }; });
+    cols.forEach((s, i) => { if (!s.teaching) columnStyles[i + 1] = { cellWidth: 18 }; });
 
     autoTable(doc, {
       head: [head],
