@@ -669,9 +669,14 @@ export function exportTimetableLandscapePDF({
             doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 7, { align: 'center' });
             doc.setTextColor(0);
           }
-        } else {
-          // Break/lunch columns are labelled once — vertically in the body cell —
-          // so the header stays blank and long names ("Long Break") never clip.
+        } else if (slot.start) {
+          // Break/lunch: show the time range in the header, in the same place as
+          // period times, drawn vertically so it fits the narrow column. The
+          // break NAME is the vertical label in the body cell below, so every
+          // break reads exactly the same way as Lunch.
+          doc.setFontSize(6); doc.setTextColor(60);
+          doc.text(`${slot.start}-${slot.end}`, cx, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+          doc.setTextColor(0);
         }
         return;
       }
@@ -798,9 +803,13 @@ export function exportAllTimetablesPDF({
               doc.text(`${slot.start} - ${slot.end}`, cx, data.cell.y + data.cell.height - 7, { align: 'center' });
               doc.setTextColor(0);
             }
-          } else {
-            doc.setFontSize(6.5);
-            doc.text(String(slot.label), cx, data.cell.y + data.cell.height / 2 + 2, { align: 'center' });
+          } else if (slot.start) {
+            // Break/lunch: time range in the header (same place as period times),
+            // drawn vertically to fit the narrow column. The break NAME is the
+            // vertical label in the body cell below — identical to Lunch.
+            doc.setFontSize(6); doc.setTextColor(60);
+            doc.text(`${slot.start}-${slot.end}`, cx, data.cell.y + data.cell.height / 2, { align: 'center', angle: 90 });
+            doc.setTextColor(0);
           }
           return;
         }
