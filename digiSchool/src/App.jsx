@@ -69,8 +69,14 @@ import ClassTeachers from './views/ClassTeachers';
 import ParentLayout from './views/parent/ParentLayout';
 import ParentDashboard from './views/parent/ParentDashboard';
 
+import PrivacyPolicy from './views/legal/PrivacyPolicy';
+import TermsOfService from './views/legal/TermsOfService';
+import NotFound from './views/NotFound';
+import CookieBanner from './components/CookieBanner';
+
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Native apps skip the marketing landing page and go straight into the
           product: PortalLayout's auth guard shows the app for signed-in users
@@ -86,6 +92,8 @@ export default function App() {
       <Route path="/staff-signup" element={<StaffSignupWizard />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/eduone" element={<EduOneDashboard />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
 
 
       {/* Portal Routes with Layout, Sidebar, and Auth Guard */}
@@ -162,7 +170,12 @@ export default function App() {
         <Route path=":viewId" element={<LegacyViewLoader />} />
         <Route path=":viewId/:tab" element={<LegacyViewLoader />} />
       </Route>
+
+      {/* Custom 404 for any unmatched public path */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
+    <CookieBanner />
+    </>
   );
 }
 

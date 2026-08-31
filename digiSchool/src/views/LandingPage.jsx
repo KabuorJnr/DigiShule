@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../lib/seo';
 import './LandingPage.css';
 
 /* ------------------------------------------------------------------ */
@@ -49,6 +50,12 @@ export default function LandingPage() {
   const contactPhone = '+254 701 402265';
   const contactPhoneLink = '+254701402265';
   const contactEmail = 'sales@edu1app.tech';
+
+  useSEO({
+    title: 'EduOne — School Management System for Modern Schools',
+    description: 'Run your whole school from one dashboard: CBC gradebook & reports, fee invoicing & M-PESA payments, timetables, attendance, and parent portals — offline-first and built for African schools.',
+    path: '/',
+  });
 
   useEffect(() => {
     const onScroll = () => {
@@ -432,6 +439,8 @@ export default function LandingPage() {
               <a href="#stories">Success stories</a>
               <a href="/book-demo" onClick={(e) => { e.preventDefault(); go('/book-demo'); }}>Book a demo</a>
               <a href="#" onClick={(e) => { e.preventDefault(); go('/login'); }}>Login</a>
+              <a href="/privacy" onClick={(e) => { e.preventDefault(); go('/privacy'); }}>Privacy Policy</a>
+              <a href="/terms" onClick={(e) => { e.preventDefault(); go('/terms'); }}>Terms of Service</a>
             </div>
             <div className="eo-foot-col">
               <h4>Contact</h4>
@@ -450,6 +459,14 @@ export default function LandingPage() {
       <button className={`eo-top ${showTop ? 'show' : ''}`} aria-label="Back to top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
       </button>
+
+      {/* Sticky mobile CTA — keeps the primary action reachable while scrolling. */}
+      <div className="eo-sticky-cta">
+        <button className="eo-btn eo-btn-primary" onClick={() => go('/signup')}>
+          Start free trial <Icon name="arrow" className="eo-i-sm" />
+        </button>
+        <button className="eo-btn eo-btn-ghost" onClick={() => go('/book-demo')}>Demo</button>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { signInWithUsername, supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../lib/seo';
 import { Eye, EyeOff, Shield, CheckCircle2, Mail, Phone, User, Lock, ArrowLeft } from 'lucide-react';
 import Modal from '../components/Modal';
 
@@ -46,6 +47,7 @@ const MicrosoftIcon = () => (
 
 export default function Login() {
   const navigate = useNavigate();
+  useSEO({ title: 'Sign in — EduOne', description: 'Sign in to your EduOne school portal.', path: '/login', noindex: true });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);

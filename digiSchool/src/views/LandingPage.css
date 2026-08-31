@@ -440,3 +440,28 @@
 .eo-success-ico svg { width: 32px; height: 32px; }
 .eo-demo-success h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
 .eo-demo-success p { color: var(--muted); margin-top: 10px; }
+
+/* ---------- Sticky mobile CTA ---------- */
+/* Hidden on desktop; a fixed action bar on phones/tablets so the primary
+   call-to-action stays reachable while the visitor scrolls the page. */
+.eo-sticky-cta { display: none; }
+@media (max-width: 768px) {
+  .eo-sticky-cta {
+    display: flex;
+    gap: 10px;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 60;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08);
+  }
+  .eo-sticky-cta .eo-btn-primary { flex: 1; justify-content: center; }
+  .eo-sticky-cta .eo-btn-ghost { flex: 0 0 auto; }
+  /* Keep the back-to-top button clear of the sticky bar. */
+  .eo-top.show { bottom: 78px; }
+  /* Give the footer breathing room so the bar never covers its last row. */
+  .eo-footer { padding-bottom: 84px; }
+}

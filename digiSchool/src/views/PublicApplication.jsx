@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useSEO } from '../lib/seo';
 
 const schoolConfig = (() => {
   try {
@@ -10,6 +11,7 @@ const schoolConfig = (() => {
 const levels = schoolConfig?.levels || schoolConfig?.school?.levels || ['Grade 7', 'Grade 8', 'Grade 9'];
 
 export default function PublicApplication({ onBack }) {
+  useSEO({ title: 'Apply for Admission — EduOne', description: 'Submit a student admission application online.', path: '/apply' });
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     studentName: '', kcpeMarks: '', dob: '', gender: 'Male', grade: levels[0],
