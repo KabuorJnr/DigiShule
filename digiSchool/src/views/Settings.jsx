@@ -148,6 +148,13 @@ export default function Settings({ store, user }) {
     readImageFile(file, 512, (dataUrl) => upForm({ stamp: dataUrl }));
   }
 
+  function onSignature(file) {
+    // Store the scanned principal's signature as a data URL. It renders on the
+    // signature line of official documents (in place of, or alongside, the
+    // stamp) so sign-offs look authentic without a wet signature each time.
+    readImageFile(file, 512, (dataUrl) => upForm({ signature: dataUrl }));
+  }
+
   function saveGeneral() {
     setSettings((s) => ({
       ...s,
@@ -159,6 +166,7 @@ export default function Settings({ store, user }) {
       principal: form.principal,
       principalRank: form.principalRank,
       stamp: form.stamp,
+      signature: form.signature,
       logo: form.logo,
       paymentDetails: form.paymentDetails,
       latitude: form.latitude,
@@ -295,6 +303,19 @@ export default function Settings({ store, user }) {
                   <input type="file" accept="image/*" onChange={(e) => onStamp(e.target.files[0])} />
                   <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Appears on official newsletters & documents.</div>
                   {form.stamp && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => upForm({ stamp: '' })}>Remove</button>}
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Principal's Signature (scanned)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="logo-box" style={{ width: 120, height: 64, background: form.signature ? '#fff' : 'var(--muted, #f1f5f9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {form.signature ? <img src={form.signature} alt="signature" style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>No signature</span>}
+                </div>
+                <div>
+                  <input type="file" accept="image/*" onChange={(e) => onSignature(e.target.files[0])} />
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Signs off official documents on the signature line.</div>
+                  {form.signature && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => upForm({ signature: '' })}>Remove</button>}
                 </div>
               </div>
             </div>

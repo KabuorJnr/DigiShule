@@ -90,9 +90,31 @@ export default function TeacherDashboard() {
     if (!replyText[msgId]) return;
     try {
       const msg = messages.find(m => m.id === msgId);
+      // Mark the incoming message as replied so it shows resolved in the
+      // teacher's own inbox (keeps the thread context on the original row).
       const updatedMsg = { ...msg, status: 'Replied', reply: replyText[msgId], replied_at: new Date().toISOString() };
       await upsertRow('messages', updatedMsg);
+
+      // Deliver the reply as its own message addressed back to the parent —
+      // routed by the original sender's user id AND the student link so it
+      // lands in the parent's inbox (which filters on recipient_role='parent').
+      await upsertRow('messages', {
+        id: `msg_${Date.now()}`,
+        sender_id: user?.id || teacherName,
+        sender_name: teacherName,
+        sender_role: 'teacher',
+        recipient_role: 'parent',
+        recipient_id: msg.sender_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject ? `Re: ${msg.subject}` : 'Reply from teacher',
+        body: replyText[msgId],
+        status: 'Unread',
+        created_at: new Date().toISOString(),
+      });
+
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
+      setReplyText(prev => ({ ...prev, [msgId]: '' }));
       store.notify('Reply sent successfully', 'success');
     } catch (e) { store.notify(`Failed to reply: ${e.message}`, 'error'); }
   };

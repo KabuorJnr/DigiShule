@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageHeader, KpiCard, Badge, ProgressBar } from '../components/widgets';
 import { fetchTable, upsertRow } from '../lib/api';
 import { expandClassesWithStreams, SUBJECTS, DEPARTMENTS, DEPT_COLORS, getDynamicClasses } from '../data/seed';
+import { subjectAverage, gradeFor, is844Class, CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 import Modal from '../components/Modal';
 import {
   Users, UserCheck, Building2, BookOpen, ClipboardList, BarChart3,
   GraduationCap, Search, Filter, RotateCcw, Zap, Eye, EyeOff,
-  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X, Clock
+  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X, Clock, LineChart, Award
 } from 'lucide-react';
 
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
@@ -320,6 +321,75 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
   const activeTeachers = useMemo(() => teachers.filter(t => t.status !== 'Inactive'), [teachers]);
 
+  // ── TEACHER SUBJECT ANALYSIS (Zeraki-style) ──
+  // For every teacher × subject the teacher is assigned to teach, compute the
+  // mean score of the students they teach (matched by class + stream against
+  // the student's combined class label), the mean grade, and the teacher's
+  // rank among all teachers of that same subject. Aggregates across all of a
+  // teacher's classes for the subject so each row is one teacher-subject.
+  const students = store.students || [];
+  const subjectAnalysis = useMemo(() => {
+    // Curriculum system for grade mapping — follow the majority of students.
+    const n844 = students.filter((s) => is844Class(s.class)).length;
+    const system = students.length && n844 > students.length / 2 ? '844' : 'CBC';
+    const boundaries = system === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
+
+    // Index students by their combined class label for quick class matching.
+    const normalize = (v) => String(v || '').trim().toLowerCase();
+
+    const rows = [];
+    activeTeachers.forEach((t) => {
+      const assigned = teacherAssignMap[t.id] || [];
+      // Group this teacher's assignments by subject.
+      const bySubject = {};
+      assigned.forEach((a) => {
+        const sub = a.subject_name;
+        if (!sub) return;
+        (bySubject[sub] = bySubject[sub] || []).push(a);
+      });
+      Object.entries(bySubject).forEach(([subject, classAssigns]) => {
+        const classLabels = classAssigns.map((a) =>
+          normalize(`${a.class_name || ''} ${a.stream_name || ''}`));
+        // Students whose class label matches any of the teacher's classes for
+        // this subject and who have a recorded score.
+        let sum = 0, entries = 0;
+        const classSet = new Set(classLabels);
+        students.forEach((s) => {
+          const label = normalize(s.class);
+          const matches = classSet.has(label) || classAssigns.some((a) =>
+            normalize(a.class_name) === label ||
+            (a.stream_name && normalize(`${a.class_name} ${a.stream_name}`) === label));
+          if (!matches) return;
+          const v = subjectAverage(s.scores?.[subject]);
+          if (v > 0) { sum += v; entries += 1; }
+        });
+        const mean = entries > 0 ? Math.round((sum / entries) * 10) / 10 : 0;
+        rows.push({
+          teacherId: t.id,
+          teacher: t.name,
+          department: t.department || t.subject || 'General',
+          subject,
+          classesLabel: classAssigns.map((a) => `${a.class_name}${a.stream_name ? ' ' + a.stream_name : ''}`).join(', '),
+          classCount: classAssigns.length,
+          entries,
+          mean,
+          grade: entries > 0 ? gradeFor(mean, boundaries, system) : '-',
+        });
+      });
+    });
+
+    // Rank teachers within each subject by mean (highest = rank 1).
+    const bySub = {};
+    rows.forEach((r) => { (bySub[r.subject] = bySub[r.subject] || []).push(r); });
+    Object.values(bySub).forEach((group) => {
+      group.filter((r) => r.entries > 0).sort((a, b) => b.mean - a.mean)
+        .forEach((r, i) => { r.rank = i + 1; r.subjectTeacherCount = group.filter((x) => x.entries > 0).length; });
+    });
+
+    rows.sort((a, b) => b.mean - a.mean);
+    return { rows, system };
+  }, [activeTeachers, teacherAssignMap, students]);
+
   // Departments
   const departments = useMemo(() => {
     const depts = new Set(activeTeachers.map(t => t.department || t.role || t.dept).filter(Boolean));
@@ -550,7 +620,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
     { key: 'directory', label: 'Teaching Staff', icon: <Users size={16} /> },
     { key: 'assign', label: 'Assign to Class', icon: <ClipboardList size={16} /> },
     { key: 'qualifications', label: 'Qualifications', icon: <GraduationCap size={16} /> },
-    { key: 'workload', label: 'Workload Analysis', icon: <BarChart3 size={16} /> }
+    { key: 'workload', label: 'Workload Analysis', icon: <BarChart3 size={16} /> },
+    { key: 'subject_analysis', label: 'Subject Analysis', icon: <LineChart size={16} /> }
   ];
 
   return (
@@ -1086,6 +1157,84 @@ export default function TeacherManagement({ store, user, params = {} }) {
           </div>
         </div>
       )}
+
+      {activeTab === 'subject_analysis' && (() => {
+        const rows = subjectAnalysis.rows;
+        const withData = rows.filter(r => r.entries > 0);
+        const overallMean = withData.length ? Math.round((withData.reduce((a, r) => a + r.mean, 0) / withData.length) * 10) / 10 : 0;
+        const best = withData[0];
+        const meanColor = (m) => m >= 70 ? '#047857' : m >= 50 ? '#F59E0B' : '#EF4444';
+        return (
+          <div>
+            <InfoCallout>
+              <strong>Teacher Subject Analysis:</strong> Mean score per teacher for each subject they teach, ranked against other teachers of the same subject — based on marks entered in the gradebook.
+            </InfoCallout>
+
+            <div className="grid grid-4" style={{ marginBottom: 24 }}>
+              <KpiCard iconComponent={<Users size={20} />} label="Teacher-Subjects" value={rows.length} />
+              <KpiCard iconComponent={<CheckCircle2 size={20} />} label="With Marks Entered" value={withData.length} accent="#047857" />
+              <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Mean" value={overallMean > 0 ? `${overallMean}%` : '—'} accent="#047857" />
+              <KpiCard iconComponent={<Award size={20} />} label="Top Performer" value={best ? `${best.mean}%` : '—'} sub={best ? `${best.teacher} · ${best.subject}` : ''} accent="#047857" />
+            </div>
+
+            <div className="card card-pad">
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Subject Performance by Teacher</h3>
+              <p className="muted" style={{ fontSize: 12, marginTop: 0, marginBottom: 16 }}>
+                Curriculum: {subjectAnalysis.system === '844' ? '8-4-4 / KCSE' : 'CBC'} grading · sorted by mean score
+              </p>
+              <div className="scroll-x">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Teacher</th>
+                      <th>Subject</th>
+                      <th>Class(es)</th>
+                      <th style={{ textAlign: 'center' }}>Entries</th>
+                      <th style={{ textAlign: 'center' }}>Mean %</th>
+                      <th style={{ textAlign: 'center' }}>Grade</th>
+                      <th style={{ textAlign: 'center' }}>Subject Rank</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={`${r.teacherId}_${r.subject}_${i}`}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{r.teacher}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{r.department}</div>
+                        </td>
+                        <td>{r.subject}</td>
+                        <td style={{ fontSize: 12, color: '#475569' }}>{r.classesLabel || '—'}</td>
+                        <td style={{ textAlign: 'center' }}>{r.entries || <span className="muted">—</span>}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.entries > 0 ? (
+                            <span style={{ fontWeight: 700, color: meanColor(r.mean) }}>{r.mean}%</span>
+                          ) : <span className="muted">No marks</span>}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.entries > 0 ? <Badge color={r.mean >= 70 ? 'green' : r.mean >= 50 ? 'amber' : 'red'}>{r.grade}</Badge> : '—'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.entries > 0 && r.rank ? (
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>
+                              {r.rank}<span className="muted" style={{ fontWeight: 400 }}> / {r.subjectTeacherCount}</span>
+                              {r.rank === 1 && r.subjectTeacherCount > 1 && ' 🏆'}
+                            </span>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    {rows.length === 0 && (
+                      <tr><td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 24 }}>
+                        No subject assignments yet. Assign teachers to classes and enter marks in the gradebook to see analysis.
+                      </td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {editRoleModal && (
         <Modal title={`Edit Role: ${editRoleModal.name}`} onClose={() => setEditRoleModal(null)} footer={

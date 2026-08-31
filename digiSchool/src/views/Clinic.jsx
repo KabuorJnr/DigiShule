@@ -16,6 +16,7 @@ export default function Clinic({ store }) {
   const [notifyParentOpen, setNotifyParentOpen] = useState(null);
   const [parentMsg, setParentMsg] = useState('');
   const [activeTab, setActiveTab] = useState('directory');
+  const [pickerQuery, setPickerQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -60,9 +61,39 @@ export default function Clinic({ store }) {
   }, [students, groupedStudents, selectedClass, searchQuery]);
 
   const openLogForStudent = (st) => {
-    setForm({ student: st.name, adm: st.adm, student_id: st.id, medicalInfo: st.medicalInfo, complaint: '', treatment: '', outcome: 'Returned to class' });
+    setForm({ student: st.name, adm: st.adm, student_id: st.id, medicalInfo: st.medicalInfo, complaint: '', treatment: '', outcome: 'Returned to class', manual: false });
     setLogOpen(true);
   };
+
+  // Standalone entry point — lets the nurse log a visit without first drilling
+  // into the class directory. Opens the modal in "manual" mode with a browsable
+  // list of every student to pick from.
+  const openBlankLog = () => {
+    setForm({ student: '', adm: '', student_id: '', medicalInfo: '', complaint: '', treatment: '', outcome: 'Returned to class', manual: true });
+    setPickerQuery('');
+    setLogOpen(true);
+  };
+
+  // Pick a student from the browsable list in manual mode — fills the name,
+  // admission number, id and any known medical info in one click.
+  const pickStudent = (st) => {
+    setForm((f) => ({
+      ...f,
+      student: st.name,
+      adm: st.adm || '',
+      student_id: st.id,
+      medicalInfo: st.medicalInfo,
+    }));
+  };
+
+  // Students shown in the manual-entry picker, filtered by the search box.
+  const pickerStudents = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    const list = q
+      ? students.filter((s) => s.name?.toLowerCase().includes(q) || String(s.adm || '').toLowerCase().includes(q) || s.class?.toLowerCase().includes(q))
+      : students;
+    return [...list].sort((a, b) => (a.class || '').localeCompare(b.class || '') || (a.name || '').localeCompare(b.name || ''));
+  }, [students, pickerQuery]);
 
   const logVisit = async () => {
     if (!form.student || !form.complaint) {
@@ -145,6 +176,9 @@ export default function Clinic({ store }) {
           subtitle="Student visits, treatments and medical directory"
           actions={
             <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-primary" onClick={openBlankLog}>
+                <Icon name="plus" size={16} /> Log Visit
+              </button>
               <button className="btn" onClick={handlePrint}>
                 <Icon name="clipboard" size={16} /> Print Report
               </button>
@@ -309,10 +343,51 @@ export default function Clinic({ store }) {
             </div>
           )}
 
+          {form.manual && (
+            <div style={{ marginBottom: 16 }}>
+              <label className="field-label">Select Student</label>
+              <div style={{ position: 'relative', marginBottom: 8 }}>
+                <Icon name="search" size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <input
+                  className="input"
+                  placeholder={`Search ${students.length} students by name, admission no. or class…`}
+                  value={pickerQuery}
+                  onChange={(e) => setPickerQuery(e.target.value)}
+                  style={{ paddingLeft: 32, margin: 0, width: '100%' }}
+                  autoFocus
+                />
+              </div>
+              <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+                {pickerStudents.length === 0 ? (
+                  <div className="muted" style={{ padding: 16, textAlign: 'center', fontSize: 13 }}>
+                    {students.length === 0 ? 'No students loaded yet.' : 'No students match your search.'}
+                  </div>
+                ) : pickerStudents.map((s) => {
+                  const active = form.student_id === s.id;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => pickStudent(s)}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '8px 12px', cursor: 'pointer', fontSize: 13,
+                        borderBottom: '1px solid var(--border-light)',
+                        background: active ? '#e0f2fe' : 'transparent',
+                      }}
+                    >
+                      <span style={{ fontWeight: active ? 700 : 500, color: active ? '#0369a1' : 'inherit' }}>{s.name}</span>
+                      <span className="muted" style={{ fontSize: 12 }}>{s.adm || '—'} · {s.class || 'Unassigned'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student Name</label>
-              <input className="input" value={form.student} disabled />
+              <input className="input" value={form.student} placeholder={form.manual ? 'Pick a student above' : ''} disabled />
             </div>
             <div>
               <label className="field-label">Admission No.</label>
@@ -320,7 +395,7 @@ export default function Clinic({ store }) {
             </div>
           </div>
           <label className="field-label" style={{ marginTop: 12 }}>Complaint / Symptoms</label>
-          <input className="input" value={form.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} autoFocus />
+          <input className="input" value={form.complaint} onChange={(e) => setForm((f) => ({ ...f, complaint: e.target.value }))} autoFocus={!form.manual} />
           <label className="field-label" style={{ marginTop: 12 }}>Treatment / Action Taken</label>
           <input className="input" value={form.treatment} onChange={(e) => setForm((f) => ({ ...f, treatment: e.target.value }))} />
           <label className="field-label" style={{ marginTop: 12 }}>Outcome</label>

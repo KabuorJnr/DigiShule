@@ -596,7 +596,7 @@ export default function StaffAttendance({ store, user }) {
                 <tbody>
                   {shown.map((s) => (
                     <tr key={s.id}>
-                      <td style={{ fontWeight: 600 }}>{s.name}</td>
+                      <td style={{ fontWeight: 600, cursor: 'pointer', color: '#0078D4' }} onClick={() => setSelectedStaff(s)} title="View attendance record">{s.name}</td>
                       <td>{s.role}</td>
                       <td className="muted">{s.dept}</td>
                       <td className="check-in-col">{s.checkIn || ''}</td>
@@ -867,6 +867,23 @@ export default function StaffAttendance({ store, user }) {
         let subjectAvg = gradedStudents > 0 ? (sumScores / gradedStudents).toFixed(1) : '-';
         totalStudents = totalStudents || '-';
 
+        // This staff member's own attendance history — pulled from both the
+        // device clock-ins and the admin-marked daily register, resolved via
+        // the same staff-id lookup used by the Logs tab, then matched by staff
+        // record id (with a name fallback for legacy rows).
+        const staffAttendance = [...registerLogs, ...logs]
+          .filter((l) => {
+            const rec = resolveStaffFromLog(l.staff_id);
+            if (rec) return rec.id === selectedStaff.id;
+            return (l.staff_name || '').toLowerCase() === selectedStaff.name.toLowerCase();
+          })
+          .sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+        const attSummary = {
+          present: staffAttendance.filter((l) => (l.status || (l.check_in_time ? 'Present' : '')) === 'Present').length,
+          absent: staffAttendance.filter((l) => l.status === 'Absent').length,
+          leave: staffAttendance.filter((l) => l.status === 'On Leave').length,
+        };
+
         return (
           <Modal title={`${selectedStaff.name}'s Profile`} onClose={() => setSelectedStaff(null)} footer={
             <div style={{ display: 'flex', gap: 10 }}>
@@ -906,18 +923,41 @@ export default function StaffAttendance({ store, user }) {
               </div>
 
               <div className="card" style={{ padding: 16, background: '#f8fafc', border: 'none' }}>
-                <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Recent Activity</div>
-                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#334155' }}>
-                  <li style={{ marginBottom: 6 }}>
-                    {selectedStaff.checkIn ? `Checked in today at ${selectedStaff.checkIn}` : 'Not checked in today yet'}
-                  </li>
-                  <li style={{ marginBottom: 6 }}>
-                    {gradedStudents > 0 ? `Recorded ${gradedStudents} scores in ${subject} gradebook` : `Assigned as teacher for ${subject}`}
-                  </li>
-                  <li>
-                    {assignedClass !== 'None' ? `Responsible for ${assignedClass} as Class Teacher` : 'No Class Teacher assignment'}
-                  </li>
-                </ul>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Attendance Record</div>
+                  {staffAttendance.length > 0 && (
+                    <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                      <Badge color="green">{attSummary.present} Present</Badge>
+                      <Badge color="red">{attSummary.absent} Absent</Badge>
+                      {attSummary.leave > 0 && <Badge color="amber">{attSummary.leave} Leave</Badge>}
+                    </div>
+                  )}
+                </div>
+                {staffAttendance.length > 0 ? (
+                  <div className="scroll-x" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                    <table className="table" style={{ fontSize: 13 }}>
+                      <thead>
+                        <tr><th>Date</th><th>Status</th><th>Clock In</th><th>Clock Out</th><th>Source</th></tr>
+                      </thead>
+                      <tbody>
+                        {staffAttendance.slice(0, 60).map((l) => (
+                          <tr key={l.id}>
+                            <td>{l.date || (l.created_at || '').slice(0, 10)}</td>
+                            <td>{l.status ? <Badge color={STATUS_COLOR[l.status] || 'gray'}>{l.status}</Badge> : (l.check_in_time ? <Badge color="green">Present</Badge> : '-')}</td>
+                            <td style={{ color: '#065f46' }}>{l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '-'}</td>
+                            <td style={{ color: '#dc2626' }}>{l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '-'}</td>
+                            <td className="muted" style={{ fontSize: 12 }}>{l.source === 'manual' ? `Manual (${l.marked_by || '—'})` : 'Clock-in'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="muted" style={{ fontSize: 13 }}>
+                    No attendance records yet for {selectedStaff.name.split(' ')[0]}.
+                    {selectedStaff.checkIn ? ` Checked in today at ${selectedStaff.checkIn}.` : ''}
+                  </div>
+                )}
               </div>
 
             </div>

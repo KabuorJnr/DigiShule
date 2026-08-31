@@ -96,11 +96,16 @@ export default function ParentDashboard() {
       // belong in notifications with a 'parents' audience, surfaced separately.
       setInboxMessages((msgs || []).filter(m =>
         m.recipient_role === 'parent' &&
-        (m.student_id === child.id || m.student_id === child.adm)
+        (
+          // Addressed to me directly (e.g. a teacher's reply carries my user id)…
+          (m.recipient_id && currentUser && m.recipient_id === currentUser.id) ||
+          // …or keyed to one of my children (clinic notes, teacher-initiated notes).
+          m.student_id === child.id || m.student_id === child.adm
+        )
       ));
     });
     return () => { active = false; };
-  }, [child?.id, child?.adm]);
+  }, [child?.id, child?.adm, currentUser?.id]);
 
   // ── Computed values ──
   const subjects = useMemo(() => {
@@ -153,6 +158,7 @@ export default function ParentDashboard() {
         id: `msg_${Date.now()}`,
         sender_id: currentUser.id || 'parent',
         sender_name: currentUser.name || 'Parent',
+        sender_role: 'parent',
         recipient_role: msgForm.to,
         student_id: child.id,
         student_name: child.name,
@@ -162,6 +168,34 @@ export default function ParentDashboard() {
         created_at: new Date().toISOString()
       };
       await upsertRow('messages', messagePayload);
+
+      // Office recipients (Principal, Finance, Admin, Health Center) have no
+      // message inbox — deliver those to the relevant staff via the bell
+      // notifications feed so they actually arrive. Teacher messages are picked
+      // up directly by the teacher inbox and need no notification mirror.
+      const OFFICE_AUDIENCE = {
+        'School Administration': ['admins'],
+        'Finance Office': ['finance'],
+        'Health Center': ['nurse'],
+        'Principal': ['principal'],
+      };
+      const audience = OFFICE_AUDIENCE[msgForm.to];
+      if (audience) {
+        try {
+          await upsertRow('notifications', {
+            id: `pmsg_${Date.now()}`,
+            title: `Parent message: ${msgForm.subject}`,
+            message: `From ${currentUser.name || 'a parent'} (re ${child.name}): ${msgForm.body}`.slice(0, 240),
+            body: `From ${currentUser.name || 'a parent'} regarding ${child.name}:\n\n${msgForm.body}`,
+            posted_by: currentUser.name || 'Parent',
+            role: 'parent',
+            audience,
+            read: false,
+            created_at: new Date().toISOString(),
+          });
+        } catch { /* message already saved; notification mirror is best-effort */ }
+      }
+
       notify(`Message sent to ${msgForm.to} successfully!`, 'success', 'Messages');
       setMsgModal(false);
       setMsgForm({ to: 'Class Teacher', subject: '', body: '' });

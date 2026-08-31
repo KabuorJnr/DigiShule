@@ -252,6 +252,26 @@ export default function PortalLayout() {
   };
   const unreadCount = visibleNotifications.filter((n) => !n.read).length;
 
+  // Notifications are stored with `created_at` (ISO); older rows may carry a
+  // pre-formatted `time` string. Render a friendly relative/absolute stamp from
+  // whichever is present so the timestamp line is never blank.
+  const formatNotifTime = (n) => {
+    if (n?.time) return n.time;
+    const raw = n?.created_at;
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw);
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
   const store = useMemo(
     () => ({
       settings, setSettings: setSettingsP,
@@ -928,14 +948,22 @@ export default function PortalLayout() {
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
+              {visibleNotifications.length === 0 && (
+                <div className="muted" style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13 }}>
+                  You're all caught up — no notifications.
+                </div>
+              )}
               {visibleNotifications.map((n) => (
                 <div key={n.id} className="notif-item" style={{ background: n.read ? '#fff' : '#f0f6ff' }} onClick={() => markRead(n.id)}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
                     <strong style={{ fontSize: 13 }}>{n.title}</strong>
-                    {!n.read && <span className="dot" />}
+                    {!n.read && <span className="dot" style={{ flexShrink: 0, marginTop: 4 }} />}
                   </div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{n.body}</div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>{n.time}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{n.body || n.message}</div>
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <span>{n.posted_by ? `From ${n.posted_by}` : ''}</span>
+                    <span>{formatNotifTime(n)}</span>
+                  </div>
                 </div>
               ))}
             </div>
