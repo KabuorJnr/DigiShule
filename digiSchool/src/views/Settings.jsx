@@ -366,7 +366,7 @@ export default function Settings({ store, user }) {
               </div>
             ) : (
               <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
-                âš  No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
+                ⚠  No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
               </div>
             )}
           </div>
