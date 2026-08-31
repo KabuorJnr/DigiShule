@@ -84,7 +84,7 @@ export default function Newsletter({ store, user }) {
         body: intro || `A new school newsletter (${title.trim()}) has been published by the ${authorRole}.`,
         posted_by: user?.name || authorRole,
         role: user?.role || 'admin',
-        audience: ['all', 'parents'],
+        audience: ['parents'],
         school_id: getActiveSchoolId(),
         read: false,
         created_at: new Date().toISOString(),
