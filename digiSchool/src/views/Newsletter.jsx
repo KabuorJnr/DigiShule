@@ -27,6 +27,9 @@ export default function Newsletter({ store, user }) {
   const [sections, setSections] = useState([{ ...blankSection(), heading: 'Highlights', body: '' }]);
   const [saving, setSaving] = useState(false);
   const [currentId, setCurrentId] = useState(null);
+  // Preserve the ORIGINAL creation time across edits so re-saving an old issue
+  // doesn't reset its timestamp and scramble "Past Issues" ordering.
+  const [createdAt, setCreatedAt] = useState(() => new Date().toISOString());
   const [past, setPast] = useState([]);
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function Newsletter({ store, user }) {
     author: user?.name || 'Administration',
     author_role: authorRole,
     published_at: status === 'Published' ? new Date().toISOString() : null,
-    created_at: new Date().toISOString(),
+    created_at: createdAt,
   });
 
   const handleSave = async (status = 'Draft') => {
@@ -97,6 +100,7 @@ export default function Newsletter({ store, user }) {
 
   const loadPast = (nl) => {
     setCurrentId(nl.id);
+    setCreatedAt(nl.created_at || new Date().toISOString());
     setTitle(nl.title || '');
     setIssueDate(nl.issue_date || new Date().toISOString().slice(0, 10));
     setIntro(nl.intro || '');
@@ -109,6 +113,7 @@ export default function Newsletter({ store, user }) {
 
   const newDraft = () => {
     setCurrentId(null);
+    setCreatedAt(new Date().toISOString());
     setTitle('School Newsletter');
     setIssueDate(new Date().toISOString().slice(0, 10));
     setIntro('');

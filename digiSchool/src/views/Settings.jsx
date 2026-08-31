@@ -118,21 +118,34 @@ export default function Settings({ store, user }) {
 
   const upForm = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  function onLogo(file) {
+  // Read an image upload into a data URL after validating type and size.
+  // Logo/stamp live inline in the settings JSON that many screens fetch, so an
+  // unbounded base64 blob would bloat every read — reject non-images and
+  // oversized files up front.
+  function readImageFile(file, maxKB, apply) {
     if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) {
+      notify('Please choose an image file (PNG, JPG, SVG…).', 'error', 'Settings');
+      return;
+    }
+    if (file.size > maxKB * 1024) {
+      notify(`Image is too large (${Math.round(file.size / 1024)}KB). Please use one under ${maxKB}KB.`, 'error', 'Settings');
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (e) => upForm({ logo: String(e.target.result) });
+    reader.onload = (e) => apply(String(e.target.result));
     reader.readAsDataURL(file);
   }
 
+  function onLogo(file) {
+    readImageFile(file, 1024, (dataUrl) => upForm({ logo: dataUrl }));
+  }
+
   function onStamp(file) {
-    if (!file) return;
     // Store the scanned official stamp as a data URL in settings so it can be
     // stamped onto every official document (newsletters, fee structures,
     // letters) without depending on external storage.
-    const reader = new FileReader();
-    reader.onload = (e) => upForm({ stamp: String(e.target.result) });
-    reader.readAsDataURL(file);
+    readImageFile(file, 512, (dataUrl) => upForm({ stamp: dataUrl }));
   }
 
   function saveGeneral() {
