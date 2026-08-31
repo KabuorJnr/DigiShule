@@ -94,7 +94,8 @@ export async function fetchTable(key) {
       clinic_visits: 'date', disciplinary_records: 'date', school_events: 'date', student_attendance: 'date',
       admissions: 'date', job_applications: 'applied_date',
       assignment_submissions: 'submitted_at',
-      parent_meeting_requests: 'created_at', calendar_events: 'date'
+      parent_meeting_requests: 'created_at', calendar_events: 'date',
+      staff_daily_attendance: 'created_at'
     };
     
     if (dateColMap[table]) {

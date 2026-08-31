@@ -13,6 +13,7 @@ const TABS = [
   { id: 'fee_structure', label: 'Fee Structure', path: 'fee_structure' },
   { id: 'expenses', label: 'Expenses', path: 'expenses' },
   { id: 'payment_plans', label: 'Payment Plans', path: 'payment_plans' },
+  { id: 'pledges', label: 'Pledges & In-Kind', path: 'pledges' },
   { id: 'budget', label: 'Budget', path: 'budget' },
   { id: 'scholarships', label: 'Scholarships', path: 'scholarships' },
   { id: 'reports', label: 'Reports', path: 'reports' },
@@ -38,6 +39,7 @@ export default function FinanceLayout() {
   const [paymentPlans, setPaymentPlans] = useState([]);
   const [scholarships, setScholarships] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [pledges, setPledges] = useState([]);
 
   useEffect(() => {
     if (params?.tab) {
@@ -56,8 +58,9 @@ export default function FinanceLayout() {
       import('../../lib/api').then(({ fetchStudents }) => fetchStudents(0, 1000).then(r => r.data || [])).catch(() => []),
       fetchTable('payment_plans').catch(() => []),
       fetchTable('scholarships').catch(() => []),
-      fetchTable('finance_audit_log').catch(() => [])
-    ]).then(([invs, pays, exps, stus, plans, schs, logs]) => {
+      fetchTable('finance_audit_log').catch(() => []),
+      fetchTable('payment_pledges').catch(() => [])
+    ]).then(([invs, pays, exps, stus, plans, schs, logs, pldg]) => {
       setInvoices(invs);
       setPayments(pays);
       setExpenses(exps);
@@ -65,6 +68,7 @@ export default function FinanceLayout() {
       setPaymentPlans(plans || []);
       setScholarships(schs || []);
       setAuditLogs(logs || []);
+      setPledges(pldg || []);
     });
   }, []);
 
@@ -110,6 +114,7 @@ export default function FinanceLayout() {
         paymentPlans, setPaymentPlans,
         scholarships, setScholarships,
         auditLogs, setAuditLogs,
+        pledges, setPledges,
         addAuditLog
       }} />
     </div>

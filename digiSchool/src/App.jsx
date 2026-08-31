@@ -29,6 +29,7 @@ import ExpensesTab from './views/finance/ExpensesTab';
 import ReportsTab from './views/finance/ReportsTab';
 import DefaultersTab from './views/finance/DefaultersTab';
 import PaymentPlansTab from './views/finance/PaymentPlansTab';
+import PledgesTab from './views/finance/PledgesTab';
 import BudgetTab from './views/finance/BudgetTab';
 import ScholarshipsTab from './views/finance/ScholarshipsTab';
 import AuditTab from './views/finance/AuditTab';
@@ -108,6 +109,7 @@ export default function App() {
           <Route path="fee_structure" element={<FeeStructureTab />} />
           <Route path="expenses" element={<ExpensesTab />} />
           <Route path="payment_plans" element={<PaymentPlansTab />} />
+          <Route path="pledges" element={<PledgesTab />} />
           <Route path="budget" element={<BudgetTab />} />
           <Route path="scholarships" element={<ScholarshipsTab />} />
           <Route path="reports" element={<ReportsTab />} />

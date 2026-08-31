@@ -25,6 +25,7 @@ import MyProfile from '../MyProfile';
 import DosDashboard from '../DosDashboard';
 import ELearning from '../ELearning';
 import Appraisal from '../Appraisal';
+import Newsletter from '../Newsletter';
 
 const VIEW_MAP = {
   developer_portal: DeveloperPortal,
@@ -54,6 +55,7 @@ const VIEW_MAP = {
   dos_dashboard: DosDashboard,
   elearning: ELearning,
   appraisal: Appraisal,
+  newsletter: Newsletter,
 };
 
 export default function LegacyViewLoader() {

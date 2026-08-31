@@ -39,7 +39,6 @@ function Icon({ name, className }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [billing, setBilling] = useState('annual');
   const [openFaq, setOpenFaq] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [showTop, setShowTop] = useState(false);
@@ -152,51 +151,6 @@ export default function LandingPage() {
     { q: 'Is our data safe?', a: 'Absolutely. Data is encrypted, backed up automatically, and protected by strict role-based access so each user only sees what they should.' },
   ];
 
-  // Subscription packages - flat per-school pricing (KES). Annual = 10x monthly.
-  const packages = [
-    {
-      id: 'starter', name: 'Starter', tagline: 'For small schools going digital for the first time.',
-      monthly: 3000, annual: 30000, limit: 'Up to 250 learners', cta: 'Start free trial',
-      features: [
-        { t: 'Principal & admin dashboard', on: true },
-        { t: 'Gradebook & automated CBC reports', on: true },
-        { t: 'Fee invoicing, receipts & statements', on: true },
-        { t: 'Timetable generator', on: true },
-        { t: 'Offline-first - works without internet', on: true },
-        { t: 'Email support', on: true },
-        { t: 'SMS notifications', on: false },
-        { t: 'Parent & student portals', on: false },
-      ],
-    },
-    {
-      id: 'standard', name: 'Standard', tagline: 'Everything a busy school needs day-to-day.',
-      monthly: 6500, annual: 65000, limit: 'Up to 800 learners', cta: 'Start free trial', popular: true,
-      features: [
-        { t: 'Everything in Starter', on: true, strong: true },
-        { t: 'Bulk SMS - fees, results & absences', on: true },
-        { t: 'Parent & student mobile portals', on: true },
-        { t: 'M-PESA / mobile-money reconciliation', on: true },
-        { t: 'Staff HR, attendance & payroll', on: true },
-        { t: 'Admissions & registrar workflows', on: true },
-        { t: 'Priority support', on: true },
-      ],
-    },
-    {
-      id: 'premium', name: 'Premium', tagline: 'The full suite for large & multi-stream schools.',
-      monthly: 12000, annual: 120000, limit: 'Unlimited learners', cta: 'Talk to sales',
-      features: [
-        { t: 'Everything in Standard', on: true, strong: true },
-        { t: 'E-learning & CBC resource library', on: true },
-        { t: 'Performance analytics & insights', on: true },
-        { t: 'Clinic & library modules', on: true },
-        { t: 'Custom domain (portal.yourschool.com)', on: true },
-        { t: 'On-site staff training', on: true },
-        { t: 'Dedicated account manager', on: true },
-      ],
-    },
-  ];
-
-  const fmtKES = (n) => 'KES ' + n.toLocaleString('en-KE');
 
   return (
     <div className="eo">
@@ -210,7 +164,6 @@ export default function LandingPage() {
             <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
             <a href="#portals" onClick={() => setMenuOpen(false)}>Portals</a>
             <a href="#how" onClick={() => setMenuOpen(false)}>How it works</a>
-            <a href="#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
             <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
             <div className="eo-nav-mobile-cta">
               <button className="eo-btn eo-btn-ghost" onClick={() => go('/login')}>Login</button>
@@ -374,57 +327,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ---------- PRICING ---------- */}
-        <section className="eo-sec eo-sec-soft" id="pricing">
-          <div className="eo-wrap">
-            <div className="eo-sec-head">
-              <div className="eo-eyebrow eo-center"><span className="eo-dot" /> Simple pricing</div>
-              <h2>One flat fee for your whole school.</h2>
-              <p>No per-student charges, no hidden add-ons. Pick a package for your size and get every module for one predictable price - a fraction of what per-student platforms cost.</p>
-            </div>
-
-            <div className="eo-billing" role="tablist" aria-label="Billing cycle">
-              <button role="tab" aria-selected={billing === 'monthly'} className={`eo-bill-opt ${billing === 'monthly' ? 'active' : ''}`} onClick={() => setBilling('monthly')}>Monthly</button>
-              <button role="tab" aria-selected={billing === 'annual'} className={`eo-bill-opt ${billing === 'annual' ? 'active' : ''}`} onClick={() => setBilling('annual')}>
-                Annual <span className="eo-save">2 months free</span>
-              </button>
-            </div>
-
-            <div className="eo-pkgs">
-              {packages.map((pkg) => {
-                const price = billing === 'annual' ? pkg.annual : pkg.monthly;
-                const suffix = billing === 'annual' ? '/ year' : '/ month';
-                return (
-                  <div key={pkg.id} className={`eo-pkg ${pkg.popular ? 'popular' : ''}`}>
-                    {pkg.popular && <div className="eo-pkg-ribbon">Most popular</div>}
-                    <div className="eo-pkg-name">{pkg.name}</div>
-                    <p className="eo-pkg-tag">{pkg.tagline}</p>
-                    <div className="eo-pkg-price">
-                      <span className="eo-pkg-amt">{fmtKES(price)}</span>
-                      <span className="eo-pkg-suffix">{suffix}</span>
-                    </div>
-                    <div className="eo-pkg-sub">
-                      {billing === 'annual'
-                        ? `Just ${fmtKES(Math.round(pkg.annual / 12))}/mo, billed yearly`
-                        : `Save ${fmtKES(pkg.monthly * 12 - pkg.annual)} paying annually`}
-                    </div>
-                    <div className="eo-pkg-limit">{pkg.limit}</div>
-                    <button className={`eo-btn ${pkg.popular ? 'eo-btn-primary' : 'eo-btn-ghost'} eo-pkg-cta`} onClick={() => go('/signup')}>{pkg.cta}</button>
-                    <ul className="eo-pkg-feats">
-                      {pkg.features.map((f, i) => (
-                        <li key={i} className={`${f.on ? 'yes' : 'no'} ${f.strong ? 'strong' : ''}`}>
-                          <Icon name={f.on ? 'check' : 'chevron'} className="eo-i-xs eo-feat-ico" />
-                          <span>{f.t}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="eo-pkg-foot">All packages include automated backups, encryption, free onboarding &amp; data migration, and a 14-day free trial - no card required. Running a group of schools? <a href="/book-demo" onClick={(e) => { e.preventDefault(); go('/book-demo'); }}>Talk to us</a> about a multi-school plan.</p>
-          </div>
-        </section>
 
         {/* ---------- TESTIMONIALS ---------- */}
         <section className="eo-sec" id="stories">
@@ -522,7 +424,6 @@ export default function LandingPage() {
               <h4>Product</h4>
               <a href="#features">Features</a>
               <a href="#portals">Portals</a>
-              <a href="#pricing">Pricing</a>
               <a href="#faq">FAQ</a>
             </div>
             <div className="eo-foot-col">

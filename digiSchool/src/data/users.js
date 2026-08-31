@@ -122,7 +122,8 @@ export const ROLES = {
         section: 'COMMUNICATIONS',
         items: [
           { id: 'notices', icon: 'bell', label: 'Notices & Announcements', view: 'notices' },
-          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
+          { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' },
+          { id: 'newsletter', icon: 'file', label: 'Generate Newsletter', view: 'newsletter' }
         ]
       },
       {
@@ -172,7 +173,8 @@ export const ROLES = {
         section: 'COMMUNICATIONS',
         items: [
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' },
+          { id: 'newsletter', icon: 'file', label: 'Generate Newsletter', view: 'newsletter' }
         ]
       },
       {
@@ -215,7 +217,8 @@ export const ROLES = {
         section: 'COMMUNICATIONS',
         items: [
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' },
+          { id: 'newsletter', icon: 'file', label: 'Generate Newsletter', view: 'newsletter' }
         ]
       },
       {
@@ -260,7 +263,8 @@ export const ROLES = {
         section: 'COMMUNICATIONS',
         items: [
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' },
-          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' }
+          { id: 'school_calendar', icon: 'calendar', label: 'Calendar', view: 'school_calendar' },
+          { id: 'newsletter', icon: 'file', label: 'Generate Newsletter', view: 'newsletter' }
         ]
       },
       {
@@ -291,6 +295,7 @@ export const ROLES = {
         items: [
           { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
           { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'pledges', icon: 'payment', label: 'Pledges & In-Kind', view: 'finance', tab: 'pledges' },
           { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' },
           { id: 'payment_plans', icon: 'clipboard', label: 'Payment Plans', view: 'finance', tab: 'payment_plans' }
         ]
@@ -351,6 +356,7 @@ export const ROLES = {
         items: [
           { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
           { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'pledges', icon: 'payment', label: 'Pledges & In-Kind', view: 'finance', tab: 'pledges' },
           { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' }
         ]
       },
@@ -415,6 +421,7 @@ export const ROLES = {
         items: [
           { id: 'all_invoices', icon: 'file', label: 'Invoices & Billing', view: 'finance', tab: 'billing' },
           { id: 'all_payments', icon: 'payment', label: 'Payments', view: 'finance', tab: 'payments' },
+          { id: 'pledges', icon: 'payment', label: 'Pledges & In-Kind', view: 'finance', tab: 'pledges' },
           { id: 'defaulters', icon: 'warning', label: 'Defaulters List', view: 'finance', tab: 'defaulters' }
         ]
       },
