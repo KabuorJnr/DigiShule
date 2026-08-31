@@ -5,8 +5,18 @@ import { fmtKES } from '../../data/modules';
 import { getActiveSchoolId, saveConfig } from '../../lib/api';
 import { supabase } from '../../lib/supabaseClient';
 import Modal from '../../components/Modal';
+import OfficialStamp from '../../components/OfficialStamp';
 import { Printer, Send, Plus, Trash2, Edit2, Download, Building2, CheckCircle2 } from 'lucide-react';
 import { exportTablePDF } from '../../utils/exporters';
+
+// Sensible defaults so a brand-new school still prints a complete document.
+// Every school can override these in the Edit Fee Structure modal.
+const DEFAULT_NOTES = [
+  'All students are advised to clear term fee balances before proceeding to the next academic term.',
+  'Students are expected to purchase their own personal learning materials/stationery.',
+  'Fees once paid are not refundable except as provided by the institution policy.',
+];
+const DEFAULT_BANK = 'Bank: [Bank Name] | Account Name: [School Account Name]\nAccount No: [Account Number] | M-PESA PAYBILL: [Paybill] | Account: [ADM NO + Student Name]';
 
 const DEFAULT_VOTE_HEADS = [
   { id: 'vh-1', name: 'TUITION', term1: 12500, term2: 12500, term3: 11049 },
@@ -38,6 +48,17 @@ export default function FeeStructureTab() {
   });
 
   const [newHead, setNewHead] = useState({ name: '', term1: '', term2: '', term3: '' });
+
+  // Editable, per-school official-document copy. Persisted in app settings so
+  // it fits any onboarded institution rather than a hardcoded reference school.
+  const settingsObj = store?.settings || {};
+  const [docHeader, setDocHeader] = useState(settingsObj.feeDocHeader ?? '');
+  const [docNotes, setDocNotes] = useState(
+    Array.isArray(settingsObj.feeDocNotes) && settingsObj.feeDocNotes.length > 0
+      ? settingsObj.feeDocNotes.join('\n')
+      : DEFAULT_NOTES.join('\n')
+  );
+  const [docBank, setDocBank] = useState(settingsObj.feeDocBank ?? DEFAULT_BANK);
 
   const totals = useMemo(() => {
     let t1 = 0, t2 = 0, t3 = 0;
@@ -75,9 +96,17 @@ export default function FeeStructureTab() {
 
   const handleSaveVoteHeads = async () => {
     try {
-      await saveConfig({ feeStructure: voteHeads });
+      const notesArr = docNotes.split('\n').map(s => s.trim()).filter(Boolean);
+      const mergedSettings = {
+        ...settingsObj,
+        feeDocHeader: docHeader.trim(),
+        feeDocNotes: notesArr,
+        feeDocBank: docBank,
+      };
+      await saveConfig({ feeStructure: voteHeads, settings: mergedSettings });
       if (store.setFeeStructure) store.setFeeStructure(voteHeads);
-      notify('Fee structure vote heads updated successfully.', 'success');
+      if (store.setSettings) store.setSettings(mergedSettings);
+      notify('Fee structure updated successfully.', 'success');
       setEditModalOpen(false);
     } catch (e) {
       notify(`Failed to save: ${e.message}`, 'error');
@@ -163,21 +192,22 @@ export default function FeeStructureTab() {
 
           {/* Center Institution Title */}
           <div style={{ textAlign: 'center', flex: 1, padding: '0 12px' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: '#000' }}>
-              Ministry of Education
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#333', marginBottom: 4 }}>
-              State Department for Technical, Vocational Education and Training
-            </div>
+            {(docHeader || '').split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => (
+              <div key={i} style={{ fontSize: i === 0 ? 13 : 11, fontWeight: i === 0 ? 700 : 600, letterSpacing: 0.5, textTransform: 'uppercase', color: i === 0 ? '#000' : '#333', marginBottom: 2 }}>
+                {line}
+              </div>
+            ))}
             <h2 style={{ margin: '4px 0', fontSize: 20, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, color: '#000', fontFamily: 'Times New Roman, serif' }}>
-              {school.name || 'Butere Technical Training Institute'}
+              {school.name || 'School Name'}
             </h2>
-            <div style={{ fontSize: 11, color: '#222', lineHeight: 1.4 }}>
-              {school.address || 'P.O. Box 108-50101, Butere | Mobile: 0727402370 / 0790849063'}
-            </div>
-            <div style={{ fontSize: 11, color: '#222' }}>
-              Email: {school.email || 'buteretti@gmail.com'} | Website: {school.website || 'www.buteretti.ac.ke'}
-            </div>
+            {school.address && (
+              <div style={{ fontSize: 11, color: '#222', lineHeight: 1.4 }}>{school.address}</div>
+            )}
+            {(school.email || school.website) && (
+              <div style={{ fontSize: 11, color: '#222' }}>
+                {school.email ? `Email: ${school.email}` : ''}{school.email && school.website ? ' | ' : ''}{school.website ? `Website: ${school.website}` : ''}
+              </div>
+            )}
           </div>
 
           {/* Right School Badge Crest */}
@@ -255,58 +285,21 @@ export default function FeeStructureTab() {
         {/* ── Official Notes Section ── */}
         <div style={{ fontFamily: 'Times New Roman, serif', fontSize: 11, lineHeight: 1.5, marginBottom: 28, color: '#111' }}>
           <div style={{ fontWeight: 900, textDecoration: 'underline', marginBottom: 4 }}>NOTES</div>
-          <p style={{ margin: '0 0 8px 0', textIndent: 16 }}>
-            Following your placement in this institution, you are eligible for government scholarship/bursary allocations to assist with your education expenses. 
-            The application should be made early well in advance prior to admission. In case the government scholarship/loan does not cover the entire cost of your programme, 
-            the deficit will be met by your parent/guardian.
-          </p>
-
           <ol style={{ margin: 0, paddingLeft: 20 }}>
-            <li style={{ marginBottom: 4 }}>All students are advised to clear term fee balances before proceeding to the next academic term.</li>
-            <li style={{ marginBottom: 4 }}>Accommodation fee (for boarders only) is <strong>KES 5,000.00</strong> per term. Internal accommodation is available on a first-come basis.</li>
-            <li style={{ marginBottom: 4 }}>Students are expected to purchase their own personal learning materials/stationery.</li>
-            <li style={{ marginBottom: 4 }}>All new students will pay a Registration fee of <strong>KES 500.00</strong> and <strong>KES 2,500.00</strong> for ICT/Placement fees.</li>
-            <li style={{ marginBottom: 4 }}>All new trainees will pay <strong>KES 500.00</strong> for Student Identity Card.</li>
+            {docNotes.split('\n').map(s => s.trim()).filter(Boolean).map((note, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>{note}</li>
+            ))}
             <li style={{ marginBottom: 4 }}>
               All monies should be paid directly into official institution accounts:
-              <div style={{ fontWeight: 700, marginTop: 2, paddingLeft: 12 }}>
-                Bank: KCB Bank Ltd | Account Name: {school.name || 'EduOne Technical Institute'} Main Acc<br />
-                Account No: 1209428430 | M-PESA PAYBILL: 522533 | Account: [ADM NO + Trainee Name]
+              <div style={{ fontWeight: 700, marginTop: 2, paddingLeft: 12, whiteSpace: 'pre-line' }}>
+                {docBank}
               </div>
             </li>
           </ol>
         </div>
 
-        {/* ── Authorization & Official Stamp Box Footer ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', marginTop: 30 }}>
-          <div style={{ textAlign: 'center' }}>
-            {/* Signature SVG */}
-            <div style={{ height: 40, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <svg width="140" height="36" viewBox="0 0 140 36">
-                <path d="M10 25 C30 5, 45 35, 60 15 C75 35, 90 5, 110 20 C125 30, 135 10, 138 18" stroke="#1d4ed8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              </svg>
-            </div>
-
-            {/* Official Stamp Box */}
-            <div style={{ 
-              border: '2px dashed #1d4ed8', 
-              borderRadius: 6, 
-              padding: '8px 16px', 
-              color: '#1d4ed8', 
-              fontFamily: 'Courier New, monospace', 
-              fontSize: 10, 
-              fontWeight: 900,
-              letterSpacing: 0.5,
-              textTransform: 'uppercase',
-              transform: 'rotate(-2deg)'
-            }}>
-              <div>★ PRINCIPAL / BURSAR ★</div>
-              <div>{school.name || 'BUTERE TECHNICAL INSTITUTE'}</div>
-              <div>P.O. BOX 108 - 50101</div>
-              <div>OFFICIAL STAMP</div>
-            </div>
-          </div>
-        </div>
+        {/* ── Authorization & Official Stamp Footer ── */}
+        <OfficialStamp settings={school} label="Principal / Bursar" />
 
       </div>
 
@@ -380,6 +373,17 @@ export default function FeeStructureTab() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Editable official-document copy — makes the document fit any school. */}
+          <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div className="section-title" style={{ fontSize: 14, marginBottom: 12 }}>Official Document Text</div>
+            <label className="field-label">Header lines (e.g. Ministry / Department) — one per line, optional</label>
+            <textarea className="input" rows={2} placeholder={'Ministry of Education\nState Department for ...'} value={docHeader} onChange={e => setDocHeader(e.target.value)} style={{ marginBottom: 12, resize: 'vertical' }} />
+            <label className="field-label">Notes — one per line</label>
+            <textarea className="input" rows={5} value={docNotes} onChange={e => setDocNotes(e.target.value)} style={{ marginBottom: 12, resize: 'vertical' }} />
+            <label className="field-label">Banking / Payment Details</label>
+            <textarea className="input" rows={3} value={docBank} onChange={e => setDocBank(e.target.value)} style={{ resize: 'vertical' }} />
           </div>
         </Modal>
       )}

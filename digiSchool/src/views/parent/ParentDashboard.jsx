@@ -89,10 +89,14 @@ export default function ParentDashboard() {
       setNotifications(notifs || []);
       setSchoolEvents(events || []);
       setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
-      // Inbox: messages where recipient_role = 'parent' and linked to this child
+      // Inbox: messages addressed to a parent AND explicitly linked to this
+      // child. We deliberately do NOT show messages with no student_id here —
+      // a clinic note or teacher message that lost its student link must not
+      // fan out to every guardian in the school. Genuinely school-wide notes
+      // belong in notifications with a 'parents' audience, surfaced separately.
       setInboxMessages((msgs || []).filter(m =>
         m.recipient_role === 'parent' &&
-        (m.student_id === child.id || m.student_id === child.adm || !m.student_id)
+        (m.student_id === child.id || m.student_id === child.adm)
       ));
     });
     return () => { active = false; };

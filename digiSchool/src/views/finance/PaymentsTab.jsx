@@ -108,6 +108,12 @@ export default function PaymentsTab() {
       date: new Date().toISOString().slice(0,10),
       created_at: new Date().toISOString()
     };
+    // Only attach in-kind columns for an in-kind payment so ordinary payments
+    // stay unaffected if the in_kind/description migration hasn't been applied.
+    if (form.method === 'In-Kind') {
+      payment.in_kind = true;
+      payment.description = form.description || null;
+    }
     try {
       await upsertRow('financePayments', payment);
       await refreshPayments();
@@ -299,10 +305,17 @@ export default function PaymentsTab() {
             <div>
               <label className="field-label">Method</label>
               <select className="select" value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
-                <option>M-Pesa</option><option>Bank</option><option>Cheque</option><option>Cash</option>
+                <option>M-Pesa</option><option>Bank</option><option>Cheque</option><option>Cash</option><option>In-Kind</option>
               </select>
             </div>
           </div>
+          {form.method === 'In-Kind' && (
+            <div style={{ marginTop: 12 }}>
+              <label className="field-label">In-Kind Contribution (what was received)</label>
+              <input className="input" placeholder="e.g. 20 bags of maize, 50 desks" value={form.description || ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Enter the assessed monetary value above as the amount.</div>
+            </div>
+          )}
           <div style={{ marginTop: 12 }}>
             <label className="field-label">Reference</label>
             <input className="input" value={form.ref} onChange={e => setForm(f => ({ ...f, ref: e.target.value }))} />

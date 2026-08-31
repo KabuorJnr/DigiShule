@@ -125,6 +125,16 @@ export default function Settings({ store, user }) {
     reader.readAsDataURL(file);
   }
 
+  function onStamp(file) {
+    if (!file) return;
+    // Store the scanned official stamp as a data URL in settings so it can be
+    // stamped onto every official document (newsletters, fee structures,
+    // letters) without depending on external storage.
+    const reader = new FileReader();
+    reader.onload = (e) => upForm({ stamp: String(e.target.result) });
+    reader.readAsDataURL(file);
+  }
+
   function saveGeneral() {
     setSettings((s) => ({
       ...s,
@@ -134,6 +144,8 @@ export default function Settings({ store, user }) {
       phone: form.phone,
       email: form.email,
       principal: form.principal,
+      principalRank: form.principalRank,
+      stamp: form.stamp,
       logo: form.logo,
       paymentDetails: form.paymentDetails,
       latitude: form.latitude,
@@ -248,14 +260,30 @@ export default function Settings({ store, user }) {
             <div><label className="field-label">Phone</label><input className="input" value={form.phone} onChange={(e) => upForm({ phone: e.target.value })} /></div>
             <div><label className="field-label">Email</label><input className="input" value={form.email} onChange={(e) => upForm({ email: e.target.value })} /></div>
             <div><label className="field-label">Principal Name</label><input className="input" value={form.principal} onChange={(e) => upForm({ principal: e.target.value })} /></div>
+            <div><label className="field-label">Principal's Rank / Title</label><input className="input" placeholder="e.g. Chief Principal, HSC" value={form.principalRank || ''} onChange={(e) => upForm({ principalRank: e.target.value })} /></div>
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="field-label">School Logo</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div className="logo-box" style={{ width: 64, height: 64, background: form.logo ? '#fff' : 'var(--accent)' }}>
-                {form.logo ? <img src={form.logo} alt="logo" /> : <span>WS</span>}
+          <div className="grid grid-2" style={{ marginBottom: 16 }}>
+            <div>
+              <label className="field-label">School Logo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="logo-box" style={{ width: 64, height: 64, background: form.logo ? '#fff' : 'var(--accent)' }}>
+                  {form.logo ? <img src={form.logo} alt="logo" /> : <span>WS</span>}
+                </div>
+                <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files[0])} />
               </div>
-              <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files[0])} />
+            </div>
+            <div>
+              <label className="field-label">Official School Stamp (scanned)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="logo-box" style={{ width: 64, height: 64, background: form.stamp ? '#fff' : 'var(--muted, #f1f5f9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {form.stamp ? <img src={form.stamp} alt="stamp" style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>No stamp</span>}
+                </div>
+                <div>
+                  <input type="file" accept="image/*" onChange={(e) => onStamp(e.target.files[0])} />
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Appears on official newsletters & documents.</div>
+                  {form.stamp && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => upForm({ stamp: '' })}>Remove</button>}
+                </div>
+              </div>
             </div>
           </div>
 

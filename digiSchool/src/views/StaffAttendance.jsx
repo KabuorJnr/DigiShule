@@ -18,7 +18,9 @@ export default function StaffAttendance({ store, user }) {
   const [staff, setStaff] = useState([]);
   const [filter, setFilter] = useState('All');
   const [tab, setTab] = useState('attendance');
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState([]);            // device clock-ins (uuid keyed)
+  const [registerLogs, setRegisterLogs] = useState([]); // admin-marked daily register
+  const [logDate, setLogDate] = useState(''); // '' = all dates
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ type: 'Annual', start: '', end: '', reason: '' });
@@ -52,8 +54,12 @@ export default function StaffAttendance({ store, user }) {
     Promise.all([
       fetchTable('staff'),
       fetchTable('staff_attendance_logs'),
-      supabase.from('profiles').select('id, teacher_id, full_name')
-    ]).then(([staffRows, logRows, { data: profs }]) => {
+      supabase.from('profiles').select('id, teacher_id, full_name'),
+      fetchTable('staff_daily_attendance').catch(() => [])
+    ]).then(([staffRows, logRows, { data: profs }, registerRows]) => {
+      if (registerRows) {
+        setRegisterLogs(registerRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      }
       // profMap: staff.id (teacher_id) → auth user UUID
       const profMap = {};
       // uidStaffMap: auth user UUID → staff record (for log lookups)
@@ -138,18 +144,20 @@ export default function StaffAttendance({ store, user }) {
   };
 
   const handleExportLogs = () => {
-    if (!logs || logs.length === 0) {
-      notify('No attendance logs available to export.', 'warning');
+    const combined = [...registerLogs, ...logs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (combined.length === 0) {
+      notify('No attendance records available to export.', 'warning');
       return;
     }
-    
+
     const rows = [
-      ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status'],
-      ...logs.map(l => {
-        const s = resolveStaffFromLog(l.staff_id) || { name: 'Unknown', role: 'Staff' };
+      ['Staff Name', 'Role', 'Date', 'Check In', 'Check Out', 'Status', 'Source'],
+      ...combined.map(l => {
+        const s = resolveStaffFromLog(l.staff_id) || { name: l.staff_name || 'Unknown', role: l.role || 'Staff' };
         const inTime = l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '-';
         const outTime = l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '-';
-        return [s.name, s.role || 'Staff', l.date || (l.created_at || '').slice(0, 10), inTime, outTime, l.status || 'Present'];
+        const source = l.source === 'manual' ? `Manual (${l.marked_by || '—'})` : 'Clock-in';
+        return [s.name || l.staff_name, s.role || l.role || 'Staff', l.date || (l.created_at || '').slice(0, 10), inTime, outTime, l.status || 'Present', source];
       })
     ];
     
@@ -202,12 +210,59 @@ export default function StaffAttendance({ store, user }) {
         id: updated.id, name: updated.name, role: updated.role,
         dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
       });
+      // Also persist a DATED attendance record so the marking is kept for
+      // reference and historical tracking — not just the live roster status.
+      // Keyed by staff+date so re-marking the same day updates one row.
+      await persistDailyRecord(updated, next);
     } catch (e) {
       alert('Failed to update status: ' + e.message);
       console.error(e);
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
-    notify('Staff status updated.', 'info', 'Attendance');
+    notify('Staff status updated & recorded.', 'info', 'Attendance');
+  };
+
+  // Write/refresh a single staff member's dated attendance record. A manual
+  // register entry is deterministic per staff+day, so we can safely upsert.
+  const persistDailyRecord = async (member, status, dateStr = new Date().toISOString().slice(0, 10)) => {
+    const record = {
+      id: `att_${member.id}_${dateStr}`,
+      staff_id: member.id,
+      staff_name: member.name,
+      role: member.role || null,
+      dept: member.dept || null,
+      date: dateStr,
+      status,
+      source: 'manual',
+      marked_by: user?.name || 'Admin',
+      created_at: new Date().toISOString(),
+    };
+    await upsertRow('staff_daily_attendance', record);
+    setRegisterLogs((prev) => {
+      const rest = prev.filter((l) => l.id !== record.id);
+      return [record, ...rest].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    });
+  };
+
+  // Persist the whole active roster's current status as today's register in one
+  // action — gives admins a complete, kept daily attendance record on demand.
+  const [savingRegister, setSavingRegister] = useState(false);
+  const saveDailyRegister = async () => {
+    const active = staff.filter((s) => s.status !== 'Inactive');
+    if (active.length === 0) { notify('No active staff to record.', 'warning'); return; }
+    setSavingRegister(true);
+    let saved = 0;
+    try {
+      for (const s of active) {
+        await persistDailyRecord(s, s.status);
+        saved++;
+      }
+      notify(`Today's attendance register saved (${saved} staff).`, 'success', 'Attendance');
+    } catch (e) {
+      notify(`Saved ${saved}/${active.length}. Error: ${e.message}`, 'error', 'Attendance');
+    } finally {
+      setSavingRegister(false);
+    }
   };
 
   const offboardStaff = async (id) => {
@@ -487,7 +542,7 @@ export default function StaffAttendance({ store, user }) {
           <Icon name="users" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Staff Roster
         </button>
         <button className={`tab${tab === 'logs' ? ' active' : ''}`} onClick={() => setTab('logs')}>
-          <Icon name="clock" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> EduOne Logs
+          <Icon name="clock" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Attendance History
         </button>
         <button className={`tab${tab === 'leave' ? ' active' : ''}`} onClick={() => setTab('leave')}>
           <Icon name="clipboard" size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Leave Requests
@@ -518,6 +573,9 @@ export default function StaffAttendance({ store, user }) {
               </div>
               {canApprove && (
                 <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-sm btn-primary" onClick={saveDailyRegister} disabled={savingRegister}>
+                    {savingRegister ? 'Saving…' : 'Save Register'}
+                  </button>
                   <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportLogs}>
                     Export Logs
                   </button>
@@ -564,43 +622,56 @@ export default function StaffAttendance({ store, user }) {
         </>
       )}
 
-      {tab === 'logs' && (
+      {tab === 'logs' && (() => {
+        const logDay = (l) => l.date || (l.created_at || '').slice(0, 10);
+        const combined = [...registerLogs, ...logs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const shownLogs = logDate ? combined.filter((l) => logDay(l) === logDate) : combined;
+        return (
         <div className="card card-pad">
-          <div className="toolbar" style={{ marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 15 }}>EduOne Attendance Clock-In History</h3>
+          <div className="toolbar" style={{ marginBottom: 14, justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>Staff Attendance History</h3>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <label className="muted" style={{ fontSize: 12 }}>Filter by date</label>
+              <input type="date" className="input" value={logDate} onChange={(e) => setLogDate(e.target.value)} style={{ width: 160 }} />
+              {logDate && <button className="btn btn-sm" onClick={() => setLogDate('')}>Clear</button>}
+            </div>
           </div>
           <div className="scroll-x">
             <table className="table">
               <thead>
-                <tr><th>Staff Member</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Location Data</th></tr>
+                <tr><th>Staff Member</th><th>Date</th><th>Status</th><th>Clock In</th><th>Clock Out</th><th>Source</th><th>Location Data</th></tr>
               </thead>
               <tbody>
-                {logs.map((l) => {
-                  const staffMember = resolveStaffFromLog(l.staff_id) || { name: 'Unknown Staff' };
+                {shownLogs.map((l) => {
+                  const staffMember = resolveStaffFromLog(l.staff_id) || { name: l.staff_name || 'Unknown Staff' };
+                  const isManual = l.source === 'manual';
                   return (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 600 }}>{staffMember.name}</td>
-                      <td>{l.date}</td>
+                      <td style={{ fontWeight: 600 }}>{staffMember.name || l.staff_name}</td>
+                      <td>{logDay(l)}</td>
+                      <td>{l.status ? <Badge color={STATUS_COLOR[l.status] || 'gray'}>{l.status}</Badge> : (l.check_in_time ? <Badge color="green">Present</Badge> : '-')}</td>
                       <td style={{ color: '#065f46', fontWeight: 500 }}>
                         {l.check_in_time ? new Date(l.check_in_time).toLocaleTimeString() : '-'}
                       </td>
                       <td style={{ color: '#dc2626', fontWeight: 500 }}>
                         {l.check_out_time ? new Date(l.check_out_time).toLocaleTimeString() : '-'}
                       </td>
+                      <td className="muted" style={{ fontSize: 12 }}>{isManual ? `Manual (${l.marked_by || '—'})` : 'Clock-in'}</td>
                       <td className="muted" style={{ fontSize: 12 }}>
-                        {l.location_lat ? `Lat: ${l.location_lat.toFixed(4)}, Lng: ${l.location_lng.toFixed(4)}` : 'N/A'}
+                        {l.location_lat ? `Lat: ${Number(l.location_lat).toFixed(4)}, Lng: ${Number(l.location_lng).toFixed(4)}` : 'N/A'}
                       </td>
                     </tr>
                   );
                 })}
-                {logs.length === 0 && (
-                  <tr><td colSpan={5} className="muted" style={{ textAlign: 'center', padding: 24 }}>No EduOne logs recorded yet.</td></tr>
+                {shownLogs.length === 0 && (
+                  <tr><td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 24 }}>No attendance records{logDate ? ' for this date' : ' yet'}.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {tab === 'leave' && (
         <>

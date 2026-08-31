@@ -2,7 +2,7 @@
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';
 import { fmtKES } from '../../data/modules';
-import { upsertRow, updateRow } from '../../lib/api';
+import { upsertRow } from '../../lib/api';
 import { useOutletContext } from 'react-router-dom';
 import { Search, CheckCircle, XCircle } from 'lucide-react';
 
@@ -94,23 +94,23 @@ export default function ExpensesTab() {
     const expense = expenses.find(e => e.id === expenseId);
     if (!expense) return;
 
-    const updated = expenses.map(e =>
-      e.id === expenseId
-        ? { ...e, status: 'Approved', approved_by: user?.name || 'Admin', approved_at: new Date().toISOString() }
-        : e
-    );
-    setExpenses(updated);
-    notify(`Expense "${expense.description}" approved.`, 'success');
-    addAuditLog('Expense Approved', `${expense.category}: ${expense.description} (by ${user?.name})`, expense.amount);
+    // Persist the FULL merged row via upsert rather than a partial update.
+    // A partial update keyed on id silently touches zero rows if the original
+    // expense insert never reached the database (an offline queue or an RLS
+    // rejection on insert), which is exactly how "approval doesn't save" shows
+    // up: the toast fires but nothing is written. Upserting the whole row
+    // guarantees the approved record exists after a reload.
+    const approvedRow = { ...expense, status: 'Approved', approved_by: user?.name || 'Admin', approved_at: new Date().toISOString() };
+    setExpenses(prev => prev.map(e => (e.id === expenseId ? approvedRow : e)));
 
     try {
-      await updateRow('expenses', expenseId, {
-        status: 'Approved',
-        approved_by: user?.name || 'Admin',
-        approved_at: new Date().toISOString()
-      });
-    } catch (e) {
-      console.warn('API error:', e.message);
+      await upsertRow('expenses', approvedRow);
+      notify(`Expense "${expense.description}" approved.`, 'success');
+      addAuditLog('Expense Approved', `${expense.category}: ${expense.description} (by ${user?.name})`, expense.amount);
+    } catch (err) {
+      // Roll back the optimistic change so the UI reflects what really saved.
+      setExpenses(prev => prev.map(e => (e.id === expenseId ? expense : e)));
+      notify(`Could not save approval: ${err.message}`, 'error');
     }
   };
 
@@ -119,26 +119,18 @@ export default function ExpensesTab() {
     const expense = expenses.find(e => e.id === expenseId);
     if (!expense) return;
 
-    const updated = expenses.map(e =>
-      e.id === expenseId
-        ? { ...e, status: 'Rejected', rejected_by: user?.name || 'Admin', rejected_at: new Date().toISOString(), rejection_reason: rejectReason }
-        : e
-    );
-    setExpenses(updated);
-    notify(`Expense "${expense.description}" rejected.`, 'info');
-    addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} - Reason: ${rejectReason}`, expense.amount);
+    const rejectedRow = { ...expense, status: 'Rejected', rejected_by: user?.name || 'Admin', rejected_at: new Date().toISOString(), rejection_reason: rejectReason };
+    setExpenses(prev => prev.map(e => (e.id === expenseId ? rejectedRow : e)));
     setRejectModalOpen(null);
     setRejectReason('');
 
     try {
-      await updateRow('expenses', expenseId, {
-        status: 'Rejected',
-        rejected_by: user?.name || 'Admin',
-        rejected_at: new Date().toISOString(),
-        rejection_reason: rejectReason
-      });
-    } catch (e) {
-      console.warn('API error:', e.message);
+      await upsertRow('expenses', rejectedRow);
+      notify(`Expense "${expense.description}" rejected.`, 'info');
+      addAuditLog('Expense Rejected', `${expense.category}: ${expense.description} - Reason: ${rejectReason}`, expense.amount);
+    } catch (err) {
+      setExpenses(prev => prev.map(e => (e.id === expenseId ? expense : e)));
+      notify(`Could not save rejection: ${err.message}`, 'error');
     }
   };
 

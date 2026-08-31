@@ -207,15 +207,36 @@ export default function PortalLayout() {
 
   const visibleNotifications = useMemo(() => {
     if (!currentUser) return [];
+    // For a parent, build the set of identifiers (student id + admission no)
+    // that belong to THIS guardian's own children. We derive it from the
+    // guardian's explicit linkage on their profile rather than the shared
+    // `students` array — that array can contain the whole school if RLS ever
+    // widens, and matching a per-student notice against it would light up
+    // every parent's bell for another child's fee reminder or clinic note.
+    const myChildKeys = new Set();
+    if (currentUser.role === 'parent') {
+      (currentUser.linked_students || []).forEach((c) => {
+        if (c?.id) myChildKeys.add(c.id);
+        if (c?.adm) myChildKeys.add(c.adm);
+      });
+      if (currentUser.student_id) myChildKeys.add(currentUser.student_id);
+      if (currentUser.studentId) myChildKeys.add(currentUser.studentId);
+      // Fall back to the (RLS-scoped) students list only when the profile
+      // carries no explicit linkage for us to key off.
+      if (myChildKeys.size === 0) {
+        students.forEach((s) => { if (s?.id) myChildKeys.add(s.id); if (s?.adm) myChildKeys.add(s.adm); });
+      }
+    }
     return notifications.filter((n) => {
       const aud = n.audience || [];
       if (aud.includes('all')) return true;
       if (aud.includes('admins') && ['principal', 'deputy_admin', 'deputy_academic', 'finance', 'registrar', 'dos'].includes(currentUser.role)) return true;
       if (aud.includes(currentUser.role)) return true;
       if (aud.includes(currentUser.id)) return true;
-      if (currentUser.role === 'parent' && students.length > 0) {
-        // students state for parents contains only their own children due to RLS
-        if (students.some(s => aud.includes(s.id) || aud.includes(s.adm))) return true;
+      if (currentUser.role === 'parent') {
+        if (aud.includes('parents')) return true; // school-wide parent broadcast
+        // Otherwise only notices explicitly keyed to one of my own children.
+        if (aud.some((a) => myChildKeys.has(a))) return true;
       }
       return false;
     });
@@ -259,7 +280,7 @@ export default function PortalLayout() {
         } else {
           // Map sub-route names that live inside nested layout routes
           const nestedSubRoutes = {
-            finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
+            finance: ['billing', 'payments', 'defaulters', 'statements', 'fee_structure', 'expenses', 'payment_plans', 'pledges', 'budget', 'scholarships', 'reports', 'audit', 'procurement', 'payroll', 'assets', 'tax', 'ai', 'permissions', 'journal'],
             registrar: ['enroll', 'transfers'],
             student: ['academics', 'records', 'resources', 'student_finance'],
             // 'gradebook' intentionally NOT nested here — the standalone

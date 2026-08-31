@@ -99,7 +99,10 @@ export default function Clinic({ store }) {
         sender_role: 'nurse',
         sender_name: 'School Clinic',
         recipient_role: 'parent',
-        student_id: notifyParentOpen.student_id,
+        // Always attach a student link so the note reaches only that child's
+        // guardian; fall back to the admission number for legacy visit rows
+        // that predate student_id being stored.
+        student_id: notifyParentOpen.student_id || notifyParentOpen.adm,
         subject: `Clinic Update: ${notifyParentOpen.student}`,
         body: parentMsg,
         status: 'Unread',
