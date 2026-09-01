@@ -4,8 +4,9 @@ import {
 } from 'lucide-react';
 import { ParentFees, ParentResults, ParentAttendance, ParentClinic, ParentMessages } from './ParentScreens';
 import { StudentTimetable, StudentResults, StudentLearn, StudentFinance, StudentClasses } from './StudentScreens';
-import { TeacherClasses, TeacherGradebook, TeacherMessages } from './TeacherScreens';
+import { TeacherClasses, TeacherGradebook, TeacherMessages, TeacherMarks, TeacherAttendance } from './TeacherScreens';
 import { AdminAcademics, AdminFinance, AdminStaff, AdminNotices } from './AdminScreens';
+import { AdminStudents, AdminTeachers, AdminExams, AdminTimetable, AdminApprovals, AdminAttendance } from './AdminMore';
 
 // name -> { title, Component }. 'home' and 'account' are handled by the shell.
 export const SCREENS = {
@@ -24,11 +25,19 @@ export const SCREENS = {
   teacher_classes: { title: 'My classes', Component: TeacherClasses },
   teacher_gradebook: { title: 'Gradebook', Component: TeacherGradebook },
   teacher_messages: { title: 'Messages', Component: TeacherMessages },
+  teacher_marks: { title: 'Enter marks', Component: TeacherMarks },
+  teacher_attendance: { title: 'Attendance', Component: TeacherAttendance },
 
   admin_academics: { title: 'Academics', Component: AdminAcademics },
   admin_finance: { title: 'Finance', Component: AdminFinance },
   admin_staff: { title: 'Staff', Component: AdminStaff },
   admin_notices: { title: 'Notices', Component: AdminNotices },
+  admin_students: { title: 'Students', Component: AdminStudents },
+  admin_teachers: { title: 'Teachers', Component: AdminTeachers },
+  admin_exams: { title: 'Exams', Component: AdminExams },
+  admin_timetable: { title: 'Timetable', Component: AdminTimetable },
+  admin_approvals: { title: 'Approvals', Component: AdminApprovals },
+  admin_attendance: { title: 'Attendance', Component: AdminAttendance },
 };
 
 // Bottom-nav tabs per role. `key` doubles as the root screen name.

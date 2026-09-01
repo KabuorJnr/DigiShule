@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Search, Wallet, CalendarDays, Award, Stethoscope, MessageSquare, BookOpen,
-  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell,
+  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell, Clock,
 } from 'lucide-react';
 import { studentOverall, gradeFor, is844Class, CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
@@ -77,6 +77,15 @@ export default function MobileHome({ role, store, user, open }) {
           <QA icon={Users} label="Staff" color={INFO} onClick={() => open('admin_staff')} />
           <QA icon={Bell} label="Notices" color={WARN} onClick={() => open('admin_notices')} />
         </div>
+        <div className="eom-sec"><h5>More</h5></div>
+        <div className="eom-qa-grid">
+          <QA icon={GraduationCap} label="Students" color={BLUE} onClick={() => open('admin_students')} />
+          <QA icon={Users} label="Teachers" color={INFO} onClick={() => open('admin_teachers')} />
+          <QA icon={ClipboardList} label="Exams" color={WARN} onClick={() => open('admin_exams')} />
+          <QA icon={CalendarDays} label="Timetable" color={GOOD} onClick={() => open('admin_timetable')} />
+          <QA icon={Clock} label="Approvals" color={BAD} onClick={() => open('admin_approvals')} />
+          <QA icon={CalendarDays} label="Attendance" color={BLUE} onClick={() => open('admin_attendance')} />
+        </div>
       </>
     );
   }
@@ -96,10 +105,10 @@ export default function MobileHome({ role, store, user, open }) {
         </div>
         <div className="eom-sec"><h5>Quick actions</h5></div>
         <div className="eom-qa-grid">
+          <QA icon={CalendarDays} label="Attendance" color={GOOD} onClick={() => open('teacher_attendance')} />
+          <QA icon={Award} label="Marks" color={WARN} onClick={() => open('teacher_gradebook')} />
           <QA icon={BookOpen} label="Classes" color={BLUE} onClick={() => open('teacher_classes')} />
-          <QA icon={Award} label="Gradebook" color={WARN} onClick={() => open('teacher_gradebook')} />
           <QA icon={MessageSquare} label="Messages" color={INFO} onClick={() => open('teacher_messages')} />
-          <QA icon={BarChart3} label="Performance" color={GOOD} onClick={() => open('teacher_gradebook')} />
         </div>
       </>
     );

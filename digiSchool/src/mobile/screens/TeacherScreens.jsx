@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft } from 'lucide-react';
+import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft, Users, Check } from 'lucide-react';
 import { subjectAverage, gradeFor, is844Class } from '../../utils/grading';
 import { upsertRow } from '../../lib/api';
 import { useTable, Empty, SecHead, Loading, Prog, Composer } from './kit';
@@ -23,7 +23,7 @@ function useTeacherContext(store, user) {
       inClass.forEach((s) => { const v = subjectAverage(s.scores?.[subject]); if (v > 0) { sum += v; n += 1; } });
       const mean = n ? Math.round((sum / n) * 10) / 10 : 0;
       const system = is844Class(label) ? '844' : 'CBC';
-      return { label, subject, learners: inClass.length, entered: n, mean, grade: mean ? gradeFor(mean, store.gradeBoundaries, system) : '—' };
+      return { label, className: a.class_name, subject, learners: inClass.length, entered: n, mean, grade: mean ? gradeFor(mean, store.gradeBoundaries, system) : '—' };
     });
   }, [assignments, subjects, students, me.id, user?.id, store.gradeBoundaries]);
 
@@ -49,22 +49,133 @@ export function TeacherClasses({ store, user }) {
   );
 }
 
-export function TeacherGradebook({ store, user }) {
+export function TeacherGradebook({ store, user, open }) {
   const { classes, loading } = useTeacherContext(store, user);
   if (loading) return <Loading />;
-  if (classes.length === 0) return <Empty icon={Award} text="Gradebook appears once you're assigned classes and marks are entered." />;
+  if (classes.length === 0) return <Empty icon={Award} text="Gradebook appears once you're assigned classes." />;
   return (
     <>
-      <SecHead title="Subject performance" />
+      <SecHead title="Enter & review marks" />
       <div className="eom-list-card">
         {classes.map((c, i) => (
-          <div className="eom-subj" key={i}>
-            <div className="eom-sn">{c.label} · {c.subject}<div style={{ fontSize: 11, color: 'var(--eom-muted)', fontWeight: 500 }}>{c.entered}/{c.learners} marked</div></div>
+          <button className="eom-subj" key={i} style={{ width: '100%', textAlign: 'left', background: 'none', border: 0, cursor: 'pointer' }}
+            onClick={() => open('teacher_marks', { label: c.label, className: c.className, subject: c.subject })}>
+            <div className="eom-sn">{c.label} · {c.subject}<div style={{ fontSize: 11, color: 'var(--eom-muted)', fontWeight: 500 }}>{c.entered}/{c.learners} marked · tap to enter marks</div></div>
             <div className="eom-sp"><Prog value={c.mean} /></div>
             <span className="eom-sg eom-num">{c.mean ? `${c.mean}%` : '—'}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+const ASSESSMENTS = [['a1', 'A1'], ['a2', 'A2'], ['a3', 'A3'], ['a4', 'A4']];
+
+export function TeacherMarks({ store, params }) {
+  const { label, className, subject } = params || {};
+  const students = useMemo(
+    () => (store.students || []).filter((s) => s.class === label || s.class === className)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+    [store.students, label, className]
+  );
+  const [assessment, setAssessment] = useState('a1');
+  const [saved, setSaved] = useState(null);
+
+  const save = (s, raw) => {
+    const v = raw === '' ? undefined : Math.max(0, Math.min(100, Number(raw) || 0));
+    const cur = s.scores || {};
+    const subj = { ...(cur[subject] || {}) };
+    if (v === undefined) delete subj[assessment]; else subj[assessment] = v;
+    store.updateStudent?.({ ...s, scores: { ...cur, [subject]: subj } });
+    setSaved(s.id); setTimeout(() => setSaved((x) => (x === s.id ? null : x)), 1200);
+  };
+
+  if (students.length === 0) return <Empty icon={Users} text={`No learners found in ${label || 'this class'}.`} />;
+  return (
+    <>
+      <div className="eom-assess">
+        {ASSESSMENTS.map(([k, lbl]) => (
+          <button key={k} className={`eom-assess-btn${assessment === k ? ' eom-on' : ''}`} onClick={() => setAssessment(k)}>{lbl}</button>
+        ))}
+      </div>
+      <div className="eom-list-card">
+        {students.map((s) => (
+          <div className="eom-markrow" key={s.id}>
+            <div className="eom-marklt"><b>{s.name}</b><span>{s.adm || ''}</span></div>
+            {saved === s.id && <span className="eom-marksaved"><Check size={14} /></span>}
+            <input
+              className="eom-markin eom-num" type="number" inputMode="numeric" min="0" max="100"
+              key={s.id + assessment}
+              defaultValue={s.scores?.[subject]?.[assessment] ?? ''}
+              onBlur={(e) => save(s, e.target.value)}
+              placeholder="—"
+            />
           </div>
         ))}
       </div>
+      <p className="eom-markhint">Enter a percentage (0–100) for {subject}. Saves when you tap away; grades are derived automatically.</p>
+    </>
+  );
+}
+
+const STATUSES = ['Present', 'Absent', 'Late'];
+const STATUS_COLOR = { Present: '#059669', Absent: '#DC2626', Late: '#D97706' };
+
+export function TeacherAttendance({ store, user }) {
+  const { classes, loading } = useTeacherContext(store, user);
+  const me = (store.teachers || []).find((t) => t.id === user?.teacher_id || t.name === user?.name) || {};
+  const cls = me.assignedClass || classes[0]?.label || classes[0]?.className || '';
+  const students = useMemo(
+    () => (store.students || []).filter((s) => s.class === cls).sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+    [store.students, cls]
+  );
+  const { rows: att } = useTable('studentAttendance');
+  const today = new Date().toISOString().slice(0, 10);
+  const [state, setState] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const seed = {};
+    (att || []).forEach((a) => { if (String(a.date || '').slice(0, 10) === today && a.adm) seed[a.adm] = a.status; });
+    setState(seed);
+  }, [att, today]);
+
+  const save = async () => {
+    setSaving(true); setDone(false);
+    try {
+      await Promise.all(students.map((s) => upsertRow('student_attendance', {
+        id: `att_${s.adm}_${today}`, date: today, student_id: s.id, adm: s.adm,
+        class: cls, status: state[s.adm] || 'Present', recorded_by: user?.name || 'Teacher',
+      })));
+      setDone(true); setTimeout(() => setDone(false), 1800);
+    } catch { /* store shows errors via its own path */ } finally { setSaving(false); }
+  };
+
+  if (loading) return <Loading />;
+  if (!cls) return <Empty icon={Users} text="You're not assigned as a class teacher, so there's no register to mark." />;
+  if (students.length === 0) return <Empty icon={Users} text={`No learners found in ${cls}.`} />;
+  return (
+    <>
+      <div className="eom-sec"><h5>{cls} · {today}</h5></div>
+      <div className="eom-list-card">
+        {students.map((s) => (
+          <div className="eom-markrow" key={s.id}>
+            <div className="eom-marklt"><b>{s.name}</b><span>{s.adm || ''}</span></div>
+            <div className="eom-att-seg">
+              {STATUSES.map((st) => (
+                <button key={st} className={`eom-att-btn${(state[s.adm] || 'Present') === st ? ' eom-on' : ''}`}
+                  style={(state[s.adm] || 'Present') === st ? { background: STATUS_COLOR[st], borderColor: STATUS_COLOR[st], color: '#fff' } : undefined}
+                  onClick={() => setState((p) => ({ ...p, [s.adm]: st }))}>{st[0]}</button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="eom-btn-solid" style={{ height: 50 }} onClick={save} disabled={saving}>
+        {saving ? 'Saving…' : done ? <><Check size={17} /> Saved</> : 'Save register'}
+      </button>
     </>
   );
 }
