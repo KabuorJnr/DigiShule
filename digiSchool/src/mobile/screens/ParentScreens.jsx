@@ -219,7 +219,7 @@ export function ParentMessages({ store, user }) {
                   <span className="eom-lic" style={{ background: 'var(--eom-info-100)', color: 'var(--eom-info)' }}><MessageSquare /></span>
                   <div className="eom-lt">
                     <b>{m.subject || 'Message'}</b>
-                    <span style={{ whiteSpace: 'normal' }}>{(m.body || '').slice(0, 140)}</span>
+                    <span className="eom-msg-body">{m.body || ''}</span>
                   </div>
                   <span className="eom-rt">{String(m.created_at || '').slice(0, 10)}</span>
                 </div>

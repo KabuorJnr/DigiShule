@@ -37,12 +37,12 @@ function timeAgo(iso) {
 
 // The phone shell: an in-app screen stack (no router) with a top bar and a
 // role-aware bottom nav. Every screen is a native mobile component.
-export default function MobileShell({ store, user, onLogout, onChangePassword, loading }) {
+export default function MobileShell({ store, user, onLogout, onChangePassword, loading, initialStack }) {
   const role = user?.role || 'parent';
   const homeRole = homeRoleFor(role);
   const tabs = tabsForRole(role);
 
-  const [stack, setStack] = useState([{ name: 'home' }]);
+  const [stack, setStack] = useState(initialStack && initialStack.length ? initialStack : [{ name: 'home' }]);
   const [notifOpen, setNotifOpen] = useState(false);
   const current = stack[stack.length - 1];
 

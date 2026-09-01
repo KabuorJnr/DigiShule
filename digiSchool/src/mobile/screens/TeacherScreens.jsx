@@ -173,7 +173,7 @@ export function TeacherAttendance({ store, user }) {
           </div>
         ))}
       </div>
-      <button className="eom-btn-solid" style={{ height: 50 }} onClick={save} disabled={saving}>
+      <button className="eom-btn-solid" style={{ height: 50, width: '100%' }} onClick={save} disabled={saving}>
         {saving ? 'Saving…' : done ? <><Check size={17} /> Saved</> : 'Save register'}
       </button>
     </>
@@ -241,7 +241,7 @@ export function TeacherMessages({ store, user }) {
             <span className="eom-lic" style={{ background: 'var(--eom-info-100)', color: 'var(--eom-info)' }}><MessageSquare /></span>
             <div className="eom-lt">
               <b>{m.subject || 'Message'}{m.student_name ? ` · ${m.student_name}` : ''}</b>
-              <span style={{ whiteSpace: 'normal' }}>{(m.body || '').slice(0, 140)}</span>
+              <span className="eom-msg-body">{m.body || ''}</span>
               <span style={{ color: 'var(--eom-blue)', fontWeight: 700, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
                 <CornerUpLeft size={13} /> {m.status === 'Replied' ? 'Replied · tap to reply again' : 'Tap to reply'}
               </span>

@@ -45,16 +45,39 @@ const ROLE_USERS = {
   principal: { id: 'u_a', role: 'principal', name: 'Dr. Susan Mwangi' },
 };
 
+// Direct jumps to screens the harness can't reach through normal nav (their
+// class/assignment data is fetched from Supabase, which is empty without auth).
+const JUMPS = [
+  { label: 'T:marks', role: 'teacher', stack: [{ name: 'home' }, { name: 'teacher_marks', params: { label: 'Grade 7 B', className: 'Grade 7', subject: 'Mathematics' } }] },
+  { label: 'T:attend', role: 'teacher', stack: [{ name: 'home' }, { name: 'teacher_attendance' }] },
+  { label: 'P:approve', role: 'principal', stack: [{ name: 'home' }, { name: 'admin_approvals' }] },
+  { label: 'P:students', role: 'principal', stack: [{ name: 'home' }, { name: 'admin_students' }] },
+  { label: 'Par:msg', role: 'parent', stack: [{ name: 'home' }, { name: 'parent_messages' }] },
+];
+
 export default function DevPreview() {
   const [role, setRole] = useState('parent');
+  const [jump, setJump] = useState(null); // {role, stack}
+
+  const activeRole = jump ? jump.role : role;
+  const key = jump ? `jump-${jump.label}` : `role-${role}`;
+  const btn = (active) => ({ fontSize: 10, padding: '4px 7px', borderRadius: 6, border: 0, cursor: 'pointer', background: active ? '#1E5FE0' : '#333', color: '#fff' });
+
   return (
     <div>
-      <div style={{ position: 'fixed', top: 6, left: '50%', transform: 'translateX(-50%)', zIndex: 99999, display: 'flex', gap: 4, background: '#111', padding: 4, borderRadius: 8 }}>
-        {Object.keys(ROLE_USERS).map((r) => (
-          <button key={r} onClick={() => setRole(r)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: 0, cursor: 'pointer', background: r === role ? '#1E5FE0' : '#333', color: '#fff' }}>{r}</button>
-        ))}
+      <div style={{ position: 'fixed', top: 4, left: '50%', transform: 'translateX(-50%)', zIndex: 99999, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 3, background: '#111', padding: 3, borderRadius: 8 }}>
+          {Object.keys(ROLE_USERS).map((r) => (
+            <button key={r} onClick={() => { setRole(r); setJump(null); }} style={btn(!jump && r === role)}>{r}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 3, background: '#111', padding: 3, borderRadius: 8 }}>
+          {JUMPS.map((j) => (
+            <button key={j.label} onClick={() => setJump(j)} style={btn(jump?.label === j.label)}>{j.label}</button>
+          ))}
+        </div>
       </div>
-      <MobileShell key={role} store={MOCK_STORE} user={ROLE_USERS[role]} onLogout={() => {}} onChangePassword={() => {}} loading={false} />
+      <MobileShell key={key} store={MOCK_STORE} user={ROLE_USERS[activeRole]} onLogout={() => {}} onChangePassword={() => {}} loading={false} initialStack={jump?.stack} />
     </div>
   );
 }

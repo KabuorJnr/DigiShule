@@ -184,6 +184,8 @@
 .eom-li .eom-lt { flex: 1; min-width: 0; }
 .eom-li .eom-lt b { display: block; font-size: 13.5px; font-weight: 700; color: var(--eom-ink); }
 .eom-li .eom-lt span { font-size: 12px; color: var(--eom-muted); }
+/* Clamp long message bodies to 2 lines so inbox cards stay compact. */
+.eom-msg-body { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .eom-li .eom-rt { font-size: 12px; font-weight: 700; color: var(--eom-muted); white-space: nowrap; }
 
 .eom-place { padding: 40px 22px; text-align: center; color: var(--eom-muted); }
@@ -274,9 +276,11 @@
 .eom-select:focus, .eom-tinput:focus, .eom-textarea:focus { border-color: var(--eom-blue); background: #fff; }
 .eom-textarea { resize: vertical; line-height: 1.5; }
 .eom-btn-ghost, .eom-btn-solid {
-  flex: 1; height: 46px; border-radius: 12px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+  flex: 0 0 auto; height: 46px; border-radius: 12px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 7px; border: 1.5px solid var(--eom-line);
 }
+/* In the composer's two-button row, split the width evenly. */
+.eom-composer .eom-btn-ghost, .eom-composer .eom-btn-solid { flex: 1; }
 .eom-btn-ghost { background: #fff; color: var(--eom-ink); }
 .eom-btn-solid { background: var(--eom-blue); color: #fff; border-color: var(--eom-blue); }
 .eom-btn-ghost:disabled, .eom-btn-solid:disabled { opacity: .6; }
