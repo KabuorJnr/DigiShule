@@ -240,10 +240,14 @@
 /* ---------- notifications panel ---------- */
 .eo-np { position: absolute; top: calc(64px + env(safe-area-inset-top)); right: 14px; left: 14px; max-height: 60%; background: #fff; border: 1px solid var(--eo-line); border-radius: 16px; box-shadow: var(--eo-shadow); z-index: 45; overflow: hidden; display: flex; flex-direction: column; animation: eo-fadeUp .2s both; }
 .eo-np h6 { margin: 0; padding: 13px 15px; font-size: 14px; font-weight: 800; color: var(--eo-ink); border-bottom: 1px solid var(--eo-line); display: flex; justify-content: space-between; align-items: center; }
+.eo-np-actions { padding: 8px 12px; border-bottom: 1px solid var(--eo-line); }
+.eo-np-actions .eo-link { font-size: 12.5px; }
 .eo-np-list { overflow-y: auto; }
-.eo-np .eo-ni { padding: 11px 15px; border-bottom: 1px solid var(--eo-line); }
-.eo-np .eo-ni b { color: var(--eo-ink); font-size: 13px; display: block; }
+.eo-np .eo-ni { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--eo-line); font-family: inherit; padding: 11px 15px; cursor: default; }
+.eo-np .eo-ni.eo-unread { background: var(--eo-blue-50); cursor: pointer; }
+.eo-np .eo-ni b { color: var(--eo-ink); font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .eo-np .eo-ni span { color: var(--eo-muted); font-size: 12px; }
+.eo-nidot { width: 7px; height: 7px; border-radius: 50%; background: var(--eo-blue); flex: 0 0 auto; }
 .eo-np .eo-ni-empty { padding: 28px 15px; text-align: center; color: var(--eo-muted); font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {

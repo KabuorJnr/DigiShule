@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import MobileHome from './MobileHome';
 import { SCREENS, tabsForRole, homeRoleFor } from './screens/registry';
+import { setNotificationRead, markAllNotificationsRead } from '../lib/api';
 import './mobile.css';
 
 const ADMIN_ROLES = ['principal', 'deputy_academic', 'deputy_admin', 'dos', 'registrar', 'admin', 'finance', 'accountant', 'bursar', 'clinic', 'nurse', 'librarian', 'support', 'procurement'];
@@ -54,6 +55,17 @@ export default function MobileShell({ store, user, onLogout, onChangePassword, l
 
   const notifs = useMemo(() => visibleNotifs(store.notifications, user), [store.notifications, user]);
   const unread = notifs.filter((n) => !n.read).length;
+
+  // Mark one/all read — optimistic store update, then persist (same contract as
+  // the desktop bell). Failures are swallowed so the UI stays responsive.
+  const markRead = useCallback((id) => {
+    store.setNotifications?.((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    setNotificationRead(id, true).catch(() => {});
+  }, [store]);
+  const markAllRead = useCallback(() => {
+    store.setNotifications?.((ns) => ns.map((n) => ({ ...n, read: true })));
+    markAllNotificationsRead().catch(() => {});
+  }, [store]);
 
   const rootName = stack[0].name;
   const isHome = current.name === 'home';
@@ -127,14 +139,22 @@ export default function MobileShell({ store, user, onLogout, onChangePassword, l
 
       {notifOpen && (
         <div className="eo-np">
-          <h6>Notifications <button className="eo-link" onClick={() => setNotifOpen(false)} aria-label="Close"><X size={18} /></button></h6>
+          <h6>
+            <span>Notifications{unread > 0 ? ` · ${unread} new` : ''}</span>
+            <button className="eo-link" onClick={() => setNotifOpen(false)} aria-label="Close"><X size={18} /></button>
+          </h6>
+          {unread > 0 && (
+            <div className="eo-np-actions">
+              <button className="eo-link" onClick={markAllRead}>Mark all as read</button>
+            </div>
+          )}
           <div className="eo-np-list">
             {notifs.length === 0 && <div className="eo-ni-empty">You&apos;re all caught up.</div>}
             {notifs.slice(0, 30).map((n) => (
-              <div className="eo-ni" key={n.id}>
-                <b>{n.title}</b>
+              <button className={`eo-ni${n.read ? '' : ' eo-unread'}`} key={n.id} onClick={() => !n.read && markRead(n.id)}>
+                <b>{n.title}{!n.read && <span className="eo-nidot" />}</b>
                 <span>{(n.body || n.message || '').slice(0, 120)}{n.posted_by ? ` · ${n.posted_by}` : ''} · {timeAgo(n.created_at)}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
