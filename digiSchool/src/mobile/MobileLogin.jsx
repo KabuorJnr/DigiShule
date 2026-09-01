@@ -84,89 +84,89 @@ export default function MobileLogin() {
   };
 
   return (
-    <div className="eo-m">
-      <div className="eo-login eo-active">
-        <div className="eo-login-hero">
-          <span className="eo-halo" style={{ width: 230, height: 230, background: '#7FA8F2', right: -80, top: -90 }} />
-          <span className="eo-halo" style={{ width: 150, height: 150, background: '#fff', left: -40, top: 70, opacity: 0.1 }} />
-          <div className="eo-login-grid" />
-          <div className="eo-login-center">
-            <img className="eo-logo eo-logo--on-dark" src="/eduone-logo.png" alt="EduOne" />
-            <div className="eo-tag">School management, simplified</div>
+    <div className="eom-m">
+      <div className="eom-login eom-active">
+        <div className="eom-login-hero">
+          <span className="eom-halo" style={{ width: 230, height: 230, background: '#7FA8F2', right: -80, top: -90 }} />
+          <span className="eom-halo" style={{ width: 150, height: 150, background: '#fff', left: -40, top: 70, opacity: 0.1 }} />
+          <div className="eom-login-grid" />
+          <div className="eom-login-center">
+            <img className="eom-logo eom-logo--on-dark" src="/eduone-logo.png" alt="EduOne" />
+            <div className="eom-tag">School management, simplified</div>
           </div>
         </div>
 
         {mode === 'signin' ? (
-          <form className="eo-sheet" onSubmit={submit}>
-            <div className="eo-sheet-head">
+          <form className="eom-sheet" onSubmit={submit}>
+            <div className="eom-sheet-head">
               <h3>Sign in</h3>
               <p>Welcome back to {schoolName}</p>
             </div>
 
-            {error && <div className="eo-error"><ShieldAlert size={18} /> {error}</div>}
+            {error && <div className="eom-error"><ShieldAlert size={18} /> {error}</div>}
 
-            <div className="eo-field">
-              <label htmlFor="eo-user">Email or admission number</label>
-              <div className="eo-input">
+            <div className="eom-field">
+              <label htmlFor="eom-user">Email or admission number</label>
+              <div className="eom-input">
                 <Mail />
-                <input id="eo-user" type="text" autoComplete="username" placeholder="you@example.com"
+                <input id="eom-user" type="text" autoComplete="username" placeholder="you@example.com"
                   value={username} onChange={(e) => setUsername(e.target.value)} />
               </div>
             </div>
 
-            <div className="eo-field">
-              <label htmlFor="eo-pw">Password</label>
-              <div className="eo-input">
+            <div className="eom-field">
+              <label htmlFor="eom-pw">Password</label>
+              <div className="eom-input">
                 <Lock />
-                <input id="eo-pw" type={showPw ? 'text' : 'password'} autoComplete="current-password"
+                <input id="eom-pw" type={showPw ? 'text' : 'password'} autoComplete="current-password"
                   placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <button type="button" className="eo-eye" onClick={() => setShowPw((s) => !s)}
+                <button type="button" className="eom-eye" onClick={() => setShowPw((s) => !s)}
                   aria-label={showPw ? 'Hide password' : 'Show password'}>
                   {showPw ? <EyeOff size={19} /> : <Eye size={19} />}
                 </button>
               </div>
             </div>
 
-            <div className="eo-row-between">
-              <button type="button" className={`eo-check${keep ? ' eo-on' : ''}`} role="checkbox" aria-checked={keep}
+            <div className="eom-row-between">
+              <button type="button" className={`eom-check${keep ? ' eom-on' : ''}`} role="checkbox" aria-checked={keep}
                 onClick={() => setKeep((k) => !k)}>
-                <span className="eo-box"><Check /></span>Keep me signed in
+                <span className="eom-box"><Check /></span>Keep me signed in
               </button>
-              <button type="button" className="eo-link" onClick={() => { setMode('forgot'); setForgotMsg(''); }}>Forgot password?</button>
+              <button type="button" className="eom-link" onClick={() => { setMode('forgot'); setForgotMsg(''); }}>Forgot password?</button>
             </div>
 
-            <button className="eo-btn" type="submit" disabled={busy || oauthBusy}>
-              {busy ? <span className="eo-spin" /> : <>Sign in <ArrowRight /></>}
+            <button className="eom-btn" type="submit" disabled={busy || oauthBusy}>
+              {busy ? <span className="eom-spin" /> : <>Sign in <ArrowRight /></>}
             </button>
 
-            <div className="eo-or">or continue with</div>
-            <div className="eo-social">
+            <div className="eom-or">or continue with</div>
+            <div className="eom-social">
               <button type="button" onClick={oauth} disabled={busy || oauthBusy}>
-                {oauthBusy ? <span className="eo-spin eo-spin--blue" /> : <GoogleIcon />} Google
+                {oauthBusy ? <span className="eom-spin eom-spin--blue" /> : <GoogleIcon />} Google
               </button>
             </div>
 
-            <div className="eo-foot">New to {schoolName}? <button type="button" className="eo-link" onClick={() => navigate('/parent-signup')}>Register here</button></div>
+            <div className="eom-foot">New to {schoolName}? <button type="button" className="eom-link" onClick={() => navigate('/parent-signup')}>Register here</button></div>
           </form>
         ) : (
-          <form className="eo-sheet" onSubmit={sendReset}>
-            <div className="eo-sheet-head">
+          <form className="eom-sheet" onSubmit={sendReset}>
+            <div className="eom-sheet-head">
               <h3>Reset password</h3>
               <p>We&apos;ll email you a secure reset link.</p>
             </div>
-            {forgotMsg && <div className="eo-error" style={{ background: 'var(--eo-blue-50)', color: 'var(--eo-blue-deep)' }}>{forgotMsg}</div>}
-            <div className="eo-field">
-              <label htmlFor="eo-forgot">Email address</label>
-              <div className="eo-input">
+            {forgotMsg && <div className="eom-error" style={{ background: 'var(--eom-blue-50)', color: 'var(--eom-blue-deep)' }}>{forgotMsg}</div>}
+            <div className="eom-field">
+              <label htmlFor="eom-forgot">Email address</label>
+              <div className="eom-input">
                 <Mail />
-                <input id="eo-forgot" type="email" placeholder="your@email.com"
+                <input id="eom-forgot" type="email" placeholder="your@email.com"
                   value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} autoFocus />
               </div>
             </div>
-            <button className="eo-btn" type="submit" disabled={forgotBusy}>
-              {forgotBusy ? <span className="eo-spin" /> : 'Send reset link'}
+            <button className="eom-btn" type="submit" disabled={forgotBusy}>
+              {forgotBusy ? <span className="eom-spin" /> : 'Send reset link'}
             </button>
-            <button type="button" className="eo-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}
+            <button type="button" className="eom-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}
               onClick={() => setMode('signin')}>
               <ArrowLeft size={15} /> Back to sign in
             </button>

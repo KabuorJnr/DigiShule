@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
-import { BookOpen, Award, MessageSquare, Inbox } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft } from 'lucide-react';
 import { subjectAverage, gradeFor, is844Class } from '../../utils/grading';
-import { useTable, Empty, SecHead, Loading, Prog } from './kit';
+import { upsertRow } from '../../lib/api';
+import { useTable, Empty, SecHead, Loading, Prog, Composer } from './kit';
 
 function useTeacherContext(store, user) {
   const teachers = store.teachers || [];
@@ -36,11 +37,11 @@ export function TeacherClasses({ store, user }) {
   return (
     <>
       <SecHead title="My classes" />
-      <div className="eo-list-card">
+      <div className="eom-list-card">
         {classes.map((c, i) => (
-          <div className="eo-li" key={i} style={{ cursor: 'default' }}>
-            <span className="eo-lic" style={{ background: 'var(--eo-blue-50)', color: 'var(--eo-blue)' }}><BookOpen /></span>
-            <div className="eo-lt"><b>{c.label} · {c.subject}</b><span>{c.learners} learners</span></div>
+          <div className="eom-li" key={i} style={{ cursor: 'default' }}>
+            <span className="eom-lic" style={{ background: 'var(--eom-blue-50)', color: 'var(--eom-blue)' }}><BookOpen /></span>
+            <div className="eom-lt"><b>{c.label} · {c.subject}</b><span>{c.learners} learners</span></div>
           </div>
         ))}
       </div>
@@ -55,12 +56,12 @@ export function TeacherGradebook({ store, user }) {
   return (
     <>
       <SecHead title="Subject performance" />
-      <div className="eo-list-card">
+      <div className="eom-list-card">
         {classes.map((c, i) => (
-          <div className="eo-subj" key={i}>
-            <div className="eo-sn">{c.label} · {c.subject}<div style={{ fontSize: 11, color: 'var(--eo-muted)', fontWeight: 500 }}>{c.entered}/{c.learners} marked</div></div>
-            <div className="eo-sp"><Prog value={c.mean} /></div>
-            <span className="eo-sg eo-num">{c.mean ? `${c.mean}%` : '—'}</span>
+          <div className="eom-subj" key={i}>
+            <div className="eom-sn">{c.label} · {c.subject}<div style={{ fontSize: 11, color: 'var(--eom-muted)', fontWeight: 500 }}>{c.entered}/{c.learners} marked</div></div>
+            <div className="eom-sp"><Prog value={c.mean} /></div>
+            <span className="eom-sg eom-num">{c.mean ? `${c.mean}%` : '—'}</span>
           </div>
         ))}
       </div>
@@ -75,33 +76,67 @@ export function TeacherMessages({ store, user }) {
   const teacherName = user?.name || '';
   const { rows, loading } = useTable('messages');
 
-  const mine = useMemo(() => (rows || []).filter((m) => {
-    if (m.recipient_id && user?.id) return String(m.recipient_id) === String(user.id);
-    if (!m.recipient_role) return false;
-    const role = String(m.recipient_role).toLowerCase().trim();
-    if (role === 'class teacher' && assignedClass && m.student_id) {
-      const stu = students.find((s) => s.id === m.student_id || s.adm === m.student_id);
-      if (stu && stu.class === assignedClass) return true;
-    }
-    if (teacherName && role === teacherName.toLowerCase().trim()) return true;
-    return false;
-  }).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))), [rows, assignedClass, teacherName, students, user?.id]);
+  const [items, setItems] = useState([]);
+  const [replyTo, setReplyTo] = useState(null); // the message being replied to
+
+  useEffect(() => {
+    setItems((rows || []).filter((m) => {
+      if (m.recipient_id && user?.id) return String(m.recipient_id) === String(user.id);
+      if (!m.recipient_role) return false;
+      const role = String(m.recipient_role).toLowerCase().trim();
+      if (role === 'class teacher' && assignedClass && m.student_id) {
+        const stu = students.find((s) => s.id === m.student_id || s.adm === m.student_id);
+        if (stu && stu.class === assignedClass) return true;
+      }
+      if (teacherName && role === teacherName.toLowerCase().trim()) return true;
+      return false;
+    }).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))));
+  }, [rows, assignedClass, teacherName, students, user?.id]);
+
+  const sendReply = async ({ subject, body }) => {
+    const msg = replyTo;
+    const now = new Date().toISOString();
+    // Mark the incoming message replied, and deliver a new message back to the
+    // parent (routed by their user id + student link) — same as desktop.
+    await upsertRow('messages', { ...msg, status: 'Replied', reply: body, replied_at: now });
+    await upsertRow('messages', {
+      id: `msg_${Date.now()}`,
+      sender_id: user?.id || teacherName, sender_name: teacherName, sender_role: 'teacher',
+      recipient_role: 'parent', recipient_id: msg.sender_id || null,
+      student_id: msg.student_id || null, student_name: msg.student_name || null,
+      subject, body, status: 'Unread', created_at: now,
+    });
+    setItems((prev) => prev.map((m) => (m.id === msg.id ? { ...m, status: 'Replied' } : m)));
+    setReplyTo(null);
+  };
 
   if (loading) return <Loading />;
-  if (mine.length === 0) return <Empty icon={Inbox} text="No messages from parents yet." />;
+  if (replyTo) {
+    return (
+      <Composer
+        title={`Reply · ${replyTo.student_name || 'Parent'}`}
+        replyTo={replyTo.subject || 'your message'}
+        onSend={sendReply} onCancel={() => setReplyTo(null)}
+      />
+    );
+  }
+  if (items.length === 0) return <Empty icon={Inbox} text="No messages from parents yet." />;
   return (
     <>
       <SecHead title="Parent messages" />
-      <div className="eo-list-card">
-        {mine.slice(0, 40).map((m) => (
-          <div className="eo-li" key={m.id} style={{ cursor: 'default', alignItems: 'flex-start' }}>
-            <span className="eo-lic" style={{ background: 'var(--eo-info-100)', color: 'var(--eo-info)' }}><MessageSquare /></span>
-            <div className="eo-lt">
+      <div className="eom-list-card">
+        {items.slice(0, 40).map((m) => (
+          <button className="eom-li" key={m.id} style={{ alignItems: 'flex-start' }} onClick={() => setReplyTo(m)}>
+            <span className="eom-lic" style={{ background: 'var(--eom-info-100)', color: 'var(--eom-info)' }}><MessageSquare /></span>
+            <div className="eom-lt">
               <b>{m.subject || 'Message'}{m.student_name ? ` · ${m.student_name}` : ''}</b>
               <span style={{ whiteSpace: 'normal' }}>{(m.body || '').slice(0, 140)}</span>
+              <span style={{ color: 'var(--eom-blue)', fontWeight: 700, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <CornerUpLeft size={13} /> {m.status === 'Replied' ? 'Replied · tap to reply again' : 'Tap to reply'}
+              </span>
             </div>
-            <span className="eo-rt">{String(m.created_at || '').slice(0, 10)}</span>
-          </div>
+            <span className="eom-rt">{String(m.created_at || '').slice(0, 10)}</span>
+          </button>
         ))}
       </div>
     </>

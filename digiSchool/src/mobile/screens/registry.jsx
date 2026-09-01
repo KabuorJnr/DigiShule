@@ -5,7 +5,7 @@ import {
 import { ParentFees, ParentResults, ParentAttendance, ParentClinic, ParentMessages } from './ParentScreens';
 import { StudentTimetable, StudentResults, StudentLearn, StudentFinance, StudentClasses } from './StudentScreens';
 import { TeacherClasses, TeacherGradebook, TeacherMessages } from './TeacherScreens';
-import { AdminAcademics, AdminFinance, AdminStaff } from './AdminScreens';
+import { AdminAcademics, AdminFinance, AdminStaff, AdminNotices } from './AdminScreens';
 
 // name -> { title, Component }. 'home' and 'account' are handled by the shell.
 export const SCREENS = {
@@ -28,6 +28,7 @@ export const SCREENS = {
   admin_academics: { title: 'Academics', Component: AdminAcademics },
   admin_finance: { title: 'Finance', Component: AdminFinance },
   admin_staff: { title: 'Staff', Component: AdminStaff },
+  admin_notices: { title: 'Notices', Component: AdminNotices },
 };
 
 // Bottom-nav tabs per role. `key` doubles as the root screen name.

@@ -79,39 +79,39 @@ export default function MobileShell({ store, user, onLogout, onChangePassword, l
   const ScreenComp = screenDef?.Component;
 
   return (
-    <div className="eo-m">
-      <div className="eo-app">
-        <div className="eo-scroll">
+    <div className="eom-m">
+      <div className="eom-app">
+        <div className="eom-scroll">
           {/* Header: avatar bar on home, back+title elsewhere */}
           {isHome ? (
-            <div className="eo-top">
-              <div className="eo-avatar">{initials(user?.name)}</div>
-              <div className="eo-who">
-                <div className="eo-hi">{greeting}</div>
-                <div className="eo-nm">{user?.name || 'Welcome'}</div>
+            <div className="eom-top">
+              <div className="eom-avatar">{initials(user?.name)}</div>
+              <div className="eom-who">
+                <div className="eom-hi">{greeting}</div>
+                <div className="eom-nm">{user?.name || 'Welcome'}</div>
               </div>
-              <button className="eo-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
+              <button className="eom-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
                 <Bell />
-                {unread > 0 && <span className="eo-bdot">{unread > 9 ? '9+' : unread}</span>}
+                {unread > 0 && <span className="eom-bdot">{unread > 9 ? '9+' : unread}</span>}
               </button>
             </div>
           ) : (
-            <div className="eo-schead">
-              {canBack && <button className="eo-back" onClick={back} aria-label="Back"><ChevronLeft /></button>}
+            <div className="eom-schead">
+              {canBack && <button className="eom-back" onClick={back} aria-label="Back"><ChevronLeft /></button>}
               <div style={{ flex: 1 }}>
                 <h2>{isAccount ? 'Account' : (screenDef?.title || '')}</h2>
               </div>
               {!canBack && (
-                <button className="eo-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
+                <button className="eom-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
                   <Bell />
-                  {unread > 0 && <span className="eo-bdot">{unread > 9 ? '9+' : unread}</span>}
+                  {unread > 0 && <span className="eom-bdot">{unread > 9 ? '9+' : unread}</span>}
                 </button>
               )}
             </div>
           )}
 
           {loading ? (
-            <div className="eo-empty"><p>Loading your EduOne data…</p></div>
+            <div className="eom-empty"><p>Loading your EduOne data…</p></div>
           ) : isHome ? (
             <MobileHome role={homeRole} store={store} user={user} open={open} />
           ) : isAccount ? (
@@ -119,17 +119,17 @@ export default function MobileShell({ store, user, onLogout, onChangePassword, l
           ) : ScreenComp ? (
             <ScreenComp store={store} user={user} open={open} back={back} params={current.params} />
           ) : (
-            <div className="eo-empty"><p>Screen not found.</p></div>
+            <div className="eom-empty"><p>Screen not found.</p></div>
           )}
         </div>
 
-        <nav className="eo-tabbar">
+        <nav className="eom-tabbar">
           {tabs.map((t) => {
             const Icon = t.icon;
             const active = rootName === t.key || (t.key === 'home' && rootName === 'home');
             return (
-              <button key={t.key} className={`eo-tab${active ? ' eo-active' : ''}`} onClick={() => setRoot(t.key)}>
-                {active && <span className="eo-ind" />}
+              <button key={t.key} className={`eom-tab${active ? ' eom-active' : ''}`} onClick={() => setRoot(t.key)}>
+                {active && <span className="eom-ind" />}
                 <Icon /><span>{t.label}</span>
               </button>
             );
@@ -138,21 +138,21 @@ export default function MobileShell({ store, user, onLogout, onChangePassword, l
       </div>
 
       {notifOpen && (
-        <div className="eo-np">
+        <div className="eom-np">
           <h6>
             <span>Notifications{unread > 0 ? ` · ${unread} new` : ''}</span>
-            <button className="eo-link" onClick={() => setNotifOpen(false)} aria-label="Close"><X size={18} /></button>
+            <button className="eom-link" onClick={() => setNotifOpen(false)} aria-label="Close"><X size={18} /></button>
           </h6>
           {unread > 0 && (
-            <div className="eo-np-actions">
-              <button className="eo-link" onClick={markAllRead}>Mark all as read</button>
+            <div className="eom-np-actions">
+              <button className="eom-link" onClick={markAllRead}>Mark all as read</button>
             </div>
           )}
-          <div className="eo-np-list">
-            {notifs.length === 0 && <div className="eo-ni-empty">You&apos;re all caught up.</div>}
+          <div className="eom-np-list">
+            {notifs.length === 0 && <div className="eom-ni-empty">You&apos;re all caught up.</div>}
             {notifs.slice(0, 30).map((n) => (
-              <button className={`eo-ni${n.read ? '' : ' eo-unread'}`} key={n.id} onClick={() => !n.read && markRead(n.id)}>
-                <b>{n.title}{!n.read && <span className="eo-nidot" />}</b>
+              <button className={`eom-ni${n.read ? '' : ' eom-unread'}`} key={n.id} onClick={() => !n.read && markRead(n.id)}>
+                <b>{n.title}{!n.read && <span className="eom-nidot" />}</b>
                 <span>{(n.body || n.message || '').slice(0, 120)}{n.posted_by ? ` · ${n.posted_by}` : ''} · {timeAgo(n.created_at)}</span>
               </button>
             ))}
@@ -167,25 +167,25 @@ function AccountPanel({ user, store, onLogout, onChangePassword }) {
   const settings = store.settings || {};
   return (
     <>
-      <div className="eo-stat-card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div className="eo-avatar" style={{ width: 56, height: 56, borderRadius: 18, fontSize: 20 }}>{initials(user?.name)}</div>
+      <div className="eom-stat-card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="eom-avatar" style={{ width: 56, height: 56, borderRadius: 18, fontSize: 20 }}>{initials(user?.name)}</div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--eo-ink)' }}>{user?.name}</div>
-          <div style={{ fontSize: 13, color: 'var(--eo-muted)', textTransform: 'capitalize' }}>{(user?.role || '').replace(/_/g, ' ')}{settings.name ? ` · ${settings.name}` : ''}</div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--eom-ink)' }}>{user?.name}</div>
+          <div style={{ fontSize: 13, color: 'var(--eom-muted)', textTransform: 'capitalize' }}>{(user?.role || '').replace(/_/g, ' ')}{settings.name ? ` · ${settings.name}` : ''}</div>
         </div>
       </div>
-      <div className="eo-list-card">
+      <div className="eom-list-card">
         {onChangePassword && (
-          <button className="eo-li" onClick={onChangePassword}>
-            <span className="eo-lic" style={{ background: 'var(--eo-blue-50)', color: 'var(--eo-blue)' }}><KeyRound /></span>
-            <div className="eo-lt"><b>Change password</b><span>Update your login credentials</span></div>
-            <span className="eo-rt"><ChevronRight size={18} /></span>
+          <button className="eom-li" onClick={onChangePassword}>
+            <span className="eom-lic" style={{ background: 'var(--eom-blue-50)', color: 'var(--eom-blue)' }}><KeyRound /></span>
+            <div className="eom-lt"><b>Change password</b><span>Update your login credentials</span></div>
+            <span className="eom-rt"><ChevronRight size={18} /></span>
           </button>
         )}
-        <button className="eo-li" onClick={onLogout}>
-          <span className="eo-lic" style={{ background: 'var(--eo-bad-100)', color: 'var(--eo-bad)' }}><LogOut /></span>
-          <div className="eo-lt"><b>Sign out</b><span>Log out of EduOne</span></div>
-          <span className="eo-rt"><ChevronRight size={18} /></span>
+        <button className="eom-li" onClick={onLogout}>
+          <span className="eom-lic" style={{ background: 'var(--eom-bad-100)', color: 'var(--eom-bad)' }}><LogOut /></span>
+          <div className="eom-lt"><b>Sign out</b><span>Log out of EduOne</span></div>
+          <span className="eom-rt"><ChevronRight size={18} /></span>
         </button>
       </div>
       <div style={{ textAlign: 'center', marginTop: 6 }}>

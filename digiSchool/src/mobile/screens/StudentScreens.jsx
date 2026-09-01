@@ -38,12 +38,12 @@ export function StudentTimetable({ store, user }) {
   return (
     <>
       <SecHead title={`${day} · ${child.class}`} />
-      <div className="eo-list-card">
+      <div className="eom-list-card">
         {periods.map((p) => (
-          <div className="eo-tt" key={p.period}>
-            <span className="eo-ttime">P{p.period}</span>
-            <span className="eo-tbar" />
-            <div className="eo-tbody"><b>{p.subject}</b><span>{p.teacher || ''}</span></div>
+          <div className="eom-tt" key={p.period}>
+            <span className="eom-ttime">P{p.period}</span>
+            <span className="eom-tbar" />
+            <div className="eom-tbody"><b>{p.subject}</b><span>{p.teacher || ''}</span></div>
           </div>
         ))}
       </div>
@@ -62,10 +62,10 @@ export function StudentClasses({ store, user }) {
   return (
     <>
       <SecHead title="My class" />
-      <div className="eo-list-card">
-        <div className="eo-li" style={{ cursor: 'default' }}>
-          <span className="eo-lic" style={{ background: 'var(--eo-blue-50)', color: 'var(--eo-blue)' }}><BookOpen /></span>
-          <div className="eo-lt"><b>{child.class || 'Not assigned'}</b><span>Admission no. {child.adm || '—'}</span></div>
+      <div className="eom-list-card">
+        <div className="eom-li" style={{ cursor: 'default' }}>
+          <span className="eom-lic" style={{ background: 'var(--eom-blue-50)', color: 'var(--eom-blue)' }}><BookOpen /></span>
+          <div className="eom-lt"><b>{child.class || 'Not assigned'}</b><span>Admission no. {child.adm || '—'}</span></div>
         </div>
       </div>
     </>

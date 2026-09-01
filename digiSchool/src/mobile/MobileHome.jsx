@@ -1,35 +1,35 @@
 import { useMemo } from 'react';
 import {
   Search, Wallet, CalendarDays, Award, Stethoscope, MessageSquare, BookOpen,
-  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList,
+  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell,
 } from 'lucide-react';
 import { studentOverall, gradeFor, is844Class, CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
 function QA({ icon: Icon, label, color, onClick }) {
   return (
-    <button className="eo-qa" onClick={onClick}>
-      <span className="eo-ico" style={{ background: `color-mix(in srgb, ${color} 13%, #fff)`, color }}><Icon /></span>
+    <button className="eom-qa" onClick={onClick}>
+      <span className="eom-ico" style={{ background: `color-mix(in srgb, ${color} 13%, #fff)`, color }}><Icon /></span>
       <span>{label}</span>
     </button>
   );
 }
 function Kpi({ icon: Icon, color, value, label }) {
   return (
-    <div className="eo-kpi">
-      <span className="eo-ic" style={{ background: `color-mix(in srgb, ${color} 13%, #fff)`, color }}><Icon /></span>
-      <div className="eo-v eo-num">{value}</div>
-      <div className="eo-l">{label}</div>
+    <div className="eom-kpi">
+      <span className="eom-ic" style={{ background: `color-mix(in srgb, ${color} 13%, #fff)`, color }}><Icon /></span>
+      <div className="eom-v eom-num">{value}</div>
+      <div className="eom-l">{label}</div>
     </div>
   );
 }
 function HeroCard({ icon: Icon, tag, title, text, cta, onCta }) {
   return (
-    <div className="eo-hero-card">
-      {tag && <span className="eo-pill">{tag}</span>}
+    <div className="eom-hero-card">
+      {tag && <span className="eom-pill">{tag}</span>}
       <h4>{title}</h4>
       {text && <p>{text}</p>}
-      {cta && <button className="eo-cta" onClick={onCta}>{cta} <ArrowRight /></button>}
-      {Icon && <span className="eo-hero-ico"><Icon /></span>}
+      {cta && <button className="eom-cta" onClick={onCta}>{cta} <ArrowRight /></button>}
+      {Icon && <span className="eom-hero-ico"><Icon /></span>}
     </div>
   );
 }
@@ -55,7 +55,7 @@ export default function MobileHome({ role, store, user, open }) {
     return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
   }, [students]);
 
-  const search = <div className="eo-searchbar"><Search /> Search students, staff, records…</div>;
+  const search = <div className="eom-searchbar"><Search /> Search students, staff, records…</div>;
 
   if (['principal', 'deputy_academic', 'deputy_admin', 'dos', 'registrar', 'admin', 'finance', 'accountant', 'bursar', 'librarian', 'support', 'procurement', 'clinic', 'nurse'].includes(role)) {
     return (
@@ -64,18 +64,18 @@ export default function MobileHome({ role, store, user, open }) {
         <HeroCard icon={GraduationCap} tag={(settings.name || 'Your school').toUpperCase()}
           title="School at a glance" text="The numbers that need you — academics, fees and staff."
           cta="Open academics" onCta={() => open('admin_academics')} />
-        <div className="eo-mini-grid">
+        <div className="eom-mini-grid">
           <Kpi icon={Users} color={BLUE} value={students.length} label="Students" />
           <Kpi icon={Users} color={INFO} value={teachers.length} label="Teaching staff" />
           <Kpi icon={BarChart3} color={GOOD} value={schoolMean > 0 ? `${schoolMean}%` : '—'} label="School mean" />
           <Kpi icon={Award} color={WARN} value={schoolMean > 0 ? gradeFor(schoolMean, boundaries, system) : '—'} label="Mean grade" />
         </div>
-        <div className="eo-sec"><h5>Quick actions</h5></div>
-        <div className="eo-qa-grid">
+        <div className="eom-sec"><h5>Quick actions</h5></div>
+        <div className="eom-qa-grid">
           <QA icon={BarChart3} label="Academics" color={BLUE} onClick={() => open('admin_academics')} />
           <QA icon={Wallet} label="Finance" color={GOOD} onClick={() => open('admin_finance')} />
           <QA icon={Users} label="Staff" color={INFO} onClick={() => open('admin_staff')} />
-          <QA icon={Award} label="Results" color={WARN} onClick={() => open('admin_academics')} />
+          <QA icon={Bell} label="Notices" color={WARN} onClick={() => open('admin_notices')} />
         </div>
       </>
     );
@@ -90,12 +90,12 @@ export default function MobileHome({ role, store, user, open }) {
         <HeroCard icon={ClipboardList} tag="TEACHER"
           title="Your classes today" text="Track your subjects, learners and messages in one place."
           cta="View classes" onCta={() => open('teacher_classes')} />
-        <div className="eo-mini-grid">
+        <div className="eom-mini-grid">
           <Kpi icon={Users} color={BLUE} value={students.length} label="Learners" />
           <Kpi icon={BookOpen} color={INFO} value={subject} label="Subject" />
         </div>
-        <div className="eo-sec"><h5>Quick actions</h5></div>
-        <div className="eo-qa-grid">
+        <div className="eom-sec"><h5>Quick actions</h5></div>
+        <div className="eom-qa-grid">
           <QA icon={BookOpen} label="Classes" color={BLUE} onClick={() => open('teacher_classes')} />
           <QA icon={Award} label="Gradebook" color={WARN} onClick={() => open('teacher_gradebook')} />
           <QA icon={MessageSquare} label="Messages" color={INFO} onClick={() => open('teacher_messages')} />
@@ -114,12 +114,12 @@ export default function MobileHome({ role, store, user, open }) {
         <HeroCard icon={BookOpen} tag={(me.class || 'MY CLASS').toUpperCase()}
           title="Welcome back to class" text="Your timetable, results and resources, all here."
           cta="View timetable" onCta={() => open('student_timetable')} />
-        <div className="eo-mini-grid">
+        <div className="eom-mini-grid">
           <Kpi icon={Award} color={WARN} value={overall > 0 ? gradeFor(overall, boundaries, system) : '—'} label="Mean grade" />
           <Kpi icon={BarChart3} color={GOOD} value={overall > 0 ? `${overall}%` : '—'} label="Mean score" />
         </div>
-        <div className="eo-sec"><h5>Quick actions</h5></div>
-        <div className="eo-qa-grid">
+        <div className="eom-sec"><h5>Quick actions</h5></div>
+        <div className="eom-qa-grid">
           <QA icon={CalendarDays} label="Timetable" color={BLUE} onClick={() => open('student_timetable')} />
           <QA icon={Award} label="Results" color={WARN} onClick={() => open('student_results')} />
           <QA icon={PlayCircle} label="Learn" color={GOOD} onClick={() => open('student_learn')} />
@@ -138,18 +138,18 @@ export default function MobileHome({ role, store, user, open }) {
       <HeroCard icon={GraduationCap} tag="THIS TERM"
         title={`${childName}'s progress`} text="Attendance, results and fees — all in one place."
         cta="View results" onCta={() => open('parent_results')} />
-      <div className="eo-sec"><h5>Quick actions</h5></div>
-      <div className="eo-qa-grid">
+      <div className="eom-sec"><h5>Quick actions</h5></div>
+      <div className="eom-qa-grid">
         <QA icon={Wallet} label="Fees" color={BLUE} onClick={() => open('parent_fees')} />
         <QA icon={CalendarDays} label="Attendance" color={GOOD} onClick={() => open('parent_attendance')} />
         <QA icon={Award} label="Results" color={WARN} onClick={() => open('parent_results')} />
         <QA icon={Stethoscope} label="Clinic" color={BAD} onClick={() => open('parent_clinic')} />
       </div>
-      <div className="eo-sec"><h5>Messages</h5><a onClick={() => open('parent_messages')}>Open</a></div>
-      <div className="eo-list-card">
-        <button className="eo-li" onClick={() => open('parent_messages')}>
-          <span className="eo-lic" style={{ background: 'var(--eo-info-100)', color: 'var(--eo-info)' }}><MessageSquare /></span>
-          <div className="eo-lt"><b>School &amp; clinic messages</b><span>Tap to open your inbox</span></div>
+      <div className="eom-sec"><h5>Messages</h5><a onClick={() => open('parent_messages')}>Open</a></div>
+      <div className="eom-list-card">
+        <button className="eom-li" onClick={() => open('parent_messages')}>
+          <span className="eom-lic" style={{ background: 'var(--eom-info-100)', color: 'var(--eom-info)' }}><MessageSquare /></span>
+          <div className="eom-lt"><b>School &amp; clinic messages</b><span>Tap to open your inbox</span></div>
         </button>
       </div>
     </>

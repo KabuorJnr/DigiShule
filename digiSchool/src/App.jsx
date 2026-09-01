@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { isNative } from './lib/native';
 import { useIsMobile } from './mobile/useIsMobile';
 import MobileLogin from './mobile/MobileLogin';
+import DevPreview from './mobile/DevPreview';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
 import SuperAdminPortal from './views/SuperAdminPortal';
@@ -95,6 +96,7 @@ export default function App() {
       <Route path="/admin" element={<SuperAdminPortal />} />
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
       <Route path="/login" element={<LoginRoute />} />
+      {import.meta.env.DEV && <Route path="/m-dev" element={<DevPreview />} />}
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
