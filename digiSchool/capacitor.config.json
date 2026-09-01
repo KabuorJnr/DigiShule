@@ -5,12 +5,12 @@
   "server": {
     "androidScheme": "https"
   },
-  "backgroundColor": "#0f172a",
+  "backgroundColor": "#0B1B3E",
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
       "launchAutoHide": false,
-      "backgroundColor": "#0f172a",
+      "backgroundColor": "#0B1B3E",
       "showSpinner": false,
       "androidScaleType": "CENTER_CROP",
       "splashFullScreen": true,
@@ -21,7 +21,7 @@
     },
     "StatusBar": {
       "style": "DARK",
-      "backgroundColor": "#0f172a",
+      "backgroundColor": "#0B1B3E",
       "overlaysWebView": false
     }
   }

@@ -14,6 +14,8 @@ import { Icon, NAV_ICON_MAP } from '../../components/icons';
 import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
+import { useIsMobile } from '../../mobile/useIsMobile';
+import MobileShell from '../../mobile/MobileShell';
 
 let toastId = 0;
 
@@ -40,6 +42,7 @@ export default function PortalLayout() {
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const isMobile = useIsMobile();
 
   // Staff Activation state
   const [staffRecord, setStaffRecord] = useState(null);
@@ -636,6 +639,54 @@ export default function PortalLayout() {
     if (navItem.action && viewParams.action !== navItem.action) return false;
     return true;
   };
+
+  // ---- Phone shell ----
+  // On phones the desktop sidebar layout is replaced by the native-feeling
+  // MobileShell — a self-contained screen stack (adaptive home + bottom nav +
+  // per-role native screens) that reads the same `store`. Shared overlays
+  // (toasts, change-password) still render alongside it.
+  if (isMobile) {
+    return (
+      <>
+        <MobileShell
+          store={store}
+          user={currentUser}
+          onLogout={handleLogout}
+          onChangePassword={() => setChangePasswordOpen(true)}
+          loading={dataLoading}
+        />
+
+        {/* Toasts */}
+        <div className="toast-wrap">
+          {toasts.map((t) => (
+            <div key={t.id} className={`toast ${t.type}`}>
+              <span style={{ fontSize: 16 }}>
+                {t.type === 'success' ? <Icon name="check" size={16} /> :
+                 t.type === 'error' ? <Icon name="close" size={16} /> :
+                 t.type === 'warning' ? <Icon name="warning" size={16} /> :
+                 <Icon name="info" size={16} />}
+              </span>
+              <div style={{ flex: 1 }}>
+                {t.title && <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{t.title}</div>}
+                <div style={{ fontSize: 13, opacity: 0.9 }}>{t.message}</div>
+              </div>
+              <button className="btn" style={{ background: 'transparent', border: 'none', color: 'inherit', opacity: 0.7, padding: 4 }} onClick={() => store.removeToast(t.id)}>
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {(changePasswordOpen || mustChangePassword) && (
+          <ChangePasswordModal
+            forced={mustChangePassword && !changePasswordOpen}
+            onClose={() => { setChangePasswordOpen(false); setMustChangePassword(false); }}
+            notify={notify}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="layout">

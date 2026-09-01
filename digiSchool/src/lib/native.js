@@ -37,7 +37,7 @@ export async function initNative() {
     await StatusBar.setOverlaysWebView({ overlay: false });
     await StatusBar.setStyle({ style: Style.Dark });
     if (nativePlatform() === 'android') {
-      await StatusBar.setBackgroundColor({ color: '#0f172a' });
+      await StatusBar.setBackgroundColor({ color: '#0B1B3E' });
     }
   } catch { /* status bar plugin unavailable — ignore */ }
 

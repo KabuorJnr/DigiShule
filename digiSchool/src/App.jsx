@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { isNative } from './lib/native';
+import { useIsMobile } from './mobile/useIsMobile';
+import MobileLogin from './mobile/MobileLogin';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
 import SuperAdminPortal from './views/SuperAdminPortal';
@@ -74,6 +76,13 @@ import TermsOfService from './views/legal/TermsOfService';
 import NotFound from './views/NotFound';
 import CookieBanner from './components/CookieBanner';
 
+// Phones (native app or a narrow viewport) get the mobile sign-in; desktop
+// keeps the existing web login untouched.
+function LoginRoute() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileLogin /> : <Login />;
+}
+
 export default function App() {
   return (
     <>
@@ -85,7 +94,7 @@ export default function App() {
       <Route path="/book-demo" element={<BookDemo />} />
       <Route path="/admin" element={<SuperAdminPortal />} />
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<LoginRoute />} />
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
