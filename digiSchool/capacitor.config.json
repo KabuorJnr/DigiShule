@@ -20,9 +20,8 @@
       "resize": "native"
     },
     "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#0B1B3E",
-      "overlaysWebView": false
+      "style": "LIGHT",
+      "overlaysWebView": true
     }
   }
 }

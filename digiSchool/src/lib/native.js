@@ -31,14 +31,13 @@ export async function initNative() {
   // Lets CSS target the app shell (safe-area insets, etc.) without affecting web.
   document.documentElement.classList.add('capacitor', `platform-${nativePlatform()}`);
 
-  // Status bar: dark navy background with light content, sitting above the app.
+  // Status bar: the app draws edge-to-edge under a transparent status bar
+  // (matches modern Android behaviour), and the mobile CSS reserves the inset
+  // via --eom-safe-top so the header clears it. Dark icons suit the light app.
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
-    await StatusBar.setOverlaysWebView({ overlay: false });
-    await StatusBar.setStyle({ style: Style.Dark });
-    if (nativePlatform() === 'android') {
-      await StatusBar.setBackgroundColor({ color: '#0B1B3E' });
-    }
+    await StatusBar.setOverlaysWebView({ overlay: true });
+    await StatusBar.setStyle({ style: Style.Light });
   } catch { /* status bar plugin unavailable — ignore */ }
 
   // Android hardware back button: walk the SPA history, exit at the root.

@@ -22,10 +22,14 @@
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
-  /* Respect native notches / home indicators. */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* Safe-area insets — applied to the scroll/nav, not the fixed root, so the
+     header clears the status bar and the tab bar clears the home indicator.
+     Android WebViews often report 0 for the top inset even edge-to-edge, so a
+     sensible minimum is forced on Android below. */
+  --eom-safe-top: env(safe-area-inset-top, 0px);
+  --eom-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
+html.platform-android .eom-m { --eom-safe-top: max(env(safe-area-inset-top, 0px), 26px); }
 .eom-m *, .eom-m *::before, .eom-m *::after { box-sizing: border-box; }
 .eom-num { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-variant-numeric: tabular-nums; }
 
@@ -118,7 +122,7 @@
 
 /* ---------- app shell ---------- */
 .eom-app { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--eom-surface); }
-.eom-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 16px; }
+.eom-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(14px + var(--eom-safe-top)) 16px calc(96px + var(--eom-safe-bottom)); display: flex; flex-direction: column; gap: 16px; }
 .eom-scroll > * { flex-shrink: 0; }
 .eom-scroll::-webkit-scrollbar { display: none; }
 .eom-top { display: flex; align-items: center; gap: 12px; }
@@ -232,7 +236,7 @@
 .eom-tt .eom-tbody span { display: block; font-size: 11.5px; color: var(--eom-muted); }
 
 /* ---------- bottom nav ---------- */
-.eom-tabbar { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-top: 1px solid var(--eom-line); display: flex; padding: 8px 8px calc(10px + env(safe-area-inset-bottom)); z-index: 30; }
+.eom-tabbar { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-top: 1px solid var(--eom-line); display: flex; padding: 8px 8px calc(10px + var(--eom-safe-bottom)); z-index: 30; }
 .eom-tab { position: relative; flex: 1; background: none; border: 0; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--eom-muted); padding-top: 8px; }
 .eom-tab svg { width: 22px; height: 22px; }
 .eom-tab span { font-size: 10.5px; font-weight: 700; letter-spacing: .01em; }
@@ -240,7 +244,7 @@
 .eom-tab.eom-active .eom-ind { position: absolute; top: 0; width: 26px; height: 3px; border-radius: 99px; background: var(--eom-blue); }
 
 /* ---------- notifications panel ---------- */
-.eom-np { position: absolute; top: calc(64px + env(safe-area-inset-top)); right: 14px; left: 14px; max-height: 60%; background: #fff; border: 1px solid var(--eom-line); border-radius: 16px; box-shadow: var(--eom-shadow); z-index: 45; overflow: hidden; display: flex; flex-direction: column; animation: eom-fadeUp .2s both; }
+.eom-np { position: absolute; top: calc(58px + var(--eom-safe-top)); right: 14px; left: 14px; max-height: 60%; background: #fff; border: 1px solid var(--eom-line); border-radius: 16px; box-shadow: var(--eom-shadow); z-index: 45; overflow: hidden; display: flex; flex-direction: column; animation: eom-fadeUp .2s both; }
 .eom-np h6 { margin: 0; padding: 13px 15px; font-size: 14px; font-weight: 800; color: var(--eom-ink); border-bottom: 1px solid var(--eom-line); display: flex; justify-content: space-between; align-items: center; }
 .eom-np-actions { padding: 8px 12px; border-bottom: 1px solid var(--eom-line); }
 .eom-np-actions .eom-link { font-size: 12.5px; }
