@@ -210,16 +210,24 @@ export default function StaffAttendance({ store, user }) {
         id: updated.id, name: updated.name, role: updated.role,
         dept: updated.dept, status: updated.status, check_in: updated.check_in || null,
       });
-      // Also persist a DATED attendance record so the marking is kept for
-      // reference and historical tracking — not just the live roster status.
-      // Keyed by staff+date so re-marking the same day updates one row.
-      await persistDailyRecord(updated, next);
     } catch (e) {
       alert('Failed to update status: ' + e.message);
       console.error(e);
+      return;
     }
     setStaff((ss) => ss.map((s) => (s.id === id ? updated : s)));
-    notify('Staff status updated & recorded.', 'info', 'Attendance');
+    // Also persist a DATED attendance record so the marking is kept for history
+    // — best-effort, so a missing register table never blocks the live update.
+    try {
+      await persistDailyRecord(updated, next);
+      notify('Staff status updated & recorded.', 'info', 'Attendance');
+    } catch (e) {
+      if (isMissingRegisterTable(e)) {
+        notify('Status updated. (Historical register not saved — run migration 069 to enable it.)', 'warning', 'Attendance');
+      } else {
+        notify(`Status updated, but the record failed to save: ${e.message}`, 'warning', 'Attendance');
+      }
+    }
   };
 
   // Write/refresh a single staff member's dated attendance record. A manual
@@ -244,6 +252,13 @@ export default function StaffAttendance({ store, user }) {
     });
   };
 
+  // The daily-register table may not exist in a given deployment. Detect that
+  // specific failure so we can show an actionable message instead of a raw
+  // PostgREST "schema cache" error, and so a single status toggle still updates
+  // the live roster even when the historical record can't be written.
+  const isMissingRegisterTable = (e) =>
+    /staff_daily_attendance/.test(e?.message || '') || e?.code === 'PGRST205' || /schema cache/i.test(e?.message || '');
+
   // Persist the whole active roster's current status as today's register in one
   // action — gives admins a complete, kept daily attendance record on demand.
   const [savingRegister, setSavingRegister] = useState(false);
@@ -259,7 +274,11 @@ export default function StaffAttendance({ store, user }) {
       }
       notify(`Today's attendance register saved (${saved} staff).`, 'success', 'Attendance');
     } catch (e) {
-      notify(`Saved ${saved}/${active.length}. Error: ${e.message}`, 'error', 'Attendance');
+      if (isMissingRegisterTable(e)) {
+        notify('Staff register storage isn\'t set up yet. Run migration 069_staff_daily_attendance.sql in Supabase (SQL editor), then try again.', 'error', 'Attendance');
+      } else {
+        notify(`Saved ${saved}/${active.length}. Error: ${e.message}`, 'error', 'Attendance');
+      }
     } finally {
       setSavingRegister(false);
     }
