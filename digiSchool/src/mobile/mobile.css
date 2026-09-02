@@ -223,6 +223,14 @@ html.platform-android .eom-m { --eom-safe-top: max(env(safe-area-inset-top, 0px)
 /* subject/result bar row */
 .eom-subj { display: flex; align-items: center; gap: 12px; padding: 12px 15px; }
 .eom-subj + .eom-subj { border-top: 1px solid var(--eom-line); }
+/* report-card subject row */
+.eom-rcrow { display: flex; align-items: center; gap: 10px; padding: 11px 15px; }
+.eom-rcrow + .eom-rcrow { border-top: 1px solid var(--eom-line); }
+.eom-rcsub { flex: 1; min-width: 0; }
+.eom-rcsub b { display: block; font-size: 13.5px; font-weight: 700; color: var(--eom-ink); }
+.eom-rcsub span { font-size: 11.5px; color: var(--eom-muted); }
+.eom-rcscore { font-size: 14px; font-weight: 700; color: var(--eom-ink); width: 46px; text-align: right; }
+.eom-rcgrade { font-size: 13px; font-weight: 800; width: 34px; text-align: center; }
 .eom-subj .eom-sn { flex: 1; font-size: 13.5px; font-weight: 700; color: var(--eom-ink); }
 .eom-subj .eom-sp { width: 64px; }
 .eom-subj .eom-sg { width: 34px; text-align: center; font-weight: 800; font-size: 13px; }

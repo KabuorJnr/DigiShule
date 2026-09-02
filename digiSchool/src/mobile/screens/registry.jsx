@@ -6,7 +6,8 @@ import { ParentFees, ParentResults, ParentAttendance, ParentClinic, ParentMessag
 import { StudentTimetable, StudentResults, StudentLearn, StudentFinance, StudentClasses } from './StudentScreens';
 import { TeacherClasses, TeacherGradebook, TeacherMessages, TeacherMarks, TeacherAttendance } from './TeacherScreens';
 import { AdminAcademics, AdminFinance, AdminStaff, AdminNotices } from './AdminScreens';
-import { AdminStudents, AdminTeachers, AdminExams, AdminTimetable, AdminApprovals, AdminAttendance } from './AdminMore';
+import { AdminStudents, AdminTeachers, AdminExams, AdminTimetable, AdminApprovals, AdminAttendance, AdminExpenses } from './AdminMore';
+import { ReportCard } from './ReportCard';
 
 // name -> { title, Component }. 'home' and 'account' are handled by the shell.
 export const SCREENS = {
@@ -15,6 +16,7 @@ export const SCREENS = {
   parent_attendance: { title: 'Attendance', Component: ParentAttendance },
   parent_clinic: { title: 'Clinic & Health', Component: ParentClinic },
   parent_messages: { title: 'Messages', Component: ParentMessages },
+  report_card: { title: 'Report card', Component: ReportCard },
 
   student_timetable: { title: 'Timetable', Component: StudentTimetable },
   student_results: { title: 'Results', Component: StudentResults },
@@ -38,6 +40,7 @@ export const SCREENS = {
   admin_timetable: { title: 'Timetable', Component: AdminTimetable },
   admin_approvals: { title: 'Approvals', Component: AdminApprovals },
   admin_attendance: { title: 'Attendance', Component: AdminAttendance },
+  admin_expenses: { title: 'Expense approvals', Component: AdminExpenses },
 };
 
 // Bottom-nav tabs per role. `key` doubles as the root screen name.

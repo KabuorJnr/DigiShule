@@ -1,10 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import {
   Users, GraduationCap, CalendarDays, ClipboardList, Clock,
-  Check, X, Search,
+  Check, X, Search, Receipt,
 } from 'lucide-react';
 import { upsertRow } from '../../lib/api';
-import { useTable, StatCard, DList, Empty, SecHead, Loading } from './kit';
+import { fmtKES, useTable, StatCard, DList, Empty, SecHead, Loading } from './kit';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -199,6 +199,61 @@ export function AdminAttendance({ store }) {
         { k: 'Total students', v: (store.students || []).length },
       ]} />
       {stats.marked === 0 && <p className="eom-markhint">No attendance has been marked yet today.</p>}
+    </>
+  );
+}
+
+// ---- Expense approvals (principal / admin) ----
+export function AdminExpenses({ user }) {
+  const { rows, loading } = useTable('expenses');
+  const [items, setItems] = useState([]);
+  useEffect(() => { setItems((rows || []).slice().sort((a, b) => String(b.date || b.created_at).localeCompare(String(a.date || a.created_at)))); }, [rows]);
+
+  const act = async (ex, status) => {
+    const updated = { ...ex, status, ...(status === 'Approved'
+      ? { approved_by: user?.name || 'Admin', approved_at: new Date().toISOString() }
+      : { rejected_by: user?.name || 'Admin', rejected_at: new Date().toISOString() }) };
+    setItems((prev) => prev.map((x) => (x.id === ex.id ? updated : x)));
+    try { await upsertRow('expenses', updated); } catch { /* optimistic */ }
+  };
+
+  if (loading) return <Loading />;
+  const pending = items.filter((e) => (e.status || 'Pending') === 'Pending');
+  const done = items.filter((e) => (e.status || 'Pending') !== 'Pending');
+  const pendingTotal = pending.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  return (
+    <>
+      <StatCard>
+        <div className="eom-cap">Awaiting your approval</div>
+        <div className="eom-big eom-num">{fmtKES(pendingTotal)}</div>
+        <div className="eom-l" style={{ fontSize: 12, color: 'var(--eom-muted)' }}>{pending.length} expense{pending.length === 1 ? '' : 's'} pending</div>
+      </StatCard>
+
+      <SecHead title="Pending expenses" />
+      {pending.length === 0 ? <Empty icon={Receipt} text="No expenses awaiting approval." /> : (
+        <div className="eom-list-card">
+          {pending.map((e) => (
+            <div className="eom-li" key={e.id} style={{ cursor: 'default', alignItems: 'flex-start' }}>
+              <span className="eom-lic" style={{ background: 'var(--eom-warn-100)', color: 'var(--eom-warn)' }}><Receipt /></span>
+              <div className="eom-lt">
+                <b>{e.category || 'Expense'} · {fmtKES(e.amount)}</b>
+                <span style={{ whiteSpace: 'normal' }}>{e.description || ''}{e.date ? ` · ${String(e.date).slice(0, 10)}` : ''}</span>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button className="eom-btn-solid" style={{ height: 34, flex: 'none', padding: '0 12px' }} onClick={() => act(e, 'Approved')}><Check size={15} /> Approve</button>
+                  <button className="eom-btn-ghost" style={{ height: 34, flex: 'none', padding: '0 12px' }} onClick={() => act(e, 'Rejected')}><X size={15} /> Reject</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {done.length > 0 && (
+        <>
+          <SecHead title="Recently reviewed" />
+          <DList items={done.slice(0, 20).map((e) => ({ k: `${e.category || 'Expense'} · ${fmtKES(e.amount)}`, v: e.status, color: e.status === 'Approved' ? '#059669' : '#DC2626' }))} />
+        </>
+      )}
     </>
   );
 }

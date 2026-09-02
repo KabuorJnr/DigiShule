@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Search, Wallet, CalendarDays, Award, Stethoscope, MessageSquare, BookOpen,
-  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell, Clock,
+  Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell, Clock, Receipt,
 } from 'lucide-react';
 import { studentOverall, gradeFor, is844Class, CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 
@@ -84,6 +84,7 @@ export default function MobileHome({ role, store, user, open }) {
           <QA icon={ClipboardList} label="Exams" color={WARN} onClick={() => open('admin_exams')} />
           <QA icon={CalendarDays} label="Timetable" color={GOOD} onClick={() => open('admin_timetable')} />
           <QA icon={Clock} label="Approvals" color={BAD} onClick={() => open('admin_approvals')} />
+          <QA icon={Receipt} label="Expenses" color={GOOD} onClick={() => open('admin_expenses')} />
           <QA icon={CalendarDays} label="Attendance" color={BLUE} onClick={() => open('admin_attendance')} />
         </div>
       </>
