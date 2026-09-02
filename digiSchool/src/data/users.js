@@ -656,3 +656,9 @@ export const ROLES = {
   },
 };
 
+// Some nurse accounts carry the role 'nurse' rather than 'clinic'. Without this
+// alias, ROLES['nurse'] is undefined and PortalLayout falls back to the
+// principal portal — so the nurse never sees the clinic or its Log Visit
+// action. Aliasing sends them to the Health & Nursing portal instead.
+ROLES.nurse = ROLES.clinic;
+

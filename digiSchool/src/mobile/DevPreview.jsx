@@ -43,6 +43,7 @@ const ROLE_USERS = {
   student: { id: 'u_s', role: 'student', name: 'Tony Stark', student_id: 'stu1', linked_students: [MOCK_STUDENT] },
   teacher: { id: 'u_t', role: 'teacher', name: 'David Kamau', teacher_id: 't1' },
   principal: { id: 'u_a', role: 'principal', name: 'Dr. Susan Mwangi' },
+  nurse: { id: 'u_n', role: 'clinic', name: 'Nurse Jane' },
 };
 
 // Direct jumps to screens the harness can't reach through normal nav (their

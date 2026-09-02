@@ -327,6 +327,8 @@ html.platform-android .eom-m { --eom-safe-top: max(env(safe-area-inset-top, 0px)
 .eom-assess { display: flex; gap: 6px; margin-bottom: 4px; }
 .eom-assess-btn { flex: 1; height: 40px; border-radius: 11px; border: 1.5px solid var(--eom-line); background: #fff; font-family: inherit; font-weight: 700; font-size: 13px; color: var(--eom-muted); cursor: pointer; }
 .eom-assess-btn.eom-on { background: var(--eom-blue); color: #fff; border-color: var(--eom-blue); }
+.eom-chip { border: 1.5px solid var(--eom-line); background: #fff; color: var(--eom-muted); font-family: inherit; font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 99px; cursor: pointer; }
+.eom-chip.eom-on { background: var(--eom-blue); color: #fff; border-color: var(--eom-blue); }
 .eom-markrow { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
 .eom-markrow + .eom-markrow { border-top: 1px solid var(--eom-line); }
 .eom-marklt { flex: 1; min-width: 0; }

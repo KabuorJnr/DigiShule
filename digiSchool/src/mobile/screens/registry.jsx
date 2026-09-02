@@ -8,6 +8,7 @@ import { TeacherClasses, TeacherGradebook, TeacherMessages, TeacherMarks, Teache
 import { AdminAcademics, AdminFinance, AdminStaff, AdminNotices } from './AdminScreens';
 import { AdminStudents, AdminTeachers, AdminExams, AdminTimetable, AdminApprovals, AdminAttendance, AdminExpenses } from './AdminMore';
 import { ReportCard } from './ReportCard';
+import { NurseClinic } from './NurseScreens';
 
 // name -> { title, Component }. 'home' and 'account' are handled by the shell.
 export const SCREENS = {
@@ -41,6 +42,7 @@ export const SCREENS = {
   admin_approvals: { title: 'Approvals', Component: AdminApprovals },
   admin_attendance: { title: 'Attendance', Component: AdminAttendance },
   admin_expenses: { title: 'Expense approvals', Component: AdminExpenses },
+  nurse_clinic: { title: 'Clinic', Component: NurseClinic },
 };
 
 // Bottom-nav tabs per role. `key` doubles as the root screen name.
@@ -73,17 +75,27 @@ export const TABS = {
     { key: 'admin_staff', label: 'Staff', icon: Users },
     { key: 'account', label: 'Account', icon: User },
   ],
+  nurse: [
+    { key: 'home', label: 'Home', icon: Home },
+    { key: 'nurse_clinic', label: 'Clinic', icon: Stethoscope },
+    { key: 'admin_students', label: 'Students', icon: Users },
+    { key: 'account', label: 'Account', icon: User },
+  ],
 };
+
+const NURSE_ROLES = ['nurse', 'clinic'];
 
 export function tabsForRole(role) {
   if (role === 'parent') return TABS.parent;
   if (role === 'student') return TABS.student;
   if (role === 'teacher' || role === 'class teacher') return TABS.teacher;
+  if (NURSE_ROLES.includes(role)) return TABS.nurse;
   return TABS.admin;
 }
 
 export function homeRoleFor(role) {
   if (role === 'parent') return 'parent';
+  if (NURSE_ROLES.includes(role)) return 'nurse';
   if (role === 'student') return 'student';
   if (role === 'teacher' || role === 'class teacher') return 'teacher';
   return 'admin';
