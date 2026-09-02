@@ -590,22 +590,25 @@ export default function StaffAttendance({ store, user }) {
                   <button key={f} className={`btn btn-sm${filter === f ? ' btn-primary' : ''}`} onClick={() => setFilter(f)}>{f}</button>
                 ))}
               </div>
-              {canApprove && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-sm btn-primary" onClick={saveDailyRegister} disabled={savingRegister}>
-                    {savingRegister ? 'Saving…' : 'Save Register'}
-                  </button>
-                  <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportLogs}>
-                    Export Logs
-                  </button>
-                  <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportRegister}>
-                    Download Register
-                  </button>
+              {/* Register save/export/download are available to anyone who can
+                  view staff attendance; only roster management (Add Staff) stays
+                  restricted to approver roles. */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-sm btn-primary" onClick={saveDailyRegister} disabled={savingRegister}>
+                  {savingRegister ? 'Saving…' : 'Save Register'}
+                </button>
+                <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportLogs}>
+                  Export Logs
+                </button>
+                <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportRegister}>
+                  Download Register
+                </button>
+                {canApprove && (
                   <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
                     + Add Staff
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
             <div className="scroll-x">
               <table className="table">
