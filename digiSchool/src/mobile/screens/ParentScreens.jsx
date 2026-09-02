@@ -85,10 +85,14 @@ export function ParentFees({ store, user }) {
     () => (payments || []).filter((p) => p.student_id === child.id || p.adm === child.adm),
     [payments, child.id, child.adm]
   );
+  // Identical to the parent dashboard (src/views/parent/ParentDashboard.jsx):
+  // termFees = Σ fee-structure rows for the child's level; paid = Σ payments
+  // that aren't pending/awaiting-verification; balance = termFees − paid (may be
+  // negative when overpaid, shown as a credit, exactly like the web portal).
   const termFees = feeStructure.reduce((s, f) => s + (Number(f[myLevel]) || 0), 0);
   const paid = mine.filter(paidStatuses).reduce((a, p) => a + Number(p.amount || 0), 0);
-  const outstanding = Math.max(0, termFees - paid);
-  const pct = termFees > 0 ? (paid / termFees) * 100 : 0;
+  const outstanding = termFees - paid;
+  const pct = termFees > 0 ? Math.min(100, (paid / termFees) * 100) : 0;
 
   if (loading) return <Loading />;
   return (
@@ -110,7 +114,7 @@ export function ParentFees({ store, user }) {
         )}
       </StatCard>
 
-      {paying && <PayPanel child={child} store={store} defaultAmount={outstanding || ''} onClose={() => setPaying(false)} />}
+      {paying && <PayPanel child={child} store={store} defaultAmount={outstanding > 0 ? outstanding : ''} onClose={() => setPaying(false)} />}
 
       <SecHead title="Payment history" />
       {mine.length === 0 ? (
