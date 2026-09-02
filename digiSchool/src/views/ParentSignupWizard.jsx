@@ -1,12 +1,15 @@
-﻿import { useState, useEffect } from 'react';
-import { Users, Search, CheckCircle2, User, CreditCard, Loader, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Search, CheckCircle2, User, CreditCard, Loader, Shield, Check, ArrowLeft, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function ParentSignupWizard({ onComplete, onCancel }) {
+  const navigate = useNavigate();
+  const cancel = onCancel || (() => navigate('/login'));
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Step 1: Student Lookup
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('');
@@ -19,7 +22,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
       if (!error && data) setSchools(data);
     });
   }, []);
-  
+
   // Step 2: Parent Profile
   const [parent, setParent] = useState({
     name: '', email: '', password: ''
@@ -35,12 +38,12 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     if (!selectedSchool) return setError('Please select your school.');
     if (!admNumber.trim()) return setError('Please enter your child\'s admission number.');
     if (!parentPin.trim()) return setError('Please enter the Parent Access PIN provided by the school.');
-    
+
     setSaving(true);
     try {
       const { data, error: fetchErr } = await supabase
-        .rpc('lookup_student_for_signup', { 
-          p_school_id: selectedSchool, 
+        .rpc('lookup_student_for_signup', {
+          p_school_id: selectedSchool,
           p_adm: admNumber.trim().toUpperCase(),
           p_parent_pin: parentPin.trim()
         });
@@ -63,7 +66,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     if (step === 2) {
       if (!parent.name || !parent.email || !parent.password) return setError('Please fill in all required fields.');
       if (parent.password.length < 6) return setError('Password must be at least 6 characters.');
-      
+
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(parent.email.trim())) {
         return setError('Please enter a valid email address.');
@@ -86,7 +89,7 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
   const provisionAccount = async () => {
     setSaving(true);
     setError('');
-    
+
     try {
       // 1. Create Parent Auth Account
       const { data: authData, error: authErr } = await supabase.auth.signUp({
@@ -100,14 +103,14 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
           }
         }
       });
-      
+
       if (authErr) {
         if (authErr.message.includes('already registered')) {
           throw new Error('An account with this email is already registered.');
         }
         throw new Error(`Auth Error: ${authErr.message}`);
       }
-      
+
       if (!authData?.user) throw new Error('Failed to create authentication credentials.');
 
       // 2. Update Parent Profile linked to the Student (upsert since trigger may have created it)
@@ -142,176 +145,193 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     }
   };
 
+  const stepTitles = ['Find your child', 'Parent details', 'Account activation', 'All done'];
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div className="card" style={{ maxWidth: 600, width: '100%', background: '#fff', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-        
-        <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#fff', padding: '30px 40px', position: 'relative' }}>
-          <button 
-            onClick={onCancel}
-            style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', color: '#fff', opacity: 0.7, cursor: 'pointer' }}
-          >
-            Cancel
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <Users size={32} color="#047857" />
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Parent Portal Activation</h1>
+    <div className="psw-page">
+      <div className="psw-card">
+        <div className="psw-header">
+          <button className="psw-cancel" onClick={cancel}>Cancel</button>
+          <div className="psw-brand">
+            <span className="psw-brandicon"><Users size={22} /></span>
+            <div>
+              <h1>Parent Portal Activation</h1>
+              <p>Link your account to your child and track their academic journey.</p>
+            </div>
           </div>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: 14 }}>Link your account to your child to track their academic journey.</p>
         </div>
 
-        <div style={{ padding: '40px' }}>
-          {/* Progress Indicator */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 12, left: 20, right: 20, height: 2, background: '#e2e8f0', zIndex: 0 }} />
-            <div style={{ position: 'absolute', top: 12, left: 20, width: `${(step - 1) * 33}%`, height: 2, background: '#047857', zIndex: 0, transition: '0.3s' }} />
-            
+        <div className="psw-body">
+          {/* Progress */}
+          <div className="psw-steps" aria-label={`Step ${step} of 4: ${stepTitles[step - 1]}`}>
+            <div className="psw-steptrack"><span style={{ width: `${((step - 1) / 3) * 100}%` }} /></div>
             {[1, 2, 3, 4].map(s => (
-              <div key={s} style={{ 
-                width: 26, height: 26, borderRadius: '50%', background: step >= s ? '#047857' : '#e2e8f0', 
-                color: step >= s ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1, fontSize: 12, fontWeight: 600, transition: '0.3s'
-              }}>
-                {s}
+              <div key={s} className={`psw-dot${step > s ? ' done' : step === s ? ' on' : ''}`}>
+                {step > s ? <Check /> : s}
               </div>
             ))}
           </div>
 
-          {error && (
-            <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, marginBottom: 20, fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Shield size={16} /> {error}
-            </div>
-          )}
+          {error && <div className="psw-error"><Shield size={16} /> {error}</div>}
 
           {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Search size={20} color="#047857" /> Find Your Child
-              </h3>
-              <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>Enter your child's official Admission Number as provided by the school.</p>
-              
-              <div>
-                <label className="field-label">Select School *</label>
+            <div className="psw-step">
+              <h3><Search size={19} /> Find your child</h3>
+              <p className="psw-hint">Enter your child&apos;s official admission number as provided by the school.</p>
+
+              <div className="psw-field">
+                <label className="field-label">Select school *</label>
                 <select className="select" value={selectedSchool} onChange={e => setSelectedSchool(e.target.value)}>
-                  <option value="" disabled>-- Select Your School --</option>
-                  {schools.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
+                  <option value="" disabled>-- Select your school --</option>
+                  {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
-
-              <div>
-                <label className="field-label">Admission Number *</label>
+              <div className="psw-field">
+                <label className="field-label">Admission number *</label>
                 <input className="input" value={admNumber} onChange={e => setAdmNumber(e.target.value)} placeholder="e.g. ADM/2026/9027" style={{ textTransform: 'uppercase' }} />
               </div>
-
-              <div>
-                <label className="field-label">Parent Access PIN *</label>
-                <input className="input" type="password" maxLength={6} value={parentPin} onChange={e => setParentPin(e.target.value)} placeholder="6-digit PIN" />
-                <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>This secret PIN is provided by the school.</p>
+              <div className="psw-field">
+                <label className="field-label">Parent access PIN *</label>
+                <input className="input" type="password" inputMode="numeric" maxLength={6} value={parentPin} onChange={e => setParentPin(e.target.value)} placeholder="6-digit PIN" />
+                <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>This secret PIN is provided by the school.</p>
               </div>
-              
-              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={handleLookupStudent} disabled={saving} style={{ background: '#0f172a', padding: '12px 24px' }}>
-                  {saving ? 'Searching...' : 'Search →'}
+
+              <div className="psw-actions">
+                <button type="button" className="psw-btn" onClick={handleLookupStudent} disabled={saving}>
+                  {saving ? 'Searching…' : <>Search <ArrowRight size={18} /></>}
                 </button>
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <User size={20} color="#047857" /> Parent Details
-              </h3>
-              <p style={{ margin: '-10px 0 10px 0', fontSize: 14, color: '#64748b' }}>
-                Student Found: <strong>{foundStudent?.name} ({foundStudent?.adm})</strong>
-              </p>
-              
-              <div>
-                <label className="field-label">Your Full Name *</label>
-                <input className="input" value={parent.name} onChange={e => setParent({...parent, name: e.target.value})} placeholder="e.g. Jane Doe" />
+            <div className="psw-step">
+              <h3><User size={19} /> Parent details</h3>
+              <p className="psw-hint">Student found: <strong style={{ color: '#0f172a' }}>{foundStudent?.name} ({foundStudent?.adm})</strong></p>
+
+              <div className="psw-field">
+                <label className="field-label">Your full name *</label>
+                <input className="input" value={parent.name} onChange={e => setParent({ ...parent, name: e.target.value })} placeholder="e.g. Jane Doe" />
+              </div>
+              <div className="psw-field">
+                <label className="field-label">Email address *</label>
+                <input className="input" type="email" value={parent.email} onChange={e => setParent({ ...parent, email: e.target.value })} placeholder="you@example.com" />
+                <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>This will be your login username.</p>
+              </div>
+              <div className="psw-field">
+                <label className="field-label">Create password *</label>
+                <input className="input" type="password" value={parent.password} onChange={e => setParent({ ...parent, password: e.target.value })} placeholder="Minimum 6 characters" />
               </div>
 
-              <div>
-                <label className="field-label">Email Address *</label>
-                <input className="input" type="email" value={parent.email} onChange={e => setParent({...parent, email: e.target.value})} placeholder="you@example.com" />
-                <p style={{ margin: '4px 0 0 0', fontSize: 12, color: '#64748b' }}>This will be your login username.</p>
-              </div>
-              
-              <div>
-                <label className="field-label">Create Password *</label>
-                <input className="input" type="password" value={parent.password} onChange={e => setParent({...parent, password: e.target.value})} placeholder="Minimum 6 characters" />
-              </div>
-
-              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(1); }}>â† Back</button>
-                <button type="button" className="btn btn-primary" onClick={nextStep} style={{ background: '#0f172a', padding: '12px 24px' }}>Continue to Payment →</button>
+              <div className="psw-actions">
+                <button type="button" className="psw-btn-ghost" onClick={() => { setError(''); setStep(1); }}><ArrowLeft size={17} /> Back</button>
+                <button type="button" className="psw-btn" onClick={nextStep}>Continue <ArrowRight size={18} /></button>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CreditCard size={20} color="#047857" /> Account Activation
-              </h3>
-              
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 20, borderRadius: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 14, color: '#166534', fontWeight: 600, marginBottom: 8 }}>MONTHLY SUBSCRIPTION</div>
-                <div style={{ fontSize: 32, fontWeight: 800, color: '#14532d', marginBottom: 16 }}>KES 250</div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15, color: '#166534' }}>
-                  <div>1. Go to M-Pesa on your phone</div>
-                  <div>2. Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong></div>
-                  <div>3. Enter Business Number: <strong style={{ fontSize: 18, color: '#000' }}>123456</strong></div>
-                  <div>4. Enter Account Number: <strong style={{ fontSize: 18, color: '#000' }}>{foundStudent?.adm || 'EDUONE'}</strong></div>
-                  <div>5. Enter Amount: <strong>250</strong></div>
-                </div>
+            <div className="psw-step">
+              <h3><CreditCard size={19} /> Account activation</h3>
+
+              <div className="psw-plan">
+                <div className="psw-plan-label">MONTHLY SUBSCRIPTION</div>
+                <div className="psw-plan-amt">KES 250</div>
+                <ol className="psw-plan-steps">
+                  <li>Open M-Pesa on your phone</li>
+                  <li>Select <strong>Lipa na M-Pesa</strong> &rarr; <strong>Paybill</strong></li>
+                  <li>Business number: <strong>123456</strong></li>
+                  <li>Account number: <strong>{foundStudent?.adm || 'EDUONE'}</strong></li>
+                  <li>Amount: <strong>250</strong></li>
+                </ol>
               </div>
 
-              <div style={{ marginTop: 10 }}>
-                <label className="field-label">Enter M-Pesa Transaction Code *</label>
-                <input 
-                  className="input" 
-                  value={payment.transactionCode} 
-                  onChange={e => setPayment({...payment, transactionCode: e.target.value.toUpperCase()})} 
-                  placeholder="e.g. SAJ1234XYZ" 
-                  style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}
-                  maxLength={10}
-                />
+              <div className="psw-field">
+                <label className="field-label">M-Pesa transaction code *</label>
+                <input className="input" value={payment.transactionCode}
+                  onChange={e => setPayment({ ...payment, transactionCode: e.target.value.toUpperCase() })}
+                  placeholder="e.g. SAJ1234XYZ" style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }} maxLength={10} />
               </div>
 
-              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => { setError(''); setStep(2); }}>â† Back</button>
-                <button type="button" className="btn btn-primary" onClick={handleVerifyPayment} disabled={saving} style={{ background: '#047857', borderColor: '#047857', padding: '12px 24px', color: '#fff' }}>
-                  {saving ? 'Verifying...' : 'Verify & Activate'}
-                </button>
+              <div className="psw-actions">
+                <button type="button" className="psw-btn-ghost" onClick={() => { setError(''); setStep(2); }}><ArrowLeft size={17} /> Back</button>
+                <button type="button" className="psw-btn" onClick={handleVerifyPayment} disabled={saving}>{saving ? 'Verifying…' : 'Verify & activate'}</button>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', justifyContent: 'center', padding: '40px 0', animation: 'fadeIn 0.3s ease', textAlign: 'center' }}>
+            <div className="psw-step" style={{ alignItems: 'center', textAlign: 'center', padding: '30px 0' }}>
               {saving ? (
                 <>
-                  <Loader size={48} color="#047857" className="spin" style={{ margin: '20px 0' }} />
-                  <h3 style={{ margin: 0 }}>Activating Account...</h3>
-                  <p className="muted">Please wait while we link your account to {foundStudent?.name}.</p>
+                  <Loader size={46} color="#1E5FE0" className="spin" style={{ margin: '16px 0' }} />
+                  <h3 style={{ margin: 0 }}>Activating account…</h3>
+                  <p className="muted">Linking your account to {foundStudent?.name}.</p>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={64} color="#047857" style={{ margin: '20px 0' }} />
-                  <h2 style={{ margin: 0, color: '#0f172a' }}>Activation Successful!</h2>
-                  <p className="muted" style={{ marginBottom: 20 }}>Your Parent Portal has been securely linked and activated.</p>
-                  <p className="muted" style={{ fontSize: 14 }}>Redirecting to your dashboard...</p>
+                  <span className="psw-success"><CheckCircle2 size={40} /></span>
+                  <h2 style={{ margin: '6px 0 0', color: '#0f172a' }}>Activation successful!</h2>
+                  <p className="muted" style={{ margin: '4px 0 0' }}>Your Parent Portal is securely linked and activated.</p>
+                  <p className="muted" style={{ fontSize: 13 }}>Redirecting to your dashboard…</p>
                 </>
               )}
             </div>
           )}
         </div>
       </div>
+
       <style>{`
+        .psw-page { min-height: 100dvh; background: #eef2f8; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: max(24px, env(safe-area-inset-bottom)); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        @media (min-width: 640px) { .psw-page { justify-content: center; padding: 28px 20px max(28px, env(safe-area-inset-bottom)); } }
+        .psw-card { width: 100%; max-width: 540px; background: #fff; overflow: hidden; }
+        @media (min-width: 640px) { .psw-card { border-radius: 22px; box-shadow: 0 30px 70px -24px rgba(15,30,70,.35); } }
+
+        .psw-header { position: relative; color: #fff; background: linear-gradient(150deg, #12306E 0%, #142C63 52%, #1E5FE0 100%); padding: calc(env(safe-area-inset-top, 0px) + 34px) 22px 26px; }
+        html.platform-android .psw-header, html.capacitor .psw-header { padding-top: calc(env(safe-area-inset-top, 0px) + 46px); }
+        .psw-cancel { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 16px); right: 16px; background: rgba(255,255,255,.16); border: 0; color: #fff; font: inherit; font-weight: 600; font-size: 13px; padding: 7px 13px; border-radius: 10px; cursor: pointer; }
+        html.platform-android .psw-cancel, html.capacitor .psw-cancel { top: calc(env(safe-area-inset-top, 0px) + 28px); }
+        .psw-cancel:hover { background: rgba(255,255,255,.26); }
+        .psw-brand { display: flex; gap: 13px; align-items: flex-start; padding-right: 68px; }
+        .psw-brandicon { width: 44px; height: 44px; border-radius: 13px; background: rgba(255,255,255,.16); display: grid; place-items: center; flex: 0 0 auto; }
+        .psw-brand h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+        .psw-brand p { margin: 6px 0 0; font-size: 13px; opacity: .85; line-height: 1.5; }
+
+        .psw-body { padding: 26px 22px; }
+        .psw-steps { position: relative; display: flex; justify-content: space-between; margin-bottom: 28px; }
+        .psw-steptrack { position: absolute; top: 13px; left: 14px; right: 14px; height: 3px; border-radius: 9px; background: #e2e8f0; }
+        .psw-steptrack > span { display: block; height: 100%; border-radius: 9px; background: #1E5FE0; transition: width .3s ease; }
+        .psw-dot { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; transition: .3s; }
+        .psw-dot.on { background: #1E5FE0; color: #fff; box-shadow: 0 6px 14px -6px #1E5FE0; }
+        .psw-dot.done { background: #1E5FE0; color: #fff; }
+        .psw-dot svg { width: 15px; height: 15px; }
+
+        .psw-step { display: flex; flex-direction: column; gap: 16px; animation: fadeIn .3s ease; }
+        .psw-step h3 { margin: 0; font-size: 17px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .psw-step h3 svg { color: #1E5FE0; }
+        .psw-hint { margin: -6px 0 2px; font-size: 13.5px; color: #64748b; line-height: 1.5; }
+        .psw-field { display: flex; flex-direction: column; }
+        .psw-field .field-label { margin-bottom: 6px; }
+
+        .psw-actions { margin-top: 8px; display: flex; gap: 10px; }
+        .psw-btn { flex: 1; min-height: 50px; border: 0; border-radius: 13px; background: linear-gradient(135deg, #1E5FE0, #142C63); color: #fff; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px -12px #1E5FE0; transition: transform .12s; }
+        .psw-btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .psw-btn:disabled { opacity: .7; cursor: not-allowed; }
+        .psw-btn-ghost { min-height: 50px; padding: 0 18px; border: 1.5px solid #d7deea; border-radius: 13px; background: #fff; color: #334155; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .psw-btn-ghost:hover { border-color: #1E5FE0; color: #1E5FE0; }
+
+        .psw-error { display: flex; gap: 8px; align-items: center; background: #fee2e2; color: #b91c1c; padding: 12px 14px; border-radius: 11px; font-size: 13.5px; margin-bottom: 16px; }
+
+        .psw-plan { background: linear-gradient(160deg, #EEF4FE, #DEE9FD); border: 1px solid #cfe0fb; border-radius: 16px; padding: 20px; text-align: center; }
+        .psw-plan-label { font-size: 12px; letter-spacing: .08em; font-weight: 700; color: #1E5FE0; }
+        .psw-plan-amt { font-size: 34px; font-weight: 800; color: #142C63; margin: 4px 0 14px; letter-spacing: -.02em; }
+        .psw-plan-steps { margin: 0; padding: 0; list-style: none; counter-reset: p; display: flex; flex-direction: column; gap: 9px; text-align: left; }
+        .psw-plan-steps li { counter-increment: p; position: relative; padding-left: 30px; font-size: 13.5px; color: #334155; line-height: 1.5; }
+        .psw-plan-steps li::before { content: counter(p); position: absolute; left: 0; top: 0; width: 21px; height: 21px; border-radius: 50%; background: #1E5FE0; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+        .psw-plan-steps strong { color: #0f172a; }
+
+        .psw-success { width: 74px; height: 74px; border-radius: 50%; background: #D1FAE5; color: #059669; display: grid; place-items: center; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -319,6 +339,3 @@ export default function ParentSignupWizard({ onComplete, onCancel }) {
     </div>
   );
 }
-
-
-
