@@ -20,6 +20,7 @@ export default function Gradebook({ store }) {
   const [subject, setSubject] = useState('Mathematics');
   const [term, setTerm] = useState('Term 2');
   const [assessment, setAssessment] = useState('All');
+  const [outOf, setOutOf] = useState(100); // "marks out of" — raw marks convert to %
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null); // {id, field}
   const [selected, setSelected] = useState([]);
@@ -122,11 +123,21 @@ export default function Gradebook({ store }) {
     }
     const target = loadedStudents.find((s) => s.id === id);
     if (!target) return;
-    // Marks are entered as PERCENTAGES (0–100) for every curriculum. CBC
-    // 8-tier grades (EE1 … BE2) are derived from the percentage downstream by
-    // grading.js — no rubric-scale entry any more.
-    const maxScore = 100;
-    const v = field === 'remarks' ? value : Math.max(0, Math.min(maxScore, Number(value) || 0));
+    // Zeraki-style entry: teachers key RAW marks out of `outOf` (default 100),
+    // and we convert to a percentage that grading.js turns into a CBC/8-4-4
+    // grade downstream. Typing "x" marks the student Absent (stored as 'X',
+    // which grading treats as no result).
+    let v;
+    if (field === 'remarks') {
+      v = value;
+    } else if (String(value).trim().toLowerCase() === 'x') {
+      v = 'X';
+    } else if (String(value).trim() === '') {
+      v = 0;
+    } else {
+      const max = Math.max(1, Number(outOf) || 100);
+      v = Math.max(0, Math.min(100, Math.round((Number(value) || 0) / max * 100)));
+    }
     if (target) {
       const currentScores = target.scores || {};
       const subjectScores = currentScores[subject] || {};
@@ -195,15 +206,26 @@ export default function Gradebook({ store }) {
         <td>
           <input
             className="score-input"
-            style={{ width: field === 'remarks' ? '120px' : '48px', padding: '0 4px' }}
-            type={field === 'remarks' ? "text" : "number"}
-            min={field === 'remarks' ? undefined : 0}
-            max={field === 'remarks' ? undefined : 100}
-            step={field === 'remarks' ? undefined : 1}
-            placeholder={field === 'remarks' ? '' : '0–100'}
+            style={{ width: field === 'remarks' ? '120px' : '52px', padding: '0 4px' }}
+            type="text"
+            inputMode={field === 'remarks' ? undefined : 'numeric'}
+            enterKeyHint="next"
+            placeholder={field === 'remarks' ? '' : `/${Math.max(1, Number(outOf) || 100)}`}
             autoFocus
             defaultValue={r[field]}
-            onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                saveScore(r.id, field, e.target.value);
+                // Zeraki-style: jump straight to the next student in this column.
+                if (field !== 'remarks') {
+                  const idx = rows.findIndex((x) => x.id === r.id);
+                  const next = rows[idx + 1];
+                  if (next) setEditing({ id: next.id, field });
+                }
+              }
+              if (e.key === 'Escape') setEditing(null);
+            }}
             onBlur={(e) => saveScore(r.id, field, e.target.value)}
           />
         </td>
@@ -276,6 +298,11 @@ export default function Gradebook({ store }) {
           <select className="select" value={term} onChange={(e) => setTerm(e.target.value)} style={{ width: 120 }}>
             {['Term 1', 'Term 2', 'Term 3'].map((t) => <option key={t}>{t}</option>)}
           </select></div>
+        <div><label className="field-label">Marks out of</label>
+          <input className="input" type="number" min="1" max="1000" value={outOf}
+            onChange={(e) => setOutOf(e.target.value.replace(/[^\d]/g, '') || '')}
+            title="Enter raw marks out of this value; they convert to a percentage automatically."
+            style={{ width: 90 }} /></div>
         <div><label className="field-label">Assessment Type</label>
           <select className="select" value={assessment} onChange={(e) => setAssessment(e.target.value)} style={{ width: 130 }}>
             {ASSESS_OPTIONS.map((a) => <option key={a}>{a}</option>)}

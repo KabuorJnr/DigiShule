@@ -338,6 +338,16 @@ html.platform-android .eom-m { --eom-safe-top: max(env(safe-area-inset-top, 0px)
 .eom-markin { width: 68px; height: 40px; text-align: center; font-size: 15px; font-weight: 700; color: var(--eom-ink); background: var(--eom-blue-50); border: 1.5px solid var(--eom-line); border-radius: 10px; outline: none; }
 .eom-markin:focus { border-color: var(--eom-blue); background: #fff; }
 .eom-markhint { font-size: 12px; color: var(--eom-muted); line-height: 1.5; padding: 0 4px; }
+.eom-mk-setup { display: flex; flex-direction: column; gap: 10px; }
+.eom-mk-outof { display: flex; align-items: center; gap: 10px; }
+.eom-mk-outof label { font-size: 13px; font-weight: 700; color: var(--eom-ink); }
+.eom-mk-outof input { width: 72px; height: 40px; text-align: center; font-size: 15px; font-weight: 700; color: var(--eom-ink); background: #fff; border: 1.5px solid var(--eom-line); border-radius: 10px; outline: none; }
+.eom-mk-outof input:focus { border-color: var(--eom-blue); }
+.eom-mk-count { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--eom-blue); background: var(--eom-blue-50); padding: 6px 10px; border-radius: 99px; }
+.eom-mk-adm { font-size: 11px; font-weight: 700; color: var(--eom-muted); width: 44px; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.eom-markin.eom-abs { color: var(--eom-bad); background: var(--eom-bad-100); border-color: transparent; letter-spacing: 1px; }
+.eom-mk-abs-btn { width: 34px; height: 34px; flex: 0 0 auto; border: 1px solid var(--eom-line); background: #fff; border-radius: 9px; color: var(--eom-muted); display: grid; place-items: center; cursor: pointer; }
+.eom-mk-abs-btn:hover { color: var(--eom-bad); border-color: var(--eom-bad); }
 
 /* search input inside a searchbar (admin directories) */
 .eom-searchinput { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-family: inherit; font-size: 14px; color: var(--eom-ink); }

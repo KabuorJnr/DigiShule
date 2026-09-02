@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft, Users, Check } from 'lucide-react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft, Users, Check, UserX } from 'lucide-react';
 import { subjectAverage, gradeFor, is844Class } from '../../utils/grading';
 import { upsertRow } from '../../lib/api';
 import { useTable, Empty, SecHead, Loading, Prog, Composer } from './kit';
@@ -70,8 +70,12 @@ export function TeacherGradebook({ store, user, open }) {
   );
 }
 
-const ASSESSMENTS = [['a1', 'A1'], ['a2', 'A2'], ['a3', 'A3'], ['a4', 'A4']];
+const ASSESSMENTS = [['a1', 'Exam 1'], ['a2', 'Exam 2'], ['a3', 'Exam 3'], ['a4', 'Exam 4']];
+const ABSENT = 'X'; // absent sentinel: stored as the string 'X', ignored by grading (subjectAverage treats non-numeric as 0/skip)
 
+// Zeraki-style marks entry: pick an exam slot, set the "out of" max, then key
+// raw marks straight down the list — the keyboard's next/Enter jumps to the
+// following student, marks are converted to % and grades derive automatically.
 export function TeacherMarks({ store, params }) {
   const { label, className, subject } = params || {};
   const students = useMemo(
@@ -80,41 +84,102 @@ export function TeacherMarks({ store, params }) {
     [store.students, label, className]
   );
   const [assessment, setAssessment] = useState('a1');
+  const [maxMarks, setMaxMarks] = useState(100);
+  const [marks, setMarks] = useState({});     // studentId -> raw string (out of maxMarks) or 'X'
   const [saved, setSaved] = useState(null);
+  const inputs = useRef([]);
 
-  const save = (s, raw) => {
-    const v = raw === '' ? undefined : Math.max(0, Math.min(100, Number(raw) || 0));
+  const max = Math.max(1, Number(maxMarks) || 100);
+
+  // (Re)seed the raw inputs from the stored percentages whenever the exam slot
+  // or the "out of" value changes, so raw = round(pct * max / 100).
+  useEffect(() => {
+    const next = {};
+    students.forEach((s) => {
+      const stored = s.scores?.[subject]?.[assessment];
+      if (stored === ABSENT) next[s.id] = ABSENT;
+      else if (typeof stored === 'number') next[s.id] = String(Math.round((stored * max) / 100));
+      else next[s.id] = '';
+    });
+    setMarks(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessment, max, students.length, subject]);
+
+  // Persist one student's mark: '' clears, 'X' = absent, else % = raw/max*100.
+  const persist = (s, rawVal) => {
     const cur = s.scores || {};
     const subj = { ...(cur[subject] || {}) };
-    if (v === undefined) delete subj[assessment]; else subj[assessment] = v;
+    if (rawVal === '' || rawVal == null) delete subj[assessment];
+    else if (rawVal === ABSENT) subj[assessment] = ABSENT;
+    else subj[assessment] = Math.max(0, Math.min(100, Math.round((Number(rawVal) || 0) / max * 100)));
     store.updateStudent?.({ ...s, scores: { ...cur, [subject]: subj } });
-    setSaved(s.id); setTimeout(() => setSaved((x) => (x === s.id ? null : x)), 1200);
+    setSaved(s.id); setTimeout(() => setSaved((x) => (x === s.id ? null : x)), 1000);
   };
+
+  const onChange = (s, val) => {
+    // keep only digits, cap at the max
+    let v = val.replace(/[^\d]/g, '');
+    if (v !== '' && Number(v) > max) v = String(max);
+    setMarks((m) => ({ ...m, [s.id]: v }));
+  };
+  const toggleAbsent = (s, idx) => {
+    const isAbs = marks[s.id] === ABSENT;
+    const v = isAbs ? '' : ABSENT;
+    setMarks((m) => ({ ...m, [s.id]: v }));
+    persist(s, v);
+    if (!isAbs) focusNext(idx);
+  };
+  const focusNext = (idx) => {
+    const el = inputs.current[idx + 1];
+    if (el) { el.focus(); el.select?.(); }
+  };
+
+  const entered = students.filter((s) => { const v = marks[s.id]; return v !== '' && v != null; }).length;
 
   if (students.length === 0) return <Empty icon={Users} text={`No learners found in ${label || 'this class'}.`} />;
   return (
     <>
-      <div className="eom-assess">
-        {ASSESSMENTS.map(([k, lbl]) => (
-          <button key={k} className={`eom-assess-btn${assessment === k ? ' eom-on' : ''}`} onClick={() => setAssessment(k)}>{lbl}</button>
-        ))}
+      <div className="eom-mk-setup">
+        <div className="eom-assess">
+          {ASSESSMENTS.map(([k, lbl]) => (
+            <button key={k} className={`eom-assess-btn${assessment === k ? ' eom-on' : ''}`} onClick={() => setAssessment(k)}>{lbl}</button>
+          ))}
+        </div>
+        <div className="eom-mk-outof">
+          <label>Marks out of</label>
+          <input className="eom-num" type="number" inputMode="numeric" min="1" max="1000"
+            value={maxMarks} onChange={(e) => setMaxMarks(e.target.value.replace(/[^\d]/g, ''))} />
+          <span className="eom-mk-count">{entered}/{students.length} entered</span>
+        </div>
       </div>
+
       <div className="eom-list-card">
-        {students.map((s) => (
-          <div className="eom-markrow" key={s.id}>
-            <div className="eom-marklt"><b>{s.name}</b><span>{s.adm || ''}</span></div>
-            {saved === s.id && <span className="eom-marksaved"><Check size={14} /></span>}
-            <input
-              className="eom-markin eom-num" type="number" inputMode="numeric" min="0" max="100"
-              key={s.id + assessment}
-              defaultValue={s.scores?.[subject]?.[assessment] ?? ''}
-              onBlur={(e) => save(s, e.target.value)}
-              placeholder="—"
-            />
-          </div>
-        ))}
+        {students.map((s, idx) => {
+          const isAbs = marks[s.id] === ABSENT;
+          return (
+            <div className="eom-markrow" key={s.id}>
+              <span className="eom-mk-adm">{s.adm || '—'}</span>
+              <div className="eom-marklt"><b>{s.name}</b></div>
+              {saved === s.id && <span className="eom-marksaved"><Check size={14} /></span>}
+              <input
+                ref={(el) => { inputs.current[idx] = el; }}
+                className={`eom-markin eom-num${isAbs ? ' eom-abs' : ''}`}
+                type={isAbs ? 'text' : 'number'} inputMode="numeric" enterKeyHint="next"
+                value={isAbs ? ABSENT : (marks[s.id] ?? '')}
+                readOnly={isAbs}
+                onChange={(e) => onChange(s, e.target.value)}
+                onBlur={(e) => !isAbs && persist(s, e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); persist(s, e.target.value); focusNext(idx); } }}
+                placeholder="—"
+              />
+              <button className="eom-mk-abs-btn" title={isAbs ? 'Clear' : 'Mark absent'} onClick={() => toggleAbsent(s, idx)}>
+                <UserX size={15} />
+              </button>
+            </div>
+          );
+        })}
       </div>
-      <p className="eom-markhint">Enter a percentage (0–100) for {subject}. Saves when you tap away; grades are derived automatically.</p>
+      <p className="eom-markhint">Key each mark out of {max} and press <b>next</b> to jump to the student below. Tap the person icon to mark <b>Absent (X)</b>. Grades and % are worked out automatically.</p>
     </>
   );
 }
