@@ -4,6 +4,7 @@ import {
   Users, BarChart3, GraduationCap, ArrowRight, PlayCircle, ClipboardList, Bell, Clock, Receipt,
 } from 'lucide-react';
 import { studentOverall, gradeFor, is844Class, CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
+import MobileClockIn from './MobileClockIn';
 
 function QA({ icon: Icon, label, color, onClick }) {
   return (
@@ -60,6 +61,7 @@ export default function MobileHome({ role, store, user, open }) {
   if (['principal', 'deputy_academic', 'deputy_admin', 'dos', 'registrar', 'admin', 'finance', 'accountant', 'bursar', 'librarian', 'support', 'procurement', 'clinic', 'nurse'].includes(role)) {
     return (
       <>
+        <MobileClockIn user={user} store={store} />
         {search}
         <HeroCard icon={GraduationCap} tag={(settings.name || 'Your school').toUpperCase()}
           title="School at a glance" text="The numbers that need you — academics, fees and staff."
@@ -96,6 +98,7 @@ export default function MobileHome({ role, store, user, open }) {
     const subject = me.subject || user?.dept || 'your subject';
     return (
       <>
+        <MobileClockIn user={user} store={store} />
         {search}
         <HeroCard icon={ClipboardList} tag="TEACHER"
           title="Your classes today" text="Track your subjects, learners and messages in one place."
