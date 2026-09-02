@@ -100,15 +100,23 @@ export default function Clinic({ store }) {
       notify('Student name and complaint are required.', 'error');
       return;
     }
+    // Use a real UUID for the id. If clinic_visits.id is a uuid column, the old
+    // `c<timestamp>` text id was rejected ("invalid input syntax for type
+    // uuid") and every save failed; randomUUID() is valid whether the column is
+    // uuid or text, so it's safe either way.
+    const newId = (globalThis.crypto?.randomUUID?.() || `c${Date.now()}${Math.random().toString(16).slice(2)}`);
     const visit = {
-      id: `c${Date.now()}`,
+      id: newId,
       date: new Date().toISOString().slice(0, 10),
       student: form.student,
-      student_id: form.student_id,
+      // Only send a student_id when we actually matched a directory student —
+      // an empty string can violate the column type; null is always safe.
+      student_id: form.student_id || null,
       adm: form.adm || '-',
       complaint: form.complaint,
       treatment: form.treatment,
       outcome: form.outcome,
+      created_at: new Date().toISOString(),
     };
     try {
       await upsertRow('clinicVisits', visit);
@@ -387,11 +395,23 @@ export default function Clinic({ store }) {
           <div className="grid grid-2">
             <div>
               <label className="field-label">Student Name</label>
-              <input className="input" value={form.student} placeholder={form.manual ? 'Pick a student above' : ''} disabled />
+              <input
+                className="input"
+                value={form.student}
+                placeholder={form.manual ? 'Pick above or type a name' : ''}
+                disabled={!form.manual}
+                onChange={form.manual ? (e) => setForm((f) => ({ ...f, student: e.target.value })) : undefined}
+              />
             </div>
             <div>
               <label className="field-label">Admission No.</label>
-              <input className="input" value={form.adm} disabled />
+              <input
+                className="input"
+                value={form.adm}
+                placeholder={form.manual ? 'Optional' : ''}
+                disabled={!form.manual}
+                onChange={form.manual ? (e) => setForm((f) => ({ ...f, adm: e.target.value })) : undefined}
+              />
             </div>
           </div>
           <label className="field-label" style={{ marginTop: 12 }}>Complaint / Symptoms</label>
