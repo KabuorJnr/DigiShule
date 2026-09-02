@@ -100,10 +100,8 @@ export default function Clinic({ store }) {
       notify('Student name and complaint are required.', 'error');
       return;
     }
-    // Use a real UUID for the id. If clinic_visits.id is a uuid column, the old
-    // `c<timestamp>` text id was rejected ("invalid input syntax for type
-    // uuid") and every save failed; randomUUID() is valid whether the column is
-    // uuid or text, so it's safe either way.
+    // A collision-resistant id (clinic_visits.id is a text column, so either a
+    // UUID or the timestamp fallback is accepted).
     const newId = (globalThis.crypto?.randomUUID?.() || `c${Date.now()}${Math.random().toString(16).slice(2)}`);
     const visit = {
       id: newId,
