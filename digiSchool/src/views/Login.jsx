@@ -92,10 +92,12 @@ export default function Login() {
     if (!username.trim() || !password) { setError('Please enter your username and password.'); return; }
     setError('');
     setBusy(true);
+    localStorage.setItem('eduone_preferred_username', username.trim());
     const { data, error: signInError } = await signInWithUsername(username.trim(), password.trim());
 
     if (signInError) {
       setBusy(false);
+      localStorage.removeItem('eduone_preferred_username');
       setError(signInError.message || 'Invalid credentials. Please try again.');
       return;
     }

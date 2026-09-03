@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Building2, UserCircle2, ArrowRight } from 'lucide-react';
 import { ROLES } from '../data/users';
 
@@ -44,10 +44,18 @@ export default function SelectProfile({ profiles, onSelect, onLogout }) {
                   <Building2 size={20} color="#475569" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 15, marginBottom: 2 }}>{profile.schoolName}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 700, color: '#1e293b', fontSize: 15 }}>{profile.schoolName}</span>
+                    {profile.username && (
+                      <span style={{ fontSize: 11, background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                        {profile.username}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 13, color: '#64748b', display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#047857' }}></span>
-                    {roleDetails.label}
+                    <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#047857' }}></span>
+                    <strong style={{ color: '#0f172a' }}>{roleDetails.label}</strong>
+                    {profile.dept && <span style={{ opacity: 0.7 }}>· {profile.dept}</span>}
                   </div>
                 </div>
                 <ArrowRight size={18} color="#94a3b8" />

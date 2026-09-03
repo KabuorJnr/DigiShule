@@ -11,7 +11,7 @@ import { ROLES } from '../../data/users';
 import { getDynamicClasses, reconcileClassesWithUsed } from '../../data/seed';
 
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu, UserCircle2 } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
 import { useIsMobile } from '../../mobile/useIsMobile';
@@ -435,10 +435,20 @@ export default function PortalLayout() {
         if (staffData) setStaffRecord(staffData);
       }
 
-      if (profiles.length === 1) {
+      setAvailableProfiles(profiles);
+
+      const preferredUsername = localStorage.getItem('eduone_preferred_username');
+      let targetProfile = null;
+      if (preferredUsername) {
+        targetProfile = profiles.find(p => p.username?.toLowerCase() === preferredUsername.toLowerCase());
+        localStorage.removeItem('eduone_preferred_username');
+      }
+
+      if (targetProfile) {
+        await handleSelectProfile(targetProfile, greet);
+      } else if (profiles.length === 1) {
         await handleSelectProfile(profiles[0], greet);
       } else {
-        setAvailableProfiles(profiles);
         setView('select_profile');
       }
     } catch {
@@ -635,7 +645,10 @@ export default function PortalLayout() {
 
   const isNavActive = (navItem) => {
     if (activeView !== navItem.view) return false;
-    if (navItem.tab && viewParams.tab !== navItem.tab) return false;
+    const pathParts = currentPath.split('/');
+    const pathTab = currentPath.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
+    const currentTab = viewParams.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
+    if (navItem.tab && currentTab !== navItem.tab) return false;
     if (navItem.action && viewParams.action !== navItem.action) return false;
     return true;
   };
@@ -809,6 +822,11 @@ export default function PortalLayout() {
               </div>
               {profileExpanded && (
                 <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4 }}>
+                  {availableProfiles.length > 1 && (
+                    <button className="nav-item" onClick={() => setView('select_profile')} title="Switch Role / Profile" style={{ padding: '6px 10px', fontSize: 12, minHeight: 'auto', color: '#38bdf8' }}>
+                      <UserCircle2 size={13} style={{ marginRight: 10, opacity: 0.9 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Switch Role ({availableProfiles.length})</span>
+                    </button>
+                  )}
                   <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '6px 10px', fontSize: 12, minHeight: 'auto' }}>
                     <Key size={13} style={{ marginRight: 10, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
                   </button>

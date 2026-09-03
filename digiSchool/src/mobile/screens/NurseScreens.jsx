@@ -103,9 +103,9 @@ function LogVisitForm({ store, user, onSaved, onCancel }) {
 }
 
 // The nurse's Clinic screen: log a visit + review recent visits.
-export function NurseClinic({ store, user }) {
+export function NurseClinic({ store, user, params }) {
   const { rows, loading } = useTable('clinicVisits');
-  const [logging, setLogging] = useState(false);
+  const [logging, setLogging] = useState(() => Boolean(params?.logging));
   const [added, setAdded] = useState([]);
 
   const visits = useMemo(() => {

@@ -640,15 +640,23 @@ export const ROLES = {
     home: 'clinic',
     nav: [
       {
-        section: 'CORE',
+        section: 'CLINIC SERVICES',
         items: [
-          { id: 'clinic', icon: 'clinic', label: 'Clinic', view: 'clinic' },
+          { id: 'log_visit', icon: 'plus', label: 'Log Visit', view: 'clinic', tab: 'log' },
+          { id: 'recent_visits', icon: 'activity', label: 'Recent Visits', view: 'clinic', tab: 'visits' },
+          { id: 'directory', icon: 'users', label: 'Student Directory', view: 'clinic', tab: 'directory' },
+        ]
+      },
+      {
+        section: 'COMMUNICATIONS',
+        items: [
           { id: 'notices', icon: 'bell', label: 'Notices', view: 'notices' }
         ]
       },
       {
         section: 'ACCOUNT',
         items: [
+          { id: 'profile', icon: 'user', label: 'My Profile', view: 'my_profile' },
           { id: 'logout', icon: 'logout', label: 'Log Out', action: 'logout' }
         ]
       }

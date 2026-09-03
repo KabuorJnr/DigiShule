@@ -58,16 +58,16 @@ export default function MobileHome({ role, store, user, open }) {
 
   const search = <div className="eom-searchbar"><Search /> Search students, staff, records…</div>;
 
-  if (role === 'nurse') {
+  if (role === 'nurse' || role === 'clinic') {
     return (
       <>
         {search}
         <HeroCard icon={Stethoscope} tag="HEALTH CENTER"
           title="School clinic" text="Log a student visit and review the day's records."
-          cta="Log a visit" onCta={() => open('nurse_clinic')} />
+          cta="Log a visit" onCta={() => open('nurse_clinic', { logging: true })} />
         <div className="eom-sec"><h5>Quick actions</h5></div>
         <div className="eom-qa-grid">
-          <QA icon={Plus} label="Log visit" color={BAD} onClick={() => open('nurse_clinic')} />
+          <QA icon={Plus} label="Log visit" color={BAD} onClick={() => open('nurse_clinic', { logging: true })} />
           <QA icon={Stethoscope} label="Visits" color={BLUE} onClick={() => open('nurse_clinic')} />
           <QA icon={GraduationCap} label="Students" color={INFO} onClick={() => open('admin_students')} />
           <QA icon={Bell} label="Notices" color={WARN} onClick={() => open('admin_notices')} />
