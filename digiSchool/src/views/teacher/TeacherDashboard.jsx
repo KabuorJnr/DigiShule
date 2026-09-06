@@ -145,7 +145,7 @@ export default function TeacherDashboard() {
       </div>
 
       {/* KPI Tiles */}
-      <div className="stat-tiles" style={{ marginBottom: 20 }}>
+      <div className="stat-tiles stagger" style={{ marginBottom: 20 }}>
         <KpiCard iconComponent={<BookOpen size={20} />} label={uniqueSubjects.length > 1 ? "Subjects" : "My Subject"} value={displaySubject} />
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Total Students" value={rows.length} sub={`across ${classes.length} classes`} />
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Class Average" value={`${avgOverall}%`} accent="#0369A1" />

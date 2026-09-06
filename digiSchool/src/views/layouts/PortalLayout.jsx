@@ -978,7 +978,11 @@ export default function PortalLayout() {
           {dataLoading ? (
             <p className="muted">Loading…</p>
           ) : (
-            <Outlet context={{ store, user: currentUser, params: viewParams }} />
+            /* Re-key on the route so each navigation replays a gentle rise-in.
+               Honours prefers-reduced-motion via the global guard in index.css. */
+            <div key={location.pathname} className="animate-in">
+              <Outlet context={{ store, user: currentUser, params: viewParams }} />
+            </div>
           )}
         </main>
       </div>

@@ -369,7 +369,7 @@ export default function ParentDashboard() {
         )}
 
         {/* KPI Summary Cards */}
-        <div className="stat-tiles">
+        <div className="stat-tiles stagger">
           <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#047857" />
           <KpiCard iconComponent={<ClipboardList size={20} />} label="Attendance Rate" value={attendanceRate !== '-' ? `${attendanceRate}%` : '-'} accent={Number(attendanceRate) >= 80 ? '#047857' : '#F59E0B'} />
           <KpiCard iconComponent={<Wallet size={20} />} label="Fee Balance" value={fmtKES(outstanding)} accent={outstanding > 0 ? '#D13438' : '#107C10'}>

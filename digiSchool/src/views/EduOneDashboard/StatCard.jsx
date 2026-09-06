@@ -59,7 +59,7 @@ export default function StatCard() {
   const classes = useStyles();
 
   return (
-    <div className={classes.container}>
+    <div className={`${classes.container} stagger`}>
       <div className={classes.card}>
         <div className={classes.topSection}>
           <div className={classes.iconBox} style={{ backgroundColor: tokens.colors.amber100 }}>

@@ -20,11 +20,26 @@
   --border: #E0E0E0;
   --border-light: #F0F0F0;
 
-  --radius: 8px;
-  --radius-sm: 4px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+
+  /* Softer, layered shadows — the "expensive" look comes from light,
+     multi-stop elevation rather than one hard drop shadow. */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 4px 8px rgba(15, 23, 42, 0.04), 0 16px 40px rgba(15, 23, 42, 0.12);
+
+  /* ── Motion system (Emil Kowalski) ─────────────────────────────────────────
+     A small, consistent set of durations + easings used everywhere. Enters use
+     ease-out (fast start, gentle settle); interactive/press states are quick.
+     Curves below are the real ones from Vaul/Sonner + a restrained overshoot. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);        /* snappy settle for enters */
+  --ease-out-soft: cubic-bezier(0.32, 0.72, 0, 1);   /* Vaul's curve — overlays/sheets */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);   /* gentle overshoot for tactile bits */
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --dur-slow: 260ms;
 }
 
 * {
@@ -107,7 +122,11 @@ a:hover {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
   white-space: nowrap;
   box-shadow: none;
 }
@@ -123,8 +142,14 @@ a:hover {
   color: #1A1A18;
 }
 
+/* Tactile press — a small scale reads as "physical" without moving layout. */
 .btn:active {
-  transform: translateY(0.5px);
+  transform: scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.28);
 }
 
 .btn-primary {
@@ -203,7 +228,7 @@ a:hover {
   font-family: inherit;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
 }
 textarea.input {
   height: auto;
@@ -228,11 +253,11 @@ textarea.input {
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #E2E8F0;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
 }
 .card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 .card-pad {
   padding: 24px;
@@ -356,7 +381,7 @@ textarea.input {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  animation: slideIn 0.2s ease;
+  animation: slideIn var(--dur-slow) var(--ease-out-soft);
 }
 .toast.success { border-left-color: var(--success); }
 .toast.error { border-left-color: var(--danger); }
@@ -374,21 +399,24 @@ textarea.input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 48px 16px;
   z-index: 9000;
   overflow-y: auto;
+  animation: overlayFade var(--dur) var(--ease-out);
 }
 .modal {
   background: #fff;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 560px;
-  animation: popIn 0.15s ease;
+  animation: modalIn var(--dur-slow) var(--ease-out);
 }
 .modal-lg { max-width: 860px; }
 .modal-header {
@@ -926,9 +954,18 @@ textarea.input {
   color: var(--b-text-muted);
   font-size: 14px;
 }
+@keyframes modalIn {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Kept for any legacy consumers of the old name. */
 @keyframes popIn {
-  from { transform: scale(0.97); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 /* ---------- Notifications slide-in ---------- */
@@ -944,7 +981,7 @@ textarea.input {
   z-index: 9500;
   display: flex;
   flex-direction: column;
-  animation: slideInRight 0.2s ease;
+  animation: slideInRight var(--dur-slow) var(--ease-out-soft);
 }
 @keyframes slideInRight {
   from { transform: translateX(100%); }
@@ -1010,7 +1047,7 @@ textarea.input {
   color: var(--muted);
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
-  transition: color 0.12s;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur) var(--ease-out);
 }
 .tab:hover { color: var(--text); }
 .tab.active {
@@ -1034,7 +1071,7 @@ textarea.input {
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
-  transition: all 0.12s;
+  transition: background var(--dur) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur) var(--ease-out);
 }
 .seg button.active {
   background: #fff;
@@ -1120,6 +1157,49 @@ textarea.input {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Content entrance (opt-in) ──────────────────────────────────────────────
+   Add `.animate-in` to a container to fade + rise its content on mount. Stagger
+   siblings with `.stagger > *` — each child comes in a beat after the last.
+   All of it is disabled under reduced-motion below. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: riseIn var(--dur-slow) var(--ease-out) both;
+}
+.stagger > * {
+  animation: riseIn var(--dur-slow) var(--ease-out) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 20ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 140ms; }
+.stagger > *:nth-child(5) { animation-delay: 180ms; }
+.stagger > *:nth-child(6) { animation-delay: 220ms; }
+.stagger > *:nth-child(7) { animation-delay: 260ms; }
+.stagger > *:nth-child(8) { animation-delay: 300ms; }
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   Respect the OS setting: keep opacity fades (they don't cause motion
+   sickness) but strip transforms, and never let anything animate for long.
+   A core Emil Kowalski principle — motion is a progressive enhancement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .btn:active { transform: none; }
+  .card:hover { transform: none; }
+  .bespoke-theme::before,
+  .bespoke-theme::after,
+  .landing-container { animation: none !important; }
 }
 
 

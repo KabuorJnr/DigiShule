@@ -61,7 +61,7 @@ export default function StudentDashboard() {
 
   return (
     <>
-      <div className="stat-tiles">
+      <div className="stat-tiles stagger">
         <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={isPublished ? `${overallAvg}%` : 'Pending'} accent="#0078D4" />
         <KpiCard iconComponent={<Trophy size={20} />} label="Class Position" value={isPublished && rank ? `${rank.position} / ${rank.classSize}` : 'Pending'} />
         <KpiCard iconComponent={<Award size={20} />} label="Behavior Score" value="0 pts" accent="#9CA3AF" sub="N/A" />

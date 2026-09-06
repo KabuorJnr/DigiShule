@@ -4,13 +4,16 @@
 /*  EduOne landing page - scoped under .eo to avoid global clashes    */
 /* ================================================================= */
 .eo {
-  --blue: #2563eb;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
-  --blue-500: #3b82f6;
-  --blue-050: #eff6ff;
-  --blue-100: #dbeafe;
-  --grad: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
+  /* Brand accent — remapped from blue to the app's emerald brand (--primary
+     #047857) so the landing page matches the in-app identity. Variable names
+     are kept (`--blue*`) so every existing reference updates at once. */
+  --blue: #047857;
+  --blue-600: #047857;
+  --blue-700: #065f46;
+  --blue-500: #059669;
+  --blue-050: #ecfdf5;
+  --blue-100: #d1fae5;
+  --grad: linear-gradient(135deg, #065f46 0%, #047857 55%, #059669 100%);
   --ink: #0b1220;
   --slate: #475569;
   --muted: #64748b;
