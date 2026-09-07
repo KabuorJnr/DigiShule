@@ -70,9 +70,17 @@ export default function ReportCardModal({
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // The capture area is locked to A4 proportions (794 x 1123 px), so stretch
-    // the image to fill the entire A4 page edge-to-edge.
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+    // Fit the card to a single A4 page, preserving aspect ratio: an exact-A4
+    // card fills the sheet edge-to-edge; a slightly taller one (many subjects)
+    // scales down to fit rather than clipping the footer.
+    let drawW = pdfWidth;
+    let drawH = (canvas.height * pdfWidth) / canvas.width;
+    if (drawH > pdfHeight) {
+      drawH = pdfHeight;
+      drawW = (canvas.width * pdfHeight) / canvas.height;
+    }
+    const offsetX = (pdfWidth - drawW) / 2;
+    pdf.addImage(imgData, 'PNG', offsetX, 0, drawW, drawH, undefined, 'FAST');
     pdf.save(`${report.studentName.replace(/\s+/g, '_')}_Report.pdf`);
   };
 

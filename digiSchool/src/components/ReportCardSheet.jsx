@@ -26,10 +26,10 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
   });
 
   return (
-    <div id={captureId} style={{ background: '#fff', width: 794, height: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div id={captureId} style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 24, top: 16 }}>
           {schoolSettings.logo ? (
             <img src={schoolSettings.logo} alt="Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
@@ -61,11 +61,11 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         ACADEMIC REPORT FORM - {report.className} - {report.examTitle.toUpperCase()} - ({new Date().getFullYear()} {report.termName.toUpperCase()})
       </div>
 
-      <div style={{ padding: '24px 24px 0 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '16px 24px 0 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Student Info & Graph */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 16 }}>
-            <div style={{ width: 100, height: 110, background: '#cbd5e1', borderRadius: 4, overflow: 'hidden', border: '1px solid #94a3b8' }}>
+            <div style={{ width: 96, height: 104, background: '#cbd5e1', borderRadius: 4, overflow: 'hidden', border: '1px solid #94a3b8' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1" style={{ width: '100%', height: '100%', padding: 10 }}>
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -120,7 +120,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         </div>
 
         {/* KPIs */}
-        <div style={{ display: 'flex', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '12px 20px', marginBottom: 20, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '10px 20px', marginBottom: 14, justifyContent: 'space-between' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Performance Level</div>
             <div style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>{report.meanGradeCode || report.meanGradeFull || '—'}</div>
@@ -146,15 +146,15 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         </div>
 
         {/* Subject table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid #cbd5e1`, marginBottom: 16 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid #cbd5e1`, marginBottom: 14 }}>
           <thead>
             <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #94a3b8' }}>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, borderRight: '1px solid #e2e8f0' }}>SUBJECTS</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 80, borderRight: '1px solid #e2e8f0' }}>MARKS</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 60, borderRight: '1px solid #e2e8f0' }}>DEV</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 70, borderRight: '1px solid #e2e8f0' }}>GRADE</th>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, borderRight: '1px solid #e2e8f0' }}>COMMENT</th>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, width: 140 }}>TEACHER</th>
+              <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, borderRight: '1px solid #e2e8f0' }}>SUBJECTS</th>
+              <th style={{ padding: '7px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 80, borderRight: '1px solid #e2e8f0' }}>MARKS</th>
+              <th style={{ padding: '7px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 60, borderRight: '1px solid #e2e8f0' }}>DEV</th>
+              <th style={{ padding: '7px 12px', textAlign: 'center', fontWeight: 700, fontSize: 12, width: 70, borderRight: '1px solid #e2e8f0' }}>GRADE</th>
+              <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, borderRight: '1px solid #e2e8f0' }}>COMMENT</th>
+              <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, fontSize: 12, width: 140 }}>TEACHER</th>
             </tr>
           </thead>
           <tbody>
@@ -164,14 +164,14 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
               const devSymbol = dev > 0 ? '↑' : (dev < 0 ? '↓' : '-');
               return (
                 <tr key={row.subject} style={{ borderBottom: `1px solid #e2e8f0` }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.subject}</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.scoreText || '—'}</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', color: devColor, fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>
+                  <td style={{ padding: '7px 12px', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.subject}</td>
+                  <td style={{ padding: '7px 12px', textAlign: 'center', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.scoreText || '—'}</td>
+                  <td style={{ padding: '7px 12px', textAlign: 'center', color: devColor, fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>
                     {dev > 0 ? `+${dev}` : dev} {dev !== 0 && devSymbol}
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>{row.gradeCode || row.gradeFull || '—'}</td>
-                  <td style={{ padding: '10px 12px', fontSize: 12, borderRight: '1px solid #e2e8f0' }}>{row.remark}</td>
-                  <td style={{ padding: '10px 12px', fontSize: 12 }}>{row.teacher || 'Academic Dept'}</td>
+                  <td style={{ padding: '7px 12px', textAlign: 'center', fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>{row.gradeCode || row.gradeFull || '—'}</td>
+                  <td style={{ padding: '7px 12px', fontSize: 12, borderRight: '1px solid #e2e8f0' }}>{row.remark}</td>
+                  <td style={{ padding: '7px 12px', fontSize: 12 }}>{row.teacher || 'Academic Dept'}</td>
                 </tr>
               );
             })}
@@ -179,13 +179,13 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         </table>
 
         {/* Remarks Section */}
-        <div style={{ display: 'flex', border: '1px solid #94a3b8', borderRadius: 4, overflow: 'hidden', marginBottom: 20 }}>
-          <div style={{ flex: 1, padding: 16, borderRight: '1px solid #94a3b8' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Class Teacher Remarks:</div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, minHeight: 60 }}>
+        <div style={{ display: 'flex', border: '1px solid #94a3b8', borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
+          <div style={{ flex: 1, padding: 12, borderRight: '1px solid #94a3b8' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Class Teacher Remarks:</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, minHeight: 42 }}>
               {report.studentName.split(' ')[0]}, you're meeting the expected standards with solid effort. Continue this positive momentum, and you'll continue to excel.
             </div>
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
               <div style={{ width: 140, borderBottom: '1px solid #334155', position: 'relative' }}>
                 <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
@@ -194,12 +194,12 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
               </div>
             </div>
           </div>
-          <div style={{ flex: 1, padding: 16, position: 'relative' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Chief Principal Remarks: {schoolSettings.principal || ''}</div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, minHeight: 60 }}>
+          <div style={{ flex: 1, padding: 12, position: 'relative' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Chief Principal Remarks: {schoolSettings.principal || ''}</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, minHeight: 42 }}>
               {report.studentName.split(' ')[0]}, you are performing well and meeting expectations. Your progress is steady, and with continued focus and dedication, you will continue to grow. Keep up the good work.
             </div>
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
               <div style={{ width: 140, borderBottom: '1px solid #334155', position: 'relative' }}>
                 <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
@@ -211,8 +211,8 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         </div>
 
         {/* Grade Descriptors Table */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 6, textTransform: 'uppercase' }}>Grade Descriptors</div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 5, textTransform: 'uppercase' }}>Grade Descriptors</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid #94a3b8`, fontSize: 11, textAlign: 'center' }}>
             <thead>
               <tr style={{ background: '#f1f5f9' }}>
@@ -262,7 +262,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
         </div>
 
         {/* Footer QR - pinned to the bottom of the page so the card fills the full A4 sheet */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 20, marginTop: 'auto', borderTop: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 12, paddingBottom: 14, marginTop: 'auto', borderTop: '1px solid #e2e8f0' }}>
           <div style={{ width: 64, height: 64, background: '#fff', border: '1px solid #cbd5e1', padding: 4, flexShrink: 0 }}>
             <QRCodeSVG value={verification.url} size={54} level="M" />
           </div>

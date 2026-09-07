@@ -83,8 +83,16 @@ export async function renderReportCardsPdf({
       const imgData = canvas.toDataURL('image/png');
 
       if (pageAdded) pdf.addPage();
-      // Sheet is locked to A4 proportions (794x1123), so stretch edge-to-edge.
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      // Fit each card to a single A4 page, preserving aspect ratio: exact-A4
+      // fills edge-to-edge; a taller card scales down instead of clipping.
+      let drawW = pdfWidth;
+      let drawH = (canvas.height * pdfWidth) / canvas.width;
+      if (drawH > pdfHeight) {
+        drawH = pdfHeight;
+        drawW = (canvas.width * pdfHeight) / canvas.height;
+      }
+      const offsetX = (pdfWidth - drawW) / 2;
+      pdf.addImage(imgData, 'PNG', offsetX, 0, drawW, drawH, undefined, 'FAST');
       pageAdded = true;
     }
 
