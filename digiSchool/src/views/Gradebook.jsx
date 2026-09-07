@@ -32,13 +32,13 @@ import {
 } from 'lucide-react';
 
 const GRADE_COLORS = { 
-  EE: '#047857', 
-  ME: '#0284c7', 
-  AE: '#d97706', 
-  BE: '#dc2626', 
-  A: '#047857', 'A-': '#047857', 'B+': '#047857', B: '#047857', 'B-': '#047857', 'C+': '#047857', 
-  C: '#d97706', 'C-': '#d97706', 'D+': '#d97706', 
-  D: '#dc2626', 'D-': '#dc2626', E: '#dc2626', '-': '#9CA3AF' 
+  EE: '#059669', EE1: '#059669', EE2: '#10b981',
+  ME: '#2563eb', ME1: '#2563eb', ME2: '#3b82f6',
+  AE: '#d97706', AE1: '#d97706', AE2: '#f59e0b',
+  BE: '#dc2626', BE1: '#dc2626', BE2: '#f43f5e',
+  A: '#059669', 'A-': '#10b981', 'B+': '#059669', B: '#2563eb', 'B-': '#3b82f6', 'C+': '#2563eb', 
+  C: '#d97706', 'C-': '#f59e0b', 'D+': '#d97706', 
+  D: '#dc2626', 'D-': '#f43f5e', E: '#dc2626', '-': '#9CA3AF' 
 };
 
 const ASSESS_OPTIONS = ['All', 'Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
@@ -62,14 +62,36 @@ export default function Gradebook({ store }) {
   const [selected, setSelected] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   
+  // Pagination State for high student count (e.g. 180 students)
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const [loadedStudents, setLoadedStudents] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Subject permission check for teachers
   const teacherRecord = useMemo(() => {
     if (user?.role !== 'teacher') return null;
-    return (teachers || []).find(t => t.id === user.id || t.email === user.email || t.name === user.name) || null;
-  }, [user, teachers]);
+    return (teachers || store.teachers || []).find(t => 
+      t.id === user?.id || 
+      t.id === user?.teacher_id || 
+      (t.email && user?.email && t.email.toLowerCase() === user.email.toLowerCase()) ||
+      t.emp_id === user?.id || 
+      t.emp_id === user?.teacher_id ||
+      (t.name && user?.name && t.name.toLowerCase() === user.name.toLowerCase()) ||
+      (t.full_name && user?.full_name && t.full_name.toLowerCase() === user.full_name.toLowerCase())
+    ) || null;
+  }, [user, teachers, store.teachers]);
+
+  const teacherAssignedClass = useMemo(() => {
+    return teacherRecord?.assignedClass || 
+           teacherRecord?.assigned_class || 
+           teacherRecord?.class || 
+           user?.assignedClass || 
+           user?.assigned_class || 
+           user?.class || 
+           null;
+  }, [teacherRecord, user]);
 
   const allowedSubjects = useMemo(() => {
     if (!user || user.role !== 'teacher') return SUBJECTS;
@@ -77,6 +99,7 @@ export default function Gradebook({ store }) {
     if (user.subject) subjList.push(user.subject);
     if (user.dept) subjList.push(user.dept);
     if (teacherRecord?.subject) subjList.push(teacherRecord.subject);
+    if (teacherRecord?.dept) subjList.push(teacherRecord.dept);
     if (teacherRecord?.subjects && Array.isArray(teacherRecord.subjects)) subjList.push(...teacherRecord.subjects);
     const unique = [...new Set(subjList.filter(Boolean))];
     return unique.length > 0 ? unique : SUBJECTS;
@@ -91,11 +114,27 @@ export default function Gradebook({ store }) {
 
   const canEditCurrentSubject = useMemo(() => {
     if (!user) return true;
-    if (user.role === 'principal') return false;
+    if (user.role === 'principal' || user.role === 'parent' || user.role === 'student') return false;
     if (user.role === 'dos' || user.role === 'deputy_academic' || user.role === 'admin' || user.dept === 'dos') return true;
     if (user.role !== 'teacher') return true;
-    return allowedSubjects.includes(subject);
-  }, [user, allowedSubjects, subject]);
+    
+    // Class teachers can edit their class
+    if (teacherAssignedClass && cls && (
+      teacherAssignedClass.toLowerCase() === cls.toLowerCase() ||
+      cls.toLowerCase().startsWith(teacherAssignedClass.toLowerCase()) ||
+      teacherAssignedClass.toLowerCase().startsWith(cls.toLowerCase())
+    )) {
+      return true;
+    }
+
+    // Flexible subject matching
+    const targetSub = subject.toLowerCase().trim();
+    const isMatched = allowedSubjects.some(s => {
+      const as = s.toLowerCase().trim();
+      return as === targetSub || as.includes(targetSub) || targetSub.includes(as);
+    });
+    return isMatched || allowedSubjects.length === SUBJECTS.length;
+  }, [user, allowedSubjects, subject, teacherAssignedClass, cls]);
 
   // Extract classes from students for a complete stream list, falling back to settings
   const dynamicClasses = useMemo(() => {
@@ -105,27 +144,61 @@ export default function Gradebook({ store }) {
     return expandClassesWithStreams(settings?.classes || []);
   }, [settings, store.students]);
 
-  // Auto-select first class if none selected
+  // Auto-select teacher's assigned class if none selected, or first class
   useEffect(() => {
     if (!cls && dynamicClasses && dynamicClasses.length > 0) {
-      setCls(dynamicClasses[0]);
+      if (teacherAssignedClass) {
+        const found = dynamicClasses.find(c => 
+          c.toLowerCase() === teacherAssignedClass.toLowerCase() ||
+          c.toLowerCase().startsWith(teacherAssignedClass.toLowerCase())
+        );
+        setCls(found || dynamicClasses[0]);
+      } else {
+        setCls(dynamicClasses[0]);
+      }
     }
-  }, [cls, dynamicClasses]);
+  }, [cls, dynamicClasses, teacherAssignedClass]);
+
+  // Immediate in-memory student baseline from store.students so students are NEVER blank
+  const inMemoryClassStudents = useMemo(() => {
+    if (!store.students || store.students.length === 0) return [];
+    if (!cls || cls === 'All') return store.students.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+    const target = cls.trim().toLowerCase();
+    return store.students.filter(s => {
+      if (!s.class) return false;
+      if (s.status === 'Inactive' || s.status === 'Graduated') return false;
+      const sc = s.class.trim().toLowerCase();
+      return sc === target || sc.startsWith(target) || target.startsWith(sc);
+    });
+  }, [store.students, cls]);
 
   useEffect(() => {
     let active = true;
     const loadData = async () => {
+      if (!cls) return;
+      // Instantly load in-memory students so teacher sees students without delay!
+      if (inMemoryClassStudents.length > 0) {
+        setLoadedStudents(inMemoryClassStudents);
+        if (!selectedStudentId) setSelectedStudentId(inMemoryClassStudents[0].id);
+      }
       setLoading(true);
       try {
-        const { data } = await fetchStudents(0, 200, { class: cls });
+        const { data } = await fetchStudents(0, 500, { class: cls, activeOnly: true });
         if (active) {
-          setLoadedStudents(data);
-          if (data.length > 0 && !selectedStudentId) {
-            setSelectedStudentId(data[0].id);
+          if (data && data.length > 0) {
+            setLoadedStudents(data);
+            if (!selectedStudentId) {
+              setSelectedStudentId(data[0].id);
+            }
+          } else if (inMemoryClassStudents.length > 0) {
+            setLoadedStudents(inMemoryClassStudents);
           }
         }
       } catch (e) {
-        notify('Failed to load gradebook', 'error');
+        console.warn('Gradebook fetchStudents fallback:', e);
+        if (active && inMemoryClassStudents.length > 0) {
+          setLoadedStudents(inMemoryClassStudents);
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -133,6 +206,18 @@ export default function Gradebook({ store }) {
     loadData();
     return () => { active = false; };
   }, [cls]);
+
+  // If store.students is updated, sync loadedStudents so teacher sees changes live!
+  useEffect(() => {
+    if (inMemoryClassStudents.length > 0 && loadedStudents.length === 0) {
+      setLoadedStudents(inMemoryClassStudents);
+    }
+  }, [inMemoryClassStudents]);
+
+  // Reset pagination on class, search, or subject change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [cls, search, subject, pageSize]);
 
   const classStudents = useMemo(
     () => loadedStudents.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(search.toLowerCase()))),
@@ -182,6 +267,21 @@ export default function Gradebook({ store }) {
       return { ...s, ...r, percentage, grade, points, systemType, remarks: r.remarks || remarkFor(grade, systemType) };
     }), [classStudents, subject, gradeBoundaries]);
 
+  // Pagination slicing
+  const totalStudents = rows.length;
+  const effectivePageSize = pageSize === 'all' ? totalStudents || 1 : Number(pageSize);
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(totalStudents / effectivePageSize));
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedRows = useMemo(() => {
+    if (pageSize === 'all') return rows;
+    const start = (activePage - 1) * effectivePageSize;
+    return rows.slice(start, start + effectivePageSize);
+  }, [rows, pageSize, activePage, effectivePageSize]);
+
+  const startIndex = totalStudents === 0 ? 0 : pageSize === 'all' ? 1 : (activePage - 1) * effectivePageSize + 1;
+  const endIndex = pageSize === 'all' ? totalStudents : Math.min(totalStudents, activePage * effectivePageSize);
+
   const colAvg = useMemo(() => {
     if (rows.length === 0) return null;
     const sum = (k) => rows.reduce((a, b) => a + (b[k] || 0), 0);
@@ -194,28 +294,37 @@ export default function Gradebook({ store }) {
     return { a1: avg('a1'), a2: avg('a2'), a3: avg('a3'), a4: avg('a4'), average: avgScore, points: avgPoints, grade: avgGrade };
   }, [rows, gradeBoundaries]);
 
-  // Performance summary with standard CBC / 844 grouping
+  // Clean Competency summary with non-zero filtering and proper palette
   const gradeDist = useMemo(() => {
-    const counts = { EE: 0, ME: 0, AE: 0, BE: 0 };
+    const counts = {};
     rows.forEach((r) => {
       if (r.grade && r.grade !== '-') {
-        let cat = 'BE';
-        if (r.grade.startsWith('EE') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade)) cat = 'EE';
-        else if (r.grade.startsWith('ME') || ['C', 'C-', 'D+'].includes(r.grade)) cat = 'ME';
-        else if (r.grade.startsWith('AE') || ['D', 'D-'].includes(r.grade)) cat = 'AE';
-        counts[cat] = (counts[cat] || 0) + 1;
+        counts[r.grade] = (counts[r.grade] || 0) + 1;
       }
     });
-    return Object.entries(counts).map(([grade, value]) => ({ grade, value }));
+    return Object.entries(counts)
+      .filter(([_, val]) => val > 0)
+      .map(([grade, value]) => ({
+        grade,
+        value,
+        color: GRADE_COLORS[grade] || '#059669',
+        pct: rows.length > 0 ? Math.round((value / rows.length) * 100) : 0
+      }))
+      .sort((a, b) => b.value - a.value);
   }, [rows]);
 
   const top5 = useMemo(() => [...rows].sort((a, b) => b.average - a.average).slice(0, 5), [rows]);
   const atRisk = useMemo(() => rows.filter((r) => r.average > 0 && r.average < 40), [rows]);
+  
   const subjectCompare = useMemo(() =>
     SUBJECTS.map((sub) => {
       const avg = classStudents.reduce((a, s) => a + subjectAverage(s.scores?.[sub]), 0) / (classStudents.length || 1);
-      return { subject: sub.slice(0, 4), avg: Math.round(avg * 10) / 10 };
-    }), [classStudents]);
+      return { 
+        subject: sub.length > 8 ? sub.slice(0, 7) + '..' : sub,
+        fullName: sub,
+        avg: Math.round(avg * 10) / 10 
+      };
+    }).filter(s => s.avg > 0 || classStudents.length > 0), [classStudents]);
 
   function saveScore(id, field, value) {
     if (!canEditCurrentSubject) {
@@ -223,7 +332,7 @@ export default function Gradebook({ store }) {
       setEditing(null);
       return;
     }
-    const target = loadedStudents.find((s) => s.id === id);
+    const target = loadedStudents.find((s) => s.id === id) || store.students?.find(s => s.id === id);
     if (!target) return;
     let v;
     if (field === 'remarks') {
@@ -233,17 +342,31 @@ export default function Gradebook({ store }) {
     } else if (String(value).trim() === '') {
       v = 0;
     } else {
-      const max = Math.max(1, Number(outOf) || 100);
-      v = Math.max(0, Math.min(100, Math.round((Number(value) || 0) / max * 100)));
+      const parsed = parseFloat(value);
+      if (isNaN(parsed) || parsed < 0) {
+        notify('Please enter a valid positive number or mark with "X"', 'warning', 'Gradebook');
+        setEditing(null);
+        return;
+      }
+      const maxScore = outOf > 0 ? outOf : 100;
+      const normalizedScore = maxScore !== 100 ? Math.round((parsed / maxScore) * 100) : parsed;
+      v = Math.min(100, normalizedScore);
     }
-    if (target) {
-      const currentScores = target.scores || {};
-      const subjectScores = currentScores[subject] || {};
-      const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v, score: v, average: v } } };
-      updateStudent(updated);
-      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
-    }
+    const current = target.scores?.[subject] || {};
+    const base = typeof current === 'object' ? { ...current } : { average: current };
+    base[field] = v;
+    const computed = computeRow(base);
+    const updated = {
+      ...target,
+      scores: {
+        ...(target.scores || {}),
+        [subject]: { ...base, ...computed, score: computed.average, average: computed.average },
+      },
+    };
+    updateStudent(updated);
+    setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     setEditing(null);
+    notify(`Saved ${field.toUpperCase()} mark for ${target.name}: ${v}%`, 'success', 'Gradebook');
   }
 
   function flagStudent(id) {
@@ -349,7 +472,12 @@ export default function Gradebook({ store }) {
                 if (field !== 'remarks') {
                   const idx = rows.findIndex((x) => x.id === r.id);
                   const next = rows[idx + 1];
-                  if (next) setEditing({ id: next.id, field });
+                  if (next) {
+                    if (pageSize !== 'all' && idx + 1 >= activePage * effectivePageSize) {
+                      setCurrentPage(p => Math.min(totalPages, p + 1));
+                    }
+                    setEditing({ id: next.id, field });
+                  }
                 }
               }
               if (e.key === 'Escape') setEditing(null);
@@ -975,8 +1103,9 @@ export default function Gradebook({ store }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => {
+                  {paginatedRows.map((r, i) => {
                     const isAtRisk = r.average > 0 && r.average < 40;
+                    const rowNum = pageSize === 'all' ? i + 1 : (activePage - 1) * effectivePageSize + i + 1;
                     return (
                       <tr 
                         key={r.id} 
@@ -994,7 +1123,7 @@ export default function Gradebook({ store }) {
                             onChange={(e) => setSelected((sel) => e.target.checked ? [...sel, r.id] : sel.filter((x) => x !== r.id))} 
                           />
                         </td>
-                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{i + 1}</td>
+                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{rowNum}</td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                             <div style={{
@@ -1119,53 +1248,275 @@ export default function Gradebook({ store }) {
             </div>
           </div>
 
+          {/* Pagination Navigation Bar */}
+          {totalStudents > 0 && (
+            <div 
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+                padding: '12px 18px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: 10,
+                marginBottom: 20,
+                boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)'
+              }}
+            >
+              {/* Left: Summary & Page Size */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>
+                  Showing <strong style={{ color: '#0f172a' }}>{startIndex}–{endIndex}</strong> of <strong style={{ color: '#0f172a' }}>{totalStudents}</strong> students in <strong style={{ color: '#047857' }}>{cls || 'Class'}</strong>
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748b' }}>
+                  <span>Rows per page:</span>
+                  {[25, 50, 100, 'all'].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setPageSize(size);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        height: 28,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: pageSize === size ? '1px solid #047857' : '1px solid #e2e8f0',
+                        background: pageSize === size ? '#ecfdf5' : '#ffffff',
+                        color: pageSize === size ? '#047857' : '#475569',
+                        fontWeight: pageSize === size ? 700 : 500,
+                        fontSize: 12,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {size === 'all' ? `All (${totalStudents})` : size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              {pageSize !== 'all' && totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    disabled={activePage <= 1}
+                    onClick={() => setCurrentPage(1)}
+                    style={{
+                      height: 30,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: activePage <= 1 ? '#f8fafc' : '#ffffff',
+                      color: activePage <= 1 ? '#94a3b8' : '#334155',
+                      cursor: activePage <= 1 ? 'not-allowed' : 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600
+                    }}
+                    title="First Page"
+                  >
+                    « First
+                  </button>
+
+                  <button
+                    disabled={activePage <= 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    style={{
+                      height: 30,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: activePage <= 1 ? '#f8fafc' : '#ffffff',
+                      color: activePage <= 1 ? '#94a3b8' : '#334155',
+                      cursor: activePage <= 1 ? 'not-allowed' : 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <ChevronLeft size={14} /> Prev
+                  </button>
+
+                  {/* Page numbers (smart window) */}
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - activePage) <= 2)
+                    .reduce((acc, p, i, arr) => {
+                      if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) => {
+                      if (item === '...') {
+                        return <span key={`ellipsis-${idx}`} style={{ padding: '0 4px', color: '#94a3b8' }}>...</span>;
+                      }
+                      const isCurr = item === activePage;
+                      return (
+                        <button
+                          key={item}
+                          onClick={() => setCurrentPage(item)}
+                          style={{
+                            width: 32,
+                            height: 30,
+                            borderRadius: 6,
+                            border: isCurr ? '1px solid #047857' : '1px solid #cbd5e1',
+                            background: isCurr ? '#047857' : '#ffffff',
+                            color: isCurr ? '#ffffff' : '#334155',
+                            fontWeight: isCurr ? 700 : 500,
+                            fontSize: 12,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+
+                  <button
+                    disabled={activePage >= totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    style={{
+                      height: 30,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: activePage >= totalPages ? '#f8fafc' : '#ffffff',
+                      color: activePage >= totalPages ? '#94a3b8' : '#334155',
+                      cursor: activePage >= totalPages ? 'not-allowed' : 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+
+                  <button
+                    disabled={activePage >= totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    style={{
+                      height: 30,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: activePage >= totalPages ? '#f8fafc' : '#ffffff',
+                      color: activePage >= totalPages ? '#94a3b8' : '#334155',
+                      cursor: activePage >= totalPages ? 'not-allowed' : 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600
+                    }}
+                    title="Last Page"
+                  >
+                    Last »
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── 4. ANALYTICS & INSIGHTS CARDS (GRID MODE) ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16, marginBottom: 20 }}>
             {/* Competency Distribution Donut */}
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Competency Distribution</h3>
                   <div style={{ fontSize: 11, color: '#64748b' }}>Curriculum performance bands for {subject}</div>
                 </div>
-                <Award size={16} color="#047857" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#047857' }}>
+                  <Award size={14} color="#047857" /> {rows.length} Graded
+                </div>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie 
-                    data={gradeDist} 
-                    dataKey="value" 
-                    nameKey="grade" 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius={50}
-                    outerRadius={80} 
-                    paddingAngle={3}
-                  >
-                    {gradeDist.map((d) => <Cell key={d.grade} fill={GRADE_COLORS[d.grade] || '#047857'} />)}
-                  </Pie>
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                  <Tooltip formatter={(value, name) => [`${value} Students`, `${name} Level`]} />
-                </PieChart>
-              </ResponsiveContainer>
+
+              {/* Modern visual layout: Doughnut on left, breakdown on right */}
+              <div style={{ display: 'grid', gridTemplateColumns: gradeDist.length > 0 ? '160px 1fr' : '1fr', gap: 16, alignItems: 'center' }}>
+                {gradeDist.length > 0 ? (
+                  <div style={{ position: 'relative', width: 160, height: 160 }}>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <PieChart>
+                        <Pie 
+                          data={gradeDist} 
+                          dataKey="value" 
+                          nameKey="grade" 
+                          cx="50%" 
+                          cy="50%" 
+                          innerRadius={50}
+                          outerRadius={75} 
+                          paddingAngle={3}
+                          cornerRadius={4}
+                        >
+                          {gradeDist.map((d) => <Cell key={d.grade} fill={d.color} />)}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value, name) => [`${value} Students (${rows.length > 0 ? Math.round((value / rows.length) * 100) : 0}%)`, `${name} Band`]} 
+                          contentStyle={{ background: '#0f172a', border: 'none', borderRadius: 8, color: '#ffffff', fontSize: 12 }}
+                          itemStyle={{ color: '#ffffff' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{rows.length}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', marginTop: 2 }}>Students</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 12 }}>No graded scores yet</div>
+                )}
+
+                {/* Clean band breakdown table */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {gradeDist.map((d) => (
+                    <div key={d.grade} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, padding: '4px 8px', borderRadius: 6, background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+                        <span style={{ fontWeight: 700, color: '#1e293b' }}>{d.grade}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontWeight: 600, color: '#0f172a' }}>{d.value}</span>
+                        <span style={{ fontSize: 11, color: '#64748b', minWidth: 34, textAlign: 'right' }}>{d.pct}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Subject Comparison Across Classes */}
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Subject Performance Benchmark</h3>
-                  <div style={{ fontSize: 11, color: '#64748b' }}>Class average % across all subjects</div>
+                  <div style={{ fontSize: 11, color: '#64748b' }}>Class average % across curriculum subjects</div>
                 </div>
-                <TrendingUp size={16} color="#0284c7" />
+                {subjectCompare.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#1d4ed8' }}>
+                    <TrendingUp size={14} color="#1d4ed8" /> Mean: {Math.round((subjectCompare.reduce((a, b) => a + b.avg, 0) / (subjectCompare.length || 1)) * 10) / 10}%
+                  </div>
+                )}
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={subjectCompare} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart data={subjectCompare} margin={{ top: 15, right: 10, left: -18, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="subject" tick={{ fontSize: 10, fill: '#64748b' }} />
+                  <XAxis dataKey="subject" tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip formatter={(v) => [`${v}%`, 'Class Average']} />
-                  <Bar dataKey="avg" fill="#047857" radius={[4, 4, 0, 0]} />
+                  <Tooltip 
+                    formatter={(v, name, props) => [`${v}%`, `${props?.payload?.fullName || 'Subject'} Class Average`]} 
+                    contentStyle={{ background: '#0f172a', border: 'none', borderRadius: 8, color: '#ffffff', fontSize: 12 }}
+                    itemStyle={{ color: '#ffffff' }}
+                  />
+                  <Bar dataKey="avg" radius={[6, 6, 0, 0]}>
+                    {subjectCompare.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.avg >= 70 ? '#059669' : entry.avg >= 50 ? '#2563eb' : entry.avg >= 40 ? '#d97706' : '#dc2626'} 
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

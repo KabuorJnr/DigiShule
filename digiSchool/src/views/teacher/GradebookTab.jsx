@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { computeRow, gradeFor, remarkFor, is844Class, pointsForGrade } from '../../utils/grading';
 import { Badge } from '../../components/widgets';
 import ReportCardEntrySheet from '../../components/ReportCardEntrySheet';
@@ -48,6 +48,10 @@ export default function GradebookTab() {
   const [examYear, setExamYear] = useState('2026');
   const [selected, setSelected] = useState([]);
 
+  // Pagination State for 180+ student cohorts
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Available classes for this teacher
   const availableClasses = useMemo(() => {
     const set = new Set();
@@ -56,6 +60,11 @@ export default function GradebookTab() {
     (loadedStudents || []).forEach(s => { if (s.class) set.add(s.class); });
     return Array.from(set);
   }, [assignedClass, subjectClasses, loadedStudents]);
+
+  // Reset pagination on stream, search, subject, or pageSize change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStream, search, subject, pageSize]);
 
   // Filter students by selected stream and search query
   const filteredStudents = useMemo(() => {
@@ -80,6 +89,21 @@ export default function GradebookTab() {
 
   const sortedRows = useMemo(() => [...rows].sort((a, b) => b.average - a.average), [rows]);
   const topPerformer = sortedRows[0]?.average > 0 ? sortedRows[0] : null;
+
+  // Pagination Engine
+  const totalStudents = sortedRows.length;
+  const effectivePageSize = pageSize === 'all' ? totalStudents || 1 : Number(pageSize);
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(totalStudents / effectivePageSize));
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedRows = useMemo(() => {
+    if (pageSize === 'all') return sortedRows;
+    const start = (activePage - 1) * effectivePageSize;
+    return sortedRows.slice(start, start + effectivePageSize);
+  }, [sortedRows, pageSize, activePage, effectivePageSize]);
+
+  const startIndex = totalStudents === 0 ? 0 : pageSize === 'all' ? 1 : (activePage - 1) * effectivePageSize + 1;
+  const endIndex = pageSize === 'all' ? totalStudents : Math.min(totalStudents, activePage * effectivePageSize);
 
   // Stream average computation
   const colAvg = useMemo(() => {
@@ -128,7 +152,7 @@ export default function GradebookTab() {
   };
 
   function saveScore(id, field, value) {
-    const target = loadedStudents.find((s) => s.id === id);
+    const target = (loadedStudents || []).find((s) => s.id === id) || (store.students || []).find((s) => s.id === id);
     if (!target) return;
     let v;
     if (field === 'remarks') {
@@ -138,15 +162,32 @@ export default function GradebookTab() {
     } else if (String(value).trim() === '') {
       v = 0;
     } else {
-      const max = Math.max(1, Number(outOf) || 100);
-      v = Math.max(0, Math.min(100, Math.round((Number(value) || 0) / max * 100)));
+      const parsed = parseFloat(value);
+      if (isNaN(parsed) || parsed < 0) {
+        store.notify?.('Please enter a valid positive number or mark with "X"', 'warning', 'Gradebook');
+        setEditing(null);
+        return;
+      }
+      const maxScore = outOf > 0 ? Number(outOf) : 100;
+      const normalizedScore = maxScore !== 100 ? Math.round((parsed / maxScore) * 100) : parsed;
+      v = Math.min(100, normalizedScore);
     }
     const currentScores = target.scores || {};
-    const subjectScores = currentScores[subject] || {};
-    const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v, score: v, average: v } } };
+    const currentSubj = currentScores[subject] || {};
+    const base = typeof currentSubj === 'object' ? { ...currentSubj } : { average: currentSubj };
+    base[field] = v;
+    const computed = computeRow(base);
+    const updated = {
+      ...target,
+      scores: {
+        ...currentScores,
+        [subject]: { ...base, ...computed, score: computed.average, average: computed.average },
+      },
+    };
     store.updateStudent(updated);
     setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     setEditing(null);
+    store.notify?.(`Saved ${field.toUpperCase()} mark for ${target.name}: ${v}%`, 'success', 'Gradebook');
   }
 
   // Export handlers for teacher
@@ -202,7 +243,7 @@ export default function GradebookTab() {
     return 'red';
   };
 
-  const ScoreCell = ({ r, field, editing, setEditing, saveScore, sortedRows }) => {
+  const ScoreCell = ({ r, field, editing, setEditing, saveScore, sortedRows, effectivePageSize, activePage, setCurrentPage, pageSize }) => {
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (
@@ -236,7 +277,14 @@ export default function GradebookTab() {
                 if (field !== 'remarks' && sortedRows) {
                   const idx = sortedRows.findIndex(x => x.id === r.id);
                   const next = sortedRows[idx + 1];
-                  if (next) setEditing({ id: next.id, field });
+                  if (next) {
+                    const nextIdx = idx + 1;
+                    const targetPage = Math.floor(nextIdx / effectivePageSize) + 1;
+                    if (pageSize !== 'all' && targetPage !== activePage && setCurrentPage) {
+                      setCurrentPage(targetPage);
+                    }
+                    setEditing({ id: next.id, field });
+                  }
                 }
               }
               if (e.key === 'Escape') setEditing(null);
@@ -675,15 +723,15 @@ export default function GradebookTab() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input 
                 type="checkbox" 
-                checked={selected.length === rows.length && rows.length > 0}
-                onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                checked={selected.length === paginatedRows.length && paginatedRows.length > 0}
+                onChange={(e) => setSelected(e.target.checked ? paginatedRows.map((r) => r.id) : [])} 
                 style={{ width: 16, height: 16, cursor: 'pointer' }}
               />
               <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
                 {selected.length > 0 ? (
-                  <span style={{ color: '#047857' }}>{selected.length} of {rows.length} Selected</span>
+                  <span style={{ color: '#047857' }}>{selected.length} of {paginatedRows.length} on page Selected</span>
                 ) : (
-                  <span>Students ({rows.length})</span>
+                  <span>Students ({totalStudents})</span>
                 )}
               </span>
               {selected.length > 0 && (
@@ -721,8 +769,8 @@ export default function GradebookTab() {
                   <th style={{ width: 36, textAlign: 'center' }}>
                     <input 
                       type="checkbox" 
-                      checked={selected.length === rows.length && rows.length > 0}
-                      onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                      checked={selected.length === paginatedRows.length && paginatedRows.length > 0}
+                      onChange={(e) => setSelected(e.target.checked ? paginatedRows.map((r) => r.id) : [])} 
                     />
                   </th>
                   <th style={{ width: 40, textAlign: 'center' }}>#</th>
@@ -741,8 +789,9 @@ export default function GradebookTab() {
                 </tr>
               </thead>
               <tbody>
-                {sortedRows.map((r, i) => {
+                {paginatedRows.map((r, i) => {
                   const isAtRisk = r.average > 0 && r.average < 40;
+                  const rowNumber = pageSize === 'all' ? i + 1 : (activePage - 1) * effectivePageSize + i + 1;
                   return (
                     <tr 
                       key={r.id} 
@@ -760,7 +809,7 @@ export default function GradebookTab() {
                           onChange={(e) => setSelected((sel) => e.target.checked ? [...sel, r.id] : sel.filter((x) => x !== r.id))} 
                         />
                       </td>
-                      <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{i + 1}</td>
+                      <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{rowNumber}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                           <div style={{
@@ -783,10 +832,10 @@ export default function GradebookTab() {
                       </td>
                       <td style={{ color: '#64748b', fontWeight: 500 }}>{r.adm || '—'}</td>
                       <td><Badge color="gray">{r.class}</Badge></td>
-                      <ScoreCell r={r} field="a1" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
-                      <ScoreCell r={r} field="a2" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
-                      <ScoreCell r={r} field="a3" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
-                      <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
+                      <ScoreCell r={r} field="a1" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} effectivePageSize={effectivePageSize} activePage={activePage} setCurrentPage={setCurrentPage} pageSize={pageSize} />
+                      <ScoreCell r={r} field="a2" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} effectivePageSize={effectivePageSize} activePage={activePage} setCurrentPage={setCurrentPage} pageSize={pageSize} />
+                      <ScoreCell r={r} field="a3" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} effectivePageSize={effectivePageSize} activePage={activePage} setCurrentPage={setCurrentPage} pageSize={pageSize} />
+                      <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} effectivePageSize={effectivePageSize} activePage={activePage} setCurrentPage={setCurrentPage} pageSize={pageSize} />
                       
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ fontWeight: 800, color: r.average > 0 ? (isAtRisk ? '#dc2626' : '#0369a1') : '#94a3b8', fontSize: 13.5 }}>
@@ -808,7 +857,7 @@ export default function GradebookTab() {
                         </Badge>
                       </td>
 
-                      <ScoreCell r={r} field="remarks" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
+                      <ScoreCell r={r} field="remarks" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} effectivePageSize={effectivePageSize} activePage={activePage} setCurrentPage={setCurrentPage} pageSize={pageSize} />
 
                       <td style={{ textAlign: 'center' }}>
                         <button 
@@ -876,6 +925,136 @@ export default function GradebookTab() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Navigation Bar */}
+          {totalStudents > 0 && (
+            <div 
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+                padding: '12px 18px',
+                background: '#ffffff',
+                borderTop: '1px solid #e2e8f0'
+              }}
+            >
+              {/* Left: Summary & Page Size */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>
+                  Showing <strong style={{ color: '#0f172a' }}>{startIndex}–{endIndex}</strong> of <strong style={{ color: '#0f172a' }}>{totalStudents}</strong> students in <strong style={{ color: '#047857' }}>{selectedStream === 'All' ? 'All Classes' : selectedStream}</strong>
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>Per page:</span>
+                  {[25, 50, 100, 'all'].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setPageSize(size);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        padding: '3px 9px',
+                        fontSize: 12,
+                        fontWeight: pageSize === size ? 700 : 500,
+                        borderRadius: 6,
+                        border: pageSize === size ? '1px solid #047857' : '1px solid #e2e8f0',
+                        background: pageSize === size ? '#f0fdf4' : '#ffffff',
+                        color: pageSize === size ? '#047857' : '#64748b',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {size === 'all' ? 'All' : size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Page Navigation */}
+              {pageSize !== 'all' && totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button
+                    className="btn btn-sm"
+                    disabled={activePage <= 1}
+                    onClick={() => setCurrentPage(1)}
+                    style={{ fontSize: 11.5, padding: '4px 8px', opacity: activePage <= 1 ? 0.4 : 1 }}
+                    title="First Page"
+                  >
+                    « First
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    disabled={activePage <= 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    style={{ fontSize: 12, padding: '4px 10px', opacity: activePage <= 1 ? 0.4 : 1 }}
+                  >
+                    <ChevronLeft size={14} /> Prev
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - activePage) <= 2)
+                    .reduce((acc, p, i, arr) => {
+                      if (i > 0 && p - arr[i - 1] > 1) {
+                        acc.push({ type: 'ellipsis', key: `e-${p}` });
+                      }
+                      acc.push({ type: 'page', page: p, key: p });
+                      return acc;
+                    }, [])
+                    .map(item => {
+                      if (item.type === 'ellipsis') {
+                        return <span key={item.key} style={{ padding: '0 4px', color: '#94a3b8' }}>…</span>;
+                      }
+                      const isCurrent = item.page === activePage;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => setCurrentPage(item.page)}
+                          style={{
+                            minWidth: 30,
+                            height: 30,
+                            padding: '0 6px',
+                            borderRadius: 6,
+                            border: isCurrent ? '1px solid #047857' : '1px solid #cbd5e1',
+                            background: isCurrent ? '#047857' : '#ffffff',
+                            color: isCurrent ? '#ffffff' : '#334155',
+                            fontWeight: isCurrent ? 700 : 500,
+                            fontSize: 12,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {item.page}
+                        </button>
+                      );
+                    })}
+
+                  <button
+                    className="btn btn-sm"
+                    disabled={activePage >= totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    style={{ fontSize: 12, padding: '4px 10px', opacity: activePage >= totalPages ? 0.4 : 1 }}
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    disabled={activePage >= totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    style={{ fontSize: 11.5, padding: '4px 8px', opacity: activePage >= totalPages ? 0.4 : 1 }}
+                    title="Last Page"
+                  >
+                    Last »
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
