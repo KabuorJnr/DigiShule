@@ -48,9 +48,16 @@ export default function ReportCardModal({
   const handleDownloadPDF = async () => {
     const el = document.getElementById('report-card-capture-area');
     if (!el) return;
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+    // High scale keeps text crisp; explicit white background avoids grey fringes.
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight
+    });
     const imgData = canvas.toDataURL('image/png');
-    
+
     // A4 dimensions in mm
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -58,9 +65,11 @@ export default function ReportCardModal({
       format: 'a4'
     });
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // The capture area is locked to A4 proportions (794 x 1123 px), so stretch
+    // the image to fill the entire A4 page edge-to-edge.
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
     pdf.save(`${report.studentName.replace(/\s+/g, '_')}_Report.pdf`);
   };
 
@@ -109,7 +118,7 @@ export default function ReportCardModal({
         
         {/* Printable Card Area - strictly A4 proportions (794x1123 px at 96 DPI) */}
         <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
-          <div id="report-card-capture-area" style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+          <div id="report-card-capture-area" style={{ background: '#fff', width: 794, height: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Segoe UI", "Helvetica Neue", "Noto Sans", Helvetica, Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
             {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
@@ -144,7 +153,7 @@ export default function ReportCardModal({
             ACADEMIC REPORT FORM - {report.className} - {report.examTitle.toUpperCase()} - ({new Date().getFullYear()} {report.termName.toUpperCase()})
           </div>
 
-          <div style={{ padding: '24px 24px 0 24px' }}>
+          <div style={{ padding: '24px 24px 0 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             {/* Student Info & Graph */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
               <div style={{ display: 'flex', gap: 16 }}>
@@ -344,8 +353,8 @@ export default function ReportCardModal({
               </table>
             </div>
 
-            {/* Footer QR */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16 }}>
+            {/* Footer QR - pinned to the bottom of the page so the card fills the full A4 sheet */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 20, marginTop: 'auto', borderTop: '1px solid #e2e8f0' }}>
               <div style={{ width: 64, height: 64, background: '#fff', border: '1px solid #cbd5e1', padding: 4, flexShrink: 0 }}>
                 <QRCodeSVG value={`https://digishule.com/verify?id=${report.id || report.admissionNo}&term=Term2`} size={54} level="M" />
               </div>
