@@ -26,7 +26,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
   });
 
   return (
-    <div id={captureId} style={{ background: '#fff', width: 794, height: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Segoe UI", "Helvetica Neue", "Noto Sans", Helvetica, Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div id={captureId} style={{ background: '#fff', width: 794, height: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>

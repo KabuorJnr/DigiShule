@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './Modal';
 import { computeStudentReport } from '../utils/grading';
 import ReportCardSheet from './ReportCardSheet';
+import { ensureReportFontsLoaded } from '../utils/fonts';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Printer, Download, Award } from 'lucide-react';
@@ -48,6 +49,8 @@ export default function ReportCardModal({
   const handleDownloadPDF = async () => {
     const el = document.getElementById('report-card-capture-area');
     if (!el) return;
+    // Wait for Poppins so the PDF captures the same font the card is designed in.
+    await ensureReportFontsLoaded();
     // High scale keeps text crisp; explicit white background avoids grey fringes.
     const canvas = await html2canvas(el, {
       scale: 3,

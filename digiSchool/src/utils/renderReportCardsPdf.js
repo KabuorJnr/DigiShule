@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { computeStudentReport } from './grading';
+import { ensureReportFontsLoaded } from './fonts';
 import ReportCardSheet from '../components/ReportCardSheet';
 
 // Renders one or many report cards to a multi-page A4 PDF by mounting the exact
@@ -49,9 +50,8 @@ export async function renderReportCardsPdf({
   });
 
   try {
-    if (document.fonts && document.fonts.ready) {
-      try { await document.fonts.ready; } catch { /* fonts API optional */ }
-    }
+    // Load Poppins once up front so every captured page uses the design font.
+    await ensureReportFontsLoaded();
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfWidth = pdf.internal.pageSize.getWidth();
