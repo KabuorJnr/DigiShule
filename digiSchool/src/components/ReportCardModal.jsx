@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import { computeStudentReport } from '../utils/grading';
+import { buildReportVerification } from '../utils/reportVerification';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -80,6 +81,10 @@ export default function ReportCardModal({
   const INK = '#111827';
   const MUTED = '#6b7280';
   const maxPts = is844 ? 12 : 8;
+
+  // Tamper-evident verification: code + QR both derived from this report's own
+  // data, resolving to this deployment's public /verify route.
+  const verification = buildReportVerification(report, schoolSettings.name || '');
 
   const classStr = (report.className || '').toLowerCase();
   const isSenior = classStr.includes('10') || classStr.includes('11') || classStr.includes('12') || classStr.includes('form');
@@ -356,10 +361,10 @@ export default function ReportCardModal({
             {/* Footer QR - pinned to the bottom of the page so the card fills the full A4 sheet */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 20, marginTop: 'auto', borderTop: '1px solid #e2e8f0' }}>
               <div style={{ width: 64, height: 64, background: '#fff', border: '1px solid #cbd5e1', padding: 4, flexShrink: 0 }}>
-                <QRCodeSVG value={`https://digishule.com/verify?id=${report.id || report.admissionNo}&term=Term2`} size={54} level="M" />
+                <QRCodeSVG value={verification.url} size={54} level="M" />
               </div>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Verification Code: {report.admissionNo?.substring(0,6) || 'P6AK6F'}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Verification Code: {verification.code}</div>
                 <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
                   Scan to verify the authenticity of this document via DigiSchool.
                 </div>
