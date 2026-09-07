@@ -343,7 +343,7 @@ export default function ClassSubjectAnalysis({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, color: '#1e293b' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, color: '#1e293b', fontFamily: "'Poppins', sans-serif" }}>
       
       {/* ── 1. HEADER & GLOBAL CONTROLS ── */}
       <div style={{ 
@@ -437,8 +437,25 @@ export default function ClassSubjectAnalysis({
               </span>
             </div>
 
-            {/* Quick Department Presets */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {/* Quick Department Presets & Search */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Filter subjects..."
+                  value={subjectSearch}
+                  onChange={(e) => setSubjectSearch(e.target.value)}
+                  style={{
+                    height: 26,
+                    fontSize: 11,
+                    padding: '0 8px',
+                    borderRadius: 14,
+                    border: '1px solid #cbd5e1',
+                    outline: 'none',
+                    width: 120
+                  }}
+                />
+              </div>
               <button 
                 className="btn btn-sm" 
                 onClick={selectAll}
@@ -493,7 +510,7 @@ export default function ClassSubjectAnalysis({
 
           {/* Interactive Subject Chips */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {allSubjects.map(sub => {
+            {filteredAvailableSubjects.map(sub => {
               const isSelected = selectedSubjects.includes(sub);
               const deptColor = DEPT_COLORS[DEPARTMENTS[sub]] || '#0284c7';
               return (
@@ -681,7 +698,7 @@ export default function ClassSubjectAnalysis({
           <table className="table" style={{ width: '100%', fontSize: 12 }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                <th style={{ width: 50, textAlign: 'center' }}># Rank</th>
+                <th style={{ width: 60, textAlign: 'center' }}># Rank</th>
                 <th>Class / Stream</th>
                 <th style={{ textAlign: 'center' }}>Students</th>
                 <th style={{ textAlign: 'center' }}>Mean Score (%)</th>
@@ -689,13 +706,14 @@ export default function ClassSubjectAnalysis({
                 <th style={{ textAlign: 'center' }}>Performance Level</th>
                 <th>Top Performing Subject</th>
                 <th>Selected Subjects Breakdown</th>
+                <th style={{ width: 100, textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {classAnalysisData.map((c, i) => (
                 <tr key={c.name} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ textAlign: 'center', fontWeight: 800, color: i === 0 ? '#d97706' : '#64748b' }}>
-                    {i + 1}
+                    {i === 0 ? '🥇 1' : (i === 1 ? '🥈 2' : (i === 2 ? '🥉 3' : i + 1))}
                   </td>
                   <td style={{ fontWeight: 700, color: '#0f172a' }}>
                     {c.name}
@@ -768,6 +786,26 @@ export default function ClassSubjectAnalysis({
                       )}
                     </div>
                   </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {onSelectClass && (
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => onSelectClass(c.name)}
+                        style={{
+                          fontSize: 11,
+                          padding: '3px 8px',
+                          background: '#eff6ff',
+                          color: '#1d4ed8',
+                          borderColor: '#bfdbfe',
+                          borderRadius: 6,
+                          fontWeight: 600
+                        }}
+                        title={`Open Gradebook Grid for ${c.name}`}
+                      >
+                        Open Grid →
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
 
@@ -779,14 +817,14 @@ export default function ClassSubjectAnalysis({
                 <td style={{ textAlign: 'center', color: '#0284c7' }}>{overallMetrics.mean}%</td>
                 <td style={{ textAlign: 'center' }}>{overallMetrics.points} pts</td>
                 <td style={{ textAlign: 'center' }}>{percentageToCbcGrade(overallMetrics.mean, gradeBoundaries)}</td>
-                <td colSpan={2}>
+                <td colSpan={3}>
                   Across all {selectedSubjects.length} selected subjects
                 </td>
               </tr>
 
               {classAnalysisData.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: '#94a3b8' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: 24, color: '#94a3b8' }}>
                     No student marks available for analysis in the selected subjects.
                   </td>
                 </tr>

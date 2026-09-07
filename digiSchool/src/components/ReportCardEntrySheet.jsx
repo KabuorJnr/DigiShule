@@ -46,6 +46,7 @@ export default function ReportCardEntrySheet({
   onSaveStudent,
   onNextStudent,
   onPrevStudent,
+  onSelectStudent = null,
   currentIndex = 0,
   totalStudents = 1,
   schoolSettings = {},
@@ -612,6 +613,67 @@ export default function ReportCardEntrySheet({
           </button>
         </div>
       </div>
+
+      {/* Student Quick-Switcher Ribbon */}
+      {students && students.length > 1 && (
+        <div className="no-print" style={{
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          padding: '4px 2px 12px',
+          marginBottom: 16,
+          scrollbarWidth: 'thin'
+        }}>
+          {students.map((st) => {
+            const isCurrent = st.id === student.id;
+            const initials = st.name ? st.name.split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'ST';
+            return (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => onSelectStudent ? onSelectStudent(st.id) : null}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '5px 12px',
+                  borderRadius: 20,
+                  border: isCurrent ? '2px solid #047857' : '1px solid #cbd5e1',
+                  background: isCurrent ? '#ecfdf5' : '#ffffff',
+                  color: isCurrent ? '#065f46' : '#475569',
+                  cursor: onSelectStudent ? 'pointer' : 'default',
+                  whiteSpace: 'nowrap',
+                  boxShadow: isCurrent ? '0 2px 6px rgba(4, 120, 87, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0
+                }}
+                title={`${st.name} (${st.adm || 'No Adm'})`}
+              >
+                <span style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: isCurrent ? '#047857' : '#f1f5f9',
+                  color: isCurrent ? '#ffffff' : '#475569',
+                  fontSize: 10,
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {initials}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: isCurrent ? 700 : 500 }}>
+                  {st.name.split(/\s+/)[0]} {st.adm ? `(${st.adm})` : ''}
+                </span>
+                {isCurrent && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#047857' }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* The Printable Academic Report Form (Exact Replica of Uploaded Image) */}
       <div 

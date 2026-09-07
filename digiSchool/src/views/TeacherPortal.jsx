@@ -437,10 +437,10 @@ export default function TeacherPortal({ store, user }) {
       </div>
 
       {/* Gradebook Table */}
-      <div className="card card-pad">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+      <div className="card card-pad" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="section-title" style={{ margin: 0 }}>{subject} - Marks Entry & CBC Conversion</div>
+            <div className="section-title" style={{ margin: 0, fontSize: 16 }}>{subject} - Marks Entry & Gradebook</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6 }}>
               <span style={{ fontWeight: 600, color: '#475569' }}>Marks out of:</span>
               <input 
@@ -455,11 +455,20 @@ export default function TeacherPortal({ store, user }) {
               />
             </div>
           </div>
-          {topPerformer && (
-            <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
-              Top: {topPerformer.name} ({topPerformer.average}% · {topPerformer.points} pts)
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {topPerformer && (
+              <div style={{ fontSize: 12, color: '#047857', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0', fontWeight: 600 }}>
+                Top: {topPerformer.name} ({topPerformer.average}% · {topPerformer.points} pts)
+              </div>
+            )}
+            <button 
+              className="btn btn-sm" 
+              onClick={() => navigate('gradebook')}
+              style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}
+            >
+              Full Gradebook →
+            </button>
+          </div>
         </div>
         {rows.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
@@ -468,44 +477,84 @@ export default function TeacherPortal({ store, user }) {
           </div>
         ) : (
           <div className="scroll-x">
-            <table className="table">
+            <table className="table" style={{ fontSize: 13 }}>
               <thead>
-                <tr>
-                  <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
-                  <th>Ass. 1 (%)</th><th>Ass. 2 (%)</th><th>Ass. 3 (%)</th><th>Ass. 4 (%)</th>
-                  <th>Avg (%)</th>
-                  <th>CBC Points</th>
-                  <th>Performance Level</th>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ width: 40, textAlign: 'center' }}>#</th>
+                  <th>Student</th>
+                  <th>Adm No.</th>
+                  <th>Class</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 1</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 2</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 3</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 4</th>
+                  <th style={{ textAlign: 'center' }}>Avg (%)</th>
+                  <th style={{ textAlign: 'center' }}>CBC Points</th>
+                  <th style={{ textAlign: 'center' }}>Performance</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
                 {rows
                   .sort((a, b) => b.average - a.average)
-                  .map((r, i, sorted) => (
-                    <tr key={r.id} style={r.average > 0 && r.average < 40 ? { background: '#fee2e2' } : undefined}>
-                      <td className="muted">{i + 1}</td>
-                      <td style={{ fontWeight: 600 }}>{r.name}</td>
-                      <td className="muted">{r.adm}</td>
-                      <td><Badge color="gray">{r.class}</Badge></td>
-                      <ScoreCell r={r} field="a1" sortedRows={sorted} />
-                      <ScoreCell r={r} field="a2" sortedRows={sorted} />
-                      <ScoreCell r={r} field="a3" sortedRows={sorted} />
-                      <ScoreCell r={r} field="a4" sortedRows={sorted} />
-                      <td style={{ fontWeight: 700, color: '#0369A1' }}>{r.average > 0 ? `${r.average}%` : '-'}</td>
-                      <td>
-                        {r.points > 0 ? (
-                          <Badge color="blue">{r.points} pts</Badge>
-                        ) : '-'}
-                      </td>
-                      <td>
-                        <Badge color={r.grade?.startsWith('EE') || r.grade?.startsWith('ME') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : r.grade?.startsWith('AE') || ['C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
-                          {r.grade}
-                        </Badge>
-                      </td>
-                      <ScoreCell r={r} field="remarks" sortedRows={sorted} />
-                    </tr>
-                  ))}
+                  .map((r, i, sorted) => {
+                    const isAtRisk = r.average > 0 && r.average < 40;
+                    const initials = r.name ? r.name.split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'ST';
+                    return (
+                      <tr 
+                        key={r.id} 
+                        style={{ 
+                          borderBottom: '1px solid #f1f5f9',
+                          background: isAtRisk ? '#fff5f5' : 'transparent',
+                          borderLeft: isAtRisk ? '3px solid #ef4444' : '3px solid transparent'
+                        }}
+                      >
+                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{i + 1}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: '50%',
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              {initials}
+                            </div>
+                            <span style={{ fontWeight: 600, color: '#0f172a' }}>{r.name}</span>
+                          </div>
+                        </td>
+                        <td style={{ color: '#64748b' }}>{r.adm || '—'}</td>
+                        <td><Badge color="gray">{r.class}</Badge></td>
+                        <ScoreCell r={r} field="a1" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a2" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a3" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a4" sortedRows={sorted} />
+                        <td style={{ textAlign: 'center', fontWeight: 800, color: isAtRisk ? '#dc2626' : '#0369a1' }}>
+                          {r.average > 0 ? `${r.average}%` : '—'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.points > 0 ? (
+                            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
+                              {r.points} pts
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <Badge color={r.grade?.startsWith('EE') || r.grade?.startsWith('ME') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : r.grade?.startsWith('AE') || ['C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
+                            {r.grade}
+                          </Badge>
+                        </td>
+                        <ScoreCell r={r} field="remarks" sortedRows={sorted} />
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

@@ -1,59 +1,124 @@
 import { useOutletContext } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { computeRow, gradeFor, is844Class, pointsForGrade } from '../../utils/grading';
-import { BarChart3, FileText, LayoutGrid } from 'lucide-react';
+import { computeRow, gradeFor, remarkFor, is844Class, pointsForGrade } from '../../utils/grading';
 import { Badge } from '../../components/widgets';
 import ReportCardEntrySheet from '../../components/ReportCardEntrySheet';
+import ClassSubjectAnalysis from '../../components/ClassSubjectAnalysis';
+import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../../utils/exporters';
+import { 
+  BarChart3, 
+  FileText, 
+  LayoutGrid, 
+  Download, 
+  Printer, 
+  Search, 
+  Users, 
+  Award, 
+  TrendingUp, 
+  BookOpen, 
+  ChevronLeft, 
+  ChevronRight,
+  Sparkles,
+  Check
+} from 'lucide-react';
+
+const EXAM_OPTIONS = ['End Term Assessment', 'Mid Term Assessment', 'Opening Assessment', 'Continuous Assessment (CAT)'];
 
 export default function GradebookTab() {
-  const { store, subject, loadedStudents, setLoadedStudents } = useOutletContext();
+  const { 
+    store, 
+    subject = 'Mathematics', 
+    loadedStudents = [], 
+    setLoadedStudents, 
+    subjectClasses = [], 
+    assignedClass, 
+    teacherName = 'Teacher' 
+  } = useOutletContext();
+  
   const { gradeBoundaries, settings, user, teachers = [] } = store;
   
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'report'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'report' | 'analysis'
+  const [selectedStream, setSelectedStream] = useState('All');
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [editing, setEditing] = useState(null);
   const [outOf, setOutOf] = useState(100); // Raw marks normalize to percentage
+  const [search, setSearch] = useState('');
+  const [term, setTerm] = useState('Term 2');
+  const [examTitle, setExamTitle] = useState('End Term Assessment');
+  const [examYear, setExamYear] = useState('2026');
+  const [selected, setSelected] = useState([]);
+
+  // Available classes for this teacher
+  const availableClasses = useMemo(() => {
+    const set = new Set();
+    if (assignedClass) set.add(assignedClass);
+    (subjectClasses || []).forEach(c => set.add(c));
+    (loadedStudents || []).forEach(s => { if (s.class) set.add(s.class); });
+    return Array.from(set);
+  }, [assignedClass, subjectClasses, loadedStudents]);
+
+  // Filter students by selected stream and search query
+  const filteredStudents = useMemo(() => {
+    return (loadedStudents || []).filter((s) => {
+      const matchStream = selectedStream === 'All' || s.class === selectedStream;
+      const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(search.toLowerCase()));
+      return matchStream && matchSearch;
+    });
+  }, [loadedStudents, selectedStream, search]);
 
   const rows = useMemo(() => {
-    return loadedStudents.map((s) => {
+    return filteredStudents.map((s) => {
       const scores = s.scores?.[subject];
       const row = computeRow(scores);
       const systemType = is844Class(s.class) ? '844' : 'CBC';
       const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
       const grade = gradeFor(percentage, gradeBoundaries, systemType);
       const points = pointsForGrade(grade, systemType);
-      return { ...s, ...row, percentage, grade, points, systemType };
+      return { ...s, ...row, percentage, grade, points, systemType, remarks: row.remarks || remarkFor(grade, systemType) };
     });
-  }, [loadedStudents, gradeBoundaries, subject]);
+  }, [filteredStudents, gradeBoundaries, subject]);
 
   const sortedRows = useMemo(() => [...rows].sort((a, b) => b.average - a.average), [rows]);
   const topPerformer = sortedRows[0]?.average > 0 ? sortedRows[0] : null;
 
+  // Stream average computation
+  const colAvg = useMemo(() => {
+    if (rows.length === 0) return null;
+    const sum = (k) => rows.reduce((a, b) => a + (b[k] || 0), 0);
+    const validCount = (k) => rows.filter(b => b[k] > 0).length || 1;
+    const avg = (k) => Math.round((sum(k) / validCount(k)) * 10) / 10;
+    const avgScore = avg('average');
+    const system = rows[0]?.systemType || 'CBC';
+    const avgGrade = gradeFor(avgScore, gradeBoundaries, system);
+    const avgPoints = pointsForGrade(avgGrade, system);
+    return { a1: avg('a1'), a2: avg('a2'), a3: avg('a3'), a4: avg('a4'), average: avgScore, points: avgPoints, grade: avgGrade };
+  }, [rows, gradeBoundaries]);
+
   // Selected student for Report Card Form entry
   const currentStudent = useMemo(() => {
-    if (!loadedStudents || loadedStudents.length === 0) return null;
+    if (!filteredStudents || filteredStudents.length === 0) return null;
     if (selectedStudentId) {
-      const found = loadedStudents.find(s => s.id === selectedStudentId);
+      const found = filteredStudents.find(s => s.id === selectedStudentId);
       if (found) return found;
     }
-    return loadedStudents[0];
-  }, [loadedStudents, selectedStudentId]);
+    return filteredStudents[0];
+  }, [filteredStudents, selectedStudentId]);
 
   const currentStudentIndex = useMemo(() => {
-    if (!currentStudent || !loadedStudents.length) return 0;
-    const idx = loadedStudents.findIndex(s => s.id === currentStudent.id);
+    if (!currentStudent || !filteredStudents.length) return 0;
+    const idx = filteredStudents.findIndex(s => s.id === currentStudent.id);
     return idx >= 0 ? idx : 0;
-  }, [loadedStudents, currentStudent]);
+  }, [filteredStudents, currentStudent]);
 
   const handleNextStudent = () => {
-    if (currentStudentIndex < loadedStudents.length - 1) {
-      setSelectedStudentId(loadedStudents[currentStudentIndex + 1].id);
+    if (currentStudentIndex < filteredStudents.length - 1) {
+      setSelectedStudentId(filteredStudents[currentStudentIndex + 1].id);
     }
   };
 
   const handlePrevStudent = () => {
     if (currentStudentIndex > 0) {
-      setSelectedStudentId(loadedStudents[currentStudentIndex - 1].id);
+      setSelectedStudentId(filteredStudents[currentStudentIndex - 1].id);
     }
   };
 
@@ -84,21 +149,79 @@ export default function GradebookTab() {
     setEditing(null);
   }
 
+  // Export handlers for teacher
+  const exportPDF = () => {
+    const head = ['#', 'Student', 'Adm No.', 'Class', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade', 'Remarks'];
+    const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.class, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]);
+    exportTablePDF({ 
+      school: settings, 
+      title: `${subject} Mark Sheet - ${selectedStream === 'All' ? 'All Classes' : selectedStream}`, 
+      subtitle: `Teacher: ${teacherName}  |  ${term} ${examYear}`, 
+      head, 
+      body, 
+      filename: `teacher-gradebook-${subject}-${selectedStream}.pdf` 
+    });
+    store.notify?.('Teacher Gradebook exported as PDF', 'success');
+  };
+
+  const exportExcel = () => {
+    const aoa = [['#', 'Student', 'Adm No.', 'Class', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade', 'Remarks']];
+    rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.class, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]));
+    downloadExcel(`teacher-gradebook-${subject}-${selectedStream}.xlsx`, [{ name: `${subject}`.slice(0, 31), aoa }]);
+    store.notify?.('Teacher Gradebook exported as Excel', 'success');
+  };
+
+  const generateReportCards = () => {
+    let chosen = filteredStudents.filter((r) => selected.includes(r.id));
+    if (chosen.length === 0) chosen = filteredStudents;
+    if (chosen.length === 0) return store.notify?.('No students found to generate report cards', 'warning');
+    exportReportCardsPDF({
+      school: settings,
+      gradeBoundaries,
+      students: chosen,
+      subjects: [subject],
+      examTitle: `${term} ${examTitle}`,
+      termName: term,
+      filename: `report-cards-${subject}-${selectedStream}.pdf`,
+    });
+    store.notify?.(`Generated ${chosen.length} report card(s)`, 'success');
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'ST';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const getGradeBadgeColor = (grade) => {
+    if (!grade || grade === '-') return 'gray';
+    if (grade.startsWith('EE') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(grade)) return 'green';
+    if (grade.startsWith('ME')) return 'blue';
+    if (grade.startsWith('AE') || ['C', 'C-', 'D+'].includes(grade)) return 'amber';
+    return 'red';
+  };
+
   const ScoreCell = ({ r, field, editing, setEditing, saveScore, sortedRows }) => {
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (
-        <td>
+        <td style={{ padding: '4px 6px', textAlign: field === 'remarks' ? 'left' : 'center' }}>
           <input
             style={{ 
-              width: field === 'remarks' ? '120px' : '52px', 
-              height: '28px', 
-              padding: '0 4px', 
-              border: '1px solid #065f46', 
-              borderRadius: '4px', 
+              width: field === 'remarks' ? '140px' : '56px', 
+              height: '32px', 
+              padding: '0 6px', 
+              border: '2px solid #047857', 
+              borderRadius: '6px', 
               outline: 'none', 
               textAlign: field === 'remarks' ? 'left' : 'center', 
-              fontWeight: 600 
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: "'Poppins', sans-serif",
+              background: '#f0fdf4',
+              color: '#064e3b',
+              boxShadow: '0 0 0 3px rgba(4, 120, 87, 0.15)'
             }}
             type="text"
             inputMode={field === 'remarks' ? undefined : 'numeric'}
@@ -133,56 +256,360 @@ export default function GradebookTab() {
           color: field === 'remarks' ? '#475569' : '#0369A1' 
         }} 
         onClick={() => setEditing({ id: r.id, field })} 
-        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(0-100% or raw marks)'}`}
+        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(Enter raw mark or %)'}`}
       >
-        {r[field] !== undefined && r[field] !== null && r[field] !== '' ? (r[field] === 'X' ? 'X' : (field === 'remarks' ? r[field] : `${r[field]}%`)) : (field === 'remarks' ? 'Add remark...' : '-')}
+        <div style={{
+          padding: '4px 6px',
+          borderRadius: 4,
+          display: 'inline-block',
+          minWidth: field === 'remarks' ? 'auto' : 32
+        }}>
+          {r[field] !== undefined && r[field] !== null && r[field] !== '' ? (
+            r[field] === 'X' ? <span style={{ color: '#dc2626', fontWeight: 700 }}>X (Abs)</span> : (field === 'remarks' ? r[field] : `${r[field]}%`)
+          ) : (
+            <span style={{ color: '#94a3b8', fontStyle: field === 'remarks' ? 'italic' : 'normal' }}>
+              {field === 'remarks' ? '+ Remark' : '—'}
+            </span>
+          )}
+        </div>
       </td>
     );
   };
 
   return (
-    <div className="card card-pad">
-      {/* Header & Mode Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="section-title" style={{ margin: 0 }}>{subject} - Marks Entry & Gradebook</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6 }}>
-            <span style={{ fontWeight: 600, color: '#475569' }}>Marks out of:</span>
-            <input 
-              className="input" 
-              type="number" 
-              min="1" 
-              max="1000" 
-              value={outOf} 
-              onChange={(e) => setOutOf(e.target.value.replace(/[^\d]/g, '') || '')}
-              style={{ width: 64, height: 26, textAlign: 'center', padding: '0 4px', fontSize: 12, fontWeight: 700 }}
-              title="Raw marks entered are automatically converted to percentages and CBC points."
-            />
+    <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b' }}>
+      
+      {/* ── 1. HEADER & COMMAND BAR ── */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #cbd5e1',
+        borderRadius: 12,
+        padding: '16px 20px',
+        marginBottom: 16,
+        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 14
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ 
+            width: 36, 
+            height: 36, 
+            borderRadius: 10, 
+            background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: '#ffffff',
+            boxShadow: '0 2px 6px rgba(4, 120, 87, 0.25)'
+          }}>
+            <BookOpen size={18} />
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              {subject} Marks Entry & Gradebook
+            </h1>
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              Assigned Teacher: <strong>{teacherName}</strong> · {term} {examYear}
+            </div>
           </div>
         </div>
 
-        {/* View Mode Toggle */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
-            className={`btn btn-sm ${viewMode === 'grid' ? 'btn-primary' : ''}`}
-            onClick={() => setViewMode('grid')}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}
+            className="btn btn-sm" 
+            onClick={exportExcel}
+            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
           >
-            <LayoutGrid size={15} /> Class Subject Grid
+            <Download size={14} /> Excel
           </button>
           <button 
-            className={`btn btn-sm ${viewMode === 'report' ? 'btn-primary' : ''}`}
-            onClick={() => setViewMode('report')}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}
+            className="btn btn-sm" 
+            onClick={exportPDF}
+            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
           >
-            <FileText size={15} /> Academic Report Form
+            <Printer size={14} /> PDF
           </button>
         </div>
       </div>
 
-      {/* VIEW MODE 1: Academic Report Form Entry */}
+      {/* ── 2. SEGMENTED MODE SWITCHER ── */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #cbd5e1',
+        borderRadius: 10,
+        padding: '6px',
+        marginBottom: 16,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 10,
+        boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)'
+      }}>
+        <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: 8 }}>
+          <button
+            onClick={() => setViewMode('grid')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '7px 16px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: viewMode === 'grid' ? 700 : 500,
+              cursor: 'pointer',
+              border: 'none',
+              background: viewMode === 'grid' ? '#ffffff' : 'transparent',
+              color: viewMode === 'grid' ? '#047857' : '#475569',
+              boxShadow: viewMode === 'grid' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <LayoutGrid size={16} color={viewMode === 'grid' ? '#047857' : '#64748b'} />
+            Class Subject Grid (Stream)
+          </button>
+
+          <button
+            onClick={() => setViewMode('report')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '7px 16px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: viewMode === 'report' ? 700 : 500,
+              cursor: 'pointer',
+              border: 'none',
+              background: viewMode === 'report' ? '#ffffff' : 'transparent',
+              color: viewMode === 'report' ? '#047857' : '#475569',
+              boxShadow: viewMode === 'report' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <FileText size={16} color={viewMode === 'report' ? '#047857' : '#64748b'} />
+            Academic Report Form (Student)
+          </button>
+
+          <button
+            onClick={() => setViewMode('analysis')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '7px 16px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: viewMode === 'analysis' ? 700 : 500,
+              cursor: 'pointer',
+              border: 'none',
+              background: viewMode === 'analysis' ? '#ffffff' : 'transparent',
+              color: viewMode === 'analysis' ? '#047857' : '#475569',
+              boxShadow: viewMode === 'analysis' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <BarChart3 size={16} color={viewMode === 'analysis' ? '#047857' : '#64748b'} />
+            Subject Performance Analysis
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingRight: 8 }}>
+          <span style={{ 
+            fontSize: 11.5, 
+            fontWeight: 600, 
+            color: '#64748b',
+            background: '#f8fafc',
+            padding: '4px 10px',
+            borderRadius: 6,
+            border: '1px solid #e2e8f0'
+          }}>
+            {viewMode === 'grid' && `📊 Grading ${filteredStudents.length} students in ${subject}`}
+            {viewMode === 'report' && '📄 Kenyan Academic Report Form 1:1 view'}
+            {viewMode === 'analysis' && `📈 ${subject} performance across streams`}
+          </span>
+        </div>
+      </div>
+
+      {/* ── 3. FILTER & CONFIGURATION TOOLBAR ── */}
+      {viewMode !== 'analysis' && (
+        <div style={{
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          borderRadius: 10,
+          padding: '14px 16px',
+          marginBottom: 16,
+          boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)'
+        }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}>
+            {/* Stream Filter */}
+            {availableClasses.length > 1 && (
+              <div style={{ minWidth: 140 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Assigned Stream
+                </label>
+                <select 
+                  className="select" 
+                  value={selectedStream} 
+                  onChange={(e) => {
+                    setSelectedStream(e.target.value);
+                    setSelectedStudentId(null);
+                  }}
+                  style={{ width: '100%', height: 36, fontSize: 13, fontWeight: 600 }}
+                >
+                  <option value="All">All Streams ({availableClasses.join(', ')})</option>
+                  {availableClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Student Picker (Report Mode) */}
+            {viewMode === 'report' && (
+              <div style={{ flex: 1, minWidth: 260 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Select Student
+                </label>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <select 
+                    className="select" 
+                    value={currentStudent?.id || ''} 
+                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                    style={{ flex: 1, height: 36, fontSize: 13, fontWeight: 700, color: '#047857' }}
+                  >
+                    {filteredStudents.map((s, idx) => (
+                      <option key={s.id} value={s.id}>
+                        {idx + 1}. {s.name} ({s.adm || 'No Adm'}) - {s.class}
+                      </option>
+                    ))}
+                  </select>
+                  <button 
+                    className="btn btn-sm" 
+                    onClick={handlePrevStudent} 
+                    disabled={currentStudentIndex === 0}
+                    style={{ height: 36, padding: '0 8px' }}
+                    title="Previous Student"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button 
+                    className="btn btn-sm" 
+                    onClick={handleNextStudent} 
+                    disabled={currentStudentIndex >= filteredStudents.length - 1}
+                    style={{ height: 36, padding: '0 8px' }}
+                    title="Next Student"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ minWidth: 120 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                Term
+              </label>
+              <select 
+                className="select" 
+                value={term} 
+                onChange={(e) => setTerm(e.target.value)} 
+                style={{ width: '100%', height: 36, fontSize: 13 }}
+              >
+                {['Term 1', 'Term 2', 'Term 3'].map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+
+            <div style={{ minWidth: 170 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                Assessment
+              </label>
+              <select 
+                className="select" 
+                value={examTitle} 
+                onChange={(e) => setExamTitle(e.target.value)} 
+                style={{ width: '100%', height: 36, fontSize: 13 }}
+              >
+                {EXAM_OPTIONS.map((ex) => <option key={ex} value={ex}>{ex}</option>)}
+              </select>
+            </div>
+
+            <div style={{ width: 95 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                Marks Out Of
+              </label>
+              <input 
+                className="input" 
+                type="number" 
+                min="1" 
+                max="1000" 
+                value={outOf} 
+                onChange={(e) => setOutOf(e.target.value.replace(/[^\d]/g, '') || '')}
+                style={{ width: '100%', height: 36, textAlign: 'center', fontWeight: 800, fontSize: 13 }}
+                title="Raw marks entered normalize automatically to percentages and CBC points."
+              />
+            </div>
+
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                Search Student
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 11 }} />
+                <input 
+                  className="input" 
+                  value={search} 
+                  onChange={(e) => setSearch(e.target.value)} 
+                  placeholder="Search student or adm..." 
+                  style={{ width: '100%', height: 36, paddingLeft: 32, fontSize: 13 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stream KPI Ribbon */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: 8,
+            padding: '8px 14px',
+            fontSize: 12,
+            flexWrap: 'wrap',
+            gap: 12
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                <Users size={14} color="#0284c7" />
+                Class Size: <strong style={{ color: '#0f172a' }}>{filteredStudents.length} Students</strong>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                <BookOpen size={14} color="#10b981" />
+                Graded: <strong style={{ color: '#0f172a' }}>{rows.filter(r => r.average > 0).length} of {rows.length}</strong>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                <TrendingUp size={14} color="#8b5cf6" />
+                Stream Average: <strong style={{ color: '#0369a1' }}>{colAvg?.average ? `${colAvg.average}%` : '—'}</strong>
+                {colAvg?.grade && <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>}
+              </span>
+            </div>
+
+            {topPerformer && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#047857', fontWeight: 600 }}>
+                <Award size={15} color="#d97706" />
+                Top Performer: <span style={{ color: '#0f172a' }}>{topPerformer.name}</span> ({topPerformer.average}%)
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── VIEW MODE 1: ACADEMIC REPORT FORM ── */}
       {viewMode === 'report' && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginBottom: 30 }}>
           {currentStudent ? (
             <ReportCardEntrySheet
               student={currentStudent}
@@ -190,8 +617,9 @@ export default function GradebookTab() {
               onSaveStudent={handleSaveStudentReport}
               onNextStudent={handleNextStudent}
               onPrevStudent={handlePrevStudent}
+              onSelectStudent={(id) => setSelectedStudentId(id)}
               currentIndex={currentStudentIndex}
-              totalStudents={loadedStudents.length}
+              totalStudents={filteredStudents.length}
               schoolSettings={settings}
               onUpdateSettings={store.setSettings}
               onPublishResults={() => {
@@ -202,94 +630,270 @@ export default function GradebookTab() {
               teachers={teachers}
               currentUser={user}
               gradeBoundaries={gradeBoundaries}
-              examTitle="End Term Assessment"
-              termName="Term 2"
-              year="2026"
+              examTitle={examTitle}
+              termName={term}
+              year={examYear}
               outOf={outOf}
               canEditAll={user?.role === 'admin' || user?.role === 'dos' || user?.role === 'deputy_academic'}
               allowedSubjects={[subject]}
             />
           ) : (
-            <div style={{ textAlign: 'center', padding: 32 }}>
-              <BarChart3 size={32} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
-              <div className="muted">No students found.</div>
+            <div className="card card-pad" style={{ textAlign: 'center', padding: '56px 24px', borderRadius: 12 }}>
+              <Users size={36} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>
+                No students found in {selectedStream}
+              </div>
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                Please select another stream or adjust your search filter above.
+              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* VIEW MODE 2: Class Subject Grid */}
+      {/* ── VIEW MODE 2: CLASS SUBJECT GRID ── */}
       {viewMode === 'grid' && (
-        <div>
-          {topPerformer && (
-            <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0', marginBottom: 12, display: 'inline-block' }}>
-              Top: {topPerformer.name} ({topPerformer.average}% · {topPerformer.points} pts)
+        <div style={{ 
+          background: '#ffffff', 
+          border: '1px solid #cbd5e1', 
+          borderRadius: 12, 
+          overflow: 'hidden', 
+          marginBottom: 20,
+          boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)'
+        }}>
+          {/* Table Header Controls */}
+          <div style={{ 
+            padding: '12px 18px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            flexWrap: 'wrap',
+            gap: 10
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input 
+                type="checkbox" 
+                checked={selected.length === rows.length && rows.length > 0}
+                onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                style={{ width: 16, height: 16, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                {selected.length > 0 ? (
+                  <span style={{ color: '#047857' }}>{selected.length} of {rows.length} Selected</span>
+                ) : (
+                  <span>Students ({rows.length})</span>
+                )}
+              </span>
+              {selected.length > 0 && (
+                <button 
+                  onClick={() => setSelected([])}
+                  style={{ fontSize: 11, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Clear
+                </button>
+              )}
             </div>
-          )}
 
-          {rows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 32 }}>
-              <BarChart3 size={32} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
-              <div className="muted">No students found to grade. Please check your assigned class.</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11.5, color: '#64748b' }}>
+                💡 Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save & jump to next student
+              </span>
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={generateReportCards} 
+                disabled={!settings?.results_published}
+                style={{ fontSize: 12, padding: '5px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                title={!settings?.results_published ? "Report cards must be published by Admin before printing" : ""}
+              >
+                <Printer size={15} /> 
+                Generate Report Cards ({selected.length > 0 ? selected.length : 'All'})
+              </button>
             </div>
-          ) : (
-            <div className="scroll-x">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
-                    <th>Ass. 1 (%)</th><th>Ass. 2 (%)</th><th>Ass. 3 (%)</th><th>Ass. 4 (%)</th>
-                    <th>Avg (%)</th>
-                    <th>CBC Points</th>
-                    <th>CBC Grade</th>
-                    <th>Remarks</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRows.map((r, i) => (
-                    <tr key={r.id} style={r.average > 0 && r.average < 40 ? { background: '#fee2e2' } : undefined}>
-                      <td className="muted">{i + 1}</td>
-                      <td style={{ fontWeight: 600 }}>{r.name}</td>
-                      <td className="muted">{r.adm}</td>
+          </div>
+
+          {/* Table */}
+          <div className="scroll-x">
+            <table className="table" style={{ width: '100%', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ width: 36, textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selected.length === rows.length && rows.length > 0}
+                      onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                    />
+                  </th>
+                  <th style={{ width: 40, textAlign: 'center' }}>#</th>
+                  <th style={{ minWidth: 170 }}>Student</th>
+                  <th style={{ width: 95 }}>Adm No.</th>
+                  <th style={{ width: 85 }}>Class</th>
+                  <th style={{ width: 75, textAlign: 'center' }}>Ass. 1</th>
+                  <th style={{ width: 75, textAlign: 'center' }}>Ass. 2</th>
+                  <th style={{ width: 75, textAlign: 'center' }}>Ass. 3</th>
+                  <th style={{ width: 75, textAlign: 'center' }}>Ass. 4</th>
+                  <th style={{ width: 85, textAlign: 'center' }}>Average</th>
+                  <th style={{ width: 90, textAlign: 'center' }}>Points</th>
+                  <th style={{ width: 105, textAlign: 'center' }}>Grade</th>
+                  <th style={{ minWidth: 160 }}>Remarks</th>
+                  <th style={{ width: 110, textAlign: 'center' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRows.map((r, i) => {
+                  const isAtRisk = r.average > 0 && r.average < 40;
+                  return (
+                    <tr 
+                      key={r.id} 
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        background: isAtRisk ? '#fff5f5' : (selected.includes(r.id) ? '#f0fdf4' : 'transparent'),
+                        borderLeft: isAtRisk ? '3px solid #ef4444' : '3px solid transparent',
+                        transition: 'background 0.1s ease'
+                      }}
+                    >
+                      <td style={{ textAlign: 'center' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={selected.includes(r.id)}
+                          onChange={(e) => setSelected((sel) => e.target.checked ? [...sel, r.id] : sel.filter((x) => x !== r.id))} 
+                        />
+                      </td>
+                      <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{i + 1}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <div style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {getInitials(r.name)}
+                          </div>
+                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{r.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ color: '#64748b', fontWeight: 500 }}>{r.adm || '—'}</td>
                       <td><Badge color="gray">{r.class}</Badge></td>
                       <ScoreCell r={r} field="a1" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
                       <ScoreCell r={r} field="a2" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
                       <ScoreCell r={r} field="a3" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
                       <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
-                      <td style={{ fontWeight: 700, color: '#0369A1' }}>{r.average > 0 ? `${r.average}%` : '-'}</td>
-                      <td>
-                        {r.points > 0 ? (
-                          <Badge color="blue">{r.points} pts</Badge>
-                        ) : '-'}
+                      
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ fontWeight: 800, color: r.average > 0 ? (isAtRisk ? '#dc2626' : '#0369a1') : '#94a3b8', fontSize: 13.5 }}>
+                          {r.average > 0 ? `${r.average}%` : '—'}
+                        </span>
                       </td>
-                      <td>
-                        <Badge color={r.grade?.startsWith('EE') || r.grade?.startsWith('ME') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : r.grade?.startsWith('AE') || ['C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
+
+                      <td style={{ textAlign: 'center' }}>
+                        {r.points > 0 ? (
+                          <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 700 }}>
+                            {r.points} pts
+                          </span>
+                        ) : '—'}
+                      </td>
+
+                      <td style={{ textAlign: 'center' }}>
+                        <Badge color={getGradeBadgeColor(r.grade)}>
                           {r.grade}
                         </Badge>
                       </td>
+
                       <ScoreCell r={r} field="remarks" editing={editing} setEditing={setEditing} saveScore={saveScore} sortedRows={sortedRows} />
-                      <td>
+
+                      <td style={{ textAlign: 'center' }}>
                         <button 
                           className="btn btn-sm"
                           onClick={() => {
                             setSelectedStudentId(r.id);
                             setViewMode('report');
                           }}
-                          style={{ fontSize: 11, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
                           title="Open official Report Form for this student"
+                          style={{ 
+                            fontSize: 11, 
+                            padding: '3px 8px', 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: 4,
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 6
+                          }}
                         >
-                          <FileText size={13} /> Report Form
+                          <FileText size={12} color="#047857" /> Report Form
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  );
+                })}
+
+                {/* Class Stream Average Footer */}
+                {colAvg && (
+                  <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                    <td colSpan={2}></td>
+                    <td style={{ color: '#0f172a', textTransform: 'uppercase', fontSize: 12 }}>
+                      Subject Stream Average
+                    </td>
+                    <td style={{ color: '#64748b' }}>{rows.length} Total</td>
+                    <td></td>
+                    <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a1 ? `${colAvg.a1}%` : '—'}</td>
+                    <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a2 ? `${colAvg.a2}%` : '—'}</td>
+                    <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a3 ? `${colAvg.a3}%` : '—'}</td>
+                    <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a4 ? `${colAvg.a4}%` : '—'}</td>
+                    <td style={{ textAlign: 'center', color: '#047857', fontSize: 14 }}>
+                      {colAvg.average ? `${colAvg.average}%` : '—'}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {colAvg.points ? (
+                        <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 700 }}>
+                          {colAvg.points} pts
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {colAvg.grade && <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>}
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                )}
+
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={14} style={{ textAlign: 'center', padding: 36, color: '#94a3b8' }}>
+                      No students found matching your search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+
+      {/* ── VIEW MODE 3: SUBJECT PERFORMANCE ANALYSIS ── */}
+      {viewMode === 'analysis' && (
+        <div style={{ marginBottom: 30 }}>
+          <ClassSubjectAnalysis 
+            students={loadedStudents}
+            gradeBoundaries={gradeBoundaries}
+            schoolSettings={settings}
+            onSelectClass={(className) => {
+              setSelectedStream(className);
+              setViewMode('grid');
+            }}
+          />
+        </div>
+      )}
+
     </div>
   );
 }
