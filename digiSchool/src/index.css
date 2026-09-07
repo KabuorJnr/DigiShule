@@ -2,9 +2,15 @@
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/poppins/800.css';
 
 :root {
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --primary: #047857;
   --primary-700: #065f46;
   --primary-900: #064e3b;
@@ -1197,9 +1203,30 @@ textarea.input {
   }
   .btn:active { transform: none; }
   .card:hover { transform: none; }
-  .bespoke-theme::before,
-  .bespoke-theme::after,
-  .landing-container { animation: none !important; }
 }
 
+/* ── Official Report Cards Font (Poppins) ────────────────────────── */
+.font-poppins,
+#academic-report-card-sheet,
+#academic-report-card-sheet *,
+#printable-report-card,
+#printable-report-card *,
+#report-card-capture-area,
+#report-card-capture-area *,
+.report-card-sheet,
+.report-card-sheet *,
+.academic-report-card,
+.academic-report-card * {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
 
+@media print {
+  #academic-report-card-sheet,
+  #academic-report-card-sheet *,
+  #printable-report-card,
+  #printable-report-card *,
+  #report-card-capture-area,
+  #report-card-capture-area * {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+}

@@ -510,7 +510,7 @@ export default function ReportCardEntrySheet({
   const schoolEmail = schoolSettings.email || 'homabayhomabay@gmail.com';
 
   return (
-    <div style={{ maxWidth: 940, margin: '0 auto', color: '#1e293b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ maxWidth: 940, margin: '0 auto', color: '#1e293b', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       
       {/* Top Interactive Toolbar */}
       <div className="no-print" style={{ 
@@ -616,13 +616,15 @@ export default function ReportCardEntrySheet({
       {/* The Printable Academic Report Form (Exact Replica of Uploaded Image) */}
       <div 
         id="academic-report-card-sheet"
+        className="font-poppins"
         style={{ 
           background: '#ffffff', 
           border: '1px solid #cbd5e1', 
           borderRadius: 4, 
           padding: '24px 28px',
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-          position: 'relative'
+          position: 'relative',
+          fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
         }}
       >
         {/* School Header */}

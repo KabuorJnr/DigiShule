@@ -83,7 +83,7 @@ export default function ReportCardModal({
 
   return (
     <Modal title="Student Report Card" onClose={onClose} width={840}>
-      <div style={{ padding: '4px 16px 20px', background: '#eef2f6', color: INK, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div className="font-poppins" style={{ padding: '4px 16px 20px', background: '#eef2f6', color: INK, fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         {/* Action Toolbar */}
         <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: MUTED }}>
@@ -109,7 +109,7 @@ export default function ReportCardModal({
         
         {/* Printable Card Area - strictly A4 proportions (794x1123 px at 96 DPI) */}
         <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
-          <div id="report-card-capture-area" style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+          <div id="report-card-capture-area" className="font-poppins" style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
             
             {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
