@@ -824,7 +824,7 @@ export default function ReportCardEntrySheet({
 
             {/* SVG Chart Line */}
             <div style={{ 
-              height: 94, 
+              height: 110, 
               background: '#f8fafc', 
               border: '1px solid #cbd5e1', 
               borderRadius: 4,
@@ -833,13 +833,13 @@ export default function ReportCardEntrySheet({
             }}>
               {(() => {
                 const N = Math.max(1, chartPoints.length);
-                const plotLeft = 24;
+                const plotLeft = 28;
                 const plotRight = 348;
                 const plotW = plotRight - plotLeft;
                 const plotTop = 10;
-                const plotBottom = 62;
+                const plotBottom = 68;
                 const plotH = plotBottom - plotTop;
-                const labelY = 76;
+                const labelY = plotBottom + 12;
 
                 const getX = (i) => N > 1 ? Math.round(plotLeft + (i * (plotW / (N - 1)))) : Math.round((plotLeft + plotRight) / 2);
                 const getY = (val) => Math.round(plotBottom - ((Math.max(0, Math.min(100, val)) / 100) * plotH));
@@ -849,7 +849,7 @@ export default function ReportCardEntrySheet({
                   .filter(d => d.hasScore);
 
                 return (
-                  <svg viewBox="0 0 360 84" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <svg viewBox="0 0 360 90" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                     {/* Y-axis Guidelines & Reference Labels */}
                     <line x1={plotLeft} y1={plotTop} x2={plotRight} y2={plotTop} stroke="#e2e8f0" strokeDasharray="3 3" />
                     <text x={plotLeft - 4} y={plotTop + 3} textAnchor="end" fontSize="7.5" fill="#94a3b8" fontWeight="600">100</text>
@@ -926,7 +926,7 @@ export default function ReportCardEntrySheet({
                             x={cx} 
                             y={labelY} 
                             textAnchor="middle" 
-                            fontSize="8" 
+                            fontSize={N > 8 ? "7" : "8"} 
                             fontWeight={d.hasScore ? "700" : "500"} 
                             fill={d.hasScore ? "#1e293b" : "#64748b"}
                           >

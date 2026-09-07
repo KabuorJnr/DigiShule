@@ -78,7 +78,7 @@ export default function ReportCardModal({
   
   const subjectsGraphData = report.subjectRows.map(row => {
     const classAvg = 65; 
-    return { name: row.subject.substring(0, 3).toUpperCase(), score: row.score, classAvg };
+    return { name: row.subject.substring(0, 3).toUpperCase(), score: row.score, classAvg, hasScore: row.score > 0 };
   });
 
   return (
@@ -173,23 +173,23 @@ export default function ReportCardModal({
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#94a3b8' }}></span> Class</span>
                   </div>
                 </div>
-                <div style={{ position: 'relative', height: 86, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 4, padding: '4px' }}>
+                <div style={{ position: 'relative', height: 100, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 4, padding: '4px' }}>
                   {(() => {
                     const N = Math.max(1, subjectsGraphData.length);
                     const plotLeft = 20;
                     const plotRight = 310;
                     const plotW = plotRight - plotLeft;
                     const plotTop = 8;
-                    const plotBottom = 58;
+                    const plotBottom = 64;
                     const plotH = plotBottom - plotTop;
-                    const labelY = 72;
+                    const labelY = plotBottom + 12;
 
                     const getX = (i) => N > 1 ? Math.round(plotLeft + (i * (plotW / (N - 1)))) : Math.round((plotLeft + plotRight) / 2);
                     const getY = (val) => Math.round(plotBottom - ((Math.max(0, Math.min(100, val)) / 100) * plotH));
                     const evalPts = subjectsGraphData.map((d, i) => ({ ...d, x: getX(i), y: getY(d.score) })).filter(d => d.hasScore);
 
                     return (
-                      <svg viewBox="0 0 330 78" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                      <svg viewBox="0 0 330 86" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                         <line x1={plotLeft} y1={plotTop} x2={plotRight} y2={plotTop} stroke="#e2e8f0" strokeDasharray="3 3" />
                         <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke="#cbd5e1" strokeWidth="1" />
                         <polyline 
