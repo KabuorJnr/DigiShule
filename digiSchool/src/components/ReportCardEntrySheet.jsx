@@ -741,7 +741,7 @@ export default function ReportCardEntrySheet({
 
         {/* Academic Report Ribbon */}
         <div style={{ 
-          background: '#1d4ed8', 
+          background: '#1e3a8a', 
           color: '#ffffff', 
           textAlign: 'center', 
           padding: '8px 12px', 
@@ -879,11 +879,11 @@ export default function ReportCardEntrySheet({
                       points={chartPoints.map((d, i) => `${getX(i)},${getY(d.classAvg)}`).join(' ')} 
                     />
 
-                    {/* Student Score Line (Green) - Only connects evaluated subjects so no false plunge */}
+                    {/* Student Score Line (Gold) - Only connects evaluated subjects so no false plunge */}
                     {evaluatedPoints.length > 1 && (
                       <polyline 
                         fill="none" 
-                        stroke="#16a34a" 
+                        stroke="#b8860b" 
                         strokeWidth="2.2" 
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -903,7 +903,7 @@ export default function ReportCardEntrySheet({
                                 cx={cx} 
                                 cy={cy} 
                                 r="3.5" 
-                                fill="#16a34a" 
+                                fill="#b8860b" 
                                 stroke="#ffffff" 
                                 strokeWidth="1.5" 
                               />

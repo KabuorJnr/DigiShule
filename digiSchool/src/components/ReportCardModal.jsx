@@ -116,7 +116,7 @@ export default function ReportCardModal({
           <div id="report-card-capture-area" className="font-poppins" style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontSize: 12, border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
             
             {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderBottom: '3px solid #b8860b', position: 'relative' }}>
             <div style={{ position: 'absolute', left: 24, top: 16 }}>
               {schoolSettings.logo ? (
                 <img src={schoolSettings.logo} alt="Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
@@ -144,7 +144,7 @@ export default function ReportCardModal({
           </div>
 
           {/* Title Ribbon */}
-          <div style={{ background: '#2563eb', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ background: '#1e3a8a', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             ACADEMIC REPORT FORM - {report.className} - {report.examTitle.toUpperCase()} - ({new Date().getFullYear()} {report.termName.toUpperCase()})
           </div>
 
@@ -172,8 +172,8 @@ export default function ReportCardModal({
               <div style={{ width: 340, paddingLeft: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
                   <span>Subject Performance · Student vs Class</span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#16a34a' }}></span> Student</span>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 10, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#b8860b' }}></span> Student</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#94a3b8' }}></span> Class</span>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function ReportCardModal({
                         {evalPts.length > 1 && (
                           <polyline 
                             fill="none" 
-                            stroke="#16a34a" 
+                            stroke="#b8860b" 
                             strokeWidth="2" 
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -219,7 +219,7 @@ export default function ReportCardModal({
                           return (
                             <g key={i}>
                               {d.hasScore ? (
-                                <circle cx={cx} cy={cy} r="3" fill="#16a34a" stroke="#fff" strokeWidth="1" />
+                                <circle cx={cx} cy={cy} r="3" fill="#b8860b" stroke="#fff" strokeWidth="1" />
                               ) : (
                                 <circle cx={cx} cy={plotBottom} r="1.5" fill="#cbd5e1" />
                               )}
