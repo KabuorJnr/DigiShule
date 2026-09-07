@@ -187,4 +187,44 @@ describe('grading calculations', () => {
     expect(report.meanGradeCode).toBe('EE2');
     expect(report.maxPointsPerSubject).toBe(8);
   });
+
+  it('guarantees 100% in CBC maps to EE1 and Exceeding Expectations, never KCSE grade A', () => {
+    const KCSE_SAMPLE = [
+      { min: 80, grade: 'A' },
+      { min: 75, grade: 'A-' },
+      { min: 0, grade: 'E' }
+    ];
+
+    // Direct conversion calls with KCSE boundaries passed in
+    expect(gradeFor(100, KCSE_SAMPLE, 'CBC')).toBe('EE1');
+    expect(percentageToCbcGrade(100, KCSE_SAMPLE)).toBe('EE1');
+    expect(percentageToCbcPoints(100, 8, KCSE_SAMPLE)).toBe(8);
+    expect(formatCbcConversion(100, KCSE_SAMPLE, 'CBC').gradeCode).toBe('EE1');
+    expect(formatCbcConversion(100, KCSE_SAMPLE, 'CBC').remark).toBe('Exceeding Expectations');
+
+    // Student report for Grade 10 with 100% in Math
+    const student100 = {
+      id: 'stu-samuel',
+      name: 'Samuel Kariuki',
+      adm: 'ADM/2026/020',
+      class: 'Grade 10 A',
+      scores: {
+        Mathematics: 100
+      }
+    };
+    const report100 = computeStudentReport({
+      student: student100,
+      students: [student100],
+      subjects: ['Mathematics'],
+      gradeBoundaries: KCSE_SAMPLE
+    });
+
+    expect(report100.systemType).toBe('CBC');
+    expect(report100.meanPercentage).toBe(100);
+    expect(report100.meanGradeCode).toBe('EE1');
+    expect(report100.meanGradeFull).toBe('Exceeding Expectations');
+    expect(report100.subjectRows[0].gradeCode).toBe('EE1');
+    expect(report100.subjectRows[0].gradeFull).toBe('Exceeding Expectations');
+    expect(report100.subjectRows[0].remark).toBe('Exceeding Expectations');
+  });
 });

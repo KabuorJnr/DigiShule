@@ -548,6 +548,8 @@ export default function Gradebook({ store }) {
               currentIndex={currentStudentIndex}
               totalStudents={classStudents.length}
               schoolSettings={settings}
+              onUpdateSettings={setSettings}
+              onPublishResults={handlePublishResults}
               teachers={teachers}
               currentUser={user}
               gradeBoundaries={gradeBoundaries}

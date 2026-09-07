@@ -8,9 +8,11 @@ import {
   GRADE_DESCRIPTORS_TABLE,
   computeRow,
   gradeFor,
-  pointsForGrade
+  pointsForGrade,
+  fullGradeName,
+  is844Class
 } from '../utils/grading';
-import { ChevronLeft, ChevronRight, Save, Printer, Download, Sparkles, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Printer, Download, Sparkles, Plus, Trash2, CheckCircle2, Upload, ShieldCheck, Check } from 'lucide-react';
 
 // Default subjects for CBC Senior School (Grade 10+) or Junior School
 const DEFAULT_SENIOR_SUBJECTS = [
@@ -47,6 +49,8 @@ export default function ReportCardEntrySheet({
   currentIndex = 0,
   totalStudents = 1,
   schoolSettings = {},
+  onUpdateSettings,
+  onPublishResults,
   teachers = [],
   currentUser = null,
   gradeBoundaries = [],
@@ -71,6 +75,9 @@ export default function ReportCardEntrySheet({
     return cls.includes('10') || cls.includes('11') || cls.includes('12') || cls.includes('form');
   }, [student.class]);
 
+  const is844 = useMemo(() => is844Class(student.class), [student.class]);
+  const systemType = is844 ? '844' : 'CBC';
+
   // Determine subjects list: start with existing student scores, union with default subjects
   const [subjectsList, setSubjectsList] = useState([]);
   const [scoresData, setScoresData] = useState({});
@@ -79,6 +86,55 @@ export default function ReportCardEntrySheet({
   const [principalRemarks, setPrincipalRemarks] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
   const [activeSubjectInput, setActiveSubjectInput] = useState(null);
+
+  // Scanned principal signature & DoS published status
+  const [localSignature, setLocalSignature] = useState(schoolSettings.signature || schoolSettings.principal_signature || '');
+  const [localPublished, setLocalPublished] = useState(!!schoolSettings.results_published);
+
+  useEffect(() => {
+    if (schoolSettings.signature || schoolSettings.principal_signature) {
+      setLocalSignature(schoolSettings.signature || schoolSettings.principal_signature);
+    }
+  }, [schoolSettings.signature, schoolSettings.principal_signature]);
+
+  useEffect(() => {
+    setLocalPublished(!!schoolSettings.results_published);
+  }, [schoolSettings.results_published]);
+
+  const isPublished = !!(localPublished || schoolSettings.results_published);
+  const principalSignature = localSignature || schoolSettings.signature || schoolSettings.principal_signature || '';
+
+  // Toggle Publish Results (DoS)
+  const handleTogglePublish = () => {
+    const nextState = !isPublished;
+    setLocalPublished(nextState);
+    if (onPublishResults) {
+      onPublishResults();
+    } else if (onUpdateSettings) {
+      onUpdateSettings({ ...schoolSettings, results_published: nextState });
+    }
+    setSaveStatus(nextState ? 'Results published! Principal signature applied ✓' : 'Results unpublished');
+    setTimeout(() => setSaveStatus(''), 3000);
+  };
+
+  // Upload Principal Signature image directly
+  const handleSignatureUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result;
+      if (typeof dataUrl === 'string') {
+        setLocalSignature(dataUrl);
+        if (onUpdateSettings) {
+          onUpdateSettings({ ...schoolSettings, signature: dataUrl });
+        }
+        setSaveStatus('Principal signature uploaded ✓');
+        setTimeout(() => setSaveStatus(''), 3000);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Sync state when student prop changes
   useEffect(() => {
@@ -266,8 +322,8 @@ export default function ReportCardEntrySheet({
 
       if (scoreNum !== null) {
         devObj = calculateSubjectDeviation(scoreNum, benchmark);
-        grade = percentageToCbcGrade(scoreNum, gradeBoundaries);
-        points = percentageToCbcPoints(scoreNum, 'CBC', gradeBoundaries);
+        grade = is844 ? gradeFor(scoreNum, gradeBoundaries, '844') : percentageToCbcGrade(scoreNum, gradeBoundaries);
+        points = is844 ? pointsForGrade(grade, '844') : percentageToCbcPoints(scoreNum, 8, gradeBoundaries);
       } else if (data.val === 'X') {
         grade = 'X';
       }
@@ -284,7 +340,7 @@ export default function ReportCardEntrySheet({
         benchmark
       };
     });
-  }, [subjectsList, scoresData, classAverages, gradeBoundaries]);
+  }, [subjectsList, scoresData, classAverages, gradeBoundaries, is844]);
 
   // Overall KPIs Calculation
   const kpis = useMemo(() => {
@@ -293,12 +349,13 @@ export default function ReportCardEntrySheet({
 
     if (count === 0) {
       return {
-        perfLevel: '—',
+        perfLevelCode: '—',
+        perfLevelFull: '—',
         totalMarks: '0/0',
         totalMarksDev: { text: '-', arrow: '', color: '#94a3b8' },
         totalPoints: '0/0',
         totalPointsDev: { text: '-', arrow: '', color: '#94a3b8' },
-        meanPoints: '0/8',
+        meanPoints: is844 ? '0/12' : '0/8',
         meanPointsDev: { text: '-', arrow: '', color: '#94a3b8' }
       };
     }
@@ -306,12 +363,15 @@ export default function ReportCardEntrySheet({
     const totalMarks = gradedRows.reduce((a, b) => a + b.scoreNum, 0);
     const maxMarks = count * 100;
     const totalPoints = gradedRows.reduce((a, b) => a + b.points, 0);
-    const maxPoints = count * 8;
+    const maxPoints = count * (is844 ? 12 : 8);
     const meanMarks = totalMarks / count;
     const meanPoints = totalPoints / count;
 
     // Performance level is grade of mean mark
-    const perfLevel = percentageToCbcGrade(Math.round(meanMarks), gradeBoundaries);
+    const perfLevelCode = is844 
+      ? gradeFor(Math.round(meanMarks), gradeBoundaries, '844')
+      : percentageToCbcGrade(Math.round(meanMarks), gradeBoundaries);
+    const perfLevelFull = fullGradeName(perfLevelCode, systemType);
 
     // Benchmarks
     const totalBenchmark = gradedRows.reduce((a, b) => a + b.benchmark, 0);
@@ -322,8 +382,9 @@ export default function ReportCardEntrySheet({
       color: marksDev > 0 ? '#16a34a' : (marksDev < 0 ? '#dc2626' : '#64748b')
     };
 
-    // Points benchmark (avg 6 pts * count)
-    const pointsDev = totalPoints - (count * 5);
+    // Points benchmark
+    const benchmarkExpected = count * (is844 ? 6 : 5);
+    const pointsDev = totalPoints - benchmarkExpected;
     const totalPointsDev = {
       text: pointsDev > 0 ? `+${pointsDev}` : `${pointsDev}`,
       arrow: pointsDev > 0 ? '↗' : (pointsDev < 0 ? '↘' : '→'),
@@ -331,7 +392,8 @@ export default function ReportCardEntrySheet({
     };
 
     // Mean Points Dev
-    const meanDev = (meanPoints - 5.0).toFixed(2);
+    const targetMeanBenchmark = is844 ? 6.0 : 5.0;
+    const meanDev = (meanPoints - targetMeanBenchmark).toFixed(2);
     const meanPointsDev = {
       text: Number(meanDev) > 0 ? `+${meanDev}` : `${meanDev}`,
       arrow: Number(meanDev) > 0 ? '↗' : (Number(meanDev) < 0 ? '↘' : '→'),
@@ -339,15 +401,16 @@ export default function ReportCardEntrySheet({
     };
 
     return {
-      perfLevel,
+      perfLevelCode,
+      perfLevelFull,
       totalMarks: `${totalMarks}/${maxMarks}`,
       totalMarksDev,
       totalPoints: `${totalPoints}/${maxPoints}`,
       totalPointsDev,
-      meanPoints: `${Math.round(meanPoints)}/8`,
+      meanPoints: `${(Math.round(meanPoints * 10) / 10).toFixed(1)}/${is844 ? 12 : 8}`,
       meanPointsDev
     };
-  }, [tableRows, gradeBoundaries]);
+  }, [tableRows, gradeBoundaries, is844, systemType]);
 
   // Persist student marks
   const handleSave = () => {
@@ -498,7 +561,25 @@ export default function ReportCardEntrySheet({
         )}
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* Publish Results (DoS) */}
+          <button 
+            type="button"
+            className="btn btn-sm" 
+            onClick={handleTogglePublish}
+            title={isPublished ? "Results are published with verified Principal Signature" : "Publish results now to apply Principal signature"}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              background: isPublished ? '#15803d' : '#f0fdf4', 
+              color: isPublished ? '#ffffff' : '#166534', 
+              borderColor: isPublished ? '#15803d' : '#86efac', 
+              fontWeight: 700 
+            }}
+          >
+            <ShieldCheck size={15} /> {isPublished ? 'Published (DoS) ✓' : 'Publish Results (DoS)'}
+          </button>
           <button 
             className="btn btn-sm" 
             onClick={handleAutoFillAllComments}
@@ -662,67 +743,137 @@ export default function ReportCardEntrySheet({
           </div>
 
           {/* Right: Trend Chart (Subject Performance - Student vs Class) */}
-          <div style={{ width: 330, flexShrink: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#475569' }}>
-                Subject Performance - Student vs Class
+          <div style={{ width: 380, flexShrink: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#334155', letterSpacing: '0.2px' }}>
+                Subject Performance · Student vs Class
               </span>
-              <div style={{ display: 'flex', gap: 8, fontSize: 10 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#166534', fontWeight: 600 }}>
-                  <span style={{ width: 8, height: 2, background: '#16a34a' }}></span> Student
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 10, fontWeight: 600 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#15803d' }}>
+                  <span style={{ width: 10, height: 3, background: '#16a34a', borderRadius: 2 }}></span> Student
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#64748b', fontWeight: 600 }}>
-                  <span style={{ width: 8, height: 2, background: '#cbd5e1' }}></span> Class
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b' }}>
+                  <span style={{ width: 10, height: 2, background: '#94a3b8' }}></span> Class Avg
                 </span>
               </div>
             </div>
 
             {/* SVG Chart Line */}
             <div style={{ 
-              height: 72, 
-              background: '#fafafa', 
-              borderLeft: '1px solid #cbd5e1', 
-              borderBottom: '1px solid #cbd5e1',
+              height: 94, 
+              background: '#f8fafc', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: 4,
               position: 'relative',
-              padding: '2px 4px'
+              padding: '4px 6px'
             }}>
-              <svg viewBox={`0 0 ${Math.max(1, chartPoints.length) * 32} 70`} preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-                {/* Class Benchmark Line (Gray) */}
-                <polyline 
-                  fill="none" 
-                  stroke="#cbd5e1" 
-                  strokeWidth="1.5" 
-                  points={chartPoints.map((d, i) => `${i * 32 + 16},${70 - (d.classAvg * 0.65)}`).join(' ')} 
-                />
+              {(() => {
+                const N = Math.max(1, chartPoints.length);
+                const plotLeft = 24;
+                const plotRight = 348;
+                const plotW = plotRight - plotLeft;
+                const plotTop = 10;
+                const plotBottom = 62;
+                const plotH = plotBottom - plotTop;
+                const labelY = 76;
 
-                {/* Student Score Line (Green) */}
-                <polyline 
-                  fill="none" 
-                  stroke="#16a34a" 
-                  strokeWidth="2" 
-                  points={chartPoints.map((d, i) => `${i * 32 + 16},${70 - (d.score * 0.65)}`).join(' ')} 
-                />
+                const getX = (i) => N > 1 ? Math.round(plotLeft + (i * (plotW / (N - 1)))) : Math.round((plotLeft + plotRight) / 2);
+                const getY = (val) => Math.round(plotBottom - ((Math.max(0, Math.min(100, val)) / 100) * plotH));
 
-                {/* Green dots for student scores */}
-                {chartPoints.map((d, i) => (
-                  <circle 
-                    key={i} 
-                    cx={i * 32 + 16} 
-                    cy={70 - (d.score * 0.65)} 
-                    r="3" 
-                    fill={d.hasScore ? "#166534" : "#94a3b8"} 
-                  />
-                ))}
-              </svg>
+                const evaluatedPoints = chartPoints
+                  .map((d, i) => ({ ...d, x: getX(i), y: getY(d.score), idx: i }))
+                  .filter(d => d.hasScore);
 
-              {/* Subject X-Axis Labels */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: 2 }}>
-                {chartPoints.map((d, i) => (
-                  <span key={i} style={{ fontSize: 8, fontWeight: 600, color: '#64748b', width: 28, textAlign: 'center' }}>
-                    {d.label}
-                  </span>
-                ))}
-              </div>
+                return (
+                  <svg viewBox="0 0 360 84" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                    {/* Y-axis Guidelines & Reference Labels */}
+                    <line x1={plotLeft} y1={plotTop} x2={plotRight} y2={plotTop} stroke="#e2e8f0" strokeDasharray="3 3" />
+                    <text x={plotLeft - 4} y={plotTop + 3} textAnchor="end" fontSize="7.5" fill="#94a3b8" fontWeight="600">100</text>
+
+                    <line x1={plotLeft} y1={getY(50)} x2={plotRight} y2={getY(50)} stroke="#f1f5f9" strokeDasharray="2 2" />
+                    <text x={plotLeft - 4} y={getY(50) + 3} textAnchor="end" fontSize="7.5" fill="#94a3b8" fontWeight="600">50</text>
+
+                    <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke="#cbd5e1" strokeWidth="1" />
+                    <text x={plotLeft - 4} y={plotBottom + 3} textAnchor="end" fontSize="7.5" fill="#94a3b8" fontWeight="600">0</text>
+
+                    <line x1={plotLeft} y1={plotTop - 2} x2={plotLeft} y2={plotBottom} stroke="#cbd5e1" strokeWidth="1" />
+
+                    {/* Class Benchmark Line (Dashed Gray) */}
+                    <polyline 
+                      fill="none" 
+                      stroke="#94a3b8" 
+                      strokeWidth="1.5" 
+                      strokeDasharray="3 2"
+                      points={chartPoints.map((d, i) => `${getX(i)},${getY(d.classAvg)}`).join(' ')} 
+                    />
+
+                    {/* Student Score Line (Green) - Only connects evaluated subjects so no false plunge */}
+                    {evaluatedPoints.length > 1 && (
+                      <polyline 
+                        fill="none" 
+                        stroke="#16a34a" 
+                        strokeWidth="2.2" 
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        points={evaluatedPoints.map(d => `${d.x},${d.y}`).join(' ')} 
+                      />
+                    )}
+
+                    {/* Subject dots & text labels */}
+                    {chartPoints.map((d, i) => {
+                      const cx = getX(i);
+                      const cy = getY(d.score);
+                      return (
+                        <g key={i}>
+                          {d.hasScore ? (
+                            <>
+                              <circle 
+                                cx={cx} 
+                                cy={cy} 
+                                r="3.5" 
+                                fill="#16a34a" 
+                                stroke="#ffffff" 
+                                strokeWidth="1.5" 
+                              />
+                              {evaluatedPoints.length <= 4 && (
+                                <text 
+                                  x={cx} 
+                                  y={cy - 5} 
+                                  textAnchor="middle" 
+                                  fontSize="7.5" 
+                                  fontWeight="800" 
+                                  fill="#15803d"
+                                >
+                                  {d.score}%
+                                </text>
+                              )}
+                            </>
+                          ) : (
+                            <circle 
+                              cx={cx} 
+                              cy={plotBottom} 
+                              r="1.5" 
+                              fill="#cbd5e1" 
+                            />
+                          )}
+
+                          {/* Subject X-Axis Label: rendered directly inside SVG aligned with cx */}
+                          <text 
+                            x={cx} 
+                            y={labelY} 
+                            textAnchor="middle" 
+                            fontSize="8" 
+                            fontWeight={d.hasScore ? "700" : "500"} 
+                            fill={d.hasScore ? "#1e293b" : "#64748b"}
+                          >
+                            {d.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -734,21 +885,32 @@ export default function ReportCardEntrySheet({
           background: '#f8fafc', 
           border: '1px solid #cbd5e1', 
           borderRadius: 2, 
-          padding: '8px 12px',
-          marginBottom: 16,
+          padding: '10px 14px',
+          marginBottom: 18,
           textAlign: 'center'
         }}>
           {/* Performance Level */}
-          <div style={{ borderRight: '1px solid #e2e8f0', padding: '0 8px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Performance Level</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#1e3a8a', marginTop: 2 }}>
-              {kpis.perfLevel}
+          <div style={{ borderRight: '1px solid #e2e8f0', padding: '0 8px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Performance Level</div>
+            <div style={{ 
+              fontSize: is844 ? 18 : 14, 
+              fontWeight: 800, 
+              color: is844 ? '#1e3a8a' : (kpis.perfLevelCode.startsWith('EE') ? '#15803d' : (kpis.perfLevelCode.startsWith('ME') ? '#0284c7' : '#b45309')), 
+              marginTop: 2, 
+              lineHeight: 1.25 
+            }}>
+              {is844 ? kpis.perfLevelCode : kpis.perfLevelFull}
             </div>
+            {!is844 && kpis.perfLevelCode !== '—' && (
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#64748b', marginTop: 2 }}>
+                Grade Band: <span style={{ color: '#0f172a', fontWeight: 800 }}>{kpis.perfLevelCode}</span>
+              </div>
+            )}
           </div>
 
           {/* Total Marks */}
           <div style={{ borderRight: '1px solid #e2e8f0', padding: '0 8px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Total Marks</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Total Marks</div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <span>{kpis.totalMarks}</span>
               {kpis.totalMarksDev.text !== '-' && (
@@ -761,7 +923,7 @@ export default function ReportCardEntrySheet({
 
           {/* Total Points */}
           <div style={{ borderRight: '1px solid #e2e8f0', padding: '0 8px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Total Points</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Total Points</div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <span>{kpis.totalPoints}</span>
               {kpis.totalPointsDev.text !== '-' && (
@@ -774,7 +936,7 @@ export default function ReportCardEntrySheet({
 
           {/* Mean Points */}
           <div style={{ padding: '0 8px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Mean Points</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Mean Points</div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <span>{kpis.meanPoints}</span>
               {kpis.meanPointsDev.text !== '-' && (
@@ -968,10 +1130,15 @@ export default function ReportCardEntrySheet({
             </div>
           </div>
 
-          {/* Chief Principal Remarks with Stamp */}
+          {/* Chief Principal Remarks with Stamp & Signature */}
           <div style={{ border: '1px solid #94a3b8', borderRadius: 2, padding: '12px 14px', position: 'relative' }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', marginBottom: 6 }}>
-              Chief Principal Remarks: <span style={{ fontWeight: 600, color: '#475569' }}>{principalName}</span>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Chief Principal Remarks: <span style={{ fontWeight: 600, color: '#475569' }}>{principalName}</span></span>
+              {isPublished && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d', background: '#dcfce7', border: '1px solid #86efac', padding: '1px 7px', borderRadius: 12 }}>
+                  ✓ Published & Certified
+                </span>
+              )}
             </div>
 
             <textarea 
@@ -994,32 +1161,123 @@ export default function ReportCardEntrySheet({
             />
 
             {/* Rubber Stamp and Signature */}
-            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 12, color: '#64748b' }}>Signature:</span>
-                <div style={{ position: 'relative', width: 100, height: 24, borderBottom: '1px solid #475569' }}>
-                  <svg viewBox="0 0 100 24" style={{ position: 'absolute', bottom: 2, left: 4, width: 75, height: 20 }}>
-                    <path d="M4,16 C30,4 50,22 88,8" stroke="#1d4ed8" strokeWidth="1.8" fill="none" />
-                  </svg>
+                <div style={{ 
+                  position: 'relative', 
+                  width: 130, 
+                  height: 32, 
+                  borderBottom: '1px solid #475569',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'center'
+                }}>
+                  {isPublished && principalSignature ? (
+                    <img 
+                      src={principalSignature} 
+                      alt="Chief Principal Signature" 
+                      style={{ 
+                        position: 'absolute', 
+                        bottom: 2, 
+                        left: '50%', 
+                        transform: 'translateX(-50%)', 
+                        maxHeight: 34, 
+                        maxWidth: 120, 
+                        objectFit: 'contain',
+                        pointerEvents: 'none' 
+                      }} 
+                    />
+                  ) : isPublished && !principalSignature ? (
+                    <svg viewBox="0 0 100 24" style={{ position: 'absolute', bottom: 2, left: 4, width: 80, height: 20 }}>
+                      <path d="M4,16 C30,4 50,22 88,8" stroke="#1d4ed8" strokeWidth="1.8" fill="none" />
+                    </svg>
+                  ) : (
+                    <span className="no-print" style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic', marginBottom: 2 }}>
+                      (Applies on Publish)
+                    </span>
+                  )}
+                </div>
+
+                {/* DoS inline triggers */}
+                <div className="no-print" style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 4 }}>
+                  <label 
+                    title={principalSignature ? "Replace Principal Signature" : "Upload Scanned Principal Signature"}
+                    style={{ 
+                      cursor: 'pointer', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 4, 
+                      fontSize: 10, 
+                      fontWeight: 700, 
+                      color: '#0369a1', 
+                      background: '#f0f9ff', 
+                      border: '1px solid #bae6fd', 
+                      borderRadius: 4, 
+                      padding: '2px 6px' 
+                    }}
+                  >
+                    <Upload size={11} /> {principalSignature ? 'Change Sig' : 'Upload Sig'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSignatureUpload} />
+                  </label>
+
+                  {!isPublished && (
+                    <button 
+                      type="button" 
+                      onClick={handleTogglePublish}
+                      title="Click to publish results and stamp Principal signature"
+                      style={{ 
+                        cursor: 'pointer', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: 3, 
+                        fontSize: 10, 
+                        fontWeight: 700, 
+                        color: '#15803d', 
+                        background: '#f0fdf4', 
+                        border: '1px solid #86efac', 
+                        borderRadius: 4, 
+                        padding: '2px 6px' 
+                      }}
+                    >
+                      <ShieldCheck size={11} /> Publish to Sign
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Official Rubber Stamp Box */}
-              <div style={{ 
-                border: '2px solid #1d4ed8', 
-                color: '#1d4ed8', 
-                borderRadius: 4, 
-                padding: '2px 8px', 
-                fontSize: 8.5, 
-                fontWeight: 800,
-                textAlign: 'center',
-                lineHeight: 1.2,
-                transform: 'rotate(-2deg)',
-                opacity: 0.9
-              }}>
-                <div>CHIEF PRINCIPAL</div>
-                <div>{schoolName.toUpperCase()}</div>
-                <div>{schoolAddress.split(',')[0]}</div>
+              <div style={{ position: 'relative' }}>
+                {schoolSettings.stamp ? (
+                  <img 
+                    src={schoolSettings.stamp} 
+                    alt="School Stamp" 
+                    style={{ 
+                      maxHeight: 48, 
+                      maxWidth: 120, 
+                      objectFit: 'contain',
+                      transform: 'rotate(-4deg)',
+                      opacity: 0.92
+                    }} 
+                  />
+                ) : (
+                  <div style={{ 
+                    border: '2px solid #1d4ed8', 
+                    color: '#1d4ed8', 
+                    borderRadius: 4, 
+                    padding: '2px 8px', 
+                    fontSize: 8.5, 
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    transform: 'rotate(-2deg)',
+                    opacity: 0.9
+                  }}>
+                    <div>CHIEF PRINCIPAL</div>
+                    <div>{schoolName.toUpperCase()}</div>
+                    <div>{schoolAddress.split(',')[0]}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

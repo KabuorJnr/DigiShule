@@ -165,39 +165,69 @@ export default function ReportCardModal({
               </div>
               
               {/* Graph Area */}
-              <div style={{ width: 320, paddingLeft: 20 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Subject Performance - Student vs Class</span>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#22c55e' }}></span> Student</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#cbd5e1' }}></span> Class</span>
+              <div style={{ width: 340, paddingLeft: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Subject Performance · Student vs Class</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#16a34a' }}></span> Student</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#94a3b8' }}></span> Class</span>
                   </div>
                 </div>
-                <div style={{ position: 'relative', height: 80, borderBottom: '1px solid #e2e8f0', borderLeft: '1px solid #e2e8f0' }}>
-                  <svg viewBox={`0 0 ${subjectsGraphData.length * 40} 100`} preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-                    {/* Class Average Line (Gray) */}
-                    <polyline 
-                      fill="none" 
-                      stroke="#cbd5e1" 
-                      strokeWidth="2" 
-                      points={subjectsGraphData.map((d, i) => `${i * 40 + 20},${100 - d.classAvg}`).join(' ')} 
-                    />
-                    {/* Student Score Line (Green) */}
-                    <polyline 
-                      fill="none" 
-                      stroke="#22c55e" 
-                      strokeWidth="2" 
-                      points={subjectsGraphData.map((d, i) => `${i * 40 + 20},${100 - d.score}`).join(' ')} 
-                    />
-                    {subjectsGraphData.map((d, i) => (
-                      <circle key={i} cx={i * 40 + 20} cy={100 - d.score} r="3" fill="#166534" />
-                    ))}
-                  </svg>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, width: '100%', paddingLeft: 4 }}>
-                    {subjectsGraphData.map((d, i) => (
-                      <div key={i} style={{ fontSize: 9, color: '#64748b' }}>{d.name}</div>
-                    ))}
-                  </div>
+                <div style={{ position: 'relative', height: 86, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 4, padding: '4px' }}>
+                  {(() => {
+                    const N = Math.max(1, subjectsGraphData.length);
+                    const plotLeft = 20;
+                    const plotRight = 310;
+                    const plotW = plotRight - plotLeft;
+                    const plotTop = 8;
+                    const plotBottom = 58;
+                    const plotH = plotBottom - plotTop;
+                    const labelY = 72;
+
+                    const getX = (i) => N > 1 ? Math.round(plotLeft + (i * (plotW / (N - 1)))) : Math.round((plotLeft + plotRight) / 2);
+                    const getY = (val) => Math.round(plotBottom - ((Math.max(0, Math.min(100, val)) / 100) * plotH));
+                    const evalPts = subjectsGraphData.map((d, i) => ({ ...d, x: getX(i), y: getY(d.score) })).filter(d => d.hasScore);
+
+                    return (
+                      <svg viewBox="0 0 330 78" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                        <line x1={plotLeft} y1={plotTop} x2={plotRight} y2={plotTop} stroke="#e2e8f0" strokeDasharray="3 3" />
+                        <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke="#cbd5e1" strokeWidth="1" />
+                        <polyline 
+                          fill="none" 
+                          stroke="#94a3b8" 
+                          strokeWidth="1.5" 
+                          strokeDasharray="3 2"
+                          points={subjectsGraphData.map((d, i) => `${getX(i)},${getY(d.classAvg)}`).join(' ')} 
+                        />
+                        {evalPts.length > 1 && (
+                          <polyline 
+                            fill="none" 
+                            stroke="#16a34a" 
+                            strokeWidth="2" 
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            points={evalPts.map(d => `${d.x},${d.y}`).join(' ')} 
+                          />
+                        )}
+                        {subjectsGraphData.map((d, i) => {
+                          const cx = getX(i);
+                          const cy = getY(d.score);
+                          return (
+                            <g key={i}>
+                              {d.hasScore ? (
+                                <circle cx={cx} cy={cy} r="3" fill="#16a34a" stroke="#fff" strokeWidth="1" />
+                              ) : (
+                                <circle cx={cx} cy={plotBottom} r="1.5" fill="#cbd5e1" />
+                              )}
+                              <text x={cx} y={labelY} textAnchor="middle" fontSize="7.5" fontWeight={d.hasScore ? "700" : "500"} fill={d.hasScore ? "#1e293b" : "#64748b"}>
+                                {d.name}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -205,8 +235,13 @@ export default function ReportCardModal({
             {/* KPIs */}
             <div style={{ display: 'flex', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '12px 20px', marginBottom: 20, justifyContent: 'space-between' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Performance Level</div>
-                <div style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>{report.meanGradeCode || report.meanGradeFull || '—'}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>Performance Level</div>
+                <div style={{ fontSize: is844 ? 16 : 14, fontWeight: 800, marginTop: 4, color: is844 ? '#1e3a8a' : '#15803d' }}>
+                  {is844 ? report.meanGradeCode : (report.meanGradeFull || report.meanGradeCode || '—')}
+                </div>
+                {!is844 && report.meanGradeCode && (
+                  <div style={{ fontSize: 10, color: '#64748b', fontWeight: 700 }}>Band: {report.meanGradeCode}</div>
+                )}
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Total Marks</div>
@@ -287,10 +322,26 @@ export default function ReportCardModal({
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
-                    <div style={{ width: 120, borderBottom: '1px solid #334155', position: 'relative' }}>
-                      <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
-                        <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
-                      </svg>
+                    <div style={{ width: 130, height: 32, borderBottom: '1px solid #334155', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      {schoolSettings.signature ? (
+                        <img 
+                          src={schoolSettings.signature} 
+                          alt="Chief Principal Signature" 
+                          style={{ 
+                            position: 'absolute', 
+                            bottom: 2, 
+                            left: '50%', 
+                            transform: 'translateX(-50%)', 
+                            maxHeight: 34, 
+                            maxWidth: 120, 
+                            objectFit: 'contain' 
+                          }} 
+                        />
+                      ) : (
+                        <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
+                          <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
+                        </svg>
+                      )}
                     </div>
                   </div>
                   {/* Official Stamp */}

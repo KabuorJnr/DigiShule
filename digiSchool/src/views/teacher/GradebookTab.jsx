@@ -193,6 +193,12 @@ export default function GradebookTab() {
               currentIndex={currentStudentIndex}
               totalStudents={loadedStudents.length}
               schoolSettings={settings}
+              onUpdateSettings={store.setSettings}
+              onPublishResults={() => {
+                const nextState = !settings?.results_published;
+                store.setSettings?.({ results_published: nextState });
+                store.notify?.(nextState ? 'Results published' : 'Results unpublished', 'success');
+              }}
               teachers={teachers}
               currentUser={user}
               gradeBoundaries={gradeBoundaries}
