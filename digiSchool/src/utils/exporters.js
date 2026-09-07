@@ -2,8 +2,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { computeStudentReport } from './grading';
 import { getSubjectMeta } from '../data/seed';
+import { renderReportCardsPdf } from './renderReportCardsPdf';
 
 export function exportNemisCSV(students, filename = 'NEMIS_Export.csv') {
   // NEMIS Standard Format Columns
@@ -257,202 +257,12 @@ export function exportClassListPDF({ school = {}, term = '', year = '', groups =
   doc.save(filename);
 }
 
-export function exportReportCardsPDF({ school = {}, gradeBoundaries = [], students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', filename = 'report_cards.pdf' }) {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  const targetStudents = students.length > 0 ? students : [];
-
-  targetStudents.forEach((stu, idx) => {
-    if (idx > 0) doc.addPage();
-
-    const r = computeStudentReport({
-      student: stu,
-      students: targetStudents,
-      subjects: subjects,
-      examTitle: examTitle,
-      termName: termName,
-      gradeBoundaries: gradeBoundaries
-    });
-
-    if (!r) return;
-    renderReportCard(doc, r, school, pageWidth, pageHeight, idx + 1, targetStudents.length);
-  });
-
-  doc.save(filename);
-}
-
-// Unified, clean single-page report card for both CBC (8-tier) and 8-4-4 (KCSE 12-tier).
-// Design: one dark ink palette, no gradients, no fake QR/verification, no hardcoded
-// school placeholders. Comments start blank when there is nothing meaningful to say.
-function renderReportCard(doc, r, school, pageW, pageH, pageIndex, pageCount) {
-  const is844 = r.systemType === '844';
-  const INK = [17, 24, 39];      // #111827
-  const MUTED = [107, 114, 128]; // #6b7280
-  const LINE = [229, 231, 235];  // #e5e7eb
-  const SOFT = [249, 250, 251];  // #f9fafb
-
-  // ── School header ────────────────────────────────────────────────────────
-  const schoolName = (school.name || '').trim();
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.setTextColor(...INK);
-  if (schoolName) doc.text(schoolName.toUpperCase(), pageW / 2, 46, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  const contactParts = [school.address, school.phone || school.tel, school.email].filter(Boolean);
-  if (contactParts.length) doc.text(contactParts.join('  ·  '), pageW / 2, 60, { align: 'center' });
-  if (school.motto) {
-    doc.setFont('helvetica', 'italic');
-    doc.text(String(school.motto), pageW / 2, contactParts.length ? 72 : 60, { align: 'center' });
-  }
-
-  let y = (school.motto ? 84 : (contactParts.length ? 72 : 60)) + 8;
-
-  // Thin divider
-  doc.setDrawColor(...LINE);
-  doc.setLineWidth(0.75);
-  doc.line(40, y, pageW - 40, y);
-  y += 14;
-
-  // ── Document title ───────────────────────────────────────────────────────
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(...INK);
-  doc.text(is844 ? 'ACADEMIC REPORT' : 'LEARNER ASSESSMENT REPORT', pageW / 2, y, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.text(`${String(r.examTitle)} · ${String(r.termName)}`, pageW / 2, y + 12, { align: 'center' });
-  y += 26;
-
-  // ── Student info strip ──────────────────────────────────────────────────
-  doc.setDrawColor(...LINE);
-  doc.setFillColor(...SOFT);
-  doc.roundedRect(40, y, pageW - 80, 44, 4, 4, 'FD');
-
-  const fields = [
-    { k: 'Name', v: r.studentName || '' },
-    { k: 'Adm No.', v: String(r.admissionNo || '—') },
-    { k: 'Class', v: String(r.className || '—') },
-    { k: 'Position', v: r.classPosition ? `${r.classPosition} of ${r.classSize}` : '—' },
-  ];
-  const colW = (pageW - 80) / fields.length;
-  fields.forEach((f, i) => {
-    const cx = 40 + i * colW + 12;
-    doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
-    doc.setFont('helvetica', 'normal');
-    doc.text(f.k.toUpperCase(), cx, y + 14);
-    doc.setFontSize(11);
-    doc.setTextColor(...INK);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(f.v), cx, y + 32);
-    if (i > 0) {
-      doc.setDrawColor(...LINE);
-      doc.line(40 + i * colW, y + 6, 40 + i * colW, y + 38);
-    }
-  });
-  y += 56;
-
-  // ── Subject table ────────────────────────────────────────────────────────
-  const subjectHead = is844
-    ? ['Subject', 'Score', '%', 'Grade', 'Pts', 'Remark']
-    : ['Learning Area', 'Score', '%', 'Level', 'Pts', 'Remark'];
-
-  const subjectBody = r.subjectRows.map(s => [
-    s.subject,
-    s.scoreText || '—',
-    s.percentageText || (s.percentage != null ? `${s.percentage}%` : '—'),
-    s.gradeCode || s.gradeFull || '—',
-    s.pts != null ? String(s.pts) : '—',
-    s.remark || '',
-  ]);
-
-  const maxPts = is844 ? 12 : 8;
-  subjectBody.push([
-    { content: 'TOTAL / MEAN', colSpan: 2, styles: { fontStyle: 'bold', fillColor: SOFT, textColor: INK } },
-    { content: r.meanPercentageText || '—', styles: { fontStyle: 'bold', fillColor: SOFT, textColor: INK, halign: 'center' } },
-    { content: r.meanGradeCode || r.meanGradeFull || '—', styles: { fontStyle: 'bold', fillColor: SOFT, textColor: INK, halign: 'center' } },
-    { content: `${r.totalPoints}/${r.subjectRows.length * maxPts}`, styles: { fontStyle: 'bold', fillColor: SOFT, textColor: INK, halign: 'center' } },
-    { content: '', styles: { fillColor: SOFT } },
-  ]);
-
-  autoTable(doc, {
-    head: [subjectHead],
-    body: subjectBody,
-    startY: y,
-    theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 5, textColor: INK, lineColor: LINE, lineWidth: 0.5, valign: 'middle' },
-    headStyles: { fontStyle: 'bold', textColor: [255, 255, 255], fillColor: INK, halign: 'left' },
-    columnStyles: {
-      0: { fontStyle: 'bold' },
-      1: { halign: 'center', cellWidth: 55 },
-      2: { halign: 'center', cellWidth: 45 },
-      3: { halign: 'center', cellWidth: 55, fontStyle: 'bold' },
-      4: { halign: 'center', cellWidth: 40 },
-      5: { cellWidth: 'auto' },
-    },
-    margin: { left: 40, right: 40 },
-    didParseCell: (data) => {
-      if (data.section === 'head' && data.column.index > 0) data.cell.styles.halign = 'center';
-    },
-  });
-
-  y = doc.lastAutoTable.finalY + 14;
-
-  // ── Grade key (single row, muted text) ─────────────────────────────────
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...MUTED);
-  doc.text('GRADING KEY', 40, y);
-  y += 10;
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...INK);
-  const key = is844
-    ? 'A 80–100  ·  A- 75–79  ·  B+ 70–74  ·  B 65–69  ·  B- 60–64  ·  C+ 55–59  ·  C 50–54  ·  C- 45–49  ·  D+ 40–44  ·  D 35–39  ·  D- 30–34  ·  E 0–29'
-    : 'EE1 90–100  ·  EE2 75–89  ·  ME1 58–74  ·  ME2 41–57  ·  AE1 31–40  ·  AE2 21–30  ·  BE1 11–20  ·  BE2 0–10';
-  doc.text(key, 40, y, { maxWidth: pageW - 80 });
-  y += is844 ? 20 : 14;
-
-  // ── Comments (blank lines to write on; no fake auto-remarks) ────────────
-  const commentH = 46;
-  const half = (pageW - 80) / 2 - 6;
-
-  doc.setDrawColor(...LINE);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(40, y, half, commentH, 4, 4, 'S');
-  doc.roundedRect(40 + half + 12, y, half, commentH, 4, 4, 'S');
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...MUTED);
-  doc.text("CLASS TEACHER'S COMMENT", 46, y + 12);
-  doc.text("PRINCIPAL'S COMMENT", 46 + half + 12, y + 12);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...INK);
-  doc.text('Signature: ____________________   Date: ____________', 46, y + commentH - 6);
-  doc.text('Signature: ____________________   Date: ____________', 46 + half + 12, y + commentH - 6);
-  y += commentH + 10;
-
-  // ── Parent / Guardian ───────────────────────────────────────────────────
-  doc.roundedRect(40, y, pageW - 80, 34, 4, 4, 'S');
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...MUTED);
-  doc.text("PARENT / GUARDIAN COMMENT", 46, y + 12);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...INK);
-  doc.text('Signature: ____________________   Date: ____________', 46, y + 28);
-
-  // ── Footer ───────────────────────────────────────────────────────────────
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...MUTED);
-  doc.text(`Generated ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, 40, pageH - 22);
-  if (pageCount > 1) doc.text(`Page ${pageIndex} of ${pageCount}`, pageW - 40, pageH - 22, { align: 'right' });
+// Bulk report-card export. Delegates to the shared DOM renderer so the output
+// is pixel-identical to the on-screen ReportCardModal download — same layout,
+// same clearer font, same verifiable QR/code — across every portal. Async: the
+// renderer snapshots real DOM, so callers may await it (fire-and-forget is fine).
+export function exportReportCardsPDF(opts) {
+  return renderReportCardsPdf(opts);
 }
 
 export function exportSchemeOfWorkPDF({ school, scheme, rows, filename }) {
