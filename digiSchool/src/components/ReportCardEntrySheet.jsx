@@ -6,6 +6,8 @@ import {
   cbcOfficialComment, 
   calculateSubjectDeviation,
   GRADE_DESCRIPTORS_TABLE,
+  CBC_BOUNDARIES,
+  KCSE_BOUNDARIES,
   computeRow,
   gradeFor,
   pointsForGrade,
@@ -78,6 +80,12 @@ export default function ReportCardEntrySheet({
 
   const is844 = useMemo(() => is844Class(student.class), [student.class]);
   const systemType = is844 ? '844' : 'CBC';
+
+  // CRITICAL: Always force correct boundaries based on curriculum type.
+  // The store's gradeBoundaries may contain KCSE grades even for CBC students.
+  const effectiveBoundaries = useMemo(() => {
+    return is844 ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
+  }, [is844]);
 
   // Determine subjects list: start with existing student scores, union with default subjects
   const [subjectsList, setSubjectsList] = useState([]);
@@ -180,7 +188,7 @@ export default function ReportCardEntrySheet({
       if (val !== '' && !comment) {
         const pct = typeof val === 'number' ? val : Number(val);
         if (!isNaN(pct) && pct > 0) {
-          const g = percentageToCbcGrade(pct, gradeBoundaries);
+          const g = percentageToCbcGrade(pct, effectiveBoundaries);
           comment = cbcOfficialComment(g, sub);
         }
       }
@@ -206,7 +214,7 @@ export default function ReportCardEntrySheet({
       `${fName}, you are performing well and meeting expectations. Your progress is steady, and with continued focus and dedication, you will continue to grow. Keep up the good work - you're on track for success!`
     );
     setSaveStatus('');
-  }, [student.id, isSenior, gradeBoundaries]);
+  }, [student.id, isSenior, effectiveBoundaries]);
 
   // Compute Class Benchmarks / Averages for Deviation Calculation
   const classAverages = useMemo(() => {
@@ -256,7 +264,7 @@ export default function ReportCardEntrySheet({
       
       // Auto-update comment if empty or already set to an official comment
       if (typeof finalVal === 'number' && (!newComment || newComment.length < 3)) {
-        const g = percentageToCbcGrade(finalVal, gradeBoundaries);
+        const g = percentageToCbcGrade(finalVal, effectiveBoundaries);
         newComment = cbcOfficialComment(g, sub);
       }
 
@@ -300,7 +308,7 @@ export default function ReportCardEntrySheet({
       subjectsList.forEach(sub => {
         const row = next[sub];
         if (row && typeof row.val === 'number') {
-          const g = percentageToCbcGrade(row.val, gradeBoundaries);
+          const g = percentageToCbcGrade(row.val, effectiveBoundaries);
           next[sub] = { ...row, comment: cbcOfficialComment(g, sub) };
         }
       });
@@ -323,8 +331,8 @@ export default function ReportCardEntrySheet({
 
       if (scoreNum !== null) {
         devObj = calculateSubjectDeviation(scoreNum, benchmark);
-        grade = is844 ? gradeFor(scoreNum, gradeBoundaries, '844') : percentageToCbcGrade(scoreNum, gradeBoundaries);
-        points = is844 ? pointsForGrade(grade, '844') : percentageToCbcPoints(scoreNum, 8, gradeBoundaries);
+        grade = is844 ? gradeFor(scoreNum, effectiveBoundaries, '844') : percentageToCbcGrade(scoreNum, effectiveBoundaries);
+        points = is844 ? pointsForGrade(grade, '844') : percentageToCbcPoints(scoreNum, 8, effectiveBoundaries);
       } else if (data.val === 'X') {
         grade = 'X';
       }
@@ -341,7 +349,7 @@ export default function ReportCardEntrySheet({
         benchmark
       };
     });
-  }, [subjectsList, scoresData, classAverages, gradeBoundaries, is844]);
+  }, [subjectsList, scoresData, classAverages, effectiveBoundaries, is844]);
 
   // Overall KPIs Calculation
   const kpis = useMemo(() => {
@@ -370,8 +378,8 @@ export default function ReportCardEntrySheet({
 
     // Performance level is grade of mean mark
     const perfLevelCode = is844 
-      ? gradeFor(Math.round(meanMarks), gradeBoundaries, '844')
-      : percentageToCbcGrade(Math.round(meanMarks), gradeBoundaries);
+      ? gradeFor(Math.round(meanMarks), effectiveBoundaries, '844')
+      : percentageToCbcGrade(Math.round(meanMarks), effectiveBoundaries);
     const perfLevelFull = fullGradeName(perfLevelCode, systemType);
 
     // Benchmarks
@@ -411,7 +419,7 @@ export default function ReportCardEntrySheet({
       meanPoints: `${(Math.round(meanPoints * 10) / 10).toFixed(1)}/${is844 ? 12 : 8}`,
       meanPointsDev
     };
-  }, [tableRows, gradeBoundaries, is844, systemType]);
+  }, [tableRows, effectiveBoundaries, is844, systemType]);
 
   // Persist student marks
   const handleSave = () => {
