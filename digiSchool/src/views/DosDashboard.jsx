@@ -322,7 +322,7 @@ export default function DosDashboard({ store, user }) {
   };
 
   return (
-    <div style={{ background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
+    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
       {/* ── PAGE HEADER ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
         <div>
@@ -460,9 +460,11 @@ export default function DosDashboard({ store, user }) {
           schoolSettings={settings}
           teachers={rawStaff}
           classes={dynamicClasses}
-          userRole={user?.role || 'dos'}
+          userRole={user?.role || store?.user?.role || 'dos'}
           currentStudentId={user?.student_id || user?.id}
           notify={notify}
+          onUpdateSettings={store?.updateSettings || ((partial) => store?.setSettings && store.setSettings(prev => ({ ...prev, ...partial })))}
+          onNavigateGradebook={() => navigate && navigate('gradebook')}
           onUpdateStudentScores={(editedScores) => {
             Object.entries(editedScores).forEach(([key, val]) => {
               const [studentId, subject] = key.split('_');
@@ -515,7 +517,7 @@ export default function DosDashboard({ store, user }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               {[
                 { label: 'Merit Lists & Analysis', icon: Award, route: 'academics_dashboard', desc: 'Rankings & means' },
-                { label: 'Gradebook & Entry', icon: BookOpen, route: 'gradebook', desc: 'Marks entry portal' },
+                { label: 'Gradebook & Entry', icon: BookOpen, route: 'gradebook', desc: 'Report forms, grid & analysis' },
                 { label: 'Exam Schedules', icon: FileText, route: 'exams', desc: 'Manage dates & rooms' },
                 { label: 'Class Registers', icon: Users, route: 'registrar', desc: 'Full student lists' },
                 { label: 'School Timetable', icon: Clock, route: 'timetable', desc: 'Master schedule' },

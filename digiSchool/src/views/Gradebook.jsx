@@ -478,7 +478,7 @@ export default function Gradebook({ store }) {
 
         {/* Global Action Triggers */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {(store.user?.role === 'deputy_academic' || store.user?.role === 'dos') && (
+          {(['deputy_academic', 'dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
             <button 
               className={`btn btn-sm ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
               onClick={handleApproveResults}
@@ -489,11 +489,12 @@ export default function Gradebook({ store }) {
             </button>
           )}
 
-          {(store.user?.role === 'dos') && settings?.results_approved && (
+          {(['dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
             <button 
               className={`btn btn-sm ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
               onClick={handlePublishResults}
               style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+              title={settings?.results_published ? 'Retract official publication' : 'Publish official results and stamp principal signature on all report cards'}
             >
               <ShieldCheck size={15} /> 
               {settings?.results_published ? 'Unpublish Results (DoS)' : 'Publish & Stamp (DoS)'}

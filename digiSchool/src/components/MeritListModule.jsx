@@ -8,7 +8,7 @@ import { Badge, ProgressBar } from './widgets';
 import { 
   Award, Download, Filter, Search, ArrowUp, ArrowDown, 
   TrendingUp, FileSpreadsheet, CheckCircle2, Lock, Unlock, Edit3, Save,
-  CheckCircle, AlertTriangle, ShieldCheck, RefreshCw
+  CheckCircle, AlertTriangle, ShieldCheck, RefreshCw, BookOpen, ChevronRight
 } from 'lucide-react';
 
 export default function MeritListModule({ 
@@ -19,7 +19,9 @@ export default function MeritListModule({
   userRole = 'dos', 
   currentStudentId = null,
   notify = console.log,
-  onUpdateStudentScores = null
+  onUpdateStudentScores = null,
+  onUpdateSettings = null,
+  onNavigateGradebook = null
 }) {
   // ── EXECUTIVE READ & WRITE PERMISSION ──
   const isExecutive = useMemo(() => {
@@ -28,10 +30,19 @@ export default function MeritListModule({
   }, [userRole]);
 
   // ── PUBLICATION & EDITING STATE ──
-  const [isPublished, setIsPublished] = useState(false);
-  const [publishedInfo, setPublishedInfo] = useState(null);
+  const isPublished = !!schoolSettings?.results_published;
+  const [publishedInfo, setPublishedInfo] = useState(() => {
+    if (schoolSettings?.results_published) {
+      return {
+        approverRole: 'Director of Studies (DoS)',
+        approvedAt: 'Certified Official'
+      };
+    }
+    return null;
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [editedScores, setEditedScores] = useState({}); // { studentId_subject: score }
+  const principalSig = schoolSettings?.principal_signature_url || schoolSettings?.signature_url || null;
 
   // ── CONTROLS STATE ──
   const [modelMode, setModelMode] = useState('auto'); // 'auto' | 'cbc' | '844'
@@ -201,21 +212,33 @@ export default function MeritListModule({
   };
 
   // Toggle Publication (Executive Only)
-  const handleTogglePublication = () => {
+  const handleTogglePublication = async () => {
     if (!isExecutive) return;
-    if (isPublished) {
-      setIsPublished(false);
-      setPublishedInfo(null);
-      notify('Merit list returned to DRAFT mode for moderation', 'info');
-    } else {
+    const nextState = !isPublished;
+    if (nextState) {
       const info = {
         approverRole: userRole === 'dos' ? 'Director of Studies (DoS)' : userRole === 'principal' ? 'Principal' : 'Deputy Academics',
         approvedAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
-      setIsPublished(true);
       setPublishedInfo(info);
-      notify(`Official Merit List APPROVED & PUBLISHED by ${info.approverRole}!`, 'success');
+    } else {
+      setPublishedInfo(null);
     }
+
+    if (onUpdateSettings) {
+      try {
+        await onUpdateSettings({ results_published: nextState });
+      } catch (err) {
+        console.error('Failed to update publication settings:', err);
+      }
+    }
+
+    notify(
+      nextState
+        ? `Official Results APPROVED & PUBLISHED! Principal signature & DoS stamps active on all report forms.`
+        : 'Merit list publication returned to DRAFT mode for moderation.',
+      nextState ? 'success' : 'info'
+    );
   };
 
   // ── CLASS & SUBJECT ANALYSIS LAYER ──
@@ -372,7 +395,7 @@ export default function MeritListModule({
   };
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 18, marginBottom: 20 }}>
+    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 18, marginBottom: 20 }}>
       
       {/* ── EXECUTIVE APPROVAL & PUBLICATION BANNER ── */}
       <div 
@@ -383,7 +406,7 @@ export default function MeritListModule({
           padding: '12px 16px',
           marginBottom: 16,
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 12
@@ -396,15 +419,20 @@ export default function MeritListModule({
             <AlertTriangle size={22} color="#b45309" />
           )}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: isPublished ? '#166534' : '#b45309', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: isPublished ? '#166534' : '#b45309', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span>{isPublished ? 'OFFICIALLY APPROVED & PUBLISHED' : 'DRAFT RESULTS — PENDING EXECUTIVE APPROVAL'}</span>
               <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: isPublished ? '#166534' : '#b45309', color: '#ffffff', textTransform: 'uppercase' }}>
                 {isPublished ? 'Verified' : 'Unpublished'}
               </span>
+              {isPublished && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: '#dcfce7', color: '#166534', border: '1px solid #86efac', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {principalSig ? '✓ Principal Signature Certified & Stamped' : '✓ Official DoS Stamp Active'}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 12, color: isPublished ? '#15803d' : '#92400e', marginTop: 2 }}>
               {isPublished ? (
-                <>Approved by <strong>{publishedInfo?.approverRole}</strong> on {publishedInfo?.approvedAt}. Official report cards can now be issued.</>
+                <>Approved &amp; Published by <strong>{publishedInfo?.approverRole || 'Director of Studies (DoS)'}</strong>. Official report cards with principal signature stamp can now be issued.</>
               ) : (
                 <>Requires sign-off from <strong>Director of Studies (DoS)</strong>, <strong>Deputy Academic</strong>, or <strong>Principal</strong> before publishing.</>
               )}
@@ -413,7 +441,17 @@ export default function MeritListModule({
         </div>
 
         {/* Executive Action Controls */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {onNavigateGradebook && (
+            <button 
+              onClick={onNavigateGradebook}
+              style={{ height: 34, padding: '0 12px', background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              title="Open Gradebook Central for full mark entry, report form preview & subject analysis"
+            >
+              <BookOpen size={14} color="#047857" /> Gradebook Central <ChevronRight size={13} />
+            </button>
+          )}
+
           {isExecutive ? (
             <>
               {Object.keys(editedScores).length > 0 && (
@@ -451,7 +489,7 @@ export default function MeritListModule({
                 }}
               >
                 {isPublished ? <Unlock size={14} /> : <Lock size={14} />}
-                {isPublished ? 'Unpublish / Revoke' : 'Approve & Publish Results'}
+                {isPublished ? 'Unpublish / Revoke' : 'Approve & Publish (DoS)'}
               </button>
             </>
           ) : (

@@ -266,7 +266,7 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
   };
 
   return (
-    <div style={{ background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
+    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
       {/* ── PAGE HEADER ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
         <div>
@@ -448,9 +448,11 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
           schoolSettings={store?.settings}
           teachers={rawStaff}
           classes={dynamicClasses}
-          userRole={user?.role || 'dos'}
+          userRole={user?.role || store?.user?.role || 'dos'}
           currentStudentId={user?.student_id || user?.id}
           notify={notify}
+          onUpdateSettings={store?.updateSettings || ((partial) => store?.setSettings && store.setSettings(prev => ({ ...prev, ...partial })))}
+          onNavigateGradebook={() => store?.navigate && store.navigate('gradebook')}
           onUpdateStudentScores={(editedScores) => {
             Object.entries(editedScores).forEach(([key, val]) => {
               const [studentId, subject] = key.split('_');
