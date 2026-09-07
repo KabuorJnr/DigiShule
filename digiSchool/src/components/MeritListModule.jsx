@@ -751,11 +751,11 @@ export default function MeritListModule({
                   <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                     {activeCurriculum === '844' ? (
                       <Badge color={s.meanGrade === 'A' || s.meanGrade === 'A-' ? 'green' : s.meanGrade === 'E' || s.meanGrade === 'D-' ? 'red' : 'blue'}>
-                        {s.meanGrade} ({s.points}pts)
+                        {s.meanGrade} ({s.points} pts)
                       </Badge>
                     ) : (
-                      <Badge color={s.meanGrade === 'EE' ? 'green' : s.meanGrade === 'BE' ? 'red' : 'blue'}>
-                        {s.meanGrade}
+                      <Badge color={s.meanGrade?.startsWith('EE') || s.meanGrade?.startsWith('ME') ? 'green' : s.meanGrade?.startsWith('AE') ? 'amber' : 'red'}>
+                        {s.meanGrade} ({s.points} pts)
                       </Badge>
                     )}
                   </td>

@@ -1,7 +1,57 @@
 import { describe, it, expect } from 'vitest';
-import { computeRow, gradeFor, remarkFor, subjectAverage, studentOverall, is844Class, computeStudentReport, pointsForGrade } from '../utils/grading';
+import { 
+  computeRow, 
+  gradeFor, 
+  remarkFor, 
+  subjectAverage, 
+  studentOverall, 
+  is844Class, 
+  computeStudentReport, 
+  pointsForGrade,
+  percentageToCbcPoints,
+  percentageToCbcGrade,
+  formatCbcConversion
+} from '../utils/grading';
 
 describe('grading calculations', () => {
+  it('converts percentage marks directly to CBC point system and performance levels', () => {
+    // 8-tier KNEC point scale from percentage
+    expect(percentageToCbcPoints(95)).toBe(8); // EE1 -> 8 pts
+    expect(percentageToCbcPoints(82)).toBe(7); // EE2 -> 7 pts
+    expect(percentageToCbcPoints(65)).toBe(6); // ME1 -> 6 pts
+    expect(percentageToCbcPoints(50)).toBe(5); // ME2 -> 5 pts
+    expect(percentageToCbcPoints(35)).toBe(4); // AE1 -> 4 pts
+    expect(percentageToCbcPoints(25)).toBe(3); // AE2 -> 3 pts
+    expect(percentageToCbcPoints(15)).toBe(2); // BE1 -> 2 pts
+    expect(percentageToCbcPoints(5)).toBe(1);  // BE2 -> 1 pt
+
+    // 4-tier rubric scale from percentage
+    expect(percentageToCbcPoints(95, 4)).toBe(4); // EE -> 4 pts
+    expect(percentageToCbcPoints(82, 4)).toBe(4); // EE -> 4 pts
+    expect(percentageToCbcPoints(65, 4)).toBe(3); // ME -> 3 pts
+    expect(percentageToCbcPoints(50, 4)).toBe(3); // ME -> 3 pts
+    expect(percentageToCbcPoints(35, 4)).toBe(2); // AE -> 2 pts
+    expect(percentageToCbcPoints(15, 4)).toBe(1); // BE -> 1 pt
+
+    // Grade codes from percentage
+    expect(percentageToCbcGrade(92)).toBe('EE1');
+    expect(percentageToCbcGrade(78)).toBe('EE2');
+    expect(percentageToCbcGrade(62)).toBe('ME1');
+    expect(percentageToCbcGrade(45)).toBe('ME2');
+    expect(percentageToCbcGrade(32)).toBe('AE1');
+    expect(percentageToCbcGrade(22)).toBe('AE2');
+    expect(percentageToCbcGrade(12)).toBe('BE1');
+    expect(percentageToCbcGrade(8)).toBe('BE2');
+
+    // Full structured conversion
+    const conv = formatCbcConversion(78);
+    expect(conv.percentage).toBe(78);
+    expect(conv.gradeCode).toBe('EE2');
+    expect(conv.points).toBe(7);
+    expect(conv.rubricPoints).toBe(4);
+    expect(conv.remark).toBe('Exceeding Expectations');
+  });
+
   it('assigns correct CBC grade for standard thresholds and 1-4 rubric points', () => {
     // 8-tier CBC scale: EE1/EE2/ME1/ME2/AE1/AE2/BE1/BE2
     expect(gradeFor(95)).toBe('EE1'); // 90-100
@@ -14,7 +64,6 @@ describe('grading calculations', () => {
     expect(gradeFor(5)).toBe('BE2');  // 0-10
 
     // 1, 2, 3, 4 rubric scale maps to the 8-tier grades in 0.5-point buckets.
-    // Buckets (>=): 3.5→EE1, 3.0→EE2, 2.5→ME1, 2.0→ME2, 1.5→AE1, 1.0→AE2, 0.5→BE1, else BE2
     expect(gradeFor(4, null, 'CBC')).toBe('EE1');
     expect(gradeFor(3, null, 'CBC')).toBe('EE2');
     expect(gradeFor(2, null, 'CBC')).toBe('ME2');
@@ -107,5 +156,35 @@ describe('grading calculations', () => {
     expect(report.totalPoints).toBe(23); // 12 + 11
     expect(report.meanGradeCode).toBe('A-');
     expect(report.className).toBe('Form 3 East');
+  });
+
+  it('computes percentage row averages correctly and handles absent X', () => {
+    const pctScores = { a1: 75, a2: 85, a3: 90, a4: 0 };
+    const row = computeRow(pctScores);
+    expect(row.average).toBe(83.3); // (75 + 85 + 90) / 3
+
+    const absentScores = { a1: 80, a2: 'X', a3: 70, a4: 0 };
+    const absentRow = computeRow(absentScores);
+    expect(absentRow.average).toBe(75); // (80 + 70) / 2
+  });
+
+  it('computes report for CBC student with 8-tier points and percentage scale', () => {
+    const student = {
+      id: 'stu-cbc7',
+      name: 'Brian Mwangi',
+      adm: '7A-001',
+      class: 'Grade 7A',
+      scores: {
+        Mathematics: { a1: 80, a2: 90, a3: 85, a4: 95 }, // avg = 87.5% -> EE2 -> 7 pts
+        English: { a1: 70, a2: 60, a3: 65, a4: 65 }       // avg = 65% -> ME1 -> 6 pts
+      }
+    };
+    const subjects = ['Mathematics', 'English'];
+    const report = computeStudentReport({ student, students: [student], subjects });
+
+    expect(report.systemType).toBe('CBC');
+    expect(report.totalPoints).toBe(13); // 7 + 6
+    expect(report.meanGradeCode).toBe('EE2');
+    expect(report.maxPointsPerSubject).toBe(8);
   });
 });

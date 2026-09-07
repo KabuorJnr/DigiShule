@@ -463,6 +463,25 @@ export default function DosDashboard({ store, user }) {
           userRole={user?.role || 'dos'}
           currentStudentId={user?.student_id || user?.id}
           notify={notify}
+          onUpdateStudentScores={(editedScores) => {
+            Object.entries(editedScores).forEach(([key, val]) => {
+              const [studentId, subject] = key.split('_');
+              const target = students.find(s => String(s.id) === String(studentId));
+              if (target) {
+                const currentScores = target.scores || {};
+                const subjectScores = currentScores[subject] || {};
+                const updated = {
+                  ...target,
+                  scores: {
+                    ...currentScores,
+                    [subject]: typeof subjectScores === 'object' ? { ...subjectScores, average: val, score: val } : val
+                  }
+                };
+                if (store.updateStudent) store.updateStudent(updated);
+                setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? updated : s));
+              }
+            });
+          }}
         />
       )}
 

@@ -10,7 +10,8 @@ import WeeklyBrief from '../components/WeeklyBrief';
 import BenchmarkCard from '../components/BenchmarkCard';
 import StreamPerformanceGraph from '../components/StreamPerformanceGraph';
 import AcademicAnalytics from '../components/AcademicAnalytics';
-import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap } from 'lucide-react';
+import ClassSubjectAnalysis from '../components/ClassSubjectAnalysis';
+import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap, Layers } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
 function Stat({ label, value, color, sub, icon: IconComp }) {
@@ -344,6 +345,7 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, gap: 4, flexWrap: 'wrap' }}>
         {[
           { id: 'overview', label: 'Overview' },
+          { id: 'class_analysis', label: 'Class & Subject Analysis' },
           { id: 'merit', label: 'Merit list', badge: meritList.length },
           { id: 'audit', label: 'Marks audit', badge: `${auditStats.overallPct}%` },
           { id: 'slips', label: 'Result slips', badge: activeStudentsList.length },
@@ -419,12 +421,24 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
               <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('slips')}>
                 <Printer size={15} style={{ marginRight: 6 }} /> Result Slips Hub
               </button>
+              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('class_analysis')}>
+                <Layers size={15} style={{ marginRight: 6 }} /> Class Analysis
+              </button>
               <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => navigate('gradebook')}>
                 <FileText size={15} style={{ marginRight: 6 }} /> Gradebook Review
               </button>
             </div>
           </div>
         </>
+      )}
+
+      {/* ── TAB: CLASS & SUBJECT ANALYSIS ── */}
+      {activeTab === 'class_analysis' && (
+        <ClassSubjectAnalysis 
+          students={activeStudentsList} 
+          gradeBoundaries={store?.gradeBoundaries} 
+          schoolSettings={settings} 
+        />
       )}
 
       {/* ── TAB 2: MERIT LIST & PERFORMANCE ── */}
@@ -437,6 +451,25 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
           userRole={user?.role || 'dos'}
           currentStudentId={user?.student_id || user?.id}
           notify={notify}
+          onUpdateStudentScores={(editedScores) => {
+            Object.entries(editedScores).forEach(([key, val]) => {
+              const [studentId, subject] = key.split('_');
+              const target = rawStudents.find(s => String(s.id) === String(studentId));
+              if (target) {
+                const currentScores = target.scores || {};
+                const subjectScores = currentScores[subject] || {};
+                const updated = {
+                  ...target,
+                  scores: {
+                    ...currentScores,
+                    [subject]: typeof subjectScores === 'object' ? { ...subjectScores, average: val, score: val } : val
+                  }
+                };
+                if (store.updateStudent) store.updateStudent(updated);
+                setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? updated : s));
+              }
+            });
+          }}
         />
       )}
 

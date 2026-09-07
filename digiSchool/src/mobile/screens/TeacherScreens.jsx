@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { BookOpen, Award, MessageSquare, Inbox, CornerUpLeft, Users, Check, UserX } from 'lucide-react';
-import { subjectAverage, gradeFor, is844Class } from '../../utils/grading';
+import { subjectAverage, gradeFor, is844Class, pointsForGrade } from '../../utils/grading';
 import { upsertRow } from '../../lib/api';
 import { useTable, Empty, SecHead, Loading, Prog, Composer } from './kit';
 
@@ -156,10 +156,24 @@ export function TeacherMarks({ store, params }) {
       <div className="eom-list-card">
         {students.map((s, idx) => {
           const isAbs = marks[s.id] === ABSENT;
+          const raw = marks[s.id];
+          const hasVal = raw !== '' && raw !== undefined && raw !== null && !isAbs;
+          const pct = hasVal ? Math.max(0, Math.min(100, Math.round((Number(raw) || 0) / max * 100))) : null;
+          const sys = is844Class(s.class) ? '844' : 'CBC';
+          const grade = pct !== null ? gradeFor(pct, store.gradeBoundaries, sys) : null;
+          const pts = grade ? pointsForGrade(grade, sys) : null;
+
           return (
             <div className="eom-markrow" key={s.id}>
               <span className="eom-mk-adm">{s.adm || '—'}</span>
-              <div className="eom-marklt"><b>{s.name}</b></div>
+              <div className="eom-marklt">
+                <b>{s.name}</b>
+                {hasVal && pct !== null && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#0369a1', marginTop: 2, display: 'block' }}>
+                    {pct}% → {grade} ({pts} pts)
+                  </span>
+                )}
+              </div>
               {saved === s.id && <span className="eom-marksaved"><Check size={14} /></span>}
               <input
                 ref={(el) => { inputs.current[idx] = el; }}
@@ -179,7 +193,7 @@ export function TeacherMarks({ store, params }) {
           );
         })}
       </div>
-      <p className="eom-markhint">Key each mark out of {max} and press <b>next</b> to jump to the student below. Tap the person icon to mark <b>Absent (X)</b>. Grades and % are worked out automatically.</p>
+      <p className="eom-markhint">Key each mark out of {max} and press <b>next</b> to jump to the student below. Tap the person icon to mark <b>Absent (X)</b>. The system converts raw marks to percentages and CBC points automatically.</p>
     </>
   );
 }

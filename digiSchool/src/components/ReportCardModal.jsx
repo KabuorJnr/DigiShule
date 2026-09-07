@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
-import { computeStudentReport } from '../utils/grading';
+import { computeStudentReport, cbcOfficialComment } from '../utils/grading';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -242,19 +242,21 @@ export default function ReportCardModal({
               </thead>
               <tbody>
                 {report.subjectRows.map(row => {
-                  const dev = (row.score || 0) - 65; // Mock dev logic for now, using 65 as baseline
+                  const dev = (row.score || 0) - 65;
                   const devColor = dev > 0 ? '#16a34a' : (dev < 0 ? '#dc2626' : '#475569');
-                  const devSymbol = dev > 0 ? '↑' : (dev < 0 ? '↓' : '-');
+                  const devSymbol = dev > 0 ? '↗' : (dev < 0 ? '↘' : '—');
+                  const officialRemark = row.remark && row.remark !== 'No Score' ? row.remark : (cbcOfficialComment(row.gradeCode, row.subject));
+                  const teacherName = student?.scores?.[row.subject]?.teacher || 'Academic Dept';
                   return (
                     <tr key={row.subject} style={{ borderBottom: `1px solid #e2e8f0` }}>
                       <td style={{ padding: '10px 12px', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.subject}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderRight: '1px solid #e2e8f0' }}>{row.scoreText || '—'}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', color: devColor, fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>
-                        {dev > 0 ? `+${dev}` : dev} {dev !== 0 && devSymbol}
+                        {dev !== 0 ? `${dev > 0 ? `+${dev}` : dev} ${devSymbol}` : '0 →'}
                       </td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, borderRight: '1px solid #e2e8f0' }}>{row.gradeCode || row.gradeFull || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, borderRight: '1px solid #e2e8f0' }}>{row.remark}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12 }}>{/* Teacher name placeholder for now */ 'Academic Dept'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, borderRight: '1px solid #e2e8f0' }}>{officialRemark}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12 }}>{teacherName}</td>
                     </tr>
                   )
                 })}
@@ -266,7 +268,7 @@ export default function ReportCardModal({
               <div style={{ flex: 1, padding: 16, borderRight: '1px solid #94a3b8' }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Class Teacher Remarks:</div>
                 <div style={{ fontSize: 13, lineHeight: 1.6, minHeight: 60 }}>
-                  {report.studentName.split(' ')[0]}, you're meeting the expected standards with solid effort. Continue this positive momentum, and you'll continue to excel.
+                  {student.classTeacherRemarks || `${report.studentName.split(' ')[0]}, you're meeting the expected standards with solid effort. Continue this positive momentum, and you'll continue to excel.`}
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
@@ -278,16 +280,35 @@ export default function ReportCardModal({
                 </div>
               </div>
               <div style={{ flex: 1, padding: 16, position: 'relative' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Chief Principal Remarks: {schoolSettings.principal || ''}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Chief Principal Remarks: {schoolSettings.principal || 'Dr. Joshua Harisson Miyawa'}</div>
                 <div style={{ fontSize: 13, lineHeight: 1.6, minHeight: 60 }}>
-                  {report.studentName.split(' ')[0]}, you are performing well and meeting expectations. Your progress is steady, and with continued focus and dedication, you will continue to grow. Keep up the good work.
+                  {student.principalRemarks || `${report.studentName.split(' ')[0]}, you are performing well and meeting expectations. Your progress is steady, and with continued focus and dedication, you will continue to grow. Keep up the good work - you're on track for success!`}
                 </div>
-                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
-                  <div style={{ width: 140, borderBottom: '1px solid #334155', position: 'relative' }}>
-                    <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
-                      <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
-                    </svg>
+                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
+                    <div style={{ width: 120, borderBottom: '1px solid #334155', position: 'relative' }}>
+                      <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
+                        <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
+                      </svg>
+                    </div>
+                  </div>
+                  {/* Official Stamp */}
+                  <div style={{ 
+                    border: '2px solid #1e3a8a', 
+                    color: '#1e3a8a', 
+                    borderRadius: 4, 
+                    padding: '3px 8px', 
+                    fontSize: 9, 
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    transform: 'rotate(-2deg)',
+                    opacity: 0.88
+                  }}>
+                    <div>CHIEF PRINCIPAL</div>
+                    <div>{(schoolSettings.name || 'HOMA BAY HIGH SCHOOL').toUpperCase()}</div>
+                    <div>{schoolSettings.address ? schoolSettings.address.split(',')[0] : 'P. O. Box 22 - 40300, HOMA-BAY'}</div>
                   </div>
                 </div>
               </div>

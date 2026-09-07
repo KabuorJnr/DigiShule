@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
-import { computeRow, gradeFor, is844Class } from '../utils/grading';
+import { computeRow, gradeFor, is844Class, pointsForGrade } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -10,6 +10,7 @@ import { reportError } from '../lib/errorReporter';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
+  const [outOf, setOutOf] = useState(100); // Raw marks normalize to percentage
   const teacherName = user?.name || 'Teacher';
 
   const teacherProfile = useMemo(() => {
@@ -206,32 +207,56 @@ export default function TeacherPortal({ store, user }) {
   };
 
   function saveScore(id, field, value) {
-    const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
-    if (target) {
-      const currentScores = target.scores || {};
-      const subjectScores = currentScores[subject] || {};
-      const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
-      store.updateStudent(updated);
-      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
+    if (!target) return;
+    let v;
+    if (field === 'remarks') {
+      v = value;
+    } else if (String(value).trim().toLowerCase() === 'x') {
+      v = 'X';
+    } else if (String(value).trim() === '') {
+      v = 0;
+    } else {
+      const max = Math.max(1, Number(outOf) || 100);
+      v = Math.max(0, Math.min(100, Math.round((Number(value) || 0) / max * 100)));
     }
+    const currentScores = target.scores || {};
+    const subjectScores = currentScores[subject] || {};
+    const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
+    store.updateStudent(updated);
+    setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     setEditing(null);
   }
 
-  const ScoreCell = ({ r, field }) => {
+  const ScoreCell = ({ r, field, sortedRows }) => {
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (
         <td>
           <input
             style={{ 
-              width: field === 'remarks' ? '120px' : '48px', 
-              height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none' 
+              width: field === 'remarks' ? '120px' : '52px', 
+              height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none',
+              textAlign: field === 'remarks' ? 'left' : 'center', fontWeight: 600
             }}
-            type={field === 'remarks' ? "text" : "number"}
+            type="text"
+            inputMode={field === 'remarks' ? undefined : 'numeric'}
+            enterKeyHint="next"
+            placeholder={field === 'remarks' ? '' : `/${Math.max(1, Number(outOf) || 100)}`}
             autoFocus
-            defaultValue={r[field]}
-            onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
+            defaultValue={r[field] === 'X' ? 'X' : (r[field] || '')}
+            onKeyDown={(e) => { 
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                saveScore(r.id, field, e.target.value); 
+                if (field !== 'remarks' && sortedRows) {
+                  const idx = sortedRows.findIndex(x => x.id === r.id);
+                  const next = sortedRows[idx + 1];
+                  if (next) setEditing({ id: next.id, field });
+                }
+              }
+              if (e.key === 'Escape') setEditing(null); 
+            }}
             onBlur={(e) => saveScore(r.id, field, e.target.value)}
           />
         </td>
@@ -239,11 +264,11 @@ export default function TeacherPortal({ store, user }) {
     }
     return (
       <td 
-        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '40px', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
+        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '48px', textAlign: field === 'remarks' ? 'left' : 'center', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
         onClick={() => setEditing({ id: r.id, field })} 
-        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}`}
+        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(0-100% or raw marks)'}`}
       >
-        {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
+        {r[field] !== undefined && r[field] !== null && r[field] !== '' ? (r[field] === 'X' ? 'X' : (field === 'remarks' ? r[field] : `${r[field]}%`)) : (field === 'remarks' ? 'Add remark...' : '-')}
       </td>
     );
   };
@@ -256,7 +281,8 @@ export default function TeacherPortal({ store, user }) {
         const systemType = is844Class(s.class) ? '844' : 'CBC';
         const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
         const grade = gradeFor(percentage, gradeBoundaries, systemType);
-        return { ...s, ...row, percentage, grade };
+        const points = pointsForGrade(grade, systemType);
+        return { ...s, ...row, percentage, grade, points, systemType };
       });
   }, [loadedStudents, gradeBoundaries, subject]);
 
@@ -264,7 +290,7 @@ export default function TeacherPortal({ store, user }) {
   const avgOverall = rows.length
     ? (rows.reduce((s, r) => s + r.average, 0) / rows.length).toFixed(1)
     : 0;
-  const atRisk = rows.filter((r) => r.average < 40).length;
+  const atRisk = rows.filter((r) => r.average > 0 && r.average < 40).length;
   const topPerformer = rows.reduce((best, r) => (!best || r.average > best.average ? r : best), null);
 
   const pendingLeaves = leaveRequests.filter(l => l.status === 'Pending').length;
@@ -412,11 +438,26 @@ export default function TeacherPortal({ store, user }) {
 
       {/* Gradebook Table */}
       <div className="card card-pad">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div className="section-title" style={{ margin: 0 }}>{subject} - Student Results</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="section-title" style={{ margin: 0 }}>{subject} - Marks Entry & CBC Conversion</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6 }}>
+              <span style={{ fontWeight: 600, color: '#475569' }}>Marks out of:</span>
+              <input 
+                className="input" 
+                type="number" 
+                min="1" 
+                max="1000" 
+                value={outOf} 
+                onChange={(e) => setOutOf(e.target.value.replace(/[^\d]/g, '') || '')}
+                style={{ width: 64, height: 26, textAlign: 'center', padding: '0 4px', fontSize: 12, fontWeight: 700 }}
+                title="Raw marks entered are automatically converted to percentages and CBC points."
+              />
+            </div>
+          </div>
           {topPerformer && (
             <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
-              Top: {topPerformer.name} ({topPerformer.average}%)
+              Top: {topPerformer.name} ({topPerformer.average}% · {topPerformer.points} pts)
             </div>
           )}
         </div>
@@ -431,30 +472,38 @@ export default function TeacherPortal({ store, user }) {
               <thead>
                 <tr>
                   <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
-                  <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
-                  <th>Avg Rubric</th><th>Grade</th><th>Remarks</th>
+                  <th>Ass. 1 (%)</th><th>Ass. 2 (%)</th><th>Ass. 3 (%)</th><th>Ass. 4 (%)</th>
+                  <th>Avg (%)</th>
+                  <th>CBC Points</th>
+                  <th>Performance Level</th>
+                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
                 {rows
                   .sort((a, b) => b.average - a.average)
-                  .map((r, i) => (
-                    <tr key={r.id}>
+                  .map((r, i, sorted) => (
+                    <tr key={r.id} style={r.average > 0 && r.average < 40 ? { background: '#fee2e2' } : undefined}>
                       <td className="muted">{i + 1}</td>
                       <td style={{ fontWeight: 600 }}>{r.name}</td>
                       <td className="muted">{r.adm}</td>
                       <td><Badge color="gray">{r.class}</Badge></td>
-                      <ScoreCell r={r} field="a1" />
-                      <ScoreCell r={r} field="a2" />
-                      <ScoreCell r={r} field="a3" />
-                      <ScoreCell r={r} field="a4" />
-                      <td style={{ fontWeight: 700 }}>{r.average || '-'}</td>
+                      <ScoreCell r={r} field="a1" sortedRows={sorted} />
+                      <ScoreCell r={r} field="a2" sortedRows={sorted} />
+                      <ScoreCell r={r} field="a3" sortedRows={sorted} />
+                      <ScoreCell r={r} field="a4" sortedRows={sorted} />
+                      <td style={{ fontWeight: 700, color: '#0369A1' }}>{r.average > 0 ? `${r.average}%` : '-'}</td>
                       <td>
-                        <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
+                        {r.points > 0 ? (
+                          <Badge color="blue">{r.points} pts</Badge>
+                        ) : '-'}
+                      </td>
+                      <td>
+                        <Badge color={r.grade?.startsWith('EE') || r.grade?.startsWith('ME') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : r.grade?.startsWith('AE') || ['C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
                           {r.grade}
                         </Badge>
                       </td>
-                      <ScoreCell r={r} field="remarks" />
+                      <ScoreCell r={r} field="remarks" sortedRows={sorted} />
                     </tr>
                   ))}
               </tbody>

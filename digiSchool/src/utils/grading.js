@@ -67,19 +67,61 @@ export function is844Class(className = '') {
   return str.includes('form') || str.includes('8-4-4') || str.includes('844') || str.includes('kcse');
 }
 
-// Assesses 4 rubric scores out of 4 (e.g. strands). Returns average rubric.
+// Assesses 4 assessment percentage scores (0-100%). Returns average percentage.
 export function computeRow(scores = {}) {
   const safeScores = scores || {};
-  const a1 = Number(safeScores.a1) || 0;
-  const a2 = Number(safeScores.a2) || 0;
-  const a3 = Number(safeScores.a3) || 0;
-  const a4 = Number(safeScores.a4) || 0;
+  const a1 = safeScores.a1 === 'X' ? 'X' : (Number(safeScores.a1) || 0);
+  const a2 = safeScores.a2 === 'X' ? 'X' : (Number(safeScores.a2) || 0);
+  const a3 = safeScores.a3 === 'X' ? 'X' : (Number(safeScores.a3) || 0);
+  const a4 = safeScores.a4 === 'X' ? 'X' : (Number(safeScores.a4) || 0);
   
-  // Calculate average only over completed assessments (score > 0)
-  const validScores = [a1, a2, a3, a4].filter(v => v > 0);
+  // Calculate average only over completed assessments (numerical score > 0)
+  const validScores = [a1, a2, a3, a4].filter(v => typeof v === 'number' && v > 0);
   const average = validScores.length > 0 ? validScores.reduce((sum, v) => sum + v, 0) / validScores.length : 0;
   
   return { a1, a2, a3, a4, average: Math.round(average * 10) / 10, remarks: safeScores.remarks || '' };
+}
+
+// Convert percentage (0-100) directly to CBC Points (default 8-tier KNEC point scale, or 4-tier rubric)
+export function percentageToCbcPoints(percentage, scale = 8, boundaries = null) {
+  if (percentage === null || percentage === undefined || isNaN(percentage)) return 0;
+  const grade = gradeFor(percentage, boundaries, 'CBC');
+  const pts8 = pointsForGrade(grade, 'CBC');
+  if (scale === 4) {
+    // 4-tier rubric points: EE -> 4, ME -> 3, AE -> 2, BE -> 1
+    if (pts8 >= 7) return 4;
+    if (pts8 >= 5) return 3;
+    if (pts8 >= 3) return 2;
+    if (pts8 >= 1) return 1;
+    return 1;
+  }
+  return pts8;
+}
+
+// Convert percentage (0-100) to CBC Grade Code
+export function percentageToCbcGrade(percentage, boundaries = null) {
+  return gradeFor(percentage, boundaries, 'CBC');
+}
+
+// Full CBC Conversion Payload from Percentage/Score
+export function formatCbcConversion(scoreOrPct, boundaries = null, systemType = 'CBC') {
+  if (scoreOrPct === null || scoreOrPct === undefined || isNaN(scoreOrPct)) {
+    return { percentage: 0, gradeCode: '-', gradeFull: '-', points: 0, rubricPoints: 0, remark: 'No Score' };
+  }
+  const pct = Math.max(0, Math.min(100, Math.round(Number(scoreOrPct))));
+  const gCode = gradeFor(pct, boundaries, systemType);
+  const gFull = fullGradeName(gCode, systemType);
+  const pts = pointsForGrade(gCode, systemType);
+  const rubricPts = systemType === '844' ? pts : (pts >= 7 ? 4 : pts >= 5 ? 3 : pts >= 3 ? 2 : 1);
+  const rmk = remarkFor(gCode, systemType);
+  return {
+    percentage: pct,
+    gradeCode: gCode,
+    gradeFull: gFull,
+    points: pts,
+    rubricPoints: rubricPts,
+    remark: rmk
+  };
 }
 
 // Map numerical average/score (0-100 or 1-4 rubric points) to a grade.
@@ -163,6 +205,66 @@ export function pointsForGrade(grade, systemType = 'CBC') {
   if (typeof grade === 'string' && grade.includes('AE')) return 4;
   if (typeof grade === 'string' && grade.includes('BE')) return 2;
   return 0;
+}
+
+export const GRADE_DESCRIPTORS_TABLE = [
+  { level: 'Exceeding Expectations', performance: 'EE1', points: 8, range: '90-100' },
+  { level: 'Exceeding Expectations', performance: 'EE2', points: 7, range: '75-89' },
+  { level: 'Meeting Expectations', performance: 'ME1', points: 6, range: '58-74' },
+  { level: 'Meeting Expectations', performance: 'ME2', points: 5, range: '41-57' },
+  { level: 'Approaching Expectations', performance: 'AE1', points: 4, range: '31-40' },
+  { level: 'Approaching Expectations', performance: 'AE2', points: 3, range: '21-30' },
+  { level: 'Below Expectations', performance: 'BE1', points: 2, range: '11-20' },
+  { level: 'Below Expectations', performance: 'BE2', points: 1, range: '0-10' },
+];
+
+export function cbcOfficialComment(gradeCode, subjectName = '') {
+  if (!gradeCode || gradeCode === '-') return 'No score recorded.';
+  const code = String(gradeCode).toUpperCase();
+  const isKiswahili = String(subjectName).toLowerCase().includes('kiswahili');
+
+  if (isKiswahili) {
+    if (code.includes('EE1')) return 'Utendaji bora wa kipekee; endelea hivyo!';
+    if (code.includes('EE2') || code === 'EE') return 'Utendaji bora wa kupigiwa mfano; endelea kuongoza!';
+    if (code.includes('ME1') || code === 'ME') return 'Umefikia viwango vya msingi; endelea.';
+    if (code.includes('ME2')) return 'Uthabiti mzuri katika utendaji; dumisha.';
+    if (code.includes('AE1') || code === 'AE') return 'Unahitaji bidii zaidi na usaidizi.';
+    if (code.includes('AE2')) return 'Unakaribia viwango; ongeza mazoezi.';
+    if (code.includes('BE1') || code === 'BE') return 'Chini ya viwango; unahitaji usaidizi wa ziada.';
+    if (code.includes('BE2')) return 'Chini ya viwango; unahitaji uangalizi wa haraka.';
+    return 'Umefikia viwango vya msingi; endelea.';
+  }
+
+  if (code.includes('EE1')) return 'Outstanding performance; excellent mastery!';
+  if (code.includes('EE2') || code === 'EE') return 'Outstanding performance; lead on!';
+  if (code.includes('ME1') || code === 'ME') return 'Meets basic standards; keep going.';
+  if (code.includes('ME2')) return 'Consistent performance; maintain.';
+  if (code.includes('AE1') || code === 'AE') return 'Needs more effort and help.';
+  if (code.includes('AE2')) return 'Approaching standards; more practice needed.';
+  if (code.includes('BE1') || code === 'BE') return 'Below standards; requires intensive support.';
+  if (code.includes('BE2')) return 'Below standards; immediate remedial intervention needed.';
+
+  // KCSE 8-4-4 fallbacks
+  if (['A', 'A-'].includes(code)) return 'Excellent performance; keep leading!';
+  if (['B+', 'B', 'B-'].includes(code)) return 'Good performance; aim higher!';
+  if (['C+', 'C', 'C-'].includes(code)) return 'Fair effort; can do better.';
+  if (['D+', 'D', 'D-'].includes(code)) return 'Below average; needs focused revision.';
+  if (code === 'E') return 'Needs serious effort and guidance.';
+
+  return 'Satisfactory work; keep striving.';
+}
+
+export function calculateSubjectDeviation(studentScore, benchmarkScore = 65) {
+  if (studentScore === null || studentScore === undefined || isNaN(studentScore) || studentScore === 0) {
+    return { dev: 0, text: '-', arrow: '', color: '#6b7280' };
+  }
+  const dev = Math.round(Number(studentScore) - Number(benchmarkScore));
+  if (dev > 0) {
+    return { dev, text: `+${dev}`, arrow: '↗', color: '#16a34a' };
+  } else if (dev < 0) {
+    return { dev, text: `${dev}`, arrow: '↘', color: '#dc2626' };
+  }
+  return { dev: 0, text: '0', arrow: '→', color: '#64748b' };
 }
 
 export function remarkFor(grade, systemType = 'CBC') {
