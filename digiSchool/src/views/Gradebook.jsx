@@ -445,10 +445,10 @@ export default function Gradebook({ store }) {
         <td style={{ padding: '4px 6px', textAlign: field === 'remarks' ? 'left' : 'center' }}>
           <input
             style={{
-              width: field === 'remarks' ? '140px' : '58px',
-              height: '32px',
-              padding: '0 6px',
-              border: '2px solid #047857',
+              width: field === 'remarks' ? '150px' : '62px',
+              height: '34px',
+              padding: '0 8px',
+              border: '2px solid #059669',
               borderRadius: '6px',
               outline: 'none',
               textAlign: field === 'remarks' ? 'left' : 'center',
@@ -457,7 +457,7 @@ export default function Gradebook({ store }) {
               fontFamily: "'Poppins', sans-serif",
               background: '#f0fdf4',
               color: '#064e3b',
-              boxShadow: '0 0 0 3px rgba(4, 120, 87, 0.15)'
+              boxShadow: '0 0 0 3px rgba(5, 150, 105, 0.18)'
             }}
             type="text"
             inputMode={field === 'remarks' ? undefined : 'numeric'}
@@ -487,17 +487,15 @@ export default function Gradebook({ store }) {
         </td>
       );
     }
+    const hasValue = r[field] !== undefined && r[field] !== null && r[field] !== '' && r[field] !== 0;
     return (
       <td 
         style={{ 
           cursor: canEditCurrentSubject ? 'pointer' : 'not-allowed', 
-          minWidth: field === 'remarks' ? '130px' : '52px', 
+          minWidth: field === 'remarks' ? '130px' : '56px', 
           textAlign: field === 'remarks' ? 'left' : 'center',
-          fontWeight: field === 'remarks' ? 400 : 600, 
-          color: field === 'remarks' ? '#475569' : '#0369A1',
-          opacity: canEditCurrentSubject ? 1 : 0.65,
-          transition: 'background 0.12s ease',
-          borderRadius: 4
+          padding: '6px 4px',
+          opacity: canEditCurrentSubject ? 1 : 0.65
         }} 
         onClick={() => {
           if (!canEditCurrentSubject) {
@@ -509,16 +507,21 @@ export default function Gradebook({ store }) {
         title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(Enter raw mark or %)'}` : `View only: Assigned to teach ${allowedSubjects.join(', ')}`}
       >
         <div style={{
-          padding: '4px 6px',
-          borderRadius: 4,
-          background: 'transparent',
+          padding: field === 'remarks' ? '4px 8px' : '4px 8px',
+          borderRadius: 6,
+          background: hasValue ? (field === 'remarks' ? '#f8fafc' : '#f0fdf4') : '#ffffff',
+          border: hasValue ? (field === 'remarks' ? '1px solid #e2e8f0' : '1px solid #bbf7d0') : '1px dashed #cbd5e1',
           display: 'inline-block',
-          minWidth: field === 'remarks' ? 'auto' : 32
+          minWidth: field === 'remarks' ? 'auto' : 38,
+          color: r[field] === 'X' ? '#dc2626' : (field === 'remarks' ? '#334155' : '#065f46'),
+          fontWeight: field === 'remarks' ? 400 : 700,
+          fontSize: 12.5,
+          transition: 'all 0.15s ease'
         }}>
           {r[field] !== undefined && r[field] !== null && r[field] !== '' ? (
-            r[field] === 'X' ? <span style={{ color: '#dc2626', fontWeight: 700 }}>X (Abs)</span> : (field === 'remarks' ? r[field] : `${r[field]}%`)
+            r[field] === 'X' ? <span style={{ color: '#dc2626', fontWeight: 800 }}>X (Abs)</span> : (field === 'remarks' ? r[field] : `${r[field]}%`)
           ) : (
-            <span style={{ color: '#94a3b8', fontStyle: field === 'remarks' ? 'italic' : 'normal' }}>
+            <span style={{ color: '#94a3b8', fontStyle: field === 'remarks' ? 'italic' : 'normal', fontSize: 11 }}>
               {field === 'remarks' ? '+ Remark' : '—'}
             </span>
           )}
@@ -908,46 +911,151 @@ export default function Gradebook({ store }) {
             </div>
           </div>
 
-          {/* Quick Stream KPI Ribbon */}
+          {/* Executive KPI Grid */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
-            padding: '8px 14px',
-            fontSize: 12,
-            flexWrap: 'wrap',
-            gap: 12
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: 12,
+            marginTop: 4
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
-                <Users size={14} color="#0284c7" />
-                Stream Cohort: <strong style={{ color: '#0f172a' }}>{classStudents.length} Students</strong>
-              </span>
-
-              {entryMode === 'grid' && (
-                <>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
-                    <BookOpen size={14} color="#10b981" />
-                    Graded in {subject}: <strong style={{ color: '#0f172a' }}>{rows.filter(r => r.average > 0).length} of {rows.length}</strong>
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
-                    <TrendingUp size={14} color="#8b5cf6" />
-                    Subject Mean: <strong style={{ color: '#0369a1' }}>{colAvg?.average ? `${colAvg.average}%` : '—'}</strong>
-                    {colAvg?.grade && <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>}
-                  </span>
-                </>
-              )}
+            {/* 1. Cohort Size */}
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: '#eff6ff',
+                color: '#0284c7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Users size={18} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Stream Cohort
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginTop: 1 }}>
+                  {classStudents.length} Students
+                </div>
+              </div>
             </div>
 
-            {top5[0] && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#047857', fontWeight: 600 }}>
-                <Award size={15} color="#d97706" />
-                Stream Leader: <span style={{ color: '#0f172a' }}>{top5[0].name}</span> ({top5[0].average}%)
+            {/* 2. Graded Progress */}
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: '#f0fdf4',
+                color: '#059669',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <BookOpen size={18} />
               </div>
-            )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Marks Entered
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#059669', marginTop: 1 }}>
+                  {rows.filter(r => r.average > 0).length} <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500 }}>of {rows.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Subject Mean */}
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: '#faf5ff',
+                color: '#8b5cf6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <TrendingUp size={18} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Subject Average
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#0369a1' }}>
+                    {colAvg?.average ? `${colAvg.average}%` : '—'}
+                  </span>
+                  {colAvg?.grade && <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Stream Leader */}
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: '#fffbeb',
+                color: '#d97706',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Award size={18} />
+              </div>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Top Performer
+                </div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', marginTop: 1 }}>
+                  {top5[0] ? top5[0].name : '—'} {top5[0] && <span style={{ color: '#059669', fontSize: 11.5 }}>({top5[0].average}%)</span>}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1078,28 +1186,29 @@ export default function Gradebook({ store }) {
 
             {/* High-Fidelity Table */}
             <div className="scroll-x">
-              <table className="table" style={{ width: '100%', fontSize: 13 }}>
+              <table className="table" style={{ width: '100%', fontSize: 13, borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ width: 36, textAlign: 'center' }}>
+                  <tr style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+                    <th style={{ width: 36, textAlign: 'center', borderBottom: '2px solid #cbd5e1' }}>
                       <input 
                         type="checkbox" 
                         checked={selected.length === rows.length && rows.length > 0}
                         onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                        style={{ cursor: 'pointer' }}
                       />
                     </th>
-                    <th style={{ width: 40, textAlign: 'center' }}>#</th>
-                    <th style={{ minWidth: 180 }}>Student</th>
-                    <th style={{ width: 100 }}>Adm No.</th>
-                    <th style={{ width: 75, textAlign: 'center' }}>Ass. 1</th>
-                    <th style={{ width: 75, textAlign: 'center' }}>Ass. 2</th>
-                    <th style={{ width: 75, textAlign: 'center' }}>Ass. 3</th>
-                    <th style={{ width: 75, textAlign: 'center' }}>Ass. 4</th>
-                    <th style={{ width: 85, textAlign: 'center' }}>Average</th>
-                    <th style={{ width: 90, textAlign: 'center' }}>Points</th>
-                    <th style={{ width: 110, textAlign: 'center' }}>Performance</th>
-                    <th style={{ minWidth: 160 }}>Remarks</th>
-                    <th style={{ width: 110, textAlign: 'center' }}>Action</th>
+                    <th style={{ width: 44, textAlign: 'center', color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>#</th>
+                    <th style={{ minWidth: 190, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Student</th>
+                    <th style={{ width: 100, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Adm No.</th>
+                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 1</th>
+                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 2</th>
+                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 3</th>
+                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 4</th>
+                    <th style={{ width: 95, textAlign: 'center', color: '#0369a1', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Average</th>
+                    <th style={{ width: 95, textAlign: 'center', color: '#1d4ed8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Points</th>
+                    <th style={{ width: 115, textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Performance</th>
+                    <th style={{ minWidth: 160, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Remarks</th>
+                    <th style={{ width: 110, textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1113,7 +1222,7 @@ export default function Gradebook({ store }) {
                           borderBottom: '1px solid #f1f5f9',
                           background: isAtRisk ? '#fff5f5' : (selected.includes(r.id) ? '#f0fdf4' : 'transparent'),
                           borderLeft: isAtRisk ? '3px solid #ef4444' : '3px solid transparent',
-                          transition: 'background 0.1s ease'
+                          transition: 'background 0.12s ease'
                         }}
                       >
                         <td style={{ textAlign: 'center' }}>
@@ -1121,56 +1230,94 @@ export default function Gradebook({ store }) {
                             type="checkbox" 
                             checked={selected.includes(r.id)}
                             onChange={(e) => setSelected((sel) => e.target.checked ? [...sel, r.id] : sel.filter((x) => x !== r.id))} 
+                            style={{ cursor: 'pointer' }}
                           />
                         </td>
-                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{rowNum}</td>
+                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600, fontSize: 12 }}>{rowNum}</td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{
-                              width: 28,
-                              height: 28,
+                              width: 32,
+                              height: 32,
                               borderRadius: '50%',
-                              background: '#eff6ff',
-                              color: '#1d4ed8',
+                              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                              color: '#ffffff',
                               fontSize: 11,
                               fontWeight: 800,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              flexShrink: 0
+                              flexShrink: 0,
+                              boxShadow: '0 2px 5px rgba(2, 132, 199, 0.25)'
                             }}>
                               {getInitials(r.name)}
                             </div>
-                            <div>
-                              <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, lineHeight: 1.25 }}>
                                 {r.name}
                               </div>
                               {r.flagged && (
-                                <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: 3, fontWeight: 700, marginTop: 2, display: 'inline-block' }}>
-                                  Flagged
+                                <span style={{ 
+                                  fontSize: 9.5, 
+                                  background: '#fef2f2', 
+                                  color: '#dc2626', 
+                                  border: '1px solid #fecaca',
+                                  padding: '1px 5px', 
+                                  borderRadius: 4, 
+                                  fontWeight: 800, 
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.03em',
+                                  marginTop: 2,
+                                  display: 'inline-block'
+                                }}>
+                                  Support Flag
                                 </span>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td style={{ color: '#64748b', fontWeight: 500 }}>{r.adm || '—'}</td>
+                        <td style={{ color: '#64748b', fontWeight: 600, fontSize: 12.5 }}>{r.adm || '—'}</td>
                         <ScoreCell r={r} field="a1" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                         <ScoreCell r={r} field="a2" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                         <ScoreCell r={r} field="a3" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                         <ScoreCell r={r} field="a4" editing={editing} setEditing={setEditing} saveScore={saveScore} />
                         
                         <td style={{ textAlign: 'center' }}>
-                          <span style={{ fontWeight: 800, color: r.average > 0 ? (isAtRisk ? '#dc2626' : '#0369a1') : '#94a3b8', fontSize: 13.5 }}>
-                            {r.average > 0 ? `${r.average}%` : '—'}
-                          </span>
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <span style={{ 
+                              fontWeight: 800, 
+                              color: r.average >= 75 ? '#059669' : r.average >= 58 ? '#2563eb' : r.average >= 31 ? '#d97706' : (r.average > 0 ? '#dc2626' : '#94a3b8'), 
+                              fontSize: 14 
+                            }}>
+                              {r.average > 0 ? `${r.average}%` : '—'}
+                            </span>
+                            {r.average > 0 && (
+                              <div style={{ width: 42, height: 3, background: '#e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{ 
+                                  width: `${Math.min(100, r.average)}%`, 
+                                  height: '100%', 
+                                  background: r.average >= 75 ? '#059669' : r.average >= 58 ? '#2563eb' : r.average >= 31 ? '#d97706' : '#dc2626',
+                                  borderRadius: 2
+                                }} />
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td style={{ textAlign: 'center' }}>
                           {r.points > 0 ? (
-                            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 700 }}>
+                            <span style={{ 
+                              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', 
+                              color: '#1d4ed8', 
+                              border: '1px solid #bfdbfe',
+                              padding: '2px 8px', 
+                              borderRadius: 12, 
+                              fontSize: 11.5, 
+                              fontWeight: 800 
+                            }}>
                               {r.points} pts
                             </span>
-                          ) : '—'}
+                          ) : <span style={{ color: '#94a3b8' }}>—</span>}
                         </td>
 
                         <td style={{ textAlign: 'center' }}>
@@ -1190,17 +1337,18 @@ export default function Gradebook({ store }) {
                             }}
                             title="Open official Report Form for this student"
                             style={{ 
-                              fontSize: 11, 
-                              padding: '3px 8px', 
+                              fontSize: 11.5, 
+                              padding: '4px 10px', 
                               display: 'inline-flex', 
                               alignItems: 'center', 
-                              gap: 4,
+                              gap: 5,
                               background: '#ffffff',
                               border: '1px solid #cbd5e1',
-                              borderRadius: 6
+                              borderRadius: 6,
+                              fontWeight: 600
                             }}
                           >
-                            <FileText size={12} color="#047857" /> Report Form
+                            <FileText size={13} color="#059669" /> Report Form
                           </button>
                         </td>
                       </tr>
@@ -1215,22 +1363,22 @@ export default function Gradebook({ store }) {
                         Stream Class Average
                       </td>
                       <td style={{ color: '#64748b' }}>{rows.length} Total</td>
-                      <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a1 ? `${colAvg.a1}%` : '—'}</td>
-                      <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a2 ? `${colAvg.a2}%` : '—'}</td>
-                      <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a3 ? `${colAvg.a3}%` : '—'}</td>
-                      <td style={{ textAlign: 'center', color: '#0369a1' }}>{colAvg.a4 ? `${colAvg.a4}%` : '—'}</td>
-                      <td style={{ textAlign: 'center', color: '#047857', fontSize: 14 }}>
+                      <td style={{ textAlign: 'center', color: '#065f46', fontWeight: 800, background: '#f0fdf4' }}>{colAvg.a1 ? `${colAvg.a1}%` : '—'}</td>
+                      <td style={{ textAlign: 'center', color: '#065f46', fontWeight: 800, background: '#f0fdf4' }}>{colAvg.a2 ? `${colAvg.a2}%` : '—'}</td>
+                      <td style={{ textAlign: 'center', color: '#065f46', fontWeight: 800, background: '#f0fdf4' }}>{colAvg.a3 ? `${colAvg.a3}%` : '—'}</td>
+                      <td style={{ textAlign: 'center', color: '#065f46', fontWeight: 800, background: '#f0fdf4' }}>{colAvg.a4 ? `${colAvg.a4}%` : '—'}</td>
+                      <td style={{ textAlign: 'center', color: '#059669', fontSize: 14.5 }}>
                         {colAvg.average ? `${colAvg.average}%` : '—'}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         {colAvg.points ? (
-                          <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 700 }}>
+                          <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 800 }}>
                             {colAvg.points} pts
                           </span>
                         ) : '—'}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {colAvg.grade && <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>}
+                        <Badge color={getGradeBadgeColor(colAvg.grade)}>{colAvg.grade}</Badge>
                       </td>
                       <td colSpan={2}></td>
                     </tr>
@@ -1525,10 +1673,13 @@ export default function Gradebook({ store }) {
           {/* Leaderboard & Support Spotlight */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
             {/* Top 5 Leaderboard */}
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Top 5 High Performers</h3>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706', background: '#fef3c7', padding: '2px 8px', borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Award size={18} color="#d97706" />
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Top 5 High Performers</h3>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706', background: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: 12 }}>
                   Honor Roll
                 </span>
               </div>
@@ -1540,43 +1691,57 @@ export default function Gradebook({ store }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      padding: '8px 12px',
+                      padding: '10px 12px',
                       borderRadius: 8,
                       background: i === 0 ? '#f0fdf4' : '#f8fafc',
-                      border: i === 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0'
+                      border: i === 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     <span style={{ 
-                      width: 24, 
-                      height: 24, 
+                      width: 26, 
+                      height: 26, 
                       borderRadius: '50%', 
-                      background: i === 0 ? '#d97706' : (i === 1 ? '#64748b' : (i === 2 ? '#b45309' : '#e2e8f0')),
-                      color: i < 3 ? '#ffffff' : '#475569',
-                      fontSize: 11,
+                      background: i === 0 ? '#fef3c7' : (i === 1 ? '#f1f5f9' : (i === 2 ? '#ffedd5' : '#f8fafc')),
+                      border: i === 0 ? '1px solid #fde68a' : (i === 1 ? '1px solid #cbd5e1' : (i === 2 ? '1px solid #fed7aa' : '1px solid #e2e8f0')),
+                      color: i === 0 ? '#b45309' : (i === 1 ? '#475569' : (i === 2 ? '#c2410c' : '#64748b')),
+                      fontSize: 12,
                       fontWeight: 800,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      {i + 1}
+                      {i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : `${i + 1}`))}
                     </span>
-                    <span style={{ flex: 1, fontWeight: 600, fontSize: 13, color: '#0f172a' }}>{r.name}</span>
-                    <strong style={{ color: '#047857', fontSize: 13 }}>{r.average}%</strong>
-                    <Badge color={getGradeBadgeColor(r.grade)}>{r.grade}</Badge>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                        {r.name}
+                      </div>
+                      <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, r.average)}%`, height: '100%', background: '#059669', borderRadius: 2 }} />
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#059669', fontWeight: 800, fontSize: 13.5 }}>{r.average}%</div>
+                      <div style={{ marginTop: 2 }}><Badge color={getGradeBadgeColor(r.grade)}>{r.grade}</Badge></div>
+                    </div>
                   </div>
                 ))}
-                {top5.length === 0 && <span className="muted">No student scores recorded yet.</span>}
+                {top5.length === 0 && <span className="muted" style={{ fontSize: 12, padding: 12, textAlign: 'center' }}>No student scores recorded yet.</span>}
               </div>
             </div>
 
             {/* At-Risk Remedial Spotlight */}
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
-                  At-Risk Support Spotlight (&lt; 40%)
-                </h3>
-                <span style={{ fontSize: 11, fontWeight: 700, color: atRisk.length > 0 ? '#dc2626' : '#047857', background: atRisk.length > 0 ? '#fee2e2' : '#ecfdf5', padding: '2px 8px', borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle size={18} color="#dc2626" />
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+                    Remedial Support Spotlight (&lt; 40%)
+                  </h3>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: atRisk.length > 0 ? '#dc2626' : '#059669', background: atRisk.length > 0 ? '#fee2e2' : '#f0fdf4', border: atRisk.length > 0 ? '1px solid #fecaca' : '1px solid #bbf7d0', padding: '2px 8px', borderRadius: 12 }}>
                   {atRisk.length} flagged
                 </span>
               </div>
@@ -1588,25 +1753,27 @@ export default function Gradebook({ store }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '8px 12px',
+                      padding: '10px 12px',
                       borderRadius: 8,
                       background: '#fef2f2',
                       border: '1px solid #fecaca'
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 13, color: '#991b1b' }}>{r.name}</div>
-                      <div style={{ fontSize: 11, color: '#dc2626' }}>Score: {r.average}% · {r.points} pts</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: '#991b1b' }}>{r.name}</div>
+                      <div style={{ fontSize: 11, color: '#b91c1c', marginTop: 2 }}>
+                        Current Mark: <strong>{r.average}%</strong> · {r.points} CBC Points ({r.grade})
+                      </div>
                     </div>
                     {r.flagged ? (
-                      <span style={{ fontSize: 11, color: '#92400e', background: '#fef3c7', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                      <span style={{ fontSize: 11, color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
                         Flagged for Remedial
                       </span>
                     ) : (
                       <button 
                         className="btn btn-sm" 
                         onClick={() => flagStudent(r.id)}
-                        style={{ fontSize: 11, padding: '3px 8px', background: '#ffffff', border: '1px solid #fca5a5', color: '#b91c1c' }}
+                        style={{ fontSize: 11, padding: '4px 10px', background: '#ffffff', border: '1px solid #fca5a5', color: '#b91c1c', fontWeight: 600 }}
                       >
                         Flag for Support
                       </button>
@@ -1614,10 +1781,10 @@ export default function Gradebook({ store }) {
                   </div>
                 ))}
                 {atRisk.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '24px 12px', color: '#047857' }}>
-                    <Check size={24} style={{ margin: '0 auto 6px' }} />
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>No at-risk students in this subject!</div>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>All evaluated students are scoring &ge; 40%.</div>
+                  <div style={{ textAlign: 'center', padding: '28px 12px', color: '#059669' }}>
+                    <Check size={28} style={{ margin: '0 auto 8px', background: '#f0fdf4', padding: 4, borderRadius: '50%', border: '1px solid #bbf7d0' }} />
+                    <div style={{ fontWeight: 700, fontSize: 13.5 }}>No at-risk students in this subject!</div>
+                    <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 3 }}>All evaluated students are scoring &ge; 40%.</div>
                   </div>
                 )}
               </div>
