@@ -98,6 +98,14 @@ export async function renderReportCardsPdf({
 
     if (!pageAdded) return;
     pdf.save(filename);
+  } catch (err) {
+    // Most call sites fire-and-forget this promise, so swallow the rejection
+    // here (rather than letting it surface as an unhandled rejection) and let
+    // the user know the export did not complete.
+    console.error('Report card PDF generation failed:', err);
+    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+      window.alert('Could not generate the report card PDF. Please try again.');
+    }
   } finally {
     // Defer unmount so React can finish any pending work before teardown.
     setTimeout(() => {

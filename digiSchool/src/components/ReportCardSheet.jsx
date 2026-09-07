@@ -32,7 +32,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 24, top: 16 }}>
           {schoolSettings.logo ? (
-            <img src={schoolSettings.logo} alt="Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+            <img src={schoolSettings.logo} alt="Logo" crossOrigin="anonymous" referrerPolicy="no-referrer" style={{ width: 80, height: 80, objectFit: 'contain' }} />
           ) : (
             <div style={{ width: 80, height: 80, background: '#f3f4f6', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb' }}>
               <span style={{ fontSize: 10, color: '#9ca3af' }}>Logo</span>

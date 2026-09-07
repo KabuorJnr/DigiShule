@@ -22,14 +22,21 @@ function fnv1a(str) {
 // Base64url encode/decode that survives Unicode student names.
 export function encodePayload(obj) {
   const json = JSON.stringify(obj);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  const b64 = btoa(bin);
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 export function decodePayload(str) {
   try {
-    const b64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(escape(atob(b64)));
+    let b64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '='; // restore stripped padding
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json);
   } catch {
     return null;
@@ -76,10 +83,11 @@ export function computeVerificationCode(payload) {
     (payload.su || []).map((x) => `${x.s}:${x.m}:${x.g}`).join(','),
   ];
   const canonical = parts.join('|');
-  // Two rounds over different salts widen the code space to 8 hex chars.
+  // Two rounds over different salts, taking 4 hex chars from each so both
+  // rounds contribute to the final 8-char code (widens the effective space).
   const a = fnv1a(canonical).toString(16).toUpperCase().padStart(8, '0');
   const b = fnv1a(`salt::${canonical}`).toString(16).toUpperCase().padStart(8, '0');
-  const raw = (a + b).slice(0, 8);
+  const raw = a.slice(0, 4) + b.slice(0, 4);
   return `${raw.slice(0, 4)}-${raw.slice(4, 8)}`;
 }
 
@@ -89,7 +97,9 @@ export function buildReportVerification(report, schoolName = '', origin = '') {
   const payload = buildVerificationPayload(report, schoolName);
   const code = computeVerificationCode(payload);
   const base = (origin || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/\/$/, '');
-  const url = `${base}/verify?d=${encodePayload(payload)}&c=${encodeURIComponent(code)}`;
+  // Carry the payload in the URL fragment, not the query string: fragments are
+  // not sent to servers, so student data stays out of access logs / analytics.
+  const url = `${base}/verify#d=${encodePayload(payload)}&c=${encodeURIComponent(code)}`;
   return { code, url, payload };
 }
 

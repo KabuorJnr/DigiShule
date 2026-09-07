@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { decodePayload, verifyPayload } from '../utils/reportVerification';
 
 // Public, auth-free page that a report-card QR code (or manual code entry)
@@ -7,10 +7,14 @@ import { decodePayload, verifyPayload } from '../utils/reportVerification';
 // link and confirms it matches the printed code — proving the card was not
 // altered after it was issued.
 export default function VerifyReport() {
-  const [params] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const result = useMemo(() => {
+    // Payload travels in the URL fragment (kept out of server logs); fall back
+    // to the query string for any older links.
+    const raw = (location.hash || '').replace(/^#/, '') || (location.search || '').replace(/^\?/, '');
+    const params = new URLSearchParams(raw);
     const d = params.get('d');
     const c = params.get('c');
     if (!d) return { status: 'missing' };
@@ -18,7 +22,7 @@ export default function VerifyReport() {
     if (!payload) return { status: 'unreadable' };
     const { valid, code } = verifyPayload(payload, c);
     return { status: valid ? 'valid' : 'invalid', payload, code, providedCode: c };
-  }, [params]);
+  }, [location.hash, location.search]);
 
   const GREEN = '#16a34a';
   const RED = '#dc2626';
