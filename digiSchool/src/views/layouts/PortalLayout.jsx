@@ -536,6 +536,87 @@ export default function PortalLayout() {
     navigateRouter('/login', { replace: true });
     notify('You have been logged out.', 'info', 'Logout');
   };
+
+  // ---- Shell Computations & Navigation State (Must stay above early returns for Rules of Hooks) ----
+  const role = ROLES[activeRoleOverride || currentUser?.role] || ROLES.principal;
+  const nav = role.nav;
+  const currentPath = location.pathname;
+  let computedActiveView = view || role.home;
+  
+  if (currentPath.startsWith('/portal/')) {
+    const pathParts = currentPath.split('/');
+    if (pathParts.length >= 3 && pathParts[2] !== 'legacy') {
+       computedActiveView = pathParts[2];
+    } else if (pathParts.length >= 4 && pathParts[2] === 'legacy') {
+       computedActiveView = pathParts[3];
+    }
+  }
+
+  const activeView = computedActiveView;
+
+  // Display name & initials for avatar
+  const displayName = currentUser?.name || currentUser?.full_name || currentUser?.username || 'User';
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
+
+  const toggleNav = (id) => setExpandedNav(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const isNavActive = (navItem) => {
+    if (!navItem || typeof navItem !== 'object') return false;
+    if (activeView !== navItem.view) return false;
+    const pathParts = (currentPath || '').split('/');
+    const pathTab = currentPath?.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
+    const currentTab = viewParams?.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
+    if (navItem.tab && currentTab !== navItem.tab) return false;
+    if (navItem.action && viewParams?.action !== navItem.action) return false;
+    return true;
+  };
+
+  // Sync document.title for browser tab tile (Unconditional hook at top level)
+  useEffect(() => {
+    try {
+      if (!currentUser) return;
+      const schoolName = (settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST')
+        ? settings.name.trim()
+        : 'School Portal';
+      const portalLabel = role?.portal || role?.label || 'Portal';
+
+      // Identify active view/tab label if available
+      let viewTitle = '';
+      for (const sec of (role?.nav || [])) {
+        for (const itm of (sec?.items || [])) {
+          if (isNavActive(itm)) {
+            viewTitle = itm?.label || '';
+            break;
+          }
+          if (itm?.sub) {
+            for (const sub of (itm.sub || [])) {
+              if (isNavActive(sub)) {
+                viewTitle = sub?.label || '';
+                break;
+              }
+            }
+          }
+        }
+        if (viewTitle) break;
+      }
+
+      const subContext = viewTitle && viewTitle.toLowerCase() !== portalLabel.toLowerCase()
+        ? `${viewTitle} · ${portalLabel}`
+        : portalLabel;
+
+      document.title = `EduOne — ${schoolName} (${subContext})`;
+    } catch (err) {
+      console.warn('[PortalLayout] Failed to update document title:', err);
+    }
+  }, [currentUser, settings?.name, role, activeView, viewParams?.tab, currentPath]);
+
   // ---- Splash while we check the session ----
   if (!authChecked) {
     return (
@@ -615,87 +696,6 @@ export default function PortalLayout() {
       </div>
     );
   }
-
-  // ---- Logged-in shell ----
-  const role = ROLES[activeRoleOverride || currentUser.role] || ROLES.principal;
-  const nav = role.nav;
-  // Extract current view from pathname
-  const currentPath = location.pathname;
-  let computedActiveView = view || role.home;
-  
-  if (currentPath.startsWith('/portal/')) {
-    const pathParts = currentPath.split('/');
-    if (pathParts.length >= 3 && pathParts[2] !== 'legacy') {
-       computedActiveView = pathParts[2];
-    } else if (pathParts.length >= 4 && pathParts[2] === 'legacy') {
-       computedActiveView = pathParts[3];
-    }
-  }
-
-  const activeView = computedActiveView;
-
-  // Display name & initials for avatar
-  const displayName = currentUser?.name || currentUser?.full_name || currentUser?.username || 'User';
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'U';
-
-  const toggleNav = (id) => setExpandedNav(prev => ({ ...prev, [id]: !prev[id] }));
-
-  const isNavActive = (navItem) => {
-    if (!navItem || typeof navItem !== 'object') return false;
-    if (activeView !== navItem.view) return false;
-    const pathParts = (currentPath || '').split('/');
-    const pathTab = currentPath?.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
-    const currentTab = viewParams?.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
-    if (navItem.tab && currentTab !== navItem.tab) return false;
-    if (navItem.action && viewParams?.action !== navItem.action) return false;
-    return true;
-  };
-
-  // Sync document.title for browser tab tile
-  useEffect(() => {
-    try {
-      if (!currentUser) return;
-      const schoolName = (settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST')
-        ? settings.name.trim()
-        : 'School Portal';
-      const portalLabel = role?.portal || role?.label || 'Portal';
-
-      // Identify active view/tab label if available
-      let viewTitle = '';
-      for (const sec of (role?.nav || [])) {
-        for (const itm of (sec?.items || [])) {
-          if (isNavActive(itm)) {
-            viewTitle = itm?.label || '';
-            break;
-          }
-          if (itm?.sub) {
-            for (const sub of (itm.sub || [])) {
-              if (isNavActive(sub)) {
-                viewTitle = sub?.label || '';
-                break;
-              }
-            }
-          }
-        }
-        if (viewTitle) break;
-      }
-
-      const subContext = viewTitle && viewTitle.toLowerCase() !== portalLabel.toLowerCase()
-        ? `${viewTitle} · ${portalLabel}`
-        : portalLabel;
-
-      document.title = `EduOne — ${schoolName} (${subContext})`;
-    } catch (err) {
-      console.warn('[PortalLayout] Failed to update document title:', err);
-    }
-  }, [currentUser, settings?.name, role, activeView, viewParams?.tab, currentPath]);
 
   // ---- Phone shell ----
   // On phones the desktop sidebar layout is replaced by the native-feeling
