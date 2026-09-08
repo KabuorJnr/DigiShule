@@ -388,6 +388,14 @@ export default function Gradebook({ store }) {
   };
 
   const handlePublishResults = () => {
+    // Publishing is a Director-of-Studies (executive) action. The button is
+    // already hidden for others; this guard blocks the action even if reached.
+    const role = (user?.role || '').toLowerCase();
+    const canPublish = ['dos', 'deputy_academic', 'principal', 'admin', 'super_admin'].includes(role) || user?.dept === 'dos';
+    if (!canPublish) {
+      notify('Only the Director of Studies can publish results.', 'warning');
+      return;
+    }
     setSettings({ results_published: !settings.results_published });
     notify(settings.results_published ? 'Results unpublished' : 'Results published & official stamps certified', 'success');
   };
