@@ -13,8 +13,11 @@ import Modal from '../../components/Modal';
 import ReportCardModal from '../../components/ReportCardModal';
 import ResultsSummary from '../../components/ResultsSummary';
 
-export default function ParentDashboard() {
-  const { user: currentUser, store, params } = useOutletContext();
+export default function ParentDashboard(props) {
+  const context = useOutletContext() || {};
+  const currentUser = props?.user || context?.user;
+  const store = props?.store || context?.store;
+  const params = props?.params || context?.params;
   const { tab: urlTab } = useParams();
   const activeTab = urlTab || params?.tab || 'dashboard';
 
@@ -86,9 +89,9 @@ export default function ParentDashboard() {
     return () => { active = false; };
   }, [child?.class]);
 
-  // ── Fetch all supporting data once child is loaded ──
+  // ── Fetch all supporting data once child is loaded or student_id is known ──
   useEffect(() => {
-    if (!child) return;
+    if (!child && !selectedChildId && !currentUser?.student_id && !currentUser?.studentId) return;
     let active = true;
     Promise.all([
       fetchTable('financePayments').catch(() => []),
@@ -101,30 +104,55 @@ export default function ParentDashboard() {
       fetchTable('messages').catch(() => []),
     ]).then(([pays, att, health, disc, notifs, events, meetings, msgs]) => {
       if (!active) return;
-      setPayments((pays || []).filter(p => p.student_id === child.id || p.adm === child.adm));
-      setAttendance((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
-      setHealthRecords((health || []).filter(h => h.adm === child.adm || h.student_id === child.id));
-      setDisciplinary((disc || []).filter(d => d.adm === child.adm));
+      const activeChildId = child?.id || selectedChildId || currentUser?.student_id || currentUser?.studentId;
+      const activeChildAdm = child?.adm;
+
+      setPayments((pays || []).filter(p => (activeChildId && p.student_id === activeChildId) || (activeChildAdm && p.adm === activeChildAdm)));
+      setAttendance((att || []).filter(a => (activeChildId && a.student_id === activeChildId) || (activeChildAdm && a.adm === activeChildAdm)));
+      setHealthRecords((health || []).filter(h => (activeChildAdm && h.adm === activeChildAdm) || (activeChildId && h.student_id === activeChildId)));
+      setDisciplinary((disc || []).filter(d => (activeChildAdm && d.adm === activeChildAdm)));
       setNotifications(notifs || []);
       setSchoolEvents(events || []);
-      setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
-      // Inbox: messages addressed to a parent AND explicitly linked to this
-      // child. We deliberately do NOT show messages with no student_id here —
-      // a clinic note or teacher message that lost its student link must not
-      // fan out to every guardian in the school. Genuinely school-wide notes
-      // belong in notifications with a 'parents' audience, surfaced separately.
-      setInboxMessages((msgs || []).filter(m =>
-        m.recipient_role === 'parent' &&
-        (
-          // Addressed to me directly (e.g. a teacher's reply carries my user id)…
-          (m.recipient_id && currentUser && m.recipient_id === currentUser.id) ||
-          // …or keyed to one of my children (clinic notes, teacher-initiated notes).
-          m.student_id === child.id || m.student_id === child.adm
-        )
-      ));
+      setMeetingRequests((meetings || []).filter(m => (activeChildId && m.student_id === activeChildId)));
+
+      // Normalised set of student IDs / ADMs linked to this guardian
+      const myStudentKeys = new Set();
+      if (activeChildId) myStudentKeys.add(String(activeChildId).trim().toLowerCase());
+      if (activeChildAdm) myStudentKeys.add(String(activeChildAdm).trim().toLowerCase());
+      if (currentUser?.student_id) myStudentKeys.add(String(currentUser.student_id).trim().toLowerCase());
+      if (currentUser?.studentId) myStudentKeys.add(String(currentUser.studentId).trim().toLowerCase());
+      (currentUser?.linked_students || []).forEach(s => {
+        if (s?.id) myStudentKeys.add(String(s.id).trim().toLowerCase());
+        if (s?.adm) myStudentKeys.add(String(s.adm).trim().toLowerCase());
+      });
+
+      // Inbox: messages addressed to parent and linked to this child or guardian
+      const matchedMsgs = (msgs || []).filter(m => {
+        const role = String(m.recipient_role || '').toLowerCase().trim();
+        const isParentRole = role === 'parent' || role === 'parents' || role === 'guardian' || !m.recipient_role;
+        if (!isParentRole) return false;
+
+        // Addressed to this guardian directly by account ID or username
+        if (m.recipient_id && currentUser) {
+          const rec = String(m.recipient_id).trim().toLowerCase();
+          if (rec === String(currentUser.id || '').trim().toLowerCase() ||
+              rec === String(currentUser.profile_id || '').trim().toLowerCase() ||
+              rec === String(currentUser.username || '').trim().toLowerCase()) {
+            return true;
+          }
+        }
+
+        // Keyed to any of the parent's linked children
+        const msgSid = m.student_id ? String(m.student_id).trim().toLowerCase() : '';
+        if (msgSid && myStudentKeys.has(msgSid)) return true;
+
+        return false;
+      }).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+      setInboxMessages(matchedMsgs);
     });
     return () => { active = false; };
-  }, [child?.id, child?.adm, currentUser?.id]);
+  }, [child?.id, child?.adm, selectedChildId, currentUser?.id, currentUser?.student_id, currentUser?.studentId]);
 
   // ── Computed values ──
   const subjects = useMemo(() => {
@@ -167,6 +195,7 @@ export default function ParentDashboard() {
   });
 
   const fmtKES = (n) => 'KES ' + Number(n || 0).toLocaleString('en-KE');
+  const unreadInbox = useMemo(() => inboxMessages.filter(m => m.status === 'Unread'), [inboxMessages]);
 
   // ── Contact teacher handler ──
   const handleSendMessage = async () => {
@@ -441,6 +470,50 @@ export default function ParentDashboard() {
           </div>
         )}
 
+        {/* Unread Teacher Messages Alert Banner */}
+        {unreadInbox.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)',
+            border: '1px solid #7dd3fc',
+            borderRadius: 12,
+            padding: '16px 20px',
+            marginBottom: 20,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            boxShadow: '0 2px 8px rgba(2,132,199,0.08)',
+            gap: 16,
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 10, background: '#0284c7',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0
+              }}>
+                <Mail size={22} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#0369a1', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>New Message from Teacher: {unreadInbox[0].sender_name || 'Staff'}</span>
+                  <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                    {unreadInbox.length} UNREAD
+                  </span>
+                </div>
+                <div style={{ color: '#334155', fontSize: 13, marginTop: 3 }}>
+                  <strong>Subject:</strong> {unreadInbox[0].subject || 'No Subject'} — <em>"{unreadInbox[0].body?.slice(0, 90)}{unreadInbox[0].body?.length > 90 ? '…' : ''}"</em>
+                </div>
+              </div>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ padding: '8px 18px', gap: 6, fontWeight: 600 }}
+              onClick={() => store?.navigate ? store.navigate('parent', { tab: 'contact' }) : null}
+            >
+              <Mail size={15} /> View & Reply
+            </button>
+          </div>
+        )}
+
         {/* KPI Summary Cards */}
         <div className="stat-tiles stagger">
           <KpiCard iconComponent={<BarChart3 size={20} />} label="Overall Average" value={`${overallAvg}%`} accent="#047857" />
@@ -473,13 +546,97 @@ export default function ParentDashboard() {
             <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => store.navigate('student', { tab: 'finance', childId: child?.id })}>
               <DollarSign size={16} /> Pay Fees
             </button>
-            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => setMsgModal(true)}>
-              <Mail size={16} /> Contact Teacher
+            <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8, position: 'relative' }} onClick={() => store.navigate('parent', { tab: 'contact' })}>
+              <Mail size={16} /> Messages & Contact
+              {unreadInbox.length > 0 && (
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>
+                  {unreadInbox.length} New
+                </span>
+              )}
             </button>
             <button className="btn" style={{ height: 44, justifyContent: 'flex-start', gap: 8 }} onClick={() => { setMsgForm({ ...msgForm, isMeeting: true }); setMsgModal(true); }}>
               <Calendar size={16} /> Request Meeting
             </button>
           </div>
+        </div>
+
+        {/* Recent Messages from Teachers Card */}
+        <div className="card card-pad" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Mail size={16} color="#0284c7" /> Recent Messages from Teachers
+              {unreadInbox.length > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                  {unreadInbox.length} unread
+                </span>
+              )}
+            </h3>
+            <button className="btn" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => store.navigate('parent', { tab: 'contact' })}>
+              Open Messages Inbox →
+            </button>
+          </div>
+          {inboxMessages.length === 0 ? (
+            <div className="muted" style={{ padding: '16px', textAlign: 'center', fontSize: 13 }}>
+              No messages from teachers yet. You can write to any teacher or staff member using the "Messages & Contact" tab.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {inboxMessages.slice(0, 3).map((m, idx) => (
+                <div key={m.id || idx} style={{
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  border: `1px solid ${m.status === 'Unread' ? '#93c5fd' : 'var(--border)'}`,
+                  background: m.status === 'Unread' ? '#f0f9ff' : '#fafafa',
+                  borderLeft: `4px solid ${m.status === 'Unread' ? '#0284c7' : '#94a3b8'}`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>
+                      {m.subject || 'Message'}
+                      {m.status === 'Unread' && <span style={{ marginLeft: 8, background: '#0284c7', color: '#fff', fontSize: 10, padding: '2px 6px', borderRadius: 6, fontWeight: 700 }}>NEW</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {m.status === 'Unread' && (
+                        <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: 11, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
+                          Mark Read
+                        </button>
+                      )}
+                      <span style={{ fontSize: 11, color: '#64748b' }}>{(m.created_at || '').slice(0, 10)}</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                    From: <strong>{m.sender_name || 'Teacher'}</strong> ({m.sender_role || 'teacher'}) {m.student_name ? `· regarding ${m.student_name}` : ''}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#334155', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    {m.body}
+                  </div>
+                  {m.reply && (
+                    <div style={{ marginTop: 8, padding: '6px 10px', background: '#f0fdf4', borderRadius: 6, border: '1px solid #bbf7d0', fontSize: 12, color: '#166534' }}>
+                      <strong>Your Reply:</strong> {m.reply}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ flex: 1, padding: '6px 10px', fontSize: 13 }}
+                      placeholder={`Reply directly to ${m.sender_name || 'the teacher'}…`}
+                      value={inboxReply[m.id] || ''}
+                      onChange={e => setInboxReply(prev => ({ ...prev, [m.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') handleInboxReply(m.id); }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '6px 14px', fontSize: 12, gap: 4 }}
+                      disabled={!(inboxReply[m.id] || '').trim()}
+                      onClick={() => handleInboxReply(m.id)}
+                    >
+                      <Send size={12} /> Reply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-2" style={{ gap: 16, marginBottom: 16 }}>
@@ -681,17 +838,135 @@ export default function ParentDashboard() {
     );
   }
 
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
+  // â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  
   // ── CONTACT TEACHER TAB ──
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
   if (activeTab === 'contact') {
     return (
-      <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Contact & Meetings</h2>
-        
+      <div style={{ padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700, color: '#0f172a' }}>Messages & Communications</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+              Direct messages from teachers and school administration regarding {child?.name || 'your child'}.
+            </p>
+          </div>
+          <button className="btn btn-primary" onClick={() => { setMsgForm({ to: 'Class Teacher', subject: '', body: '', isMeeting: false }); setMsgModal(true); }}>
+            <Send size={15} style={{ marginRight: 6 }} /> Compose Message
+          </button>
+        </div>
+
+        {/* Full Inbox Card */}
+        <div className="card card-pad" style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Mail size={18} color="#0284c7" /> Received Messages from Teachers & Staff
+              {inboxMessages.length > 0 && (
+                <span style={{ background: '#0284c7', color: '#fff', borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                  {inboxMessages.length} total
+                </span>
+              )}
+              {unreadInbox.length > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                  {unreadInbox.length} unread
+                </span>
+              )}
+            </h3>
+          </div>
+
+          {inboxMessages.length === 0 ? (
+            <div className="muted" style={{ padding: '36px 20px', textAlign: 'center' }}>
+              <Mail size={36} style={{ color: '#cbd5e1', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+              <div style={{ fontSize: 14, fontWeight: 500 }}>No messages received from teachers yet.</div>
+              <div style={{ fontSize: 12, marginTop: 4 }}>
+                When your child's teachers or school administration send you a message, it will appear right here.
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {inboxMessages.map((m, i) => (
+                <div
+                  key={m.id || i}
+                  style={{
+                    padding: '16px 18px',
+                    background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc',
+                    border: `1px solid ${m.status === 'Unread' ? '#93c5fd' : '#e2e8f0'}`,
+                    borderRadius: 10,
+                    borderLeft: `5px solid ${m.status === 'Unread' ? '#0284c7' : '#94a3b8'}`
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{m.subject || 'Message from Teacher'}</span>
+                      {m.status === 'Unread' ? (
+                        <span style={{ marginLeft: 8, background: '#0284c7', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>NEW</span>
+                      ) : m.status === 'Replied' ? (
+                        <span style={{ marginLeft: 8, background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>REPLIED</span>
+                      ) : (
+                        <span style={{ marginLeft: 8, background: '#e2e8f0', color: '#475569', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10 }}>READ</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      {m.status === 'Unread' && (
+                        <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: 12, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
+                          Mark as Read
+                        </button>
+                      )}
+                      <span style={{ fontSize: 12, color: '#64748b' }}>
+                        {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span>From: <strong style={{ color: '#0f172a' }}>{m.sender_name || 'Staff'}</strong></span>
+                    <span style={{ background: '#f1f5f9', padding: '1px 6px', borderRadius: 4, textTransform: 'capitalize' }}>{m.sender_role || 'teacher'}</span>
+                    {m.student_name && <span style={{ color: '#0284c7' }}>· Re: <strong>{m.student_name}</strong></span>}
+                  </div>
+
+                  <div style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#fff', padding: 12, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                    {m.body}
+                  </div>
+
+                  {/* Previous reply thread */}
+                  {m.reply && (
+                    <div style={{ marginTop: 10, padding: '10px 12px', background: '#f0fdf4', borderRadius: 6, border: '1px solid #bbf7d0' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', marginBottom: 2 }}>
+                        Your Reply {m.replied_at ? `(${new Date(m.replied_at).toLocaleString()})` : ''}:
+                      </div>
+                      <div style={{ fontSize: 13, color: '#14532d' }}>{m.reply}</div>
+                    </div>
+                  )}
+
+                  {/* Quick reply input */}
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ flex: 1, minWidth: 200, padding: '8px 12px', fontSize: 13 }}
+                      placeholder={`Reply directly to ${m.sender_name || 'the teacher'}…`}
+                      value={inboxReply[m.id] || ''}
+                      onChange={e => setInboxReply(prev => ({ ...prev, [m.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') handleInboxReply(m.id); }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '8px 18px', gap: 6, fontSize: 13 }}
+                      disabled={!(inboxReply[m.id] || '').trim()}
+                      onClick={() => handleInboxReply(m.id)}
+                    >
+                      <Send size={14} /> Send Reply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Compose Form & Meeting Requests */}
         <div className="grid grid-2" style={{ gap: 24 }}>
           <div className="card card-pad">
-            <h3 className="section-title">Send a Message</h3>
+            <h3 className="section-title">Send a New Message</h3>
             <div style={{ marginBottom: 16 }}>
               <label className="field-label">To</label>
               <select className="select" value={msgForm.to} onChange={e => setMsgForm({ ...msgForm, to: e.target.value })}>
@@ -773,9 +1048,9 @@ export default function ParentDashboard() {
     );
   }
 
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
+  // â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  
   // ── HEALTH RECORDS TAB ──
-  // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
+  // â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  â |  
   if (activeTab === 'health') {
     return (
       <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -812,60 +1087,34 @@ export default function ParentDashboard() {
           )}
         </div>
 
-        {/* Inbox messages from clinic/school */}
+        {/* Clinic & Health Notices */}
         <div className="card card-pad" style={{ marginTop: 24 }}>
-          <h3 className="section-title" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail size={16} /> Messages from School / Clinic
-            {inboxMessages.length > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{inboxMessages.length}</span>}
-          </h3>
-          {inboxMessages.length === 0 ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Hospital size={16} color="#047857" /> Clinic & Health Notices
+            </h3>
+            <button className="btn" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => store.navigate('parent', { tab: 'contact' })}>
+              View Teacher Messages ({inboxMessages.length}) →
+            </button>
+          </div>
+          {inboxMessages.filter(m => m.sender_role === 'nurse' || m.sender_role === 'clinic' || (m.subject || '').toLowerCase().includes('clinic') || (m.subject || '').toLowerCase().includes('health')).length === 0 ? (
             <div className="muted" style={{ padding: 20, textAlign: 'center' }}>
-              <Mail size={28} style={{ color: '#cbd5e1', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
-              <div>No messages from the school or clinic.</div>
+              <Heart size={28} style={{ color: '#cbd5e1', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+              <div>No clinic or health notes from the school medical staff.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {inboxMessages.map((m, i) => (
-                <div key={m.id || i} style={{ padding: '14px 16px', background: m.status === 'Unread' ? '#eff6ff' : '#f8fafc', border: `1px solid ${m.status === 'Unread' ? '#bfdbfe' : '#e2e8f0'}`, borderRadius: 8, borderLeft: `4px solid ${m.sender_role === 'nurse' || m.sender_role === 'clinic' ? '#047857' : '#047857'}` }}>
+              {inboxMessages.filter(m => m.sender_role === 'nurse' || m.sender_role === 'clinic' || (m.subject || '').toLowerCase().includes('clinic') || (m.subject || '').toLowerCase().includes('health')).map((m, i) => (
+                <div key={m.id || i} style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, borderLeft: '4px solid #047857' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject || 'Message from School'}</div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {m.status === 'Unread' && (
-                        <>
-                          <span style={{ background: '#047857', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>NEW</span>
-                          <button onClick={() => handleMarkInboxRead(m.id)} style={{ background: 'none', border: 'none', color: '#047857', fontSize: 11, cursor: 'pointer', padding: 0, fontWeight: 600, textDecoration: 'underline' }}>Mark Read</button>
-                        </>
-                      )}
-                      <span style={{ fontSize: 11, color: '#64748b', marginLeft: m.status === 'Unread' ? 4 : 0 }}>{(m.created_at || '').slice(0, 10)}</span>
-                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject || 'Health Notice'}</div>
+                    <span style={{ fontSize: 11, color: '#64748b' }}>{(m.created_at || '').slice(0, 10)}</span>
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    From: <strong>{m.sender_name || m.sender_role || 'School'}</strong>
-                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && <Hospital size={13} color="#047857" />}
+                    From: <strong>{m.sender_name || 'Clinic'}</strong>
+                    <Hospital size={13} color="#047857" />
                   </div>
                   <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
-
-                  {m.sender_role === 'teacher' && (
-                    <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <input
-                        type="text"
-                        className="input"
-                        style={{ flex: 1, minWidth: 180, padding: '8px 12px' }}
-                        placeholder="Write a reply to the teacher…"
-                        value={inboxReply[m.id] || ''}
-                        onChange={e => setInboxReply(prev => ({ ...prev, [m.id]: e.target.value }))}
-                        onKeyDown={e => { if (e.key === 'Enter') handleInboxReply(m.id); }}
-                      />
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: '8px 16px', gap: 6 }}
-                        disabled={!(inboxReply[m.id] || '').trim()}
-                        onClick={() => handleInboxReply(m.id)}
-                      >
-                        <Send size={14} /> Reply
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

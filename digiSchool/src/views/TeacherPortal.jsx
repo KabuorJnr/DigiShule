@@ -214,8 +214,9 @@ export default function TeacherPortal({ store, user }) {
       await upsertRow('messages', validPayload);
 
       // Deliver the reply as its own message addressed back to the parent
+      const replyMsgId = `msg_${Date.now()}`;
       await upsertRow('messages', {
-        id: `msg_${Date.now()}`,
+        id: replyMsgId,
         sender_id: store?.user?.id || teacherName,
         sender_name: teacherName,
         sender_role: 'teacher',
@@ -228,6 +229,22 @@ export default function TeacherPortal({ store, user }) {
         status: 'Unread',
         created_at: now,
       });
+
+      try {
+        await upsertRow('notifications', {
+          id: `notif_${replyMsgId}`,
+          title: `Teacher Reply: ${msg.subject || 'Message'}`,
+          message: `${teacherName} replied: ${replyBody.slice(0, 100)}`,
+          body: `Reply from teacher ${teacherName} regarding ${msg.student_name || 'student'}:\n\n${replyBody}`,
+          posted_by: teacherName,
+          role: 'teacher',
+          audience: [msg.student_id, msg.sender_id].filter(Boolean),
+          read: false,
+          created_at: now,
+        });
+      } catch (err) {
+        console.warn('Failed to mirror reply notification:', err);
+      }
 
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
       setReplyText(prev => ({ ...prev, [msgId]: '' }));

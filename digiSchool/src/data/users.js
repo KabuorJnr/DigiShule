@@ -22,7 +22,7 @@ export const ROLES = {
       {
         section: 'COMMUNICATIONS',
         items: [
-          { id: 'contact_teacher', icon: 'pen', label: 'Contact Teacher', view: 'parent', tab: 'contact' },
+          { id: 'contact_teacher', icon: 'mail', label: 'Messages & Contact', view: 'parent', tab: 'contact' },
           { id: 'notices', icon: 'bell', label: 'Notices & Alerts', view: 'notices' },
           { id: 'school_calendar', icon: 'calendar', label: 'School Calendar', view: 'school_calendar' }
         ]

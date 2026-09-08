@@ -241,11 +241,25 @@ export function ParentMessages({ store, user }) {
   const [composing, setComposing] = useState(false);
 
   useEffect(() => {
-    setItems((rows || []).filter((m) =>
-      m.recipient_role === 'parent' &&
-      ((m.recipient_id && user?.id && m.recipient_id === user.id) || m.student_id === child.id || m.student_id === child.adm)
-    ).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))));
-  }, [rows, child.id, child.adm, user?.id]);
+    const myKeys = new Set();
+    if (child?.id) myKeys.add(String(child.id).trim().toLowerCase());
+    if (child?.adm) myKeys.add(String(child.adm).trim().toLowerCase());
+    if (user?.student_id) myKeys.add(String(user.student_id).trim().toLowerCase());
+    if (user?.studentId) myKeys.add(String(user.studentId).trim().toLowerCase());
+    (user?.linked_students || []).forEach(s => {
+      if (s?.id) myKeys.add(String(s.id).trim().toLowerCase());
+      if (s?.adm) myKeys.add(String(s.adm).trim().toLowerCase());
+    });
+
+    setItems((rows || []).filter((m) => {
+      const role = String(m.recipient_role || '').toLowerCase().trim();
+      if (role !== 'parent' && role !== 'parents' && role !== 'guardian' && m.recipient_role) return false;
+      if (m.recipient_id && user?.id && (String(m.recipient_id).trim() === String(user.id).trim() || String(m.recipient_id).trim() === String(user.username || '').trim())) return true;
+      const msid = m.student_id ? String(m.student_id).trim().toLowerCase() : '';
+      if (msid && myKeys.has(msid)) return true;
+      return false;
+    }).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))));
+  }, [rows, child.id, child.adm, user?.id, user?.student_id, user?.studentId]);
 
   const send = async ({ to, subject, body }) => {
     const now = new Date().toISOString();

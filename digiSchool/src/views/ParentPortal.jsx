@@ -9,7 +9,7 @@ import { fetchTable, upsertRow, fetchStudentsByQuery } from '../lib/api';
 import { exportReportCardsPDF, exportTablePDF } from '../utils/exporters';
 import { listFiles } from '../lib/fileStore';
 import GalleryViewer from '../components/GalleryViewer';
-import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
+import { Download, ClipboardList, Send, Loader, CreditCard, Shield, CheckCircle2, Mail } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 import { supabase } from '../lib/supabaseClient';
 
@@ -75,29 +75,47 @@ export default function ParentPortal({ store, user }) {
   const [meetingRequests, setMeetingRequests] = useState([]);
   const [meetingModalOpen, setMeetingModalOpen] = useState(false);
   const [meetingForm, setMeetingForm] = useState({ teacher: '', reason: '' });
+  const [inboxMessages, setInboxMessages] = useState([]);
 
   useEffect(() => {
-    if (!child?.adm) return;
+    if (!child?.adm && !child?.id && !user?.student_id) return;
     let active = true;
     Promise.all([
       fetchTable('clinicVisits'), fetchTable('disciplinaryRecords'), fetchTable('financePayments'),
-      fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('parentMeetingRequests'), listFiles('assignments').catch(() => [])
+      fetchTable('studentAttendance'), fetchTable('assignmentSubmissions'), fetchTable('parentMeetingRequests'), listFiles('assignments').catch(() => []),
+      fetchTable('messages').catch(() => [])
     ])
-      .then(([visits, cases, pays, att, subs, meetings, assigns]) => {
+      .then(([visits, cases, pays, att, subs, meetings, assigns, msgs]) => {
         if (!active) return;
-        setHealthRecords((visits || []).filter((v) => v.adm === child.adm));
-        setDisciplinary((cases || []).filter((c) => c.adm === child.adm));
-        setPayments((pays || []).filter((p) => p.student_id === child.id));
-        setAttendanceLog((att || []).filter(a => a.student_id === child.id || a.adm === child.adm));
-        setSubmissions((subs || []).filter(s => s.student_id === child.id || s.adm === child.adm));
-        setMeetingRequests((meetings || []).filter(m => m.student_id === child.id));
+        const cAdm = child?.adm;
+        const cId = child?.id || user?.student_id;
+        setHealthRecords((visits || []).filter((v) => cAdm && v.adm === cAdm));
+        setDisciplinary((cases || []).filter((c) => cAdm && c.adm === cAdm));
+        setPayments((pays || []).filter((p) => cId && p.student_id === cId));
+        setAttendanceLog((att || []).filter(a => (cId && a.student_id === cId) || (cAdm && a.adm === cAdm)));
+        setSubmissions((subs || []).filter(s => (cId && s.student_id === cId) || (cAdm && s.adm === cAdm)));
+        setMeetingRequests((meetings || []).filter(m => cId && m.student_id === cId));
         setCloudAssignments(assigns || []);
+
+        const myKeys = new Set();
+        if (cId) myKeys.add(String(cId).trim().toLowerCase());
+        if (cAdm) myKeys.add(String(cAdm).trim().toLowerCase());
+        if (user?.student_id) myKeys.add(String(user.student_id).trim().toLowerCase());
+
+        setInboxMessages((msgs || []).filter(m => {
+          const role = String(m.recipient_role || '').toLowerCase().trim();
+          if (role !== 'parent' && role !== 'parents' && role !== 'guardian' && m.recipient_role) return false;
+          if (m.recipient_id && user?.id && (String(m.recipient_id).trim() === String(user.id).trim() || String(m.recipient_id).trim() === String(user.username || '').trim())) return true;
+          const msid = m.student_id ? String(m.student_id).trim().toLowerCase() : '';
+          if (msid && myKeys.has(msid)) return true;
+          return false;
+        }).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
       })
       .catch((e) => reportError(e, 'views.ParentPortal'));
     return () => {
       active = false;
     };
-  }, [child?.adm, child?.id]);
+  }, [child?.adm, child?.id, user?.student_id, user?.id]);
 
   const subjects = useMemo(() => {
     if (!child) return [];
@@ -537,6 +555,38 @@ export default function ParentPortal({ store, user }) {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Teacher Messages Inbox */}
+      <div className="card card-pad" style={{ marginTop: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Mail size={18} color="#0284c7" /> Messages from Teachers & School
+            {inboxMessages.length > 0 && (
+              <Badge color="blue">{inboxMessages.length}</Badge>
+            )}
+          </div>
+          <button className="btn btn-sm btn-primary" onClick={() => setMsgModalOpen(true)}>Send Message</button>
+        </div>
+        {inboxMessages.length === 0 ? (
+          <div className="muted" style={{ padding: 16, textAlign: 'center' }}>No messages received from teachers yet.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {inboxMessages.map(m => (
+              <div key={m.id} style={{ padding: 12, borderRadius: 8, border: `1px solid ${m.status === 'Unread' ? '#93c5fd' : 'var(--border)'}`, background: m.status === 'Unread' ? '#eff6ff' : '#fff', borderLeft: `4px solid ${m.status === 'Unread' ? '#0284c7' : '#94a3b8'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <strong style={{ fontSize: 14 }}>{m.subject || 'Message'}</strong>
+                  <span className="muted" style={{ fontSize: 11 }}>{(m.created_at || '').slice(0, 10)}</span>
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                  From: <strong>{m.sender_name || 'Teacher'}</strong> ({m.sender_role || 'teacher'})
+                  {m.status === 'Unread' && <span style={{ marginLeft: 8, background: '#0284c7', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 6, fontWeight: 700 }}>NEW</span>}
+                </div>
+                <div style={{ fontSize: 13, color: '#334155', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{m.body}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card card-pad" style={{ marginTop: 14 }}>

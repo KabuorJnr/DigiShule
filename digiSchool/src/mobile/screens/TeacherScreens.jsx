@@ -306,13 +306,27 @@ export function TeacherMessages({ store, user }) {
     if (msg.school_id) validPayload.school_id = msg.school_id;
 
     await upsertRow('messages', validPayload);
+    const replyMsgId = `msg_${Date.now()}`;
     await upsertRow('messages', {
-      id: `msg_${Date.now()}`,
+      id: replyMsgId,
       sender_id: user?.id || teacherName, sender_name: teacherName, sender_role: 'teacher',
       recipient_role: 'parent', recipient_id: msg.sender_id || null,
       student_id: msg.student_id || null, student_name: msg.student_name || null,
       subject, body, status: 'Unread', created_at: now,
     });
+    try {
+      await upsertRow('notifications', {
+        id: `notif_${replyMsgId}`,
+        title: `Teacher Reply: ${subject}`,
+        message: `${teacherName} replied: ${body.slice(0, 100)}`,
+        body: `Reply from teacher ${teacherName} regarding ${msg.student_name || 'student'}:\n\n${body}`,
+        posted_by: teacherName,
+        role: 'teacher',
+        audience: [msg.student_id, msg.sender_id].filter(Boolean),
+        read: false,
+        created_at: now,
+      });
+    } catch { /* best-effort notification mirror */ }
     setItems((prev) => prev.map((m) => (m.id === msg.id ? { ...m, status: 'Replied', reply: body, replied_at: now } : m)));
     setReplyTo(null);
   };

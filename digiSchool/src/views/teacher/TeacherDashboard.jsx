@@ -116,6 +116,21 @@ export default function TeacherDashboard() {
         created_at: new Date().toISOString(),
       };
       await upsertRow('messages', msg);
+      try {
+        await upsertRow('notifications', {
+          id: `notif_${msg.id}`,
+          title: `New Message from ${teacherName}`,
+          message: `${composeForm.subject.trim()}: ${composeForm.body.trim().slice(0, 100)}`,
+          body: `Message from teacher ${teacherName} regarding ${stu.name}:\n\n${composeForm.body.trim()}`,
+          posted_by: teacherName,
+          role: 'teacher',
+          audience: [stu.id, stu.adm].filter(Boolean),
+          read: false,
+          created_at: msg.created_at,
+        });
+      } catch (err) {
+        console.warn('Failed to mirror message notification:', err);
+      }
       setComposeOpen(false);
       setComposeForm({ studentId: '', subject: '', body: '' });
       store.notify(`Message sent to ${stu.name}'s parent`, 'success', 'Messages');
@@ -157,8 +172,9 @@ export default function TeacherDashboard() {
       // Deliver the reply as its own message addressed back to the parent —
       // routed by the original sender's user id AND the student link so it
       // lands in the parent's inbox (which filters on recipient_role='parent').
+      const replyMsgId = `msg_${Date.now()}`;
       await upsertRow('messages', {
-        id: `msg_${Date.now()}`,
+        id: replyMsgId,
         sender_id: user?.id || teacherName,
         sender_name: teacherName,
         sender_role: 'teacher',
@@ -171,6 +187,22 @@ export default function TeacherDashboard() {
         status: 'Unread',
         created_at: now,
       });
+
+      try {
+        await upsertRow('notifications', {
+          id: `notif_${replyMsgId}`,
+          title: `Teacher Reply: ${msg.subject || 'Message'}`,
+          message: `${teacherName} replied: ${replyBody.slice(0, 100)}`,
+          body: `Reply from teacher ${teacherName} regarding ${msg.student_name || 'student'}:\n\n${replyBody}`,
+          posted_by: teacherName,
+          role: 'teacher',
+          audience: [msg.student_id, msg.sender_id].filter(Boolean),
+          read: false,
+          created_at: now,
+        });
+      } catch (err) {
+        console.warn('Failed to mirror reply notification:', err);
+      }
 
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
       setReplyText(prev => ({ ...prev, [msgId]: '' }));

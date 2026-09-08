@@ -10,7 +10,7 @@ import Clinic from '../Clinic';
 import Facilities from '../Facilities';
 import TeacherResources from '../TeacherResources';
 import ClassTeachers from '../ClassTeachers';
-import ParentPortal from '../ParentPortal';
+import ParentDashboard from '../parent/ParentDashboard';
 import AcademicsDashboard from '../AcademicsDashboard';
 import AdminDashboard from '../AdminDashboard';
 import Notices from '../Notices';
@@ -41,7 +41,7 @@ const VIEW_MAP = {
   admissions: Admissions,
   clinic: Clinic,
   facilities: Facilities,
-  parent: ParentPortal,
+  parent: ParentDashboard,
   class_teachers: ClassTeachers,
   notices: Notices,
   school_calendar: SchoolCalendar,

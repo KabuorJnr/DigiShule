@@ -13,7 +13,7 @@ export function getChild(user, store) {
     return students.find((s) => s.id === c.id || s.adm === c.adm) || c;
   }
   const sid = user?.student_id || user?.studentId;
-  if (sid) return students.find((s) => s.id === sid) || {};
+  if (sid) return students.find((s) => s.id === sid || s.adm === sid) || { id: sid, adm: user?.adm || sid, name: 'Child' };
   return {};
 }
 
