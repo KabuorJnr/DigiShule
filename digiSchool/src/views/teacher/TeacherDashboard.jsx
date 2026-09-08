@@ -1,7 +1,7 @@
 import { useOutletContext } from 'react-router-dom';
 import { KpiCard, Badge } from '../../components/widgets';
 import { computeRow, gradeFor, is844Class } from '../../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, PlaneTakeoff, MessageSquare, CheckCircle2, XCircle, Clock, Send } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
 import EduOneWidget from '../../components/EduOneWidget';
@@ -25,6 +25,11 @@ export default function TeacherDashboard() {
 
   const [inboxModalOpen, setInboxModalOpen] = useState(false);
   const [replyText, setReplyText] = useState({});
+
+  // Compose a fresh message to a specific parent (teacher-initiated).
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeForm, setComposeForm] = useState({ studentId: '', subject: '', body: '' });
+  const [composeSending, setComposeSending] = useState(false);
 
   const rows = useMemo(() => {
     return loadedStudents.map((s) => {
@@ -53,6 +58,7 @@ export default function TeacherDashboard() {
   const quickLinks = [
     { label: 'Apply for Leave', icon: PlaneTakeoff, action: 'open_leave', color: '#065f46', desc: `${pendingLeaves} pending request${pendingLeaves !== 1 ? 's' : ''}` },
     { label: 'Parent Messages', icon: MessageSquare, action: 'open_inbox', color: '#EAB308', desc: `${messages.filter(m => m.status === 'Unread').length} unread messages` },
+    { label: 'Message a Parent', icon: Send, action: 'compose_parent', color: '#0EA5E9', desc: 'Write to a specific parent' },
     { label: 'Assignments & Materials', icon: FolderOpen, view: 'teacher_resources', color: '#0078D4', desc: 'Upload PDFs for students' },
     { label: 'Notices Board', icon: Bell, view: 'notices', color: '#7C3AED', desc: 'Post & read announcements' },
     { label: 'School Calendar', icon: Calendar, view: 'school_calendar', color: '#107C10', desc: 'Events & term dates' },
@@ -84,6 +90,38 @@ export default function TeacherDashboard() {
     } catch (e) {
       store.notify(`Failed to submit leave: ${e.message}`, 'error');
     } finally { setLeaveSaving(false); }
+  };
+
+  // Teacher opens a conversation with a specific parent by picking one of
+  // their students. The parent of that student sees it in their inbox (routed
+  // by student_id), and their reply comes back addressed to this teacher.
+  const handleComposeToParent = async () => {
+    const stu = (loadedStudents || []).find(s => String(s.id) === String(composeForm.studentId));
+    if (!stu) return store.notify('Please choose a student first', 'warning');
+    if (!composeForm.subject.trim() || !composeForm.body.trim()) return store.notify('Add a subject and a message', 'warning');
+    setComposeSending(true);
+    try {
+      const msg = {
+        id: `msg_${Date.now()}`,
+        sender_id: user?.id || teacherName,
+        sender_name: teacherName,
+        sender_role: 'teacher',
+        recipient_role: 'parent',
+        recipient_id: null,
+        student_id: stu.id,
+        student_name: stu.name,
+        subject: composeForm.subject.trim(),
+        body: composeForm.body.trim(),
+        status: 'Unread',
+        created_at: new Date().toISOString(),
+      };
+      await upsertRow('messages', msg);
+      setComposeOpen(false);
+      setComposeForm({ studentId: '', subject: '', body: '' });
+      store.notify(`Message sent to ${stu.name}'s parent`, 'success', 'Messages');
+    } catch (e) {
+      store.notify(`Failed to send message: ${e.message}`, 'error');
+    } finally { setComposeSending(false); }
   };
 
   const handleReplyMessage = async (msgId) => {
@@ -164,6 +202,7 @@ export default function TeacherDashboard() {
             <button key={q.label} onClick={() => {
               if (q.action === 'open_leave') setShowLeaveModal(true);
               else if (q.action === 'open_inbox') setInboxModalOpen(true);
+              else if (q.action === 'compose_parent') setComposeOpen(true);
               else navigate(q.view);
             }} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: q.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><q.icon size={18} color={q.color} /></div>
@@ -269,6 +308,62 @@ export default function TeacherDashboard() {
                 )}
               </div>
             ))}
+          </div>
+        </Modal>
+      )}
+
+      {/* Compose to a specific parent */}
+      {composeOpen && (
+        <Modal
+          title="Message a Parent"
+          onClose={() => !composeSending && setComposeOpen(false)}
+          footer={
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" disabled={composeSending} onClick={() => setComposeOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" disabled={composeSending} style={{ gap: 6 }} onClick={handleComposeToParent}>
+                <Send size={15} /> {composeSending ? 'Sending…' : 'Send Message'}
+              </button>
+            </div>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label className="field-label">Student (their parent receives this)</label>
+              <select
+                className="select"
+                value={composeForm.studentId}
+                onChange={e => setComposeForm(f => ({ ...f, studentId: e.target.value }))}
+              >
+                <option value="">-- Choose a student --</option>
+                {[...(loadedStudents || [])]
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                  .map(s => (
+                    <option key={s.id} value={s.id}>{s.name}{s.class ? ` — ${s.class}` : ''}{s.adm ? ` (${s.adm})` : ''}</option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Subject</label>
+              <input
+                className="input"
+                placeholder="e.g. Progress update"
+                value={composeForm.subject}
+                onChange={e => setComposeForm(f => ({ ...f, subject: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="field-label">Message</label>
+              <textarea
+                className="input"
+                rows={6}
+                placeholder="Write your message to the parent…"
+                value={composeForm.body}
+                onChange={e => setComposeForm(f => ({ ...f, body: e.target.value }))}
+              />
+            </div>
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 6, padding: 10, fontSize: 12, color: '#0369a1' }}>
+              The parent will see this in their portal inbox and can reply — replies arrive back in your Parent Messages inbox.
+            </div>
           </div>
         </Modal>
       )}

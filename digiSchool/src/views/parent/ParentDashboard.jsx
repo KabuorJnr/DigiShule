@@ -35,6 +35,7 @@ export default function ParentDashboard() {
   const [schoolEvents, setSchoolEvents] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
   const [inboxMessages, setInboxMessages] = useState([]);
+  const [inboxReply, setInboxReply] = useState({}); // {[msgId]: draft reply text}
   const [classmates, setClassmates] = useState([]);
 
   // Modal states
@@ -231,6 +232,41 @@ export default function ParentDashboard() {
       setInboxMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
     } catch (e) {
       notify(`Failed to mark read: ${e.message}`, 'error');
+    }
+  };
+
+  // Reply to a teacher's message. The reply is routed back to the teacher who
+  // sent it (by their sender_id) and stays linked to this child, so it lands
+  // in that teacher's Parent Messages inbox.
+  const handleInboxReply = async (msgId) => {
+    const text = (inboxReply[msgId] || '').trim();
+    if (!text) return;
+    try {
+      const { upsertRow } = await import('../../lib/api');
+      const orig = inboxMessages.find(m => m.id === msgId);
+      const reply = {
+        id: `msg_${Date.now()}`,
+        sender_id: currentUser?.id || 'parent',
+        sender_name: currentUser?.name || 'Parent',
+        sender_role: 'parent',
+        recipient_role: 'teacher',
+        recipient_id: orig?.sender_id || null,
+        student_id: child.id,
+        student_name: child.name,
+        subject: orig?.subject ? `Re: ${orig.subject}` : 'Reply from parent',
+        body: text,
+        status: 'Unread',
+        created_at: new Date().toISOString(),
+      };
+      await upsertRow('messages', reply);
+      if (orig && orig.status === 'Unread') {
+        await upsertRow('messages', { ...orig, status: 'Read' });
+        setInboxMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: 'Read' } : m));
+      }
+      setInboxReply(prev => ({ ...prev, [msgId]: '' }));
+      notify('Reply sent to teacher', 'success', 'Messages');
+    } catch (e) {
+      notify(`Failed to send reply: ${e.message}`, 'error');
     }
   };
 
@@ -789,6 +825,28 @@ export default function ParentDashboard() {
                     {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && <Hospital size={13} color="#047857" />}
                   </div>
                   <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
+
+                  {m.sender_role === 'teacher' && (
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        className="input"
+                        style={{ flex: 1, minWidth: 180, padding: '8px 12px' }}
+                        placeholder="Write a reply to the teacher…"
+                        value={inboxReply[m.id] || ''}
+                        onChange={e => setInboxReply(prev => ({ ...prev, [m.id]: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter') handleInboxReply(m.id); }}
+                      />
+                      <button
+                        className="btn btn-primary"
+                        style={{ padding: '8px 16px', gap: 6 }}
+                        disabled={!(inboxReply[m.id] || '').trim()}
+                        onClick={() => handleInboxReply(m.id)}
+                      >
+                        <Send size={14} /> Reply
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
