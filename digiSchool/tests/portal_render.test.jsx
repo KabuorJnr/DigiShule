@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -20,11 +20,17 @@ Object.defineProperty(window, 'matchMedia', {
 import Clinic from '../src/views/Clinic';
 import PortalLayout from '../src/views/layouts/PortalLayout';
 import ErrorBoundary from '../src/components/ErrorBoundary';
+import { ROLES } from '../src/data/users';
+
+let mockProfile = { id: 'u1', name: 'Test User', role: 'principal' };
 
 vi.mock('../src/lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      onAuthStateChange: vi.fn((cb) => {
+        cb('SIGNED_IN', { user: { id: 'u1', user_metadata: {} } });
+        return { data: { subscription: { unsubscribe: vi.fn() } } };
+      }),
       signOut: vi.fn(),
     },
     channel: vi.fn(() => ({
@@ -47,9 +53,12 @@ vi.mock('../src/lib/api', () => ({
     null
   ]),
   upsertRow: vi.fn().mockResolvedValue({}),
-  fetchProfiles: vi.fn().mockResolvedValue([{ id: 'n1', name: null, role: 'clinic' }]),
+  fetchProfiles: vi.fn(() => Promise.resolve([mockProfile])),
   setActiveSchoolId: vi.fn(),
   syncOfflineMutations: vi.fn().mockResolvedValue(),
+  fetchConfig: vi.fn().mockResolvedValue({ settings: { name: 'EduOne High' } }),
+  fetchAllStudentsUnpaginated: vi.fn().mockResolvedValue([]),
+  fetchTeachers: vi.fn().mockResolvedValue([]),
 }));
 
 const mockStore = {
@@ -81,15 +90,6 @@ describe('Portal & Clinic rendering with edge cases', () => {
     expect(container).toBeTruthy();
   });
 
-  it('renders PortalLayout without crashing even when profile has null name and clinic role', () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={['/portal/clinic']}>
-        <PortalLayout />
-      </MemoryRouter>
-    );
-    expect(container).toBeTruthy();
-  });
-
   it('renders ErrorBoundary and exposes technical error details and reset buttons', () => {
     const CrashingComponent = () => {
       throw new Error('Test portal crash');
@@ -105,5 +105,20 @@ describe('Portal & Clinic rendering with edge cases', () => {
     expect(screen.getByText(/The page couldn't render/i)).toBeTruthy();
     expect(screen.getByText(/Sign Out & Reset Session/i)).toBeTruthy();
     expect(screen.getByText(/Technical error details/i)).toBeTruthy();
+  });
+
+  const allRoleKeys = Object.keys(ROLES);
+  allRoleKeys.forEach((roleKey) => {
+    it(`renders PortalLayout cleanly for role: ${roleKey} even with null name`, async () => {
+      cleanup();
+      mockProfile = { id: `u_${roleKey}`, name: null, role: roleKey, username: `user_${roleKey}` };
+      const home = ROLES[roleKey]?.home || 'overview';
+      const { container } = render(
+        <MemoryRouter initialEntries={[`/portal/${home}`]}>
+          <PortalLayout />
+        </MemoryRouter>
+      );
+      expect(container).toBeTruthy();
+    });
   });
 });
