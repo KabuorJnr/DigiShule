@@ -11,6 +11,7 @@ import { SUBJECTS } from '../../data/seed';
 import { printReceipt } from '../../lib/printReceipt';
 import Modal from '../../components/Modal';
 import ReportCardModal from '../../components/ReportCardModal';
+import ResultsSummary from '../../components/ResultsSummary';
 
 export default function ParentDashboard() {
   const { user: currentUser, store, params } = useOutletContext();
@@ -34,6 +35,7 @@ export default function ParentDashboard() {
   const [schoolEvents, setSchoolEvents] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
   const [inboxMessages, setInboxMessages] = useState([]);
+  const [classmates, setClassmates] = useState([]);
 
   // Modal states
   const [msgModal, setMsgModal] = useState(false);
@@ -66,6 +68,22 @@ export default function ParentDashboard() {
     }
     fetchChild();
   }, [selectedChildId]);
+
+  // ── Fetch classmates (same class) for positions & class averages ──
+  // Only needed once we have the child's class; used by the results summary.
+  useEffect(() => {
+    let active = true;
+    async function fetchClassmates() {
+      if (!child?.class) { setClassmates([]); return; }
+      try {
+        const { data, error } = await supabase
+          .from('students').select('id, adm, name, class, gender, scores, kcpe').eq('class', child.class);
+        if (active && !error && Array.isArray(data)) setClassmates(data);
+      } catch (err) { console.error('Error fetching classmates:', err); }
+    }
+    fetchClassmates();
+    return () => { active = false; };
+  }, [child?.class]);
 
   // ── Fetch all supporting data once child is loaded ──
   useEffect(() => {
@@ -377,6 +395,18 @@ export default function ParentDashboard() {
           </KpiCard>
           <KpiCard iconComponent={<Heart size={20} />} label="Health Visits" value={healthRecords.length} accent="#047857" />
         </div>
+
+        {/* Zeraki-style results summary — only once the DoS has published results */}
+        {store?.settings?.results_published && subjects.length > 0 && (
+          <ResultsSummary
+            child={child}
+            classmates={classmates}
+            gradeBoundaries={gradeBoundaries}
+            settings={store?.settings || {}}
+            examTitle={store?.settings?.current_exam || 'End Term Exam'}
+            termName={store?.settings?.current_term || 'Term 2'}
+          />
+        )}
 
         {/* Quick Actions */}
         <div className="card card-pad" style={{ marginBottom: 16 }}>
