@@ -64,6 +64,8 @@ export default function Gradebook({ store }) {
   const [editing, setEditing] = useState(null); // {id, field}
   const [selected, setSelected] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [showAssessEditor, setShowAssessEditor] = useState(false);
+  const [assessDraft, setAssessDraft] = useState(null); // 4-string array while editing labels
   
   // Pagination State for high student count (e.g. 180 students)
   const [pageSize, setPageSize] = useState(25);
@@ -138,6 +140,40 @@ export default function Gradebook({ store }) {
     });
     return isMatched || allowedSubjects.length === SUBJECTS.length;
   }, [user, allowedSubjects, subject, teacherAssignedClass, cls]);
+
+  // Custom assessment names, set by the Director of Studies (e.g. "Opener",
+  // "Mid-Term", "End-Term"). Falls back to the generic Assessment 1-4 labels.
+  const DEFAULT_ASSESS_LABELS = ['Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
+  const assessLabels = useMemo(() => {
+    const raw = settings?.assessmentLabels;
+    if (Array.isArray(raw)) {
+      return DEFAULT_ASSESS_LABELS.map((def, i) => {
+        const v = raw[i];
+        return (v && String(v).trim()) ? String(v).trim() : def;
+      });
+    }
+    return DEFAULT_ASSESS_LABELS;
+  }, [settings?.assessmentLabels]);
+  // Short forms for narrow grid headers ("Mid-Term Exam" -> "Mid-Term").
+  const assessShort = useMemo(
+    () => assessLabels.map((l, i) => (l === DEFAULT_ASSESS_LABELS[i] ? `Ass. ${i + 1}` : l)),
+    [assessLabels]
+  );
+
+  // Teachers only see the subjects they teach during entry; executives see all.
+  const subjectOptions = useMemo(() => {
+    if (user?.role === 'teacher' && allowedSubjects.length > 0 && allowedSubjects.length < SUBJECTS.length) {
+      return allowedSubjects;
+    }
+    return SUBJECTS;
+  }, [user, allowedSubjects]);
+
+  // Keep the selected subject within what a teacher is allowed to see.
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !subjectOptions.some(s => s.toLowerCase() === subject.toLowerCase())) {
+      setSubject(subjectOptions[0]);
+    }
+  }, [subjectOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Extract classes from students for a complete stream list, falling back to settings
   const dynamicClasses = useMemo(() => {
@@ -383,7 +419,9 @@ export default function Gradebook({ store }) {
   }
 
   const handleApproveResults = () => {
-    setSettings({ results_approved: !settings.results_approved });
+    // Merge into existing settings — never replace the whole blob, or every
+    // other configured value (school name, boundaries, classes…) is wiped.
+    setSettings((s) => ({ ...s, results_approved: !s.results_approved }));
     notify(settings.results_approved ? 'Results approval revoked' : 'Results approved successfully', 'success');
   };
 
@@ -396,19 +434,19 @@ export default function Gradebook({ store }) {
       notify('Only the Director of Studies can publish results.', 'warning');
       return;
     }
-    setSettings({ results_published: !settings.results_published });
+    setSettings((s) => ({ ...s, results_published: !s.results_published }));
     notify(settings.results_published ? 'Results unpublished' : 'Results published & official stamps certified', 'success');
   };
 
   function exportPDF() {
-    const head = ['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks'];
+    const head = ['#', 'Student', 'Adm No.', ...assessLabels.map(l => `${l} (%)`), 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]);
     exportTablePDF({ school: settings, title: `Gradebook - Grade ${cls}  |  ${subject}`, subtitle: `${term}  |  ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
 
   function exportExcel() {
-    const aoa = [['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks']];
+    const aoa = [['#', 'Student', 'Adm No.', ...assessLabels.map(l => `${l} (%)`), 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks']];
     rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]));
     downloadExcel(`gradebook-${cls}-${subject}.xlsx`, [{ name: `${cls} ${subject}`.slice(0, 31), aoa }]);
     notify('Gradebook exported as Excel', 'success', 'Export');
@@ -542,76 +580,79 @@ export default function Gradebook({ store }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b' }}>
-      
+    <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b', maxWidth: 1160, margin: '0 auto' }}>
+
       {/* ── 1. HEADER & COMMAND BAR ── */}
       <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: 12,
-        padding: '16px 20px',
+        background: 'linear-gradient(120deg, #065f46 0%, #047857 55%, #0f766e 100%)',
+        border: '1px solid #065f46',
+        borderRadius: 14,
+        padding: '18px 22px',
         marginBottom: 16,
-        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+        boxShadow: '0 8px 24px rgba(4, 120, 87, 0.22)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: 14
+        gap: 14,
+        position: 'relative',
+        overflow: 'hidden'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: 10, 
-              background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.16)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               color: '#ffffff',
-              boxShadow: '0 2px 6px rgba(4, 120, 87, 0.25)'
+              flexShrink: 0
             }}>
-              <BookOpen size={18} />
+              <BookOpen size={20} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>
                   Gradebook & Academic Central
                 </h1>
                 {settings?.results_published && (
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4, 
-                    background: '#eff6ff', 
-                    color: '#1d4ed8', 
-                    border: '1px solid #bfdbfe', 
-                    padding: '2px 8px', 
-                    borderRadius: 12, 
-                    fontSize: 11, 
-                    fontWeight: 700 
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '3px 9px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700
                   }}>
                     <ShieldCheck size={13} /> Certified & Published
                   </span>
                 )}
                 {settings?.results_approved && !settings?.results_published && (
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4, 
-                    background: '#ecfdf5', 
-                    color: '#047857', 
-                    border: '1px solid #a7f3d0', 
-                    padding: '2px 8px', 
-                    borderRadius: 12, 
-                    fontSize: 11, 
-                    fontWeight: 700 
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '3px 9px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700
                   }}>
                     <Check size={13} /> Approved by Deputy
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}>
                 {term} · {examYear} Assessment Cycle · Official CBC & 8-4-4 Marks Engine
               </div>
             </div>
@@ -621,39 +662,59 @@ export default function Gradebook({ store }) {
         {/* Global Action Triggers */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {(['deputy_academic', 'dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
-            <button 
-              className={`btn btn-sm ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
+            <button
+              type="button"
               onClick={handleApproveResults}
-              style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{
+                fontSize: 12, padding: '8px 14px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: settings?.results_approved ? 'rgba(254,226,226,0.16)' : 'rgba(255,255,255,0.14)',
+                color: '#ffffff'
+              }}
             >
-              {settings?.results_approved ? <X size={15} /> : <Check size={15} />} 
+              {settings?.results_approved ? <X size={15} /> : <Check size={15} />}
               {settings?.results_approved ? 'Revoke Approval' : 'Approve Results'}
             </button>
           )}
 
           {(['dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
-            <button 
-              className={`btn btn-sm ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
+            <button
+              type="button"
               onClick={handlePublishResults}
-              style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
               title={settings?.results_published ? 'Retract official publication' : 'Publish official results and stamp principal signature on all report cards'}
+              style={{
+                fontSize: 12, padding: '8px 14px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6, border: 'none',
+                background: settings?.results_published ? 'rgba(254,226,226,0.16)' : '#ffffff',
+                color: settings?.results_published ? '#ffffff' : '#047857',
+                boxShadow: settings?.results_published ? 'none' : '0 2px 8px rgba(0,0,0,0.15)'
+              }}
             >
-              <ShieldCheck size={15} /> 
+              <ShieldCheck size={15} />
               {settings?.results_published ? 'Unpublish Results (DoS)' : 'Publish & Stamp (DoS)'}
             </button>
           )}
 
-          <button 
-            className="btn btn-sm" 
+          <button
+            type="button"
             onClick={exportExcel}
-            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{
+              fontSize: 12, padding: '8px 13px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.14)', color: '#ffffff'
+            }}
           >
             <Download size={14} /> Excel
           </button>
-          <button 
-            className="btn btn-sm" 
+          <button
+            type="button"
             onClick={exportPDF}
-            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{
+              fontSize: 12, padding: '8px 13px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.14)', color: '#ffffff'
+            }}
           >
             <Printer size={14} /> PDF
           </button>
@@ -687,13 +748,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'report' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'report' ? '#ffffff' : 'transparent',
-              color: entryMode === 'report' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'report' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'report' ? '#047857' : 'transparent',
+              color: entryMode === 'report' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'report' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <FileText size={16} color={entryMode === 'report' ? '#047857' : '#64748b'} />
+            <FileText size={16} color={entryMode === 'report' ? '#ffffff' : '#64748b'} />
             Academic Report Form (Student)
           </button>
 
@@ -709,13 +770,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'grid' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'grid' ? '#ffffff' : 'transparent',
-              color: entryMode === 'grid' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'grid' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'grid' ? '#047857' : 'transparent',
+              color: entryMode === 'grid' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'grid' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <LayoutGrid size={16} color={entryMode === 'grid' ? '#047857' : '#64748b'} />
+            <LayoutGrid size={16} color={entryMode === 'grid' ? '#ffffff' : '#64748b'} />
             Class Subject Grid (Stream)
           </button>
 
@@ -731,13 +792,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'analysis' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'analysis' ? '#ffffff' : 'transparent',
-              color: entryMode === 'analysis' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'analysis' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'analysis' ? '#047857' : 'transparent',
+              color: entryMode === 'analysis' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'analysis' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <BarChart3 size={16} color={entryMode === 'analysis' ? '#047857' : '#64748b'} />
+            <BarChart3 size={16} color={entryMode === 'analysis' ? '#ffffff' : '#64748b'} />
             Class & Subject Analysis
           </button>
         </div>
@@ -800,7 +861,7 @@ export default function Gradebook({ store }) {
                   onChange={(e) => setSubject(e.target.value)} 
                   style={{ width: '100%', height: 36, fontSize: 13, fontWeight: 600, color: '#0f172a' }}
                 >
-                  {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+                  {subjectOptions.map((s) => <option key={s}>{s}</option>)}
                 </select>
               </div>
             )}
@@ -900,7 +961,7 @@ export default function Gradebook({ store }) {
                   onChange={(e) => setAssessment(e.target.value)} 
                   style={{ width: '100%', height: 36, fontSize: 13 }}
                 >
-                  {ASSESS_OPTIONS.map((a) => <option key={a}>{a}</option>)}
+                  {['All', ...assessLabels].map((a) => <option key={a}>{a}</option>)}
                 </select>
               </div>
             )}
@@ -921,6 +982,84 @@ export default function Gradebook({ store }) {
               </div>
             </div>
           </div>
+
+          {/* Assessment naming — Director of Studies renames the four columns
+              (e.g. Opener / Mid-Term / End-Term). Applies everywhere marks show. */}
+          {entryMode === 'grid' && canEditAll && (
+            <div style={{ marginTop: 10 }}>
+              {!showAssessEditor ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => { setAssessDraft([...assessLabels]); setShowAssessEditor(true); }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#065f46', padding: '6px 10px' }}
+                >
+                  <FileText size={14} /> Name assessments
+                  <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+                    ({assessLabels.join(' · ')})
+                  </span>
+                </button>
+              ) : (
+                <div style={{ border: '1px solid #86efac', background: '#f0fdf4', borderRadius: 10, padding: '12px 14px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                    Name the four assessments
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {(assessDraft || assessLabels).map((val, i) => (
+                      <div key={i} style={{ flex: '1 1 160px', minWidth: 140 }}>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#15803d', marginBottom: 3 }}>
+                          Column {i + 1}
+                        </label>
+                        <input
+                          className="input"
+                          value={val}
+                          maxLength={24}
+                          placeholder={DEFAULT_ASSESS_LABELS[i]}
+                          onChange={(e) => {
+                            const next = [...(assessDraft || assessLabels)];
+                            next[i] = e.target.value;
+                            setAssessDraft(next);
+                          }}
+                          style={{ width: '100%', height: 34, fontSize: 13 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => {
+                        const cleaned = (assessDraft || assessLabels).map((v, i) => (v && v.trim()) ? v.trim() : DEFAULT_ASSESS_LABELS[i]);
+                        setSettings((s) => ({ ...s, assessmentLabels: cleaned }));
+                        setShowAssessEditor(false);
+                        notify('Assessment names saved', 'success', 'Gradebook');
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 14px' }}
+                    >
+                      <Check size={14} /> Save names
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setAssessDraft([...DEFAULT_ASSESS_LABELS])}
+                      style={{ fontSize: 12, padding: '7px 12px' }}
+                    >
+                      Reset to default
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => { setShowAssessEditor(false); setAssessDraft(null); }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 12px', color: '#64748b' }}
+                    >
+                      <X size={14} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Executive KPI Grid */}
           <div style={{
@@ -1209,10 +1348,9 @@ export default function Gradebook({ store }) {
                     <th style={{ width: 44, textAlign: 'center', color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>#</th>
                     <th style={{ minWidth: 190, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Student</th>
                     <th style={{ width: 100, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Adm No.</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 1</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 2</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 3</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 4</th>
+                    {assessShort.map((lbl, i) => (
+                      <th key={i} title={assessLabels[i]} style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac', lineHeight: 1.15, whiteSpace: 'normal', padding: '4px 3px' }}>{lbl}</th>
+                    ))}
                     <th style={{ width: 95, textAlign: 'center', color: '#0369a1', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Average</th>
                     <th style={{ width: 95, textAlign: 'center', color: '#1d4ed8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Points</th>
                     <th style={{ width: 115, textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Performance</th>

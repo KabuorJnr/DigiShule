@@ -927,7 +927,7 @@ export default function MeritListModule({
       </div>
 
       {/* ── OVERALL CLASS SUMMARY STATS CARDS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12, marginBottom: 16 }}>
         <div style={{ background: '#f0fdf4', border: '1px solid #dcfce7', padding: 12, borderRadius: 6 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>Class Mean Score</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#047857', marginTop: 2 }}>
