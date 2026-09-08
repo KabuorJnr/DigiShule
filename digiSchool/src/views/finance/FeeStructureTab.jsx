@@ -134,7 +134,21 @@ export default function FeeStructureTab() {
 
   return (
     <div style={{ animation: 'fade-in 0.4s ease-out' }}>
-      
+      {/* Print isolation: only the official document reaches the printer/PDF,
+          without the finance chrome, card border or shadow. */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: A4; margin: 12mm; }
+          body * { visibility: hidden; }
+          .printable-document-container, .printable-document-container * { visibility: visible; }
+          .printable-document-container {
+            position: absolute; left: 0; top: 0; width: 100%;
+            max-width: none !important; border: none !important; box-shadow: none !important; margin: 0 !important;
+          }
+          .no-print { display: none !important; }
+        }
+      `}} />
+
       {/* Control Bar (Hidden during Printing) */}
       <div className="card card-pad no-print" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
@@ -180,14 +194,13 @@ export default function FeeStructureTab() {
         
         {/* Header Header: Ministry & School Crest Logos */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          {/* Left Emblem: Republic of Kenya Coat of Arms SVG */}
+          {/* Left emblem: the school's uploaded ministry/government emblem, if any.
+              We never draw a fabricated coat of arms on an official document — when
+              none is configured this is a neutral spacer that keeps the title centred. */}
           <div style={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg viewBox="0 0 100 100" width="72" height="72">
-              <path d="M50 5 L85 25 L85 65 L50 95 L15 65 L15 25 Z" fill="none" stroke="#000" strokeWidth="2.5"/>
-              <circle cx="50" cy="40" r="18" fill="none" stroke="#000" strokeWidth="2"/>
-              <path d="M50 25 L50 55 M35 40 L65 40" stroke="#000" strokeWidth="2"/>
-              <text x="50" y="82" textAnchor="middle" fontSize="9" fontWeight="bold" fontFamily="serif">KENYA</text>
-            </svg>
+            {(school.ministryLogo || school.govLogo) ? (
+              <img src={school.ministryLogo || school.govLogo} alt="Ministry emblem" style={{ maxHeight: 72, maxWidth: 72, objectFit: 'contain' }} />
+            ) : null}
           </div>
 
           {/* Center Institution Title */}
@@ -300,6 +313,12 @@ export default function FeeStructureTab() {
 
         {/* ── Authorization & Official Stamp Footer ── */}
         <OfficialStamp settings={school} label="Principal / Bursar" />
+
+        {/* Document footer: provenance line for an official record. */}
+        <div style={{ marginTop: 28, paddingTop: 10, borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748b' }}>
+          <span>{school.name || 'School'} · Official Fee Structure · FY {finYear}</span>
+          <span>Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        </div>
 
       </div>
 
