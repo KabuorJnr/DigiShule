@@ -634,59 +634,68 @@ export default function PortalLayout() {
 
   const activeView = computedActiveView;
 
-  // Initials for avatar
-  const initials = currentUser.name
-    .split(' ')
+  // Display name & initials for avatar
+  const displayName = currentUser?.name || currentUser?.full_name || currentUser?.username || 'User';
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
     .map((p) => p[0])
     .slice(0, 2)
-    .join('');
+    .join('')
+    .toUpperCase() || 'U';
 
   const toggleNav = (id) => setExpandedNav(prev => ({ ...prev, [id]: !prev[id] }));
 
   const isNavActive = (navItem) => {
+    if (!navItem || typeof navItem !== 'object') return false;
     if (activeView !== navItem.view) return false;
-    const pathParts = currentPath.split('/');
-    const pathTab = currentPath.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
-    const currentTab = viewParams.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
+    const pathParts = (currentPath || '').split('/');
+    const pathTab = currentPath?.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
+    const currentTab = viewParams?.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
     if (navItem.tab && currentTab !== navItem.tab) return false;
-    if (navItem.action && viewParams.action !== navItem.action) return false;
+    if (navItem.action && viewParams?.action !== navItem.action) return false;
     return true;
   };
 
   // Sync document.title for browser tab tile
   useEffect(() => {
-    if (!currentUser) return;
-    const schoolName = (settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST')
-      ? settings.name.trim()
-      : 'School Portal';
-    const portalLabel = role?.portal || role?.label || 'Portal';
+    try {
+      if (!currentUser) return;
+      const schoolName = (settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST')
+        ? settings.name.trim()
+        : 'School Portal';
+      const portalLabel = role?.portal || role?.label || 'Portal';
 
-    // Identify active view/tab label if available
-    let viewTitle = '';
-    for (const sec of (role.nav || [])) {
-      for (const itm of (sec.items || [])) {
-        if (isNavActive(itm)) {
-          viewTitle = itm.label;
-          break;
-        }
-        if (itm.sub) {
-          for (const sub of itm.sub) {
-            if (isNavActive(sub)) {
-              viewTitle = sub.label;
-              break;
+      // Identify active view/tab label if available
+      let viewTitle = '';
+      for (const sec of (role?.nav || [])) {
+        for (const itm of (sec?.items || [])) {
+          if (isNavActive(itm)) {
+            viewTitle = itm?.label || '';
+            break;
+          }
+          if (itm?.sub) {
+            for (const sub of (itm.sub || [])) {
+              if (isNavActive(sub)) {
+                viewTitle = sub?.label || '';
+                break;
+              }
             }
           }
         }
+        if (viewTitle) break;
       }
-      if (viewTitle) break;
+
+      const subContext = viewTitle && viewTitle.toLowerCase() !== portalLabel.toLowerCase()
+        ? `${viewTitle} · ${portalLabel}`
+        : portalLabel;
+
+      document.title = `EduOne — ${schoolName} (${subContext})`;
+    } catch (err) {
+      console.warn('[PortalLayout] Failed to update document title:', err);
     }
-
-    const subContext = viewTitle && viewTitle.toLowerCase() !== portalLabel.toLowerCase()
-      ? `${viewTitle} · ${portalLabel}`
-      : portalLabel;
-
-    document.title = `EduOne — ${schoolName} (${subContext})`;
-  }, [currentUser, settings?.name, role, activeView, viewParams.tab, currentPath]);
+  }, [currentUser, settings?.name, role, activeView, viewParams?.tab, currentPath]);
 
   // ---- Phone shell ----
   // On phones the desktop sidebar layout is replaced by the native-feeling
@@ -849,9 +858,9 @@ export default function PortalLayout() {
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 title="Click to expand account actions"
               >
-                <div className="avatar" title={currentUser.name} style={{ width: 34, height: 34, fontSize: 13, flexShrink: 0 }}>{initials}</div>
+                <div className="avatar" title={displayName} style={{ width: 34, height: 34, fontSize: 13, flexShrink: 0 }}>{initials}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>{currentUser.name}</strong>
+                  <strong style={{ fontSize: 13, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', color: '#fff' }}>{displayName}</strong>
                   <span style={{ fontSize: 11, opacity: 0.7, color: 'rgba(255,255,255,0.6)' }}>{role.label}</span>
                 </div>
                 {profileExpanded ? <ChevronDown size={14} style={{ opacity: 0.6 }} /> : <ChevronRight size={14} style={{ opacity: 0.6 }} />}
@@ -876,7 +885,7 @@ export default function PortalLayout() {
             <>
               <div 
                 className="avatar" 
-                title={`${currentUser.name} (${role.label})`} 
+                title={`${displayName} (${role.label})`} 
                 style={{ width: 32, height: 32, fontSize: 12, margin: '0 auto 8px auto', cursor: 'pointer' }}
                 onClick={() => setProfileExpanded(prev => !prev)}
               >

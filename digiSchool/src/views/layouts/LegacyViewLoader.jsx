@@ -59,7 +59,8 @@ const VIEW_MAP = {
 };
 
 export default function LegacyViewLoader() {
-  const { store, user, params: outletParams } = useOutletContext();
+  const context = useOutletContext() || {};
+  const { store = {}, user = {}, params: outletParams = {} } = context;
   const { viewId, tab } = useParams();
 
   const ViewComponent = VIEW_MAP[viewId];

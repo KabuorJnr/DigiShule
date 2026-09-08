@@ -113,12 +113,12 @@ export function NurseClinic({ store, user, params }) {
   const visits = useMemo(() => {
     const all = [...added, ...(rows || [])];
     const seen = new Set();
-    return all.filter((v) => (v.id && !seen.has(v.id) && seen.add(v.id)))
-      .sort((a, b) => String(b.date || b.created_at).localeCompare(String(a.date || a.created_at)));
+    return all.filter((v) => (v && v.id && !seen.has(v.id) && seen.add(v.id)))
+      .sort((a, b) => String(b?.date || b?.created_at || '').localeCompare(String(a?.date || a?.created_at || '')));
   }, [rows, added]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayCount = visits.filter((v) => String(v.date).slice(0, 10) === today).length;
+  const todayCount = visits.filter((v) => String(v?.date || '').slice(0, 10) === today).length;
 
   if (loading) return <Loading />;
   return (

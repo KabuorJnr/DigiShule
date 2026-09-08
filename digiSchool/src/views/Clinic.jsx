@@ -16,9 +16,10 @@ const COMMON_TREATMENTS = [
   'Wound cleaned & dressed', 'Cold compress applied', 'Antacid given', 'Prescribed rest'
 ];
 
-export default function Clinic({ store, user, params }) {
-  const { notify, students: storeStudents } = store;
-  const students = storeStudents || [];
+export default function Clinic({ store = {}, user = {}, params = {} }) {
+  const { notify = (() => {}), students: storeStudents = [] } = store || {};
+  const safeNotify = typeof notify === 'function' ? notify : console.log;
+  const students = Array.isArray(storeStudents) ? storeStudents : [];
   const [visits, setVisits] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   
@@ -49,11 +50,16 @@ export default function Clinic({ store, user, params }) {
   useEffect(() => {
     let active = true;
     fetchTable('clinicVisits')
-      .then((rows) => { if (active) setVisits(rows.sort((a, b) => String(b.date).localeCompare(String(a.date)))); })
-      .catch((e) => notify(`Failed to load clinic visits: ${e.message}`, 'error'));
+      .then((rows) => {
+        if (active) {
+          const safeRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+          setVisits(safeRows.sort((a, b) => String(b?.date || '').localeCompare(String(a?.date || ''))));
+        }
+      })
+      .catch((e) => safeNotify(`Failed to load clinic visits: ${e?.message || e}`, 'error'));
       
     return () => { active = false; };
-  }, [notify]);
+  }, [safeNotify]);
 
   // Sync active tab with incoming params from sidebar navigation or router
   useEffect(() => {
@@ -66,26 +72,31 @@ export default function Clinic({ store, user, params }) {
 
   useEffect(() => {
     if (students.length > 0 && !selectedClass) {
-      const classes = [...new Set(students.map(s => s.class || 'Unassigned'))].sort();
+      const classes = [...new Set(students.filter(Boolean).map(s => s?.class || 'Unassigned'))].sort();
       if (classes.length > 0) setSelectedClass(classes[0]);
     }
   }, [students, selectedClass]);
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  const totals = useMemo(() => ({
-    total: visits.length,
-    today: visits.filter((v) => String(v.date || '').slice(0, 10) === todayStr).length,
-    referred: visits.filter((v) => v.outcome === 'Referred to hospital').length,
-  }), [visits, todayStr]);
+  const totals = useMemo(() => {
+    const safeVisits = Array.isArray(visits) ? visits.filter(Boolean) : [];
+    return {
+      total: safeVisits.length,
+      today: safeVisits.filter((v) => String(v?.date || '').slice(0, 10) === todayStr).length,
+      referred: safeVisits.filter((v) => v?.outcome === 'Referred to hospital').length,
+    };
+  }, [visits, todayStr]);
 
   const todayVisits = useMemo(() => {
-    return visits.filter((v) => String(v.date || '').slice(0, 10) === todayStr);
+    const safeVisits = Array.isArray(visits) ? visits.filter(Boolean) : [];
+    return safeVisits.filter((v) => String(v?.date || '').slice(0, 10) === todayStr);
   }, [visits, todayStr]);
 
   const groupedStudents = useMemo(() => {
     const groups = {};
-    students.forEach(s => {
+    (students || []).forEach(s => {
+      if (!s) return;
       const c = s.class || 'Unassigned';
       if (!groups[c]) groups[c] = [];
       groups[c].push(s);
@@ -94,9 +105,10 @@ export default function Clinic({ store, user, params }) {
   }, [students]);
 
   const displayedStudents = useMemo(() => {
+    const validStudents = (students || []).filter(Boolean);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      return students.filter(s => s.name?.toLowerCase().includes(q) || s.adm?.toLowerCase().includes(q));
+      return validStudents.filter(s => s?.name?.toLowerCase().includes(q) || s?.adm?.toLowerCase().includes(q));
     }
     return groupedStudents[selectedClass] || [];
   }, [students, groupedStudents, selectedClass, searchQuery]);
@@ -105,8 +117,8 @@ export default function Clinic({ store, user, params }) {
   const pickerStudents = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
     if (!q) return [];
-    return students
-      .filter((s) => s.name?.toLowerCase().includes(q) || String(s.adm || '').toLowerCase().includes(q) || s.class?.toLowerCase().includes(q))
+    return (students || [])
+      .filter((s) => s && (s.name?.toLowerCase().includes(q) || String(s.adm || '').toLowerCase().includes(q) || s.class?.toLowerCase().includes(q)))
       .slice(0, 8);
   }, [students, pickerQuery]);
 
@@ -340,7 +352,7 @@ export default function Clinic({ store, user, params }) {
 
       {/* Print-only Header */}
       <div className="print-only" style={{ marginBottom: 24 }}>
-        <PrintHeader settings={store.settings} />
+        <PrintHeader settings={store?.settings || {}} />
         <div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #000', paddingBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: '#000', textTransform: 'uppercase' }}>Clinic & Health Report</h2>
           <div style={{ fontSize: 13, marginTop: 4 }}>Generated on {new Date().toLocaleDateString()}</div>
@@ -719,7 +731,15 @@ export default function Clinic({ store, user, params }) {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 6, borderTop: '1px solid #f1f5f9' }}>
                       <span className="muted" style={{ fontSize: 11 }}>
-                        {v.created_at ? new Date(v.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'}
+                        {(() => {
+                          if (!v?.created_at) return 'Today';
+                          try {
+                            const d = new Date(v.created_at);
+                            return isNaN(d.getTime()) ? 'Today' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          } catch {
+                            return 'Today';
+                          }
+                        })()}
                       </span>
                       <button
                         className="btn btn-sm"

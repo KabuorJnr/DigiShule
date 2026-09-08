@@ -45,25 +45,51 @@ export default class ErrorBoundary extends React.Component {
             Try reloading, or head back to the dashboard.
           </p>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
             <button onClick={this.reload}
-              style={{ height: 36, padding: '0 16px', borderRadius: 6, background: '#111827', color: '#fff', border: '1px solid #111827', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+              style={{ height: 36, padding: '0 16px', borderRadius: 6, background: '#111827', color: '#fff', border: '1px solid #111827', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Reload page
             </button>
-            <button onClick={() => { this.reset(); window.location.href = '/portal'; }}
+            <button onClick={() => { this.reset(); window.location.href = '/portal/overview'; }}
               style={{ height: 36, padding: '0 16px', borderRadius: 6, background: '#fff', color: '#111827', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
               Go to dashboard
             </button>
+            <button onClick={() => {
+              try {
+                localStorage.clear();
+                sessionStorage.clear();
+              } catch (e) {
+                console.error(e);
+              }
+              window.location.href = '/login';
+            }}
+              style={{ height: 36, padding: '0 14px', borderRadius: 6, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Sign Out & Reset Session
+            </button>
           </div>
 
-          {import.meta.env?.MODE !== 'production' && (
-            <details style={{ marginTop: 20, fontSize: 12, color: '#6b7280' }}>
-              <summary style={{ cursor: 'pointer' }}>Developer detail</summary>
-              <pre style={{ marginTop: 8, padding: 10, background: '#f9fafb', borderRadius: 6, overflowX: 'auto', fontSize: 11, lineHeight: 1.5 }}>
-                {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
-              </pre>
-            </details>
-          )}
+          <details style={{ marginTop: 16, fontSize: 12, color: '#475569', background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 600, color: '#b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Technical error details (Click to expand)</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const txt = String(this.state.error?.stack || this.state.error?.message || this.state.error);
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(txt);
+                    alert('Error details copied to clipboard');
+                  }
+                }}
+                style={{ padding: '2px 8px', fontSize: 11, background: '#fff', border: '1px solid #cbd5e1', borderRadius: 4, cursor: 'pointer', color: '#334155' }}
+              >
+                Copy error
+              </button>
+            </summary>
+            <pre style={{ marginTop: 8, padding: 10, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, overflowX: 'auto', fontSize: 11, lineHeight: 1.5, color: '#0f172a', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+            </pre>
+          </details>
         </div>
       </div>
     );
