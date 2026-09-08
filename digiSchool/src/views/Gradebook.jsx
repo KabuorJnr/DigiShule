@@ -64,6 +64,8 @@ export default function Gradebook({ store }) {
   const [editing, setEditing] = useState(null); // {id, field}
   const [selected, setSelected] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [showAssessEditor, setShowAssessEditor] = useState(false);
+  const [assessDraft, setAssessDraft] = useState(null); // 4-string array while editing labels
   
   // Pagination State for high student count (e.g. 180 students)
   const [pageSize, setPageSize] = useState(25);
@@ -138,6 +140,40 @@ export default function Gradebook({ store }) {
     });
     return isMatched || allowedSubjects.length === SUBJECTS.length;
   }, [user, allowedSubjects, subject, teacherAssignedClass, cls]);
+
+  // Custom assessment names, set by the Director of Studies (e.g. "Opener",
+  // "Mid-Term", "End-Term"). Falls back to the generic Assessment 1-4 labels.
+  const DEFAULT_ASSESS_LABELS = ['Assessment 1', 'Assessment 2', 'Assessment 3', 'Assessment 4'];
+  const assessLabels = useMemo(() => {
+    const raw = settings?.assessmentLabels;
+    if (Array.isArray(raw)) {
+      return DEFAULT_ASSESS_LABELS.map((def, i) => {
+        const v = raw[i];
+        return (v && String(v).trim()) ? String(v).trim() : def;
+      });
+    }
+    return DEFAULT_ASSESS_LABELS;
+  }, [settings?.assessmentLabels]);
+  // Short forms for narrow grid headers ("Mid-Term Exam" -> "Mid-Term").
+  const assessShort = useMemo(
+    () => assessLabels.map((l, i) => (l === DEFAULT_ASSESS_LABELS[i] ? `Ass. ${i + 1}` : l)),
+    [assessLabels]
+  );
+
+  // Teachers only see the subjects they teach during entry; executives see all.
+  const subjectOptions = useMemo(() => {
+    if (user?.role === 'teacher' && allowedSubjects.length > 0 && allowedSubjects.length < SUBJECTS.length) {
+      return allowedSubjects;
+    }
+    return SUBJECTS;
+  }, [user, allowedSubjects]);
+
+  // Keep the selected subject within what a teacher is allowed to see.
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !subjectOptions.some(s => s.toLowerCase() === subject.toLowerCase())) {
+      setSubject(subjectOptions[0]);
+    }
+  }, [subjectOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Extract classes from students for a complete stream list, falling back to settings
   const dynamicClasses = useMemo(() => {
@@ -383,7 +419,9 @@ export default function Gradebook({ store }) {
   }
 
   const handleApproveResults = () => {
-    setSettings({ results_approved: !settings.results_approved });
+    // Merge into existing settings — never replace the whole blob, or every
+    // other configured value (school name, boundaries, classes…) is wiped.
+    setSettings((s) => ({ ...s, results_approved: !s.results_approved }));
     notify(settings.results_approved ? 'Results approval revoked' : 'Results approved successfully', 'success');
   };
 
@@ -396,19 +434,19 @@ export default function Gradebook({ store }) {
       notify('Only the Director of Studies can publish results.', 'warning');
       return;
     }
-    setSettings({ results_published: !settings.results_published });
+    setSettings((s) => ({ ...s, results_published: !s.results_published }));
     notify(settings.results_published ? 'Results unpublished' : 'Results published & official stamps certified', 'success');
   };
 
   function exportPDF() {
-    const head = ['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks'];
+    const head = ['#', 'Student', 'Adm No.', ...assessLabels.map(l => `${l} (%)`), 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]);
     exportTablePDF({ school: settings, title: `Gradebook - Grade ${cls}  |  ${subject}`, subtitle: `${term}  |  ${assessment}`, head, body, filename: `gradebook-${cls}-${subject}.pdf` });
     notify('Gradebook exported as PDF', 'success', 'Export');
   }
 
   function exportExcel() {
-    const aoa = [['#', 'Student', 'Adm No.', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks']];
+    const aoa = [['#', 'Student', 'Adm No.', ...assessLabels.map(l => `${l} (%)`), 'Avg (%)', 'CBC Points', 'Grade/Level', 'Remarks']];
     rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]));
     downloadExcel(`gradebook-${cls}-${subject}.xlsx`, [{ name: `${cls} ${subject}`.slice(0, 31), aoa }]);
     notify('Gradebook exported as Excel', 'success', 'Export');
@@ -800,7 +838,7 @@ export default function Gradebook({ store }) {
                   onChange={(e) => setSubject(e.target.value)} 
                   style={{ width: '100%', height: 36, fontSize: 13, fontWeight: 600, color: '#0f172a' }}
                 >
-                  {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+                  {subjectOptions.map((s) => <option key={s}>{s}</option>)}
                 </select>
               </div>
             )}
@@ -900,7 +938,7 @@ export default function Gradebook({ store }) {
                   onChange={(e) => setAssessment(e.target.value)} 
                   style={{ width: '100%', height: 36, fontSize: 13 }}
                 >
-                  {ASSESS_OPTIONS.map((a) => <option key={a}>{a}</option>)}
+                  {['All', ...assessLabels].map((a) => <option key={a}>{a}</option>)}
                 </select>
               </div>
             )}
@@ -921,6 +959,84 @@ export default function Gradebook({ store }) {
               </div>
             </div>
           </div>
+
+          {/* Assessment naming — Director of Studies renames the four columns
+              (e.g. Opener / Mid-Term / End-Term). Applies everywhere marks show. */}
+          {entryMode === 'grid' && canEditAll && (
+            <div style={{ marginTop: 10 }}>
+              {!showAssessEditor ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => { setAssessDraft([...assessLabels]); setShowAssessEditor(true); }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#065f46', padding: '6px 10px' }}
+                >
+                  <FileText size={14} /> Name assessments
+                  <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+                    ({assessLabels.join(' · ')})
+                  </span>
+                </button>
+              ) : (
+                <div style={{ border: '1px solid #86efac', background: '#f0fdf4', borderRadius: 10, padding: '12px 14px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                    Name the four assessments
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {(assessDraft || assessLabels).map((val, i) => (
+                      <div key={i} style={{ flex: '1 1 160px', minWidth: 140 }}>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#15803d', marginBottom: 3 }}>
+                          Column {i + 1}
+                        </label>
+                        <input
+                          className="input"
+                          value={val}
+                          maxLength={24}
+                          placeholder={DEFAULT_ASSESS_LABELS[i]}
+                          onChange={(e) => {
+                            const next = [...(assessDraft || assessLabels)];
+                            next[i] = e.target.value;
+                            setAssessDraft(next);
+                          }}
+                          style={{ width: '100%', height: 34, fontSize: 13 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => {
+                        const cleaned = (assessDraft || assessLabels).map((v, i) => (v && v.trim()) ? v.trim() : DEFAULT_ASSESS_LABELS[i]);
+                        setSettings((s) => ({ ...s, assessmentLabels: cleaned }));
+                        setShowAssessEditor(false);
+                        notify('Assessment names saved', 'success', 'Gradebook');
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 14px' }}
+                    >
+                      <Check size={14} /> Save names
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setAssessDraft([...DEFAULT_ASSESS_LABELS])}
+                      style={{ fontSize: 12, padding: '7px 12px' }}
+                    >
+                      Reset to default
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => { setShowAssessEditor(false); setAssessDraft(null); }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 12px', color: '#64748b' }}
+                    >
+                      <X size={14} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Executive KPI Grid */}
           <div style={{
@@ -1209,10 +1325,9 @@ export default function Gradebook({ store }) {
                     <th style={{ width: 44, textAlign: 'center', color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>#</th>
                     <th style={{ minWidth: 190, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Student</th>
                     <th style={{ width: 100, color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Adm No.</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 1</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 2</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 3</th>
-                    <th style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac' }}>Ass. 4</th>
+                    {assessShort.map((lbl, i) => (
+                      <th key={i} title={assessLabels[i]} style={{ width: 78, textAlign: 'center', background: '#f0fdf4', color: '#065f46', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #86efac', lineHeight: 1.15, whiteSpace: 'normal', padding: '4px 3px' }}>{lbl}</th>
+                    ))}
                     <th style={{ width: 95, textAlign: 'center', color: '#0369a1', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Average</th>
                     <th style={{ width: 95, textAlign: 'center', color: '#1d4ed8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Points</th>
                     <th style={{ width: 115, textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid #cbd5e1' }}>Performance</th>
