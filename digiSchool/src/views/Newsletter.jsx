@@ -224,6 +224,12 @@ function NewsletterDoc({ settings, title, issueDate, intro, sections, authorRole
 
       {/* Official stamp appears on every official document (Task requirement). */}
       <OfficialStamp settings={settings} align="right" label={authorRole} />
+
+      {/* Document footer: provenance line for an official record. */}
+      <div style={{ marginTop: 28, paddingTop: 10, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748b' }}>
+        <span>{settings.name || 'School'} · Official Newsletter</span>
+        <span>Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+      </div>
     </div>
   );
 }

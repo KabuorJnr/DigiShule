@@ -20,8 +20,8 @@ export default function PrintHeader({ settings = {} }) {
         overflow: 'hidden'
       }}>
         <svg viewBox="0 0 800 800" width="100%" height="100%" style={{ opacity: 0.02, transform: 'rotate(-30deg)' }}>
-          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="140" fontWeight="bold" fill="#000" fontFamily="sans-serif">
-            EduOne
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="110" fontWeight="bold" fill="#000" fontFamily="sans-serif">
+            {settings.name || 'EduOne'}
           </text>
         </svg>
       </div>
