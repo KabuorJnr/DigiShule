@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { PageHeader, Badge } from '../components/widgets';
+import { PageHeader, Badge, EmptyState } from '../components/widgets';
 import { SUBJECTS, expandClassesWithStreams } from '../data/seed';
 import { fetchTable, upsertRow } from '../lib/api';
 import { Download, Plus, FileText, ArrowLeft, Save } from 'lucide-react';
@@ -360,7 +360,11 @@ export default function LessonPlans({ store, user, readOnly = false }) {
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>Loading lesson plans...</div>
         ) : plans.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>No lesson plans found.</div>
+          <EmptyState
+            icon={<FileText size={22} />}
+            title="No lesson plans yet"
+            message="Create your first lesson plan, or generate one from a scheme of work."
+          />
         ) : (
           <table className="data-table">
             <thead>
