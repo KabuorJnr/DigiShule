@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
-import { computeStudentReport } from '../utils/grading';
+import { computeStudentReport, CBC_BOUNDARIES, KCSE_BOUNDARIES, is844Class } from '../utils/grading';
 import ReportCardSheet from './ReportCardSheet';
 import { ensureReportFontsLoaded } from '../utils/fonts';
 import html2canvas from 'html2canvas';
@@ -19,6 +19,10 @@ export default function ReportCardModal({
 }) {
   if (!student) return null;
 
+  // Force correct boundaries based on student's curriculum type
+  const studentIs844 = is844Class(student.class);
+  const effectiveBoundaries = studentIs844 ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
+
   let report = null;
   try {
     report = computeStudentReport({
@@ -27,7 +31,7 @@ export default function ReportCardModal({
       subjects,
       examTitle,
       termName,
-      gradeBoundaries
+      gradeBoundaries: effectiveBoundaries
     });
   } catch (err) {
     console.error("Error computing report card:", err);

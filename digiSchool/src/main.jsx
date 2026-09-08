@@ -68,7 +68,14 @@ import { PostHogProvider } from 'posthog-js/react';
 if (import.meta.env.VITE_POSTHOG_KEY) {
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
+    // Don't capture anything until the visitor accepts cookies. The
+    // CookieBanner opts in/out based on their choice.
+    opt_out_capturing_by_default: true,
   });
+  // Honour a consent decision made on a previous visit.
+  try {
+    if (localStorage.getItem('eo_cookie_consent') === 'granted') posthog.opt_in_capturing();
+  } catch { /* ignore private-mode storage errors */ }
 }
 
 const queryClient = new QueryClient();

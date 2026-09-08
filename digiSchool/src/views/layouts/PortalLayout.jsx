@@ -11,9 +11,11 @@ import { ROLES } from '../../data/users';
 import { getDynamicClasses, reconcileClassesWithUsed } from '../../data/seed';
 
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu, UserCircle2 } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
+import { useIsMobile } from '../../mobile/useIsMobile';
+import MobileShell from '../../mobile/MobileShell';
 
 let toastId = 0;
 
@@ -40,6 +42,7 @@ export default function PortalLayout() {
   const [activeRoleOverride, setActiveRoleOverride] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const isMobile = useIsMobile();
 
   // Staff Activation state
   const [staffRecord, setStaffRecord] = useState(null);
@@ -252,6 +255,26 @@ export default function PortalLayout() {
   };
   const unreadCount = visibleNotifications.filter((n) => !n.read).length;
 
+  // Notifications are stored with `created_at` (ISO); older rows may carry a
+  // pre-formatted `time` string. Render a friendly relative/absolute stamp from
+  // whichever is present so the timestamp line is never blank.
+  const formatNotifTime = (n) => {
+    if (n?.time) return n.time;
+    const raw = n?.created_at;
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw);
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
   const store = useMemo(
     () => ({
       settings, setSettings: setSettingsP,
@@ -412,10 +435,20 @@ export default function PortalLayout() {
         if (staffData) setStaffRecord(staffData);
       }
 
-      if (profiles.length === 1) {
+      setAvailableProfiles(profiles);
+
+      const preferredUsername = localStorage.getItem('eduone_preferred_username');
+      let targetProfile = null;
+      if (preferredUsername) {
+        targetProfile = profiles.find(p => p.username?.toLowerCase() === preferredUsername.toLowerCase());
+        localStorage.removeItem('eduone_preferred_username');
+      }
+
+      if (targetProfile) {
+        await handleSelectProfile(targetProfile, greet);
+      } else if (profiles.length === 1) {
         await handleSelectProfile(profiles[0], greet);
       } else {
-        setAvailableProfiles(profiles);
         setView('select_profile');
       }
     } catch {
@@ -612,10 +645,61 @@ export default function PortalLayout() {
 
   const isNavActive = (navItem) => {
     if (activeView !== navItem.view) return false;
-    if (navItem.tab && viewParams.tab !== navItem.tab) return false;
+    const pathParts = currentPath.split('/');
+    const pathTab = currentPath.startsWith('/portal/') && pathParts.length >= 4 ? pathParts[3] : undefined;
+    const currentTab = viewParams.tab || pathTab || (activeView === 'clinic' ? 'log' : undefined);
+    if (navItem.tab && currentTab !== navItem.tab) return false;
     if (navItem.action && viewParams.action !== navItem.action) return false;
     return true;
   };
+
+  // ---- Phone shell ----
+  // On phones the desktop sidebar layout is replaced by the native-feeling
+  // MobileShell — a self-contained screen stack (adaptive home + bottom nav +
+  // per-role native screens) that reads the same `store`. Shared overlays
+  // (toasts, change-password) still render alongside it.
+  if (isMobile) {
+    return (
+      <>
+        <MobileShell
+          store={store}
+          user={currentUser}
+          onLogout={handleLogout}
+          onChangePassword={() => setChangePasswordOpen(true)}
+          loading={dataLoading}
+        />
+
+        {/* Toasts */}
+        <div className="toast-wrap">
+          {toasts.map((t) => (
+            <div key={t.id} className={`toast ${t.type}`}>
+              <span style={{ fontSize: 16 }}>
+                {t.type === 'success' ? <Icon name="check" size={16} /> :
+                 t.type === 'error' ? <Icon name="close" size={16} /> :
+                 t.type === 'warning' ? <Icon name="warning" size={16} /> :
+                 <Icon name="info" size={16} />}
+              </span>
+              <div style={{ flex: 1 }}>
+                {t.title && <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{t.title}</div>}
+                <div style={{ fontSize: 13, opacity: 0.9 }}>{t.message}</div>
+              </div>
+              <button className="btn" style={{ background: 'transparent', border: 'none', color: 'inherit', opacity: 0.7, padding: 4 }} onClick={() => store.removeToast(t.id)}>
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {(changePasswordOpen || mustChangePassword) && (
+          <ChangePasswordModal
+            forced={mustChangePassword && !changePasswordOpen}
+            onClose={() => { setChangePasswordOpen(false); setMustChangePassword(false); }}
+            notify={notify}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="layout">
@@ -738,6 +822,11 @@ export default function PortalLayout() {
               </div>
               {profileExpanded && (
                 <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4 }}>
+                  {availableProfiles.length > 1 && (
+                    <button className="nav-item" onClick={() => setView('select_profile')} title="Switch Role / Profile" style={{ padding: '6px 10px', fontSize: 12, minHeight: 'auto', color: '#38bdf8' }}>
+                      <UserCircle2 size={13} style={{ marginRight: 10, opacity: 0.9 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Switch Role ({availableProfiles.length})</span>
+                    </button>
+                  )}
                   <button className="nav-item" onClick={() => setChangePasswordOpen(true)} title="Change Password" style={{ padding: '6px 10px', fontSize: 12, minHeight: 'auto' }}>
                     <Key size={13} style={{ marginRight: 10, opacity: 0.7 }} /> <span style={{ flex: 1, textAlign: 'left' }}>Change Password</span>
                   </button>
@@ -889,7 +978,11 @@ export default function PortalLayout() {
           {dataLoading ? (
             <p className="muted">Loading…</p>
           ) : (
-            <Outlet context={{ store, user: currentUser, params: viewParams }} />
+            /* Re-key on the route so each navigation replays a gentle rise-in.
+               Honours prefers-reduced-motion via the global guard in index.css. */
+            <div key={location.pathname} className="animate-in">
+              <Outlet context={{ store, user: currentUser, params: viewParams }} />
+            </div>
           )}
         </main>
       </div>
@@ -928,14 +1021,22 @@ export default function PortalLayout() {
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
+              {visibleNotifications.length === 0 && (
+                <div className="muted" style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13 }}>
+                  You're all caught up — no notifications.
+                </div>
+              )}
               {visibleNotifications.map((n) => (
                 <div key={n.id} className="notif-item" style={{ background: n.read ? '#fff' : '#f0f6ff' }} onClick={() => markRead(n.id)}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
                     <strong style={{ fontSize: 13 }}>{n.title}</strong>
-                    {!n.read && <span className="dot" />}
+                    {!n.read && <span className="dot" style={{ flexShrink: 0, marginTop: 4 }} />}
                   </div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{n.body}</div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>{n.time}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{n.body || n.message}</div>
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <span>{n.posted_by ? `From ${n.posted_by}` : ''}</span>
+                    <span>{formatNotifTime(n)}</span>
+                  </div>
                 </div>
               ))}
             </div>

@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { PageHeader, KpiCard, Badge } from '../../components/widgets';
 import { Icon } from '../../components/icons';
 import { upsertRow, fetchStaffRolesByTeacherId, deleteStaffRole } from '../../lib/api';
+import { downloadCSV, exportTablePDF } from '../../utils/exporters';
 import Modal from '../../components/Modal';
 import { secondaryAuthClient, supabase } from '../../lib/supabaseClient';
 import { generateSecurePassword, provisionAccount, generateSequentialUsername } from '../../utils/auth';
@@ -43,9 +44,69 @@ export default function LogAttendance() {
     };
   }, [staff]);
 
-  const shown = filter === 'All' 
-    ? staff.filter(s => s.status !== 'Inactive') 
+  const shown = filter === 'All'
+    ? staff.filter(s => s.status !== 'Inactive')
     : staff.filter((s) => s.status === filter && s.status !== 'Inactive');
+
+  // ---- Daily register: save + export/download (same behaviour as the
+  // Staff Attendance screen, available to anyone who can view the roster) ----
+  const [savingRegister, setSavingRegister] = useState(false);
+
+  const isMissingRegisterTable = (e) =>
+    /staff_daily_attendance/.test(e?.message || '') || e?.code === 'PGRST205' || /schema cache/i.test(e?.message || '');
+
+  const saveDailyRegister = async () => {
+    const active = staff.filter((s) => s.status !== 'Inactive');
+    if (active.length === 0) { notify('No active staff to record.', 'warning'); return; }
+    setSavingRegister(true);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    let saved = 0;
+    try {
+      for (const s of active) {
+        await upsertRow('staff_daily_attendance', {
+          id: `att_${s.id}_${dateStr}`,
+          staff_id: s.id, staff_name: s.name, role: s.role || null, dept: s.dept || null,
+          date: dateStr, status: s.status, source: 'manual',
+          marked_by: user?.name || 'Admin', created_at: new Date().toISOString(),
+        });
+        saved++;
+      }
+      notify(`Today's attendance register saved (${saved} staff).`, 'success', 'Attendance');
+    } catch (e) {
+      if (isMissingRegisterTable(e)) {
+        notify('Staff register storage isn\'t set up yet. Run migration 069_staff_daily_attendance.sql in Supabase, then try again.', 'error', 'Attendance');
+      } else {
+        notify(`Saved ${saved}/${active.length}. Error: ${e.message}`, 'error', 'Attendance');
+      }
+    } finally {
+      setSavingRegister(false);
+    }
+  };
+
+  const handleDownloadRegisterCSV = () => {
+    const active = staff.filter((s) => s.status !== 'Inactive');
+    if (active.length === 0) { notify('No staff data available to export.', 'warning'); return; }
+    const rows = [
+      ['#', 'Name', 'Role', 'Department', 'Check-In', 'Status', 'Date'],
+      ...active.map((s, i) => [i + 1, s.name || '-', s.role || '-', s.dept || '-', s.checkIn || s.check_in || '-', s.status || '-', new Date().toISOString().slice(0, 10)]),
+    ];
+    downloadCSV(`Staff_Attendance_Register_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    notify('Staff attendance register CSV downloaded.', 'success');
+  };
+
+  const handleExportRegisterPDF = () => {
+    const active = staff.filter((s) => s.status !== 'Inactive');
+    if (active.length === 0) { notify('No staff data available to export.', 'warning'); return; }
+    exportTablePDF({
+      school: store?.settings || {},
+      title: 'STAFF ATTENDANCE REGISTER',
+      subtitle: `Date: ${new Date().toLocaleDateString()} | Active Staff: ${active.length}`,
+      head: ['#', 'Name', 'Role', 'Department', 'Check-In', 'Status'],
+      body: active.map((s, i) => [i + 1, s.name || '-', s.role || '-', s.dept || '-', s.checkIn || s.check_in || '-', s.status || '-']),
+      filename: `Staff_Attendance_Register_${new Date().toISOString().slice(0, 10)}.pdf`,
+    });
+    notify('Staff attendance register PDF downloaded.', 'success');
+  };
 
   const toggleStatus = async (id) => {
     const member = staff.find((s) => s.id === id);
@@ -219,7 +280,18 @@ export default function LogAttendance() {
               <button key={f} className={`btn btn-sm${filter === f ? ' btn-primary' : ''}`} onClick={() => setFilter(f)}>{f}</button>
             ))}
           </div>
-          {canApprove && <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>+ Add Staff</button>}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button className="btn btn-sm btn-primary" onClick={saveDailyRegister} disabled={savingRegister}>
+              {savingRegister ? 'Saving…' : 'Save Register'}
+            </button>
+            <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleDownloadRegisterCSV}>
+              <Icon name="file" size={14} /> Download CSV
+            </button>
+            <button className="btn btn-sm" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1' }} onClick={handleExportRegisterPDF}>
+              <Icon name="file" size={14} /> Export PDF
+            </button>
+            {canApprove && <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>+ Add Staff</button>}
+          </div>
         </div>
         <div className="scroll-x">
           <table className="table">
