@@ -36,7 +36,8 @@ import {
   subjectAverage,
   CBC_BOUNDARIES,
   KCSE_BOUNDARIES,
-  is844Class
+  is844Class,
+  getSubjectAbbr
 } from '../utils/grading';
 import { SUBJECTS, DEPT_COLORS, DEPARTMENTS } from '../data/seed';
 import { downloadExcel, exportTablePDF } from '../utils/exporters';
@@ -299,7 +300,7 @@ export default function ClassSubjectAnalysis({
       '# Rank',
       'Class / Stream',
       'Students',
-      ...selectedSubjects.map(s => s.length > 12 ? s.substring(0, 11) + '…' : s),
+      ...selectedSubjects.map(s => getSubjectAbbr(s)),
       'Mean Score (%)',
       'CBC Points',
       'Performance Level',
@@ -820,7 +821,7 @@ export default function ClassSubjectAnalysis({
                             }}
                             title={`${sub}: ${val}%`}
                           >
-                            {sub.substring(0, 3)}: <strong>{val > 0 ? `${val}%` : '-'}</strong>
+                            {getSubjectAbbr(sub)}: <strong>{val > 0 ? `${val}%` : '-'}</strong>
                           </span>
                         );
                       })}

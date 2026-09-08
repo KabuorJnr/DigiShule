@@ -227,8 +227,27 @@ export default function ParentDashboard() {
     try {
       const { upsertRow } = await import('../../lib/api');
       const msg = inboxMessages.find(m => m.id === msgId);
+      if (!msg) return;
       const updatedMsg = { ...msg, status: 'Read' };
-      await upsertRow('messages', updatedMsg);
+      const validPayload = {
+        id: msg.id,
+        sender_id: msg.sender_id || null,
+        sender_name: msg.sender_name || null,
+        sender_role: msg.sender_role || null,
+        recipient_role: msg.recipient_role || null,
+        recipient_id: msg.recipient_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject || null,
+        body: msg.body || null,
+        status: 'Read',
+        created_at: msg.created_at || new Date().toISOString(),
+      };
+      if (msg.reply) validPayload.reply = msg.reply;
+      if (msg.replied_at) validPayload.replied_at = msg.replied_at;
+      if (msg.school_id) validPayload.school_id = msg.school_id;
+
+      await upsertRow('messages', validPayload);
       setInboxMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
     } catch (e) {
       notify(`Failed to mark read: ${e.message}`, 'error');

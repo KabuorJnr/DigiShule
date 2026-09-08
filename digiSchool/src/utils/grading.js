@@ -52,6 +52,59 @@ export const KCSE_844_SUBJECTS = [
 
 export const REPORT_CARD_SUBJECTS = CBC_SUBJECTS;
 
+export const SUBJECT_ABBREVIATIONS = {
+  'Mathematics': 'MATH',
+  'Core Mathematics': 'MATH',
+  'English': 'ENG',
+  'Kiswahili': 'KISW',
+  'Environmental Activities': 'ENV',
+  'Social Studies': 'SST',
+  'Religious Education (CRE)': 'CRE',
+  'Religious Education': 'CRE',
+  'CRE': 'CRE',
+  'IRE': 'IRE',
+  'HRE': 'HRE',
+  'Creative Arts': 'ART',
+  'Creative Arts & Sports': 'ART',
+  'Indigenous Language': 'IND',
+  'Indigenous Languages': 'IND',
+  'Indigenous Language(s)': 'IND',
+  'Integrated Science': 'ISC',
+  'Pre-Technical Studies': 'PTS',
+  'Agriculture': 'AGR',
+  'Agriculture & Nutrition': 'AGR',
+  'Biology': 'BIO',
+  'Chemistry': 'CHEM',
+  'Physics': 'PHY',
+  'History': 'HIST',
+  'History and Government': 'HIST',
+  'Geography': 'GEO',
+  'Business Studies': 'BST',
+  'Computer Studies': 'COMP',
+  'Community Service Learning': 'CSL',
+  'Home Science': 'HSC',
+  'Music': 'MUS',
+  'French': 'FRE',
+  'German': 'GER',
+  'Arabic': 'ARA',
+  'Physical Education': 'PE',
+  'General Science': 'GSCI'
+};
+
+export function getSubjectAbbr(subjectName) {
+  if (!subjectName) return '';
+  const trimmed = String(subjectName).trim();
+  if (SUBJECT_ABBREVIATIONS[trimmed]) return SUBJECT_ABBREVIATIONS[trimmed];
+  const foundKey = Object.keys(SUBJECT_ABBREVIATIONS).find(k => k.toLowerCase() === trimmed.toLowerCase());
+  if (foundKey) return SUBJECT_ABBREVIATIONS[foundKey];
+  if (trimmed.length <= 4) return trimmed.toUpperCase();
+  const words = trimmed.split(/\s+/);
+  if (words.length > 1 && words.length <= 4) {
+    return words.map(w => w[0]).join('').toUpperCase();
+  }
+  return trimmed.substring(0, 4).toUpperCase();
+}
+
 export function calculateStandardDeviation(numbers = []) {
   if (!numbers || numbers.length <= 1) return 0;
   const validNumbers = numbers.filter(n => typeof n === 'number' && !isNaN(n));

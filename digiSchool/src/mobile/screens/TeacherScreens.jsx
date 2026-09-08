@@ -285,10 +285,27 @@ export function TeacherMessages({ store, user }) {
 
   const sendReply = async ({ subject, body }) => {
     const msg = replyTo;
+    if (!msg) return;
     const now = new Date().toISOString();
-    // Mark the incoming message replied, and deliver a new message back to the
-    // parent (routed by their user id + student link) — same as desktop.
-    await upsertRow('messages', { ...msg, status: 'Replied', reply: body, replied_at: now });
+    const validPayload = {
+      id: msg.id,
+      sender_id: msg.sender_id || null,
+      sender_name: msg.sender_name || null,
+      sender_role: msg.sender_role || null,
+      recipient_role: msg.recipient_role || null,
+      recipient_id: msg.recipient_id || null,
+      student_id: msg.student_id || null,
+      student_name: msg.student_name || null,
+      subject: msg.subject || null,
+      body: msg.body || null,
+      status: 'Replied',
+      reply: body,
+      replied_at: now,
+      created_at: msg.created_at || now,
+    };
+    if (msg.school_id) validPayload.school_id = msg.school_id;
+
+    await upsertRow('messages', validPayload);
     await upsertRow('messages', {
       id: `msg_${Date.now()}`,
       sender_id: user?.id || teacherName, sender_name: teacherName, sender_role: 'teacher',
@@ -296,7 +313,7 @@ export function TeacherMessages({ store, user }) {
       student_id: msg.student_id || null, student_name: msg.student_name || null,
       subject, body, status: 'Unread', created_at: now,
     });
-    setItems((prev) => prev.map((m) => (m.id === msg.id ? { ...m, status: 'Replied' } : m)));
+    setItems((prev) => prev.map((m) => (m.id === msg.id ? { ...m, status: 'Replied', reply: body, replied_at: now } : m)));
     setReplyTo(null);
   };
 

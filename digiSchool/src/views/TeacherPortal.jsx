@@ -188,9 +188,49 @@ export default function TeacherPortal({ store, user }) {
     try {
       const { upsertRow } = await import('../lib/api');
       const msg = messages.find(m => m.id === msgId);
-      const updatedMsg = { ...msg, status: 'Replied', reply: replyText[msgId], replied_at: new Date().toISOString() };
-      await upsertRow('messages', updatedMsg);
+      if (!msg) return;
+      const now = new Date().toISOString();
+      const replyBody = replyText[msgId];
+      const updatedMsg = { ...msg, status: 'Replied', reply: replyBody, replied_at: now };
+
+      const validPayload = {
+        id: msg.id,
+        sender_id: msg.sender_id || null,
+        sender_name: msg.sender_name || null,
+        sender_role: msg.sender_role || null,
+        recipient_role: msg.recipient_role || null,
+        recipient_id: msg.recipient_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject || null,
+        body: msg.body || null,
+        status: 'Replied',
+        reply: replyBody,
+        replied_at: now,
+        created_at: msg.created_at || now,
+      };
+      if (msg.school_id) validPayload.school_id = msg.school_id;
+
+      await upsertRow('messages', validPayload);
+
+      // Deliver the reply as its own message addressed back to the parent
+      await upsertRow('messages', {
+        id: `msg_${Date.now()}`,
+        sender_id: store?.user?.id || teacherName,
+        sender_name: teacherName,
+        sender_role: 'teacher',
+        recipient_role: 'parent',
+        recipient_id: msg.sender_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject ? (msg.subject.startsWith('Re:') ? msg.subject : `Re: ${msg.subject}`) : 'Reply from teacher',
+        body: replyBody,
+        status: 'Unread',
+        created_at: now,
+      });
+
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
+      setReplyText(prev => ({ ...prev, [msgId]: '' }));
       store.notify('Reply sent successfully', 'success');
     } catch (e) {
       store.notify(`Failed to reply: ${e.message}`, 'error');

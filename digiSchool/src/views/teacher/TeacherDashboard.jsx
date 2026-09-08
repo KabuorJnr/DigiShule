@@ -128,10 +128,31 @@ export default function TeacherDashboard() {
     if (!replyText[msgId]) return;
     try {
       const msg = messages.find(m => m.id === msgId);
-      // Mark the incoming message as replied so it shows resolved in the
-      // teacher's own inbox (keeps the thread context on the original row).
-      const updatedMsg = { ...msg, status: 'Replied', reply: replyText[msgId], replied_at: new Date().toISOString() };
-      await upsertRow('messages', updatedMsg);
+      if (!msg) return;
+      const now = new Date().toISOString();
+      const replyBody = replyText[msgId];
+      const updatedMsg = { ...msg, status: 'Replied', reply: replyBody, replied_at: now };
+
+      // Whitelist only valid DB columns for updatedMsg
+      const validPayload = {
+        id: msg.id,
+        sender_id: msg.sender_id || null,
+        sender_name: msg.sender_name || null,
+        sender_role: msg.sender_role || null,
+        recipient_role: msg.recipient_role || null,
+        recipient_id: msg.recipient_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject || null,
+        body: msg.body || null,
+        status: 'Replied',
+        reply: replyBody,
+        replied_at: now,
+        created_at: msg.created_at || now,
+      };
+      if (msg.school_id) validPayload.school_id = msg.school_id;
+
+      await upsertRow('messages', validPayload);
 
       // Deliver the reply as its own message addressed back to the parent —
       // routed by the original sender's user id AND the student link so it
@@ -145,23 +166,44 @@ export default function TeacherDashboard() {
         recipient_id: msg.sender_id || null,
         student_id: msg.student_id || null,
         student_name: msg.student_name || null,
-        subject: msg.subject ? `Re: ${msg.subject}` : 'Reply from teacher',
-        body: replyText[msgId],
+        subject: msg.subject ? (msg.subject.startsWith('Re:') ? msg.subject : `Re: ${msg.subject}`) : 'Reply from teacher',
+        body: replyBody,
         status: 'Unread',
-        created_at: new Date().toISOString(),
+        created_at: now,
       });
 
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
       setReplyText(prev => ({ ...prev, [msgId]: '' }));
       store.notify('Reply sent successfully', 'success');
-    } catch (e) { store.notify(`Failed to reply: ${e.message}`, 'error'); }
+    } catch (e) {
+      store.notify(`Failed to reply: ${e.message}`, 'error');
+    }
   };
 
   const handleMarkRead = async (msgId) => {
     try {
       const msg = messages.find(m => m.id === msgId);
+      if (!msg) return;
       const updatedMsg = { ...msg, status: 'Read' };
-      await upsertRow('messages', updatedMsg);
+      const validPayload = {
+        id: msg.id,
+        sender_id: msg.sender_id || null,
+        sender_name: msg.sender_name || null,
+        sender_role: msg.sender_role || null,
+        recipient_role: msg.recipient_role || null,
+        recipient_id: msg.recipient_id || null,
+        student_id: msg.student_id || null,
+        student_name: msg.student_name || null,
+        subject: msg.subject || null,
+        body: msg.body || null,
+        status: 'Read',
+        created_at: msg.created_at || new Date().toISOString(),
+      };
+      if (msg.reply) validPayload.reply = msg.reply;
+      if (msg.replied_at) validPayload.replied_at = msg.replied_at;
+      if (msg.school_id) validPayload.school_id = msg.school_id;
+
+      await upsertRow('messages', validPayload);
       setMessages(prev => prev.map(m => m.id === msgId ? updatedMsg : m));
     } catch (e) {
       store.notify(`Failed to mark read: ${e.message}`, 'error');
