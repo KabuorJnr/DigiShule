@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
-import { computeRow, gradeFor, is844Class } from '../utils/grading';
+import { computeRow, gradeFor, is844Class, pointsForGrade } from '../utils/grading';
 import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
@@ -10,21 +10,24 @@ import { reportError } from '../lib/errorReporter';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
+  const [outOf, setOutOf] = useState(100); // Raw marks normalize to percentage
   const teacherName = user?.name || 'Teacher';
 
   const teacherProfile = useMemo(() => {
     if (!store.teachers) return {};
-    return store.teachers.find(t => 
+    return (store.teachers || []).find(t => 
       t.id === user?.id || 
       t.id === user?.teacher_id || 
+      (t.email && user?.email && t.email.toLowerCase() === user.email.toLowerCase()) ||
       t.emp_id === user?.teacher_id ||
       t.emp_id === user?.id ||
-      (t.name || '').toLowerCase() === teacherName.toLowerCase()
+      (t.name && teacherName && t.name.toLowerCase() === teacherName.toLowerCase()) ||
+      (t.full_name && teacherName && t.full_name.toLowerCase() === teacherName.toLowerCase())
     ) || {};
-  }, [store.teachers, user?.id, user?.teacher_id, teacherName]);
+  }, [store.teachers, user?.id, user?.teacher_id, user?.email, teacherName]);
   
-  const subject = teacherProfile.subject || user?.dept || 'Mathematics';
-  const assignedClass = teacherProfile.assignedClass || null;
+  const subject = teacherProfile.subject || teacherProfile.dept || user?.subject || user?.dept || 'Mathematics';
+  const assignedClass = teacherProfile.assignedClass || teacherProfile.assigned_class || teacherProfile.class || user?.assigned_class || user?.assignedClass || user?.class || null;
 
   const [loadedStudents, setLoadedStudents] = useState([]);
   
@@ -47,17 +50,33 @@ export default function TeacherPortal({ store, user }) {
   useEffect(() => {
     let active = true;
     if (active) {
-      if (assignedClass || subjectClasses.length > 0) {
-        setLoadedStudents(store.students.filter(s => 
-          (s.class === assignedClass || subjectClasses.includes(s.class)) &&
-          s.status !== 'Inactive' && s.status !== 'Graduated'
-        ));
+      const activeStudents = (store.students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+      
+      const teacherClassSet = new Set();
+      if (assignedClass) teacherClassSet.add(assignedClass.toLowerCase().trim());
+      (subjectClasses || []).forEach(c => { if (c) teacherClassSet.add(c.toLowerCase().trim()); });
+      if (teacherProfile.classes) {
+        const clsList = Array.isArray(teacherProfile.classes) ? teacherProfile.classes : String(teacherProfile.classes).split(',');
+        clsList.forEach(c => { if (c && c.trim()) teacherClassSet.add(c.toLowerCase().trim()); });
+      }
+
+      if (teacherClassSet.size > 0) {
+        const matched = activeStudents.filter(s => {
+          if (!s.class) return false;
+          const sc = s.class.toLowerCase().trim();
+          for (const tc of teacherClassSet) {
+            if (sc === tc || sc.startsWith(tc) || tc.startsWith(sc)) return true;
+          }
+          return false;
+        });
+        setLoadedStudents(matched.length > 0 ? matched : activeStudents);
       } else {
-        setLoadedStudents([]);
+        // Fallback: If no explicit class is assigned, show active students so teacher can view their classes!
+        setLoadedStudents(activeStudents);
       }
     }
     return () => { active = false; };
-  }, [assignedClass, subjectClasses, store.students]);
+  }, [assignedClass, subjectClasses, teacherProfile, store.students]);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [behaviorModalOpen, setBehaviorModalOpen] = useState(false);
   const [behaviorForm, setBehaviorForm] = useState({ student: '', type: 'Merit', points: 5, notes: '' });
@@ -206,32 +225,56 @@ export default function TeacherPortal({ store, user }) {
   };
 
   function saveScore(id, field, value) {
-    const v = field === 'remarks' ? value : Math.max(0, Math.min(4, Number(value) || 0));
     const target = loadedStudents.find((s) => s.id === id);
-    if (target) {
-      const currentScores = target.scores || {};
-      const subjectScores = currentScores[subject] || {};
-      const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
-      store.updateStudent(updated);
-      setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
+    if (!target) return;
+    let v;
+    if (field === 'remarks') {
+      v = value;
+    } else if (String(value).trim().toLowerCase() === 'x') {
+      v = 'X';
+    } else if (String(value).trim() === '') {
+      v = 0;
+    } else {
+      const max = Math.max(1, Number(outOf) || 100);
+      v = Math.max(0, Math.min(100, Math.round((Number(value) || 0) / max * 100)));
     }
+    const currentScores = target.scores || {};
+    const subjectScores = currentScores[subject] || {};
+    const updated = { ...target, scores: { ...currentScores, [subject]: { ...subjectScores, [field]: v } } };
+    store.updateStudent(updated);
+    setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     setEditing(null);
   }
 
-  const ScoreCell = ({ r, field }) => {
+  const ScoreCell = ({ r, field, sortedRows }) => {
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (
         <td>
           <input
             style={{ 
-              width: field === 'remarks' ? '120px' : '48px', 
-              height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none' 
+              width: field === 'remarks' ? '120px' : '52px', 
+              height: '28px', padding: '0 4px', border: '1px solid #065f46', borderRadius: '4px', outline: 'none',
+              textAlign: field === 'remarks' ? 'left' : 'center', fontWeight: 600
             }}
-            type={field === 'remarks' ? "text" : "number"}
+            type="text"
+            inputMode={field === 'remarks' ? undefined : 'numeric'}
+            enterKeyHint="next"
+            placeholder={field === 'remarks' ? '' : `/${Math.max(1, Number(outOf) || 100)}`}
             autoFocus
-            defaultValue={r[field]}
-            onKeyDown={(e) => { if (e.key === 'Enter') saveScore(r.id, field, e.target.value); if (e.key === 'Escape') setEditing(null); }}
+            defaultValue={r[field] === 'X' ? 'X' : (r[field] || '')}
+            onKeyDown={(e) => { 
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                saveScore(r.id, field, e.target.value); 
+                if (field !== 'remarks' && sortedRows) {
+                  const idx = sortedRows.findIndex(x => x.id === r.id);
+                  const next = sortedRows[idx + 1];
+                  if (next) setEditing({ id: next.id, field });
+                }
+              }
+              if (e.key === 'Escape') setEditing(null); 
+            }}
             onBlur={(e) => saveScore(r.id, field, e.target.value)}
           />
         </td>
@@ -239,11 +282,11 @@ export default function TeacherPortal({ store, user }) {
     }
     return (
       <td 
-        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '40px', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
+        style={{ cursor: 'pointer', minWidth: field === 'remarks' ? '120px' : '48px', textAlign: field === 'remarks' ? 'left' : 'center', fontWeight: field === 'remarks' ? 400 : 600, color: field === 'remarks' ? '#475569' : '#0369A1' }} 
         onClick={() => setEditing({ id: r.id, field })} 
-        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(1-4)'}`}
+        title={`Click to edit ${field === 'remarks' ? 'remarks' : '(0-100% or raw marks)'}`}
       >
-        {r[field] || (field === 'remarks' ? 'Add remark...' : '-')}
+        {r[field] !== undefined && r[field] !== null && r[field] !== '' ? (r[field] === 'X' ? 'X' : (field === 'remarks' ? r[field] : `${r[field]}%`)) : (field === 'remarks' ? 'Add remark...' : '-')}
       </td>
     );
   };
@@ -256,7 +299,8 @@ export default function TeacherPortal({ store, user }) {
         const systemType = is844Class(s.class) ? '844' : 'CBC';
         const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
         const grade = gradeFor(percentage, gradeBoundaries, systemType);
-        return { ...s, ...row, percentage, grade };
+        const points = pointsForGrade(grade, systemType);
+        return { ...s, ...row, percentage, grade, points, systemType };
       });
   }, [loadedStudents, gradeBoundaries, subject]);
 
@@ -264,7 +308,7 @@ export default function TeacherPortal({ store, user }) {
   const avgOverall = rows.length
     ? (rows.reduce((s, r) => s + r.average, 0) / rows.length).toFixed(1)
     : 0;
-  const atRisk = rows.filter((r) => r.average < 40).length;
+  const atRisk = rows.filter((r) => r.average > 0 && r.average < 40).length;
   const topPerformer = rows.reduce((best, r) => (!best || r.average > best.average ? r : best), null);
 
   const pendingLeaves = leaveRequests.filter(l => l.status === 'Pending').length;
@@ -411,14 +455,38 @@ export default function TeacherPortal({ store, user }) {
       </div>
 
       {/* Gradebook Table */}
-      <div className="card card-pad">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div className="section-title" style={{ margin: 0 }}>{subject} - Student Results</div>
-          {topPerformer && (
-            <div style={{ fontSize: 12, color: '#107C10', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0' }}>
-              Top: {topPerformer.name} ({topPerformer.average}%)
+      <div className="card card-pad" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="section-title" style={{ margin: 0, fontSize: 16 }}>{subject} - Marks Entry & Gradebook</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6 }}>
+              <span style={{ fontWeight: 600, color: '#475569' }}>Marks out of:</span>
+              <input 
+                className="input" 
+                type="number" 
+                min="1" 
+                max="1000" 
+                value={outOf} 
+                onChange={(e) => setOutOf(e.target.value.replace(/[^\d]/g, '') || '')}
+                style={{ width: 64, height: 26, textAlign: 'center', padding: '0 4px', fontSize: 12, fontWeight: 700 }}
+                title="Raw marks entered are automatically converted to percentages and CBC points."
+              />
             </div>
-          )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {topPerformer && (
+              <div style={{ fontSize: 12, color: '#047857', background: '#f0fdf4', borderRadius: 6, padding: '4px 10px', border: '1px solid #bbf7d0', fontWeight: 600 }}>
+                Top: {topPerformer.name} ({topPerformer.average}% · {topPerformer.points} pts)
+              </div>
+            )}
+            <button 
+              className="btn btn-sm" 
+              onClick={() => navigate('gradebook')}
+              style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}
+            >
+              Full Gradebook →
+            </button>
+          </div>
         </div>
         {rows.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
@@ -427,36 +495,84 @@ export default function TeacherPortal({ store, user }) {
           </div>
         ) : (
           <div className="scroll-x">
-            <table className="table">
+            <table className="table" style={{ fontSize: 13 }}>
               <thead>
-                <tr>
-                  <th>#</th><th>Student</th><th>Adm No.</th><th>Class</th>
-                  <th>Ass. 1</th><th>Ass. 2</th><th>Ass. 3</th><th>Ass. 4</th>
-                  <th>Avg Rubric</th><th>Grade</th><th>Remarks</th>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ width: 40, textAlign: 'center' }}>#</th>
+                  <th>Student</th>
+                  <th>Adm No.</th>
+                  <th>Class</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 1</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 2</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 3</th>
+                  <th style={{ textAlign: 'center' }}>Ass. 4</th>
+                  <th style={{ textAlign: 'center' }}>Avg (%)</th>
+                  <th style={{ textAlign: 'center' }}>CBC Points</th>
+                  <th style={{ textAlign: 'center' }}>Performance</th>
+                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
                 {rows
                   .sort((a, b) => b.average - a.average)
-                  .map((r, i) => (
-                    <tr key={r.id}>
-                      <td className="muted">{i + 1}</td>
-                      <td style={{ fontWeight: 600 }}>{r.name}</td>
-                      <td className="muted">{r.adm}</td>
-                      <td><Badge color="gray">{r.class}</Badge></td>
-                      <ScoreCell r={r} field="a1" />
-                      <ScoreCell r={r} field="a2" />
-                      <ScoreCell r={r} field="a3" />
-                      <ScoreCell r={r} field="a4" />
-                      <td style={{ fontWeight: 700 }}>{r.average || '-'}</td>
-                      <td>
-                        <Badge color={r.grade === 'EE' || r.grade === 'ME' ? 'green' : r.grade === 'AE' ? 'amber' : 'red'}>
-                          {r.grade}
-                        </Badge>
-                      </td>
-                      <ScoreCell r={r} field="remarks" />
-                    </tr>
-                  ))}
+                  .map((r, i, sorted) => {
+                    const isAtRisk = r.average > 0 && r.average < 40;
+                    const initials = r.name ? r.name.split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'ST';
+                    return (
+                      <tr 
+                        key={r.id} 
+                        style={{ 
+                          borderBottom: '1px solid #f1f5f9',
+                          background: isAtRisk ? '#fff5f5' : 'transparent',
+                          borderLeft: isAtRisk ? '3px solid #ef4444' : '3px solid transparent'
+                        }}
+                      >
+                        <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>{i + 1}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: '50%',
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              {initials}
+                            </div>
+                            <span style={{ fontWeight: 600, color: '#0f172a' }}>{r.name}</span>
+                          </div>
+                        </td>
+                        <td style={{ color: '#64748b' }}>{r.adm || '—'}</td>
+                        <td><Badge color="gray">{r.class}</Badge></td>
+                        <ScoreCell r={r} field="a1" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a2" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a3" sortedRows={sorted} />
+                        <ScoreCell r={r} field="a4" sortedRows={sorted} />
+                        <td style={{ textAlign: 'center', fontWeight: 800, color: isAtRisk ? '#dc2626' : '#0369a1' }}>
+                          {r.average > 0 ? `${r.average}%` : '—'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.points > 0 ? (
+                            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
+                              {r.points} pts
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <Badge color={r.grade?.startsWith('EE') || r.grade?.startsWith('ME') || ['A', 'A-', 'B+', 'B', 'B-', 'C+'].includes(r.grade) ? 'green' : r.grade?.startsWith('AE') || ['C', 'C-', 'D+'].includes(r.grade) ? 'amber' : 'red'}>
+                            {r.grade}
+                          </Badge>
+                        </td>
+                        <ScoreCell r={r} field="remarks" sortedRows={sorted} />
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

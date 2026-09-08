@@ -118,21 +118,41 @@ export default function Settings({ store, user }) {
 
   const upForm = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  function onLogo(file) {
+  // Read an image upload into a data URL after validating type and size.
+  // Logo/stamp live inline in the settings JSON that many screens fetch, so an
+  // unbounded base64 blob would bloat every read — reject non-images and
+  // oversized files up front.
+  function readImageFile(file, maxKB, apply) {
     if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) {
+      notify('Please choose an image file (PNG, JPG, SVG…).', 'error', 'Settings');
+      return;
+    }
+    if (file.size > maxKB * 1024) {
+      notify(`Image is too large (${Math.round(file.size / 1024)}KB). Please use one under ${maxKB}KB.`, 'error', 'Settings');
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (e) => upForm({ logo: String(e.target.result) });
+    reader.onload = (e) => apply(String(e.target.result));
     reader.readAsDataURL(file);
   }
 
+  function onLogo(file) {
+    readImageFile(file, 1024, (dataUrl) => upForm({ logo: dataUrl }));
+  }
+
   function onStamp(file) {
-    if (!file) return;
     // Store the scanned official stamp as a data URL in settings so it can be
     // stamped onto every official document (newsletters, fee structures,
     // letters) without depending on external storage.
-    const reader = new FileReader();
-    reader.onload = (e) => upForm({ stamp: String(e.target.result) });
-    reader.readAsDataURL(file);
+    readImageFile(file, 512, (dataUrl) => upForm({ stamp: dataUrl }));
+  }
+
+  function onSignature(file) {
+    // Store the scanned principal's signature as a data URL. It renders on the
+    // signature line of official documents (in place of, or alongside, the
+    // stamp) so sign-offs look authentic without a wet signature each time.
+    readImageFile(file, 512, (dataUrl) => upForm({ signature: dataUrl }));
   }
 
   function saveGeneral() {
@@ -146,6 +166,7 @@ export default function Settings({ store, user }) {
       principal: form.principal,
       principalRank: form.principalRank,
       stamp: form.stamp,
+      signature: form.signature,
       logo: form.logo,
       paymentDetails: form.paymentDetails,
       latitude: form.latitude,
@@ -285,6 +306,19 @@ export default function Settings({ store, user }) {
                 </div>
               </div>
             </div>
+            <div>
+              <label className="field-label">Principal's Signature (scanned)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="logo-box" style={{ width: 120, height: 64, background: form.signature ? '#fff' : 'var(--muted, #f1f5f9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {form.signature ? <img src={form.signature} alt="signature" style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>No signature</span>}
+                </div>
+                <div>
+                  <input type="file" accept="image/*" onChange={(e) => onSignature(e.target.files[0])} />
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Signs off official documents on the signature line.</div>
+                  {form.signature && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => upForm({ signature: '' })}>Remove</button>}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* School Location & Geofencing */}
@@ -366,7 +400,7 @@ export default function Settings({ store, user }) {
               </div>
             ) : (
               <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
-                âš  No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
+                ⚠  No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
               </div>
             )}
           </div>

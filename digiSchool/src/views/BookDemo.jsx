@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../lib/seo';
 import './LandingPage.css';
 
 const I = {
@@ -24,6 +25,12 @@ function Ico({ d, className }) {
 export default function BookDemo() {
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
+
+  useSEO({
+    title: 'Book a Live Demo — EduOne',
+    description: 'Book a personalised 30-minute walkthrough of EduOne and see how it automates fees, CBC grading and parent communication for your school.',
+    path: '/book-demo',
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();

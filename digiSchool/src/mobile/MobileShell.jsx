@@ -1,0 +1,196 @@
+import { useState, useMemo, useCallback } from 'react';
+import {
+  Bell, X, ChevronLeft, LogOut, KeyRound, ChevronRight,
+} from 'lucide-react';
+import MobileHome from './MobileHome';
+import { SCREENS, tabsForRole, homeRoleFor } from './screens/registry';
+import { setNotificationRead, markAllNotificationsRead } from '../lib/api';
+import './mobile.css';
+
+const ADMIN_ROLES = ['principal', 'deputy_academic', 'deputy_admin', 'dos', 'registrar', 'admin', 'finance', 'accountant', 'bursar', 'clinic', 'nurse', 'librarian', 'support', 'procurement'];
+
+function initials(name = '') {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'EO';
+}
+
+function visibleNotifs(notifications, user) {
+  if (!user) return [];
+  return (notifications || []).filter((n) => {
+    const aud = n.audience || [];
+    if (aud.includes('all')) return true;
+    if (aud.includes(user.role)) return true;
+    if (aud.includes(user.id)) return true;
+    if (aud.includes('admins') && ADMIN_ROLES.includes(user.role)) return true;
+    if (user.role === 'parent' && aud.includes('parents')) return true;
+    return false;
+  });
+}
+function timeAgo(iso) {
+  if (!iso) return '';
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const h = Math.floor(mins / 60); if (h < 24) return `${h}h ago`;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// The phone shell: an in-app screen stack (no router) with a top bar and a
+// role-aware bottom nav. Every screen is a native mobile component.
+export default function MobileShell({ store, user, onLogout, onChangePassword, loading, initialStack }) {
+  const role = user?.role || 'parent';
+  const homeRole = homeRoleFor(role);
+  const tabs = tabsForRole(role);
+
+  const [stack, setStack] = useState(initialStack && initialStack.length ? initialStack : [{ name: 'home' }]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const current = stack[stack.length - 1];
+
+  const open = useCallback((name, params = {}) => {
+    setNotifOpen(false);
+    setStack((s) => [...s, { name, params }]);
+  }, []);
+  const back = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
+  const setRoot = useCallback((name) => { setNotifOpen(false); setStack([{ name }]); }, []);
+
+  const notifs = useMemo(() => visibleNotifs(store.notifications, user), [store.notifications, user]);
+  const unread = notifs.filter((n) => !n.read).length;
+
+  // Mark one/all read — optimistic store update, then persist (same contract as
+  // the desktop bell). Failures are swallowed so the UI stays responsive.
+  const markRead = useCallback((id) => {
+    store.setNotifications?.((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    setNotificationRead(id, true).catch(() => {});
+  }, [store]);
+  const markAllRead = useCallback(() => {
+    store.setNotifications?.((ns) => ns.map((n) => ({ ...n, read: true })));
+    markAllNotificationsRead().catch(() => {});
+  }, [store]);
+
+  const rootName = stack[0].name;
+  const isHome = current.name === 'home';
+  const isAccount = current.name === 'account';
+  const canBack = stack.length > 1;
+
+  const hr = new Date().getHours();
+  const greeting = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+
+  const screenDef = SCREENS[current.name];
+  const ScreenComp = screenDef?.Component;
+
+  return (
+    <div className="eom-m">
+      <div className="eom-app">
+        <div className="eom-scroll">
+          {/* Header: avatar bar on home, back+title elsewhere */}
+          {isHome ? (
+            <div className="eom-top">
+              <div className="eom-avatar">{initials(user?.name)}</div>
+              <div className="eom-who">
+                <div className="eom-hi">{greeting}</div>
+                <div className="eom-nm">{user?.name || 'Welcome'}</div>
+              </div>
+              <button className="eom-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
+                <Bell />
+                {unread > 0 && <span className="eom-bdot">{unread > 9 ? '9+' : unread}</span>}
+              </button>
+            </div>
+          ) : (
+            <div className="eom-schead">
+              {canBack && <button className="eom-back" onClick={back} aria-label="Back"><ChevronLeft /></button>}
+              <div style={{ flex: 1 }}>
+                <h2>{isAccount ? 'Account' : (screenDef?.title || '')}</h2>
+              </div>
+              {!canBack && (
+                <button className="eom-bell" onClick={() => setNotifOpen((o) => !o)} aria-label="Notifications">
+                  <Bell />
+                  {unread > 0 && <span className="eom-bdot">{unread > 9 ? '9+' : unread}</span>}
+                </button>
+              )}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="eom-empty"><p>Loading your EduOne data…</p></div>
+          ) : isHome ? (
+            <MobileHome role={homeRole} store={store} user={user} open={open} />
+          ) : isAccount ? (
+            <AccountPanel user={user} store={store} onLogout={onLogout} onChangePassword={onChangePassword} />
+          ) : ScreenComp ? (
+            <ScreenComp store={store} user={user} open={open} back={back} params={current.params} />
+          ) : (
+            <div className="eom-empty"><p>Screen not found.</p></div>
+          )}
+        </div>
+
+        <nav className="eom-tabbar">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = rootName === t.key || (t.key === 'home' && rootName === 'home');
+            return (
+              <button key={t.key} className={`eom-tab${active ? ' eom-active' : ''}`} onClick={() => setRoot(t.key)}>
+                {active && <span className="eom-ind" />}
+                <Icon /><span>{t.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {notifOpen && (
+        <div className="eom-np">
+          <h6>
+            <span>Notifications{unread > 0 ? ` · ${unread} new` : ''}</span>
+            <button className="eom-link" onClick={() => setNotifOpen(false)} aria-label="Close"><X size={18} /></button>
+          </h6>
+          {unread > 0 && (
+            <div className="eom-np-actions">
+              <button className="eom-link" onClick={markAllRead}>Mark all as read</button>
+            </div>
+          )}
+          <div className="eom-np-list">
+            {notifs.length === 0 && <div className="eom-ni-empty">You&apos;re all caught up.</div>}
+            {notifs.slice(0, 30).map((n) => (
+              <button className={`eom-ni${n.read ? '' : ' eom-unread'}`} key={n.id} onClick={() => !n.read && markRead(n.id)}>
+                <b>{n.title}{!n.read && <span className="eom-nidot" />}</b>
+                <span>{(n.body || n.message || '').slice(0, 120)}{n.posted_by ? ` · ${n.posted_by}` : ''} · {timeAgo(n.created_at)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccountPanel({ user, store, onLogout, onChangePassword }) {
+  const settings = store.settings || {};
+  return (
+    <>
+      <div className="eom-stat-card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="eom-avatar" style={{ width: 56, height: 56, borderRadius: 18, fontSize: 20 }}>{initials(user?.name)}</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--eom-ink)' }}>{user?.name}</div>
+          <div style={{ fontSize: 13, color: 'var(--eom-muted)', textTransform: 'capitalize' }}>{(user?.role || '').replace(/_/g, ' ')}{settings.name ? ` · ${settings.name}` : ''}</div>
+        </div>
+      </div>
+      <div className="eom-list-card">
+        {onChangePassword && (
+          <button className="eom-li" onClick={onChangePassword}>
+            <span className="eom-lic" style={{ background: 'var(--eom-blue-50)', color: 'var(--eom-blue)' }}><KeyRound /></span>
+            <div className="eom-lt"><b>Change password</b><span>Update your login credentials</span></div>
+            <span className="eom-rt"><ChevronRight size={18} /></span>
+          </button>
+        )}
+        <button className="eom-li" onClick={onLogout}>
+          <span className="eom-lic" style={{ background: 'var(--eom-bad-100)', color: 'var(--eom-bad)' }}><LogOut /></span>
+          <div className="eom-lt"><b>Sign out</b><span>Log out of EduOne</span></div>
+          <span className="eom-rt"><ChevronRight size={18} /></span>
+        </button>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 6 }}>
+        <img src="/eduone-logo.png" alt="EduOne" style={{ height: 26, opacity: 0.5 }} />
+      </div>
+    </>
+  );
+}

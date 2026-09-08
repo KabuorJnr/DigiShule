@@ -4,13 +4,16 @@
 /*  EduOne landing page - scoped under .eo to avoid global clashes    */
 /* ================================================================= */
 .eo {
-  --blue: #2563eb;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
-  --blue-500: #3b82f6;
-  --blue-050: #eff6ff;
-  --blue-100: #dbeafe;
-  --grad: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
+  /* Brand accent — remapped from blue to the app's emerald brand (--primary
+     #047857) so the landing page matches the in-app identity. Variable names
+     are kept (`--blue*`) so every existing reference updates at once. */
+  --blue: #047857;
+  --blue-600: #047857;
+  --blue-700: #065f46;
+  --blue-500: #059669;
+  --blue-050: #ecfdf5;
+  --blue-100: #d1fae5;
+  --grad: linear-gradient(135deg, #065f46 0%, #047857 55%, #059669 100%);
   --ink: #0b1220;
   --slate: #475569;
   --muted: #64748b;
@@ -440,3 +443,28 @@
 .eo-success-ico svg { width: 32px; height: 32px; }
 .eo-demo-success h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
 .eo-demo-success p { color: var(--muted); margin-top: 10px; }
+
+/* ---------- Sticky mobile CTA ---------- */
+/* Hidden on desktop; a fixed action bar on phones/tablets so the primary
+   call-to-action stays reachable while the visitor scrolls the page. */
+.eo-sticky-cta { display: none; }
+@media (max-width: 768px) {
+  .eo-sticky-cta {
+    display: flex;
+    gap: 10px;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 60;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08);
+  }
+  .eo-sticky-cta .eo-btn-primary { flex: 1; justify-content: center; }
+  .eo-sticky-cta .eo-btn-ghost { flex: 0 0 auto; }
+  /* Keep the back-to-top button clear of the sticky bar. */
+  .eo-top.show { bottom: 78px; }
+  /* Give the footer breathing room so the bar never covers its last row. */
+  .eo-footer { padding-bottom: 84px; }
+}

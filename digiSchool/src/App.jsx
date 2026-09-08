@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { isNative } from './lib/native';
+import { useIsMobile } from './mobile/useIsMobile';
+import MobileLogin from './mobile/MobileLogin';
+import DevPreview from './mobile/DevPreview';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
 import VerifyReport from './views/VerifyReport';
@@ -70,8 +73,21 @@ import ClassTeachers from './views/ClassTeachers';
 import ParentLayout from './views/parent/ParentLayout';
 import ParentDashboard from './views/parent/ParentDashboard';
 
+import PrivacyPolicy from './views/legal/PrivacyPolicy';
+import TermsOfService from './views/legal/TermsOfService';
+import NotFound from './views/NotFound';
+import CookieBanner from './components/CookieBanner';
+
+// Phones (native app or a narrow viewport) get the mobile sign-in; desktop
+// keeps the existing web login untouched.
+function LoginRoute() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileLogin /> : <Login />;
+}
+
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Native apps skip the marketing landing page and go straight into the
           product: PortalLayout's auth guard shows the app for signed-in users
@@ -81,13 +97,16 @@ export default function App() {
       <Route path="/verify" element={<VerifyReport />} />
       <Route path="/admin" element={<SuperAdminPortal />} />
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<LoginRoute />} />
+      {import.meta.env.DEV && <Route path="/m-dev" element={<DevPreview />} />}
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
       <Route path="/staff-signup" element={<StaffSignupWizard />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/eduone" element={<EduOneDashboard />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
 
 
       {/* Portal Routes with Layout, Sidebar, and Auth Guard */}
@@ -164,7 +183,12 @@ export default function App() {
         <Route path=":viewId" element={<LegacyViewLoader />} />
         <Route path=":viewId/:tab" element={<LegacyViewLoader />} />
       </Route>
+
+      {/* Custom 404 for any unmatched public path */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
+    <CookieBanner />
+    </>
   );
 }
 

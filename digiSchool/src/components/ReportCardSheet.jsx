@@ -29,7 +29,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
     <div id={captureId} style={{ background: '#fff', width: 794, minHeight: 1123, flexShrink: 0, margin: '0 auto', color: INK, fontFamily: '"Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif', fontSize: 13, lineHeight: 1.4, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', border: '1px solid #ccc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', borderBottom: '3px solid #2563eb', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', borderBottom: '3px solid #b8860b', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 24, top: 16 }}>
           {schoolSettings.logo ? (
             <img src={schoolSettings.logo} alt="Logo" crossOrigin="anonymous" referrerPolicy="no-referrer" style={{ width: 80, height: 80, objectFit: 'contain' }} />
@@ -57,7 +57,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
       </div>
 
       {/* Title Ribbon */}
-      <div style={{ background: '#2563eb', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div style={{ background: '#1e3a8a', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         ACADEMIC REPORT FORM - {report.className} - {report.examTitle.toUpperCase()} - ({new Date().getFullYear()} {report.termName.toUpperCase()})
       </div>
 
@@ -86,7 +86,7 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
             <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
               <span>Subject Performance - Student vs Class</span>
               <div style={{ display: 'flex', gap: 10 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#22c55e' }}></span> Student</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#b8860b' }}></span> Student</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#cbd5e1' }}></span> Class</span>
               </div>
             </div>
@@ -101,15 +101,15 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
                   strokeWidth="1.5"
                   points={subjectsGraphData.map((d, i) => `${(i + 0.5) * (300 / subjectsGraphData.length)},${12 + (100 - Math.max(0, Math.min(100, d.classAvg))) / 100 * 66}`).join(' ')}
                 />
-                {/* Student Score Line (Green) */}
+                {/* Student Score Line (Gold) */}
                 <polyline
                   fill="none"
-                  stroke="#22c55e"
+                  stroke="#b8860b"
                   strokeWidth="1.5"
                   points={subjectsGraphData.map((d, i) => `${(i + 0.5) * (300 / subjectsGraphData.length)},${12 + (100 - Math.max(0, Math.min(100, d.score))) / 100 * 66}`).join(' ')}
                 />
                 {subjectsGraphData.map((d, i) => (
-                  <circle key={i} cx={(i + 0.5) * (300 / subjectsGraphData.length)} cy={12 + (100 - Math.max(0, Math.min(100, d.score))) / 100 * 66} r="2.5" fill="#166534" />
+                  <circle key={i} cx={(i + 0.5) * (300 / subjectsGraphData.length)} cy={12 + (100 - Math.max(0, Math.min(100, d.score))) / 100 * 66} r="2.5" fill="#b8860b" />
                 ))}
               </svg>
               <div style={{ display: 'flex', marginTop: 4, width: '100%' }}>

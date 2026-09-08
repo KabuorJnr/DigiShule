@@ -1,0 +1,16 @@
+# EduOne — https://www.edu1app.tech
+User-agent: *
+Allow: /
+
+# Private application areas — no value to search engines, keep them out.
+Disallow: /portal
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /parent-signup
+Disallow: /staff-signup
+Disallow: /reset-password
+Disallow: /eduone
+Disallow: /api
+
+Sitemap: https://www.edu1app.tech/sitemap.xml

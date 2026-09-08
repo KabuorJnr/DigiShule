@@ -22,17 +22,19 @@ export default function TeacherLayout() {
 
   const teacherProfile = useMemo(() => {
     if (!store.teachers) return {};
-    return store.teachers.find(t => 
+    return (store.teachers || []).find(t => 
       t.id === user?.id || 
       t.id === user?.teacher_id || 
+      (t.email && user?.email && t.email.toLowerCase() === user.email.toLowerCase()) ||
       t.emp_id === user?.teacher_id ||
       t.emp_id === user?.id ||
-      (t.name || '').toLowerCase() === teacherName.toLowerCase()
+      (t.name && teacherName && t.name.toLowerCase() === teacherName.toLowerCase()) ||
+      (t.full_name && teacherName && t.full_name.toLowerCase() === teacherName.toLowerCase())
     ) || {};
-  }, [store.teachers, user?.id, user?.teacher_id, teacherName]);
+  }, [store.teachers, user?.id, user?.teacher_id, user?.email, teacherName]);
   
-  const subject = teacherProfile.subject || user?.dept || 'Mathematics';
-  const assignedClass = teacherProfile.assignedClass || null;
+  const subject = teacherProfile.subject || teacherProfile.dept || user?.subject || user?.dept || 'Mathematics';
+  const assignedClass = teacherProfile.assignedClass || teacherProfile.assigned_class || teacherProfile.class || user?.assigned_class || user?.assignedClass || user?.class || null;
 
   const [loadedStudents, setLoadedStudents] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -58,17 +60,33 @@ export default function TeacherLayout() {
   useEffect(() => {
     let active = true;
     if (active) {
-      if (assignedClass || subjectClasses.length > 0) {
-        setLoadedStudents(store.students.filter(s => 
-          (s.class === assignedClass || subjectClasses.includes(s.class)) &&
-          s.status !== 'Inactive' && s.status !== 'Graduated'
-        ));
+      const activeStudents = (store.students || []).filter(s => s.status !== 'Inactive' && s.status !== 'Graduated');
+      
+      const teacherClassSet = new Set();
+      if (assignedClass) teacherClassSet.add(assignedClass.toLowerCase().trim());
+      (subjectClasses || []).forEach(c => { if (c) teacherClassSet.add(c.toLowerCase().trim()); });
+      if (teacherProfile.classes) {
+        const clsList = Array.isArray(teacherProfile.classes) ? teacherProfile.classes : String(teacherProfile.classes).split(',');
+        clsList.forEach(c => { if (c && c.trim()) teacherClassSet.add(c.toLowerCase().trim()); });
+      }
+
+      if (teacherClassSet.size > 0) {
+        const matched = activeStudents.filter(s => {
+          if (!s.class) return false;
+          const sc = s.class.toLowerCase().trim();
+          for (const tc of teacherClassSet) {
+            if (sc === tc || sc.startsWith(tc) || tc.startsWith(sc)) return true;
+          }
+          return false;
+        });
+        setLoadedStudents(matched.length > 0 ? matched : activeStudents);
       } else {
-        setLoadedStudents([]);
+        // Fallback: If no class has been explicitly configured for this teacher, show active students so teacher can view & grade their students!
+        setLoadedStudents(activeStudents);
       }
     }
     return () => { active = false; };
-  }, [assignedClass, subjectClasses, store.students]);
+  }, [assignedClass, subjectClasses, teacherProfile, store.students]);
 
   useEffect(() => {
     let active = true;

@@ -196,7 +196,14 @@ export async function fetchConfig() {
 
   const { data, error } = await query.maybeSingle();
   let cbcFallback = [
-    { grade: 'EE', min: 80 }, { grade: 'ME', min: 50 }, { grade: 'AE', min: 30 }, { grade: 'BE', min: 0 }
+    { min: 90, grade: 'EE1', label: 'Exceeding Expectation (EE1)', pts: 8, remark: 'Exceeding Expectations' },
+    { min: 75, grade: 'EE2', label: 'Exceeding Expectation (EE2)', pts: 7, remark: 'Exceeding Expectations' },
+    { min: 58, grade: 'ME1', label: 'Meeting Expectation (ME1)', pts: 6, remark: 'Meeting Expectations' },
+    { min: 41, grade: 'ME2', label: 'Meeting Expectation (ME2)', pts: 5, remark: 'Meeting Expectations' },
+    { min: 31, grade: 'AE1', label: 'Approaching Expectation (AE1)', pts: 4, remark: 'Approaching Expectations' },
+    { min: 21, grade: 'AE2', label: 'Approaching Expectation (AE2)', pts: 3, remark: 'Approaching Expectations' },
+    { min: 11, grade: 'BE1', label: 'Below Expectation (BE1)', pts: 2, remark: 'Below Expectations' },
+    { min: 0,  grade: 'BE2', label: 'Below Expectation (BE2)', pts: 1, remark: 'Below Expectations' },
   ];
 
   if (error || !data) {
@@ -217,8 +224,18 @@ export async function fetchConfig() {
 
   const rawSettings = data.settings || {};
   let dbBounds = data.grade_boundaries || [];
-  // Automatic migration: If the database returns the old A-E grading, swap it to CBC
-  if (dbBounds.length === 5 && dbBounds[0].grade === 'A' && dbBounds[4].grade === 'E') {
+  // Automatic migration: swap old/incorrect grading to proper 8-tier CBC
+  const needsMigration = (() => {
+    if (!dbBounds || dbBounds.length === 0) return true;
+    // Old 5-grade A-E KCSE
+    if (dbBounds.length === 5 && dbBounds[0].grade === 'A' && dbBounds[4].grade === 'E') return true;
+    // Old 4-tier CBC without 1/2 suffix (EE, ME, AE, BE)
+    if (dbBounds.length === 4 && dbBounds[0].grade === 'EE') return true;
+    // Full 12-grade KCSE (A, A-, B+, B, B-, C+, ...)
+    if (dbBounds.length >= 10 && dbBounds.some(b => ['A', 'A-', 'B+'].includes(b.grade))) return true;
+    return false;
+  })();
+  if (needsMigration) {
     dbBounds = cbcFallback;
   }
 

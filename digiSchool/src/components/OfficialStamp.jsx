@@ -14,6 +14,7 @@ export default function OfficialStamp({ settings = {}, align = 'right', label = 
   const name = settings.principal || settings.principalName || '';
   const rank = settings.principalRank || '';
   const stamp = settings.stamp || '';
+  const signature = settings.signature || '';
 
   const justify = align === 'left' ? 'flex-start' : align === 'center' ? 'center' : 'flex-end';
 
@@ -33,6 +34,22 @@ export default function OfficialStamp({ settings = {}, align = 'right', label = 
               maxHeight: 90,
               maxWidth: 150,
               opacity: 0.9,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+        {/* Scanned handwritten signature, sitting just above the signature line. */}
+        {signature && (
+          <img
+            src={signature}
+            alt="Signature"
+            style={{
+              position: 'absolute',
+              bottom: 30,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              maxHeight: 48,
+              maxWidth: 180,
               pointerEvents: 'none',
             }}
           />

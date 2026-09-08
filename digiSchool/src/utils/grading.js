@@ -67,32 +67,97 @@ export function is844Class(className = '') {
   return str.includes('form') || str.includes('8-4-4') || str.includes('844') || str.includes('kcse');
 }
 
-// Assesses 4 rubric scores out of 4 (e.g. strands). Returns average rubric.
+// Assesses 4 assessment percentage scores (0-100%). Returns average percentage.
 export function computeRow(scores = {}) {
   const safeScores = scores || {};
-  const a1 = Number(safeScores.a1) || 0;
-  const a2 = Number(safeScores.a2) || 0;
-  const a3 = Number(safeScores.a3) || 0;
-  const a4 = Number(safeScores.a4) || 0;
+  const a1 = safeScores.a1 === 'X' ? 'X' : (Number(safeScores.a1) || 0);
+  const a2 = safeScores.a2 === 'X' ? 'X' : (Number(safeScores.a2) || 0);
+  const a3 = safeScores.a3 === 'X' ? 'X' : (Number(safeScores.a3) || 0);
+  const a4 = safeScores.a4 === 'X' ? 'X' : (Number(safeScores.a4) || 0);
   
-  // Calculate average only over completed assessments (score > 0)
-  const validScores = [a1, a2, a3, a4].filter(v => v > 0);
+  // Calculate average only over completed assessments (numerical score > 0)
+  const validScores = [a1, a2, a3, a4].filter(v => typeof v === 'number' && v > 0);
   const average = validScores.length > 0 ? validScores.reduce((sum, v) => sum + v, 0) / validScores.length : 0;
   
   return { a1, a2, a3, a4, average: Math.round(average * 10) / 10, remarks: safeScores.remarks || '' };
 }
 
+// Helper to check if a boundaries array belongs to CBC (contains EE/ME/AE/BE)
+export function isCbcBoundaries(boundaries) {
+  if (!boundaries || !Array.isArray(boundaries) || boundaries.length === 0) return false;
+  return boundaries.some(b => typeof b.grade === 'string' && (b.grade.startsWith('EE') || b.grade.startsWith('ME') || b.grade.startsWith('AE') || b.grade.startsWith('BE')));
+}
+
+// Helper to check if a boundaries array belongs to 8-4-4 / KCSE (contains A, B, C, D, E)
+export function is844Boundaries(boundaries) {
+  if (!boundaries || !Array.isArray(boundaries) || boundaries.length === 0) return false;
+  return boundaries.some(b => ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'].includes(b.grade));
+}
+
+// Convert percentage (0-100) directly to CBC Points (default 8-tier KNEC point scale, or 4-tier rubric)
+export function percentageToCbcPoints(percentage, scale = 8, boundaries = null) {
+  if (percentage === null || percentage === undefined || isNaN(percentage)) return 0;
+  const bnds = (boundaries && isCbcBoundaries(boundaries)) ? boundaries : CBC_BOUNDARIES;
+  const grade = gradeFor(percentage, bnds, 'CBC');
+  const pts8 = pointsForGrade(grade, 'CBC');
+  if (scale === 4) {
+    // 4-tier rubric points: EE -> 4, ME -> 3, AE -> 2, BE -> 1
+    if (pts8 >= 7) return 4;
+    if (pts8 >= 5) return 3;
+    if (pts8 >= 3) return 2;
+    if (pts8 >= 1) return 1;
+    return 1;
+  }
+  return pts8;
+}
+
+// Convert percentage (0-100) to CBC Grade Code
+export function percentageToCbcGrade(percentage, boundaries = null) {
+  const bnds = (boundaries && isCbcBoundaries(boundaries)) ? boundaries : CBC_BOUNDARIES;
+  return gradeFor(percentage, bnds, 'CBC');
+}
+
+// Full CBC Conversion Payload from Percentage/Score
+export function formatCbcConversion(scoreOrPct, boundaries = null, systemType = 'CBC') {
+  if (scoreOrPct === null || scoreOrPct === undefined || isNaN(scoreOrPct)) {
+    return { percentage: 0, gradeCode: '-', gradeFull: '-', points: 0, rubricPoints: 0, remark: 'No Score' };
+  }
+  const pct = Math.max(0, Math.min(100, Math.round(Number(scoreOrPct))));
+  const is844 = systemType === '844';
+  const targetBnds = is844 
+    ? (boundaries && is844Boundaries(boundaries) ? boundaries : KCSE_BOUNDARIES)
+    : (boundaries && isCbcBoundaries(boundaries) ? boundaries : CBC_BOUNDARIES);
+  const gCode = gradeFor(pct, targetBnds, systemType);
+  const gFull = fullGradeName(gCode, systemType);
+  const pts = pointsForGrade(gCode, systemType);
+  const rubricPts = is844 ? pts : (pts >= 7 ? 4 : pts >= 5 ? 3 : pts >= 3 ? 2 : 1);
+  const rmk = remarkFor(gCode, systemType);
+  return {
+    percentage: pct,
+    gradeCode: gCode,
+    gradeFull: gFull,
+    points: pts,
+    rubricPoints: rubricPts,
+    remark: rmk
+  };
+}
+
 // Map numerical average/score (0-100 or 1-4 rubric points) to a grade.
 export function gradeFor(average, boundaries, systemType = 'CBC') {
-  const defaultBoundaries = systemType === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
-  const bnds = boundaries && boundaries.length > 0 ? boundaries : defaultBoundaries;
+  const is844 = systemType === '844';
+  let bnds;
+  if (is844) {
+    bnds = (boundaries && is844Boundaries(boundaries)) ? boundaries : KCSE_BOUNDARIES;
+  } else {
+    bnds = (boundaries && isCbcBoundaries(boundaries)) ? boundaries : CBC_BOUNDARIES;
+  }
   
   if (average === null || average === undefined || isNaN(average)) return '-';
   const num = Number(average);
-  const fallback = systemType === '844' ? 'E' : 'BE2';
+  const fallback = is844 ? 'E' : 'BE2';
   if (num === 0) return fallback;
 
-  if (systemType === 'CBC' || systemType === 'cbc') {
+  if (!is844) {
     // Detect 1-4 rubric score scale and map to the 8-tier grades
     if (num > 0 && num <= 4) {
       if (num >= 3.5) return 'EE1';
@@ -115,19 +180,19 @@ export function gradeFor(average, boundaries, systemType = 'CBC') {
 }
 
 export function fullGradeName(grade, systemType = 'CBC') {
-  if (systemType === '844' || ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'].includes(grade)) {
+  const is844 = systemType === '844';
+  if (!is844) {
+    if (typeof grade === 'string') {
+      if (grade.startsWith('EE') || grade.includes('EE')) return 'Exceeding Expectations';
+      if (grade.startsWith('ME') || grade.includes('ME')) return 'Meeting Expectations';
+      if (grade.startsWith('AE') || grade.includes('AE')) return 'Approaching Expectations';
+      if (grade.startsWith('BE') || grade.includes('BE')) return 'Below Expectations';
+    }
+  }
+  if (is844 || ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'].includes(grade)) {
     return grade || '-';
   }
-  switch (grade) {
-    case 'EE': return 'Exceeding Expectation (EE)';
-    case 'ME': return 'Meeting Expectation (ME)';
-    case 'AE': return 'Approaching Expectation (AE)';
-    case 'BE': return 'Below Expectation (BE)';
-    default:
-      if (!grade || grade === '-') return '-';
-      if (grade.includes('Expectation')) return grade;
-      return grade;
-  }
+  return grade || '-';
 }
 
 export function pointsForGrade(grade, systemType = 'CBC') {
@@ -165,16 +230,79 @@ export function pointsForGrade(grade, systemType = 'CBC') {
   return 0;
 }
 
+export const GRADE_DESCRIPTORS_TABLE = [
+  { level: 'Exceeding Expectations', performance: 'EE1', points: 8, range: '90-100' },
+  { level: 'Exceeding Expectations', performance: 'EE2', points: 7, range: '75-89' },
+  { level: 'Meeting Expectations', performance: 'ME1', points: 6, range: '58-74' },
+  { level: 'Meeting Expectations', performance: 'ME2', points: 5, range: '41-57' },
+  { level: 'Approaching Expectations', performance: 'AE1', points: 4, range: '31-40' },
+  { level: 'Approaching Expectations', performance: 'AE2', points: 3, range: '21-30' },
+  { level: 'Below Expectations', performance: 'BE1', points: 2, range: '11-20' },
+  { level: 'Below Expectations', performance: 'BE2', points: 1, range: '0-10' },
+];
+
+export function cbcOfficialComment(gradeCode, subjectName = '') {
+  if (!gradeCode || gradeCode === '-') return 'No score recorded.';
+  const code = String(gradeCode).toUpperCase();
+  const isKiswahili = String(subjectName).toLowerCase().includes('kiswahili');
+
+  if (isKiswahili) {
+    if (code.includes('EE1')) return 'Utendaji bora wa kipekee; endelea hivyo!';
+    if (code.includes('EE2') || code === 'EE') return 'Utendaji bora wa kupigiwa mfano; endelea kuongoza!';
+    if (code.includes('ME1') || code === 'ME') return 'Umefikia viwango vya msingi; endelea.';
+    if (code.includes('ME2')) return 'Uthabiti mzuri katika utendaji; dumisha.';
+    if (code.includes('AE1') || code === 'AE') return 'Unahitaji bidii zaidi na usaidizi.';
+    if (code.includes('AE2')) return 'Unakaribia viwango; ongeza mazoezi.';
+    if (code.includes('BE1') || code === 'BE') return 'Chini ya viwango; unahitaji usaidizi wa ziada.';
+    if (code.includes('BE2')) return 'Chini ya viwango; unahitaji uangalizi wa haraka.';
+    return 'Umefikia viwango vya msingi; endelea.';
+  }
+
+  if (code.includes('EE1')) return 'Outstanding performance; excellent mastery!';
+  if (code.includes('EE2') || code === 'EE') return 'Outstanding performance; lead on!';
+  if (code.includes('ME1') || code === 'ME') return 'Meets basic standards; keep going.';
+  if (code.includes('ME2')) return 'Consistent performance; maintain.';
+  if (code.includes('AE1') || code === 'AE') return 'Needs more effort and help.';
+  if (code.includes('AE2')) return 'Approaching standards; more practice needed.';
+  if (code.includes('BE1') || code === 'BE') return 'Below standards; requires intensive support.';
+  if (code.includes('BE2')) return 'Below standards; immediate remedial intervention needed.';
+
+  // KCSE 8-4-4 fallbacks
+  if (['A', 'A-'].includes(code)) return 'Excellent performance; keep leading!';
+  if (['B+', 'B', 'B-'].includes(code)) return 'Good performance; aim higher!';
+  if (['C+', 'C', 'C-'].includes(code)) return 'Fair effort; can do better.';
+  if (['D+', 'D', 'D-'].includes(code)) return 'Below average; needs focused revision.';
+  if (code === 'E') return 'Needs serious effort and guidance.';
+
+  return 'Satisfactory work; keep striving.';
+}
+
+export function calculateSubjectDeviation(studentScore, benchmarkScore = 65) {
+  if (studentScore === null || studentScore === undefined || isNaN(studentScore) || studentScore === 0) {
+    return { dev: 0, text: '-', arrow: '', color: '#6b7280' };
+  }
+  const dev = Math.round(Number(studentScore) - Number(benchmarkScore));
+  if (dev > 0) {
+    return { dev, text: `+${dev}`, arrow: '↗', color: '#16a34a' };
+  } else if (dev < 0) {
+    return { dev, text: `${dev}`, arrow: '↘', color: '#dc2626' };
+  }
+  return { dev: 0, text: '0', arrow: '→', color: '#64748b' };
+}
+
 export function remarkFor(grade, systemType = 'CBC') {
-  if (systemType === '844' || ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'].includes(grade)) {
+  const is844 = systemType === '844';
+  if (!is844) {
+    if (typeof grade === 'string') {
+      if (grade.includes('EE')) return 'Exceeding Expectations';
+      if (grade.includes('ME')) return 'Meeting Expectations';
+      if (grade.includes('AE')) return 'Approaching Expectations';
+      if (grade.includes('BE')) return 'Below Expectations';
+    }
+  }
+  if (is844 || ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'].includes(grade)) {
     const kcseMatch = KCSE_BOUNDARIES.find(b => b.grade === grade);
     return kcseMatch ? kcseMatch.remark : 'No Score';
-  }
-  if (typeof grade === 'string') {
-    if (grade.includes('EE')) return 'Exceeding Expectations';
-    if (grade.includes('ME')) return 'Meeting Expectations';
-    if (grade.includes('AE')) return 'Approaching Expectations';
-    if (grade.includes('BE')) return 'Below Expectations';
   }
   return 'No Score';
 }
@@ -201,15 +329,6 @@ export function studentOverall(student, subjects) {
   return Math.round(overall * 10) / 10;
 }
 
-// True when a boundary set belongs to the given curriculum. CBC bands use codes
-// like EE1/ME2/AE1/BE2; KCSE bands use letter grades (A, B+, C-, E). This guards
-// against a KCSE boundary set being applied to a CBC class (or vice versa).
-export function boundariesMatchSystem(boundaries, systemType) {
-  if (!Array.isArray(boundaries) || boundaries.length === 0) return false;
-  const looksCBC = boundaries.some(b => /^(EE|ME|AE|BE)/.test(String(b.grade || '').toUpperCase()));
-  return systemType === '844' ? !looksCBC : looksCBC;
-}
-
 // Compute full detailed report card object for a given student (supports both CBC and 8-4-4)
 export function computeStudentReport({ student, students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', gradeBoundaries = [] }) {
   if (!student) return null;
@@ -220,13 +339,9 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
     : (students.find(s => String(s.id) === String(student?.id) || (s.adm && String(s.adm) === String(student?.adm))) || student);
   
   const systemType = is844Class(richStudent.class || student.class) ? '844' : 'CBC';
-  const defaultBnds = systemType === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
-  // Only honour caller-supplied boundaries when they belong to this class's
-  // curriculum. A CBC class must grade on CBC bands (EE1..BE2), never KCSE
-  // letters — otherwise a 100 would show as "A"/"E" instead of "EE1".
-  const targetBoundaries = (gradeBoundaries && gradeBoundaries.length > 0 && boundariesMatchSystem(gradeBoundaries, systemType))
-    ? gradeBoundaries
-    : defaultBnds;
+  const targetBoundaries = systemType === '844'
+    ? (gradeBoundaries && is844Boundaries(gradeBoundaries) ? gradeBoundaries : KCSE_BOUNDARIES)
+    : (gradeBoundaries && isCbcBoundaries(gradeBoundaries) ? gradeBoundaries : CBC_BOUNDARIES);
 
   const targetSubjects = (subjects && subjects.length > 0) ? subjects : REPORT_CARD_SUBJECTS;
   
