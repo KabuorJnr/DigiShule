@@ -1,5 +1,6 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 
 export default function Modal({ title, onClose, children, footer, wide, hideClose }) {
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function Modal({ title, onClose, children, footer, wide, hideClos
           <h3>{title}</h3>
           {!hideClose && (
             <button className="btn btn-icon btn-sm" onClick={onClose} aria-label="Close">
-              ✕
+              <X size={16} />
             </button>
           )}
         </div>

@@ -4,6 +4,8 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { getSubjectMeta } from '../data/seed';
 import { renderReportCardsPdf } from './renderReportCardsPdf';
+import { poppinsRegular } from './Poppins-Regular';
+import { poppinsBold } from './Poppins-Bold';
 
 export function exportNemisCSV(students, filename = 'NEMIS_Export.csv') {
   // NEMIS Standard Format Columns
@@ -69,37 +71,57 @@ export function downloadExcel(filename, sheets) {
   XLSX.writeFile(wb, filename);
 }
 
+export function registerPoppins(doc) {
+  try {
+    doc.addFileToVFS('Poppins-Regular.ttf', poppinsRegular);
+    doc.addFileToVFS('Poppins-Bold.ttf', poppinsBold);
+    doc.addFont('Poppins-Regular.ttf', 'Poppins', 'normal');
+    doc.addFont('Poppins-Bold.ttf', 'Poppins', 'bold');
+    doc.setFont('Poppins', 'normal');
+  } catch (e) {
+    console.warn('Poppins registration failed, falling back to default font:', e);
+  }
+}
+
 function pdfHeader(doc, school, title, subtitle) {
+  registerPoppins(doc);
+  doc.setFont('Poppins', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(30, 58, 95);
   doc.text(school?.name || 'School', 40, 40);
+  doc.setFont('Poppins', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(100);
   if (school?.motto) doc.text(school.motto, 40, 56);
   if (school?.address) doc.text(school.address, 40, 70);
   doc.setDrawColor(226, 232, 240);
-  doc.line(40, 80, 555, 80);
+  doc.line(40, 80, doc.internal.pageSize.getWidth() - 40, 80);
+  doc.setFont('Poppins', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(15, 23, 42);
   doc.text(title, 40, 102);
   if (subtitle) {
+    doc.setFont('Poppins', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(subtitle, 40, 118);
   }
 }
 
-export function exportTablePDF({ school, title, subtitle, head, body, filename }) {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+export function exportTablePDF({ school, title, subtitle, head, body, foot, filename, orientation = 'landscape', format = 'a4' }) {
+  const doc = new jsPDF({ orientation, unit: 'pt', format });
+  registerPoppins(doc);
   pdfHeader(doc, school, title, subtitle);
   autoTable(doc, {
     head: [head],
     body,
+    foot: foot ? [foot] : undefined,
     startY: 132,
-    styles: { fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [30, 58, 95], textColor: 255 },
+    styles: { font: 'Poppins', fontSize: 8.5, cellPadding: 4.5 },
+    headStyles: { font: 'Poppins', fontStyle: 'bold', fillColor: [30, 58, 95], textColor: 255 },
+    footStyles: { font: 'Poppins', fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [15, 23, 42] },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    margin: { left: 40, right: 40 },
+    margin: { left: 30, right: 30 },
   });
   doc.save(filename);
 }

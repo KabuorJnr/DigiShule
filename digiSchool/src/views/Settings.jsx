@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS, DEFAULT_DEPARTMENTS, getDeptColor } from '../data/seed';
 import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
+import { MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];
 
@@ -321,9 +322,10 @@ export default function Settings({ store, user }) {
             </div>
           </div>
 
-          {/* School Location & Geofencing */}
           <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-            <h3 className="section-title" style={{ marginTop: 0 }}>📍 School Location & Geofencing</h3>
+            <h3 className="section-title" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <MapPin size={18} color="#047857" /> School Location &amp; Geofencing
+            </h3>
             <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 16 }}>
               Set your school's GPS coordinates. Teachers can only check in/out within the geofence radius.
             </p>
@@ -363,14 +365,16 @@ export default function Settings({ store, user }) {
                   );
                 }}
               >
-                📍 Detect My Location
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <MapPin size={14} /> Detect My Location
+                </span>
               </button>
             </div>
 
             {form.latitude && form.longitude ? (
               <div style={{ padding: 12, background: '#ecfdf5', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, marginBottom: 12 }}>
                 <div style={{ marginBottom: 12 }}>
-                  <strong style={{ color: '#065f46' }}>✓ Location set:</strong>{' '}
+                  <strong style={{ color: '#065f46', display: 'inline-flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={13} /> Location set:</strong>{' '}
                   <span style={{ fontFamily: 'monospace' }}>{form.latitude}, {form.longitude}</span>
                   {' · '}Radius: <strong>{form.geofenceRadius || 50}m</strong>
                 </div>
@@ -399,8 +403,8 @@ export default function Settings({ store, user }) {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e' }}>
-                ⚠  No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
+              <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', fontSize: 13, marginBottom: 12, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertTriangle size={14} style={{ flexShrink: 0 }} /> No location set - teachers can check in from anywhere. Click "Detect My Location" while at school to enable geofencing.
               </div>
             )}
           </div>

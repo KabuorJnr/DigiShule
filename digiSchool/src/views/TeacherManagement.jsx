@@ -7,7 +7,7 @@ import Modal from '../components/Modal';
 import {
   Users, UserCheck, Building2, BookOpen, ClipboardList, BarChart3,
   GraduationCap, Search, Filter, RotateCcw, Zap, Eye, EyeOff,
-  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X, Clock, LineChart, Award
+  Calendar, CheckCircle2, AlertTriangle, Plus, Trash2, Info, X, Clock, LineChart, Award, Trophy
 } from 'lucide-react';
 
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
@@ -77,7 +77,7 @@ function StatusPill({ status }) {
       background: assigned ? '#dcfce7' : '#f1f5f9',
       color: assigned ? '#166534' : '#475569'
     }}>
-      {assigned ? '✓ Assigned' : 'â—‹ Unassigned'}
+      {assigned ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={12} /> Assigned</span> : 'Unassigned'}
     </span>
   );
 }
@@ -639,8 +639,8 @@ export default function TeacherManagement({ store, user, params = {} }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, opacity: 0.9 }}>
-          <span>📅 {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          <span>📚 Term 2, 2026</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={14} /> {new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BookOpen size={14} /> Term 2, 2026</span>
         </div>
       </div>
 
@@ -958,14 +958,14 @@ export default function TeacherManagement({ store, user, params = {} }) {
 
                       {/* Qualified teachers line */}
                       {qualifiedForSubject.length > 0 && (
-                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 500 }}>
-                          ✓ Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
+                        <div style={{ fontSize: 11, color: '#047857', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <CheckCircle2 size={12} /> Qualified: {qualifiedForSubject.slice(0, 3).map(t => t.name).join(', ')}
                           {qualifiedForSubject.length > 3 && ` +${qualifiedForSubject.length - 3} more`}
                         </div>
                       )}
                       {qualifiedForSubject.length === 0 && (
-                        <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>
-                          ⚠  No qualified teachers - showing all teachers. Add qualifications first.
+                        <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <AlertTriangle size={12} /> No qualified teachers - showing all teachers. Add qualifications first.
                         </div>
                       )}
                     </div>
@@ -1217,7 +1217,7 @@ export default function TeacherManagement({ store, user, params = {} }) {
                           {r.entries > 0 && r.rank ? (
                             <span style={{ fontSize: 12, fontWeight: 600 }}>
                               {r.rank}<span className="muted" style={{ fontWeight: 400 }}> / {r.subjectTeacherCount}</span>
-                              {r.rank === 1 && r.subjectTeacherCount > 1 && ' 🏆'}
+                              {r.rank === 1 && r.subjectTeacherCount > 1 && <Trophy size={13} color="#d97706" style={{ display: 'inline', marginLeft: 4 }} />}
                             </span>
                           ) : '—'}
                         </td>

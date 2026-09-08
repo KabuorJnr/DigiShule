@@ -124,7 +124,7 @@ export default function MobileClockIn({ user, store }) {
             {busy ? <Loader size={15} className="eom-spin-ico" /> : hasIn ? <><LogOut size={15} /> Check out</> : <><CheckCircle2 size={15} /> Check in</>}
           </button>
         )}
-        {ready && hasOut && <span className="eom-clock-done">✓ Done</span>}
+        {ready && hasOut && <span className="eom-clock-done" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={13} /> Done</span>}
       </div>
     </div>
   );

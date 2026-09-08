@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { School, Users, Wallet, Clock, TrendingUp, CheckCircle2, XCircle, LogOut, Building2 } from 'lucide-react';
+import { School, Users, Wallet, Clock, TrendingUp, CheckCircle2, XCircle, LogOut, Building2, AlertTriangle } from 'lucide-react';
 import { supabase, signOutAll } from '../lib/supabaseClient';
 import { getMetrics, computeMetrics, approveSchool, rejectSchool, PLANS, planName, planPrice, collectedFor } from '../lib/superadmin';
 
@@ -99,7 +99,9 @@ export default function SuperAdminPortal() {
         </div>
 
         {loadError && (
-          <div className="sa-alert">⚠ {loadError} — make sure <code>supabase/platform_schools.sql</code> has been run, then reload.</div>
+          <div className="sa-alert" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertTriangle size={15} /> {loadError} — make sure <code>supabase/platform_schools.sql</code> has been run, then reload.
+          </div>
         )}
 
         {/* KPIs */}

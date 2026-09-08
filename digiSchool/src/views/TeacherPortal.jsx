@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { KpiCard, Badge } from '../components/widgets';
 import { computeRow, gradeFor, is844Class, pointsForGrade } from '../utils/grading';
-import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { BookOpen, BarChart3, AlertTriangle, FolderOpen, Bell, Calendar, ClipboardList, Printer, Users, Award, MessageSquare, PlaneTakeoff, Clock, CheckCircle2, XCircle, X } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 import PrintHeader from '../components/PrintHeader';
@@ -588,7 +588,7 @@ export default function TeacherPortal({ store, user }) {
               <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print / Save PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)} aria-label="Close"><X size={16} /></button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>
@@ -677,7 +677,7 @@ export default function TeacherPortal({ store, user }) {
           <div className="modal" style={{ maxWidth: 650, padding: 0, overflow: 'hidden' }}>
             <div className="modal-header">
               <h3>Parent Messages Inbox</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setInboxModalOpen(false)} aria-label="Close"><X size={16} /></button>
             </div>
             <div style={{ padding: 24, maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }}>
               {messages.length === 0 ? (
@@ -730,7 +730,7 @@ export default function TeacherPortal({ store, user }) {
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <PlaneTakeoff size={20} /> Leave Application
               </h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setShowLeaveModal(false)} aria-label="Close"><X size={16} /></button>
             </div>
 
             {/* Tab Navigation */}

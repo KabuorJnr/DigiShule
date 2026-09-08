@@ -4,6 +4,7 @@ import Modal from '../components/Modal';
 import { fetchTable, upsertRow } from '../lib/api';
 import { Icon } from '../components/icons';
 import PrintHeader from '../components/PrintHeader';
+import { Check, AlertTriangle, Hospital } from 'lucide-react';
 
 const OUTCOME_COLOR = { 'Returned to class': 'green', 'Sent home': 'amber', 'Referred to hospital': 'red' };
 const COMMON_COMPLAINTS = [
@@ -450,8 +451,8 @@ export default function Clinic({ store, user, params }) {
                                     {s.adm || '—'} · {s.class || 'Unassigned'}
                                   </span>
                                   {s.medicalInfo && (
-                                    <span style={{ fontSize: 11, color: '#dc2626', background: '#fee2e2', padding: '1px 6px', borderRadius: 4, marginLeft: 6 }}>
-                                      ⚠ {s.medicalInfo}
+                                    <span style={{ fontSize: 11, color: '#dc2626', background: '#fee2e2', padding: '1px 6px', borderRadius: 4, marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                      <AlertTriangle size={11} /> {s.medicalInfo}
                                     </span>
                                   )}
                                 </div>
@@ -612,7 +613,7 @@ export default function Clinic({ store, user, params }) {
                           color: isSelected ? borderColor : '#475569',
                         }}
                       >
-                        {isSelected && '✓ '} {o}
+                        {isSelected && <Check size={12} style={{ display: 'inline', marginRight: 4 }} />} {o}
                       </button>
                     );
                   })}
@@ -640,7 +641,7 @@ export default function Clinic({ store, user, params }) {
                   disabled={saving || !form.student || !form.complaint.trim()}
                   style={{ flex: 1, height: 44, fontWeight: 700, fontSize: 14 }}
                 >
-                  {saving ? 'Saving Visit…' : '✓ Save Clinic Visit'}
+                  {saving ? 'Saving Visit…' : 'Save Clinic Visit'}
                 </button>
                 <button
                   type="button"
@@ -675,7 +676,9 @@ export default function Clinic({ store, user, params }) {
                 color: 'var(--muted)',
                 fontSize: 13
               }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🏥</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <Hospital size={32} color="#94a3b8" />
+                </div>
                 <strong>No clinic visits recorded yet today.</strong>
                 <p style={{ margin: '4px 0 0', fontSize: 12 }}>
                   Record a visit using the form on the left. Saved visits will appear here.

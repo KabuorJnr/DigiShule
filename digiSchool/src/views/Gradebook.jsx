@@ -28,7 +28,10 @@ import {
   ChevronRight,
   TrendingUp,
   BookOpen,
-  Filter
+  Filter,
+  Trophy,
+  Medal,
+  Lightbulb
 } from 'lucide-react';
 
 const GRADE_COLORS = { 
@@ -741,9 +744,9 @@ export default function Gradebook({ store }) {
             borderRadius: 6,
             border: '1px solid #e2e8f0'
           }}>
-            {entryMode === 'report' && '📄 Official Kenyan Report Form 1:1 view'}
-            {entryMode === 'grid' && `📊 Batch marks for ${cls || 'selected stream'}`}
-            {entryMode === 'analysis' && '📈 Cross-stream & department benchmarks'}
+            {entryMode === 'report' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={13} /> Official Kenyan Report Form 1:1 view</span>}
+            {entryMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BarChart3 size={13} /> Batch marks for {cls || 'selected stream'}</span>}
+            {entryMode === 'analysis' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><TrendingUp size={13} /> Cross-stream &amp; department benchmarks</span>}
           </span>
         </div>
       </div>
@@ -1166,8 +1169,8 @@ export default function Gradebook({ store }) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 11.5, color: '#64748b' }}>
-                  💡 Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save & jump to next student
+                <span style={{ fontSize: 11.5, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Lightbulb size={13} color="#d97706" /> Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save &amp; jump to next student
                 </span>
                 <button 
                   className="btn btn-primary btn-sm" 
@@ -1710,7 +1713,7 @@ export default function Gradebook({ store }) {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      {i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : `${i + 1}`))}
+                      {i === 0 ? <Trophy size={14} color="#d97706" /> : (i === 1 ? <Medal size={14} color="#64748b" /> : (i === 2 ? <Medal size={14} color="#b45309" /> : `${i + 1}`))}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>

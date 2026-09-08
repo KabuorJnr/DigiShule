@@ -75,6 +75,11 @@ export default function ReportCardEntrySheet({
   const is844 = useMemo(() => is844Class(student?.class), [student?.class]);
   const systemType = is844 ? '844' : 'CBC';
 
+  const isExecutive = useMemo(() => {
+    const role = (currentUser?.role || '').toLowerCase();
+    return ['dos', 'deputy_academic', 'principal', 'admin', 'super_admin'].includes(role);
+  }, [currentUser]);
+
   // CRITICAL: Always force correct boundaries based on curriculum type.
   // The store's gradeBoundaries may contain KCSE grades even for CBC students.
   const effectiveBoundaries = useMemo(() => {
@@ -116,7 +121,7 @@ export default function ReportCardEntrySheet({
     } else if (onUpdateSettings) {
       onUpdateSettings({ ...schoolSettings, results_published: nextState });
     }
-    setSaveStatus(nextState ? 'Results published! Principal signature applied ✓' : 'Results unpublished');
+    setSaveStatus(nextState ? 'Results published! Principal signature applied' : 'Results unpublished');
     setTimeout(() => setSaveStatus(''), 3000);
   };
 
@@ -132,7 +137,7 @@ export default function ReportCardEntrySheet({
         if (onUpdateSettings) {
           onUpdateSettings({ ...schoolSettings, signature: dataUrl });
         }
-        setSaveStatus('Principal signature uploaded ✓');
+        setSaveStatus('Principal signature uploaded');
         setTimeout(() => setSaveStatus(''), 3000);
       }
     };
@@ -449,7 +454,7 @@ export default function ReportCardEntrySheet({
       onSaveStudent(updatedStudent);
     }
 
-    setSaveStatus('Marks Saved Successfully ✓');
+    setSaveStatus('Marks Saved Successfully');
     setTimeout(() => setSaveStatus(''), 2500);
   };
 
@@ -575,24 +580,26 @@ export default function ReportCardEntrySheet({
 
         {/* Action buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {/* Publish Results (DoS) */}
-          <button 
-            type="button"
-            className="btn btn-sm" 
-            onClick={handleTogglePublish}
-            title={isPublished ? "Results are published with verified Principal Signature" : "Publish results now to apply Principal signature"}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6, 
-              background: isPublished ? '#15803d' : '#f0fdf4', 
-              color: isPublished ? '#ffffff' : '#166534', 
-              borderColor: isPublished ? '#15803d' : '#86efac', 
-              fontWeight: 700 
-            }}
-          >
-            <ShieldCheck size={15} /> {isPublished ? 'Published (DoS) ✓' : 'Publish Results (DoS)'}
-          </button>
+          {/* Publish Results (DoS/Executive Only) */}
+          {isExecutive && (
+            <button 
+              type="button"
+              className="btn btn-sm" 
+              onClick={handleTogglePublish}
+              title={isPublished ? "Results are published with verified Principal Signature" : "Publish results now to apply Principal signature"}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6, 
+                background: isPublished ? '#15803d' : '#f0fdf4', 
+                color: isPublished ? '#ffffff' : '#166534', 
+                borderColor: isPublished ? '#15803d' : '#86efac', 
+                fontWeight: 700 
+              }}
+            >
+              <ShieldCheck size={15} /> {isPublished ? 'Published (DoS)' : 'Publish Results (DoS)'}
+            </button>
+          )}
           <button 
             className="btn btn-sm" 
             onClick={handleAutoFillAllComments}
@@ -1211,8 +1218,8 @@ export default function ReportCardEntrySheet({
             <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Chief Principal Remarks: <span style={{ fontWeight: 600, color: '#475569' }}>{principalName}</span></span>
               {isPublished && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d', background: '#dcfce7', border: '1px solid #86efac', padding: '1px 7px', borderRadius: 12 }}>
-                  ✓ Published & Certified
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d', background: '#dcfce7', border: '1px solid #86efac', padding: '1px 7px', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle2 size={11} /> Published &amp; Certified
                 </span>
               )}
             </div>
@@ -1276,50 +1283,52 @@ export default function ReportCardEntrySheet({
                 </div>
 
                 {/* DoS inline triggers */}
-                <div className="no-print" style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 4 }}>
-                  <label 
-                    title={principalSignature ? "Replace Principal Signature" : "Upload Scanned Principal Signature"}
-                    style={{ 
-                      cursor: 'pointer', 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: 4, 
-                      fontSize: 10, 
-                      fontWeight: 700, 
-                      color: '#0369a1', 
-                      background: '#f0f9ff', 
-                      border: '1px solid #bae6fd', 
-                      borderRadius: 4, 
-                      padding: '2px 6px' 
-                    }}
-                  >
-                    <Upload size={11} /> {principalSignature ? 'Change Sig' : 'Upload Sig'}
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSignatureUpload} />
-                  </label>
-
-                  {!isPublished && (
-                    <button 
-                      type="button" 
-                      onClick={handleTogglePublish}
-                      title="Click to publish results and stamp Principal signature"
+                {isExecutive && (
+                  <div className="no-print" style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 4 }}>
+                    <label 
+                      title={principalSignature ? "Replace Principal Signature" : "Upload Scanned Principal Signature"}
                       style={{ 
                         cursor: 'pointer', 
                         display: 'inline-flex', 
                         alignItems: 'center', 
-                        gap: 3, 
+                        gap: 4, 
                         fontSize: 10, 
                         fontWeight: 700, 
-                        color: '#15803d', 
-                        background: '#f0fdf4', 
-                        border: '1px solid #86efac', 
+                        color: '#0369a1', 
+                        background: '#f0f9ff', 
+                        border: '1px solid #bae6fd', 
                         borderRadius: 4, 
                         padding: '2px 6px' 
                       }}
                     >
-                      <ShieldCheck size={11} /> Publish to Sign
-                    </button>
-                  )}
-                </div>
+                      <Upload size={11} /> {principalSignature ? 'Change Sig' : 'Upload Sig'}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSignatureUpload} />
+                    </label>
+
+                    {!isPublished && (
+                      <button 
+                        type="button" 
+                        onClick={handleTogglePublish}
+                        title="Click to publish results and stamp Principal signature"
+                        style={{ 
+                          cursor: 'pointer', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: 3, 
+                          fontSize: 10, 
+                          fontWeight: 700, 
+                          color: '#15803d', 
+                          background: '#f0fdf4', 
+                          border: '1px solid #86efac', 
+                          borderRadius: 4, 
+                          padding: '2px 6px' 
+                        }}
+                      >
+                        <ShieldCheck size={11} /> Publish to Sign
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Official Rubber Stamp Box */}

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import { fmtKES } from '../../data/modules';
@@ -75,7 +75,9 @@ export default function TaxTab() {
                   {tax.status === 'Pending' ? (
                     <button className="btn btn-sm btn-primary" onClick={() => handleMarkFiled(tax.id)}>Mark as Filed</button>
                   ) : (
-                    <span className="muted" style={{ fontSize: 12 }}>✓ Complete</span>
+                    <span className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <CheckCircle size={13} color="#047857" /> Complete
+                    </span>
                   )}
                 </td>
               </tr>

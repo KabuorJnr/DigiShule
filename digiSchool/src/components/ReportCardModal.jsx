@@ -97,7 +97,7 @@ export default function ReportCardModal({
 
   return (
     <Modal title="Student Report Card" onClose={onClose} width={840}>
-      <div style={{ padding: '4px 16px 20px', background: '#eef2f6', color: INK, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ padding: '4px 16px 20px', background: '#eef2f6', color: INK, fontFamily: '"Poppins", sans-serif' }}>
         {/* Action Toolbar */}
         <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: MUTED }}>

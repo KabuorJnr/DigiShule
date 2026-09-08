@@ -191,7 +191,9 @@ export default function EduOneWidget({ user, notify, settings, store }) {
             <LogOut size={13} /> Check Out
           </button>
         ) : (
-          <span style={{ fontSize: 11, opacity: 0.7 }}>✓ Complete</span>
+          <span style={{ fontSize: 11, opacity: 0.8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <CheckCircle2 size={12} /> Complete
+          </span>
         )}
       </div>
     </div>

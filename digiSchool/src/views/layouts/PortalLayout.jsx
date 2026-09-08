@@ -11,7 +11,7 @@ import { ROLES } from '../../data/users';
 import { getDynamicClasses, reconcileClassesWithUsed } from '../../data/seed';
 
 import { Icon, NAV_ICON_MAP } from '../../components/icons';
-import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu, UserCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Bell, PanelLeftClose, PanelLeft, Building2, Landmark, LogOut, Key, Search, Menu, UserCircle2, X } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom';
 import { useIsMobile } from '../../mobile/useIsMobile';
@@ -653,6 +653,41 @@ export default function PortalLayout() {
     return true;
   };
 
+  // Sync document.title for browser tab tile
+  useEffect(() => {
+    if (!currentUser) return;
+    const schoolName = (settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST')
+      ? settings.name.trim()
+      : 'School Portal';
+    const portalLabel = role?.portal || role?.label || 'Portal';
+
+    // Identify active view/tab label if available
+    let viewTitle = '';
+    for (const sec of (role.nav || [])) {
+      for (const itm of (sec.items || [])) {
+        if (isNavActive(itm)) {
+          viewTitle = itm.label;
+          break;
+        }
+        if (itm.sub) {
+          for (const sub of itm.sub) {
+            if (isNavActive(sub)) {
+              viewTitle = sub.label;
+              break;
+            }
+          }
+        }
+      }
+      if (viewTitle) break;
+    }
+
+    const subContext = viewTitle && viewTitle.toLowerCase() !== portalLabel.toLowerCase()
+      ? `${viewTitle} · ${portalLabel}`
+      : portalLabel;
+
+    document.title = `EduOne — ${schoolName} (${subContext})`;
+  }, [currentUser, settings?.name, role, activeView, viewParams.tab, currentPath]);
+
   // ---- Phone shell ----
   // On phones the desktop sidebar layout is replaced by the native-feeling
   // MobileShell — a self-contained screen stack (adaptive home + bottom nav +
@@ -707,14 +742,15 @@ export default function PortalLayout() {
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileMenuOpen ? ' mobile-open' : ''}`}>
         <div className="sidebar-brand" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <div style={{ 
-            width: 38, height: 38, borderRadius: 8, background: '#ffffff', 
+            width: 40, height: 40, borderRadius: '50%', background: '#ffffff', 
             display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            padding: 4, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' 
+            padding: 3, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            overflow: 'hidden', border: '2px solid rgba(255, 255, 255, 0.25)'
           }}>
             {settings.logo ? (
               <img src={settings.logo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             ) : (
-              <img src="/logo.png" alt="EduOne Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/eduone-logo.png" alt="EduOne Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             )}
           </div>
           {!collapsed && (
@@ -881,9 +917,13 @@ export default function PortalLayout() {
             >
               <Menu size={20} color="#1e293b" />
             </button>
-            <div className="topbar-title" style={{ fontWeight: 800, fontSize: 16, color: '#0f172a', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#047857', display: 'inline-block' }}></span>
-              {(settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST') ? settings.name : 'EduOne Portal'}
+            <div className="topbar-title" style={{ fontWeight: 800, fontSize: 15, color: '#0f172a', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                <img src="/eduone-logo.png" alt="EduOne" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+              <span>EduOne</span>
+              <span style={{ color: '#cbd5e1', fontWeight: 400, fontSize: 13 }}>|</span>
+              <span style={{ color: '#475569', fontSize: 14, fontWeight: 600 }}>{(settings?.name && settings.name.trim() !== '' && settings.name.toUpperCase() !== 'TEST') ? settings.name : 'School Portal'}</span>
             </div>
             <div className="topbar-search hide-mobile" style={{ position: 'relative', maxWidth: '380px', width: '100%', marginLeft: '12px' }} ref={searchInputRef}>
               <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#047857' }} />
@@ -1015,7 +1055,9 @@ export default function PortalLayout() {
           <div className="notif-panel">
             <div className="modal-header">
               <h3>Notifications {unreadCount > 0 && <span className="badge badge-red">{unreadCount} new</span>}</h3>
-              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)}>✕</button>
+              <button className="btn btn-icon btn-sm" onClick={() => setNotifOpen(false)} aria-label="Close">
+                <X size={16} />
+              </button>
             </div>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
               <button className="btn btn-sm" onClick={markAllRead} disabled={unreadCount === 0}>Mark all as read</button>

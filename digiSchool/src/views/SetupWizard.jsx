@@ -1,5 +1,5 @@
-﻿import { useState } from 'react';
-import { Building, Settings, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { Building, Settings, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 import * as api from '../lib/api';
 
@@ -100,7 +100,9 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>Next Step →</button>
+                <button type="button" className="btn btn-primary" onClick={() => setStep(2)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Next Step <ArrowRight size={14} />
+                </button>
               </div>
             </div>
           )}
@@ -137,9 +139,11 @@ export default function SetupWizard({ onComplete }) {
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" className="btn" onClick={() => setStep(1)}>â† Back</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Initializing System...' : 'Complete Setup ✓'}
+                <button type="button" className="btn" onClick={() => setStep(1)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <ArrowLeft size={14} /> Back
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {saving ? 'Initializing System...' : <><CheckCircle2 size={15} /> Complete Setup</>}
                 </button>
               </div>
             </div>

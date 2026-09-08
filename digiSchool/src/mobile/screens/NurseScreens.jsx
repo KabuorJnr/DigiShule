@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Stethoscope, Search, Plus, X, Check } from 'lucide-react';
+import { Stethoscope, Search, Plus, X, Check, AlertTriangle } from 'lucide-react';
 import { upsertRow } from '../../lib/api';
 import { useTable, StatCard, Empty, SecHead, Loading } from './kit';
 
@@ -81,7 +81,9 @@ function LogVisitForm({ store, user, onSaved, onCancel }) {
       </div>
 
       {picked?.medicalInfo && (
-        <div className="eom-error" style={{ background: 'var(--eom-warn-100)', color: '#7f1d1d' }}>⚠ {picked.medicalInfo}</div>
+        <div className="eom-error" style={{ background: 'var(--eom-warn-100)', color: '#7f1d1d', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <AlertTriangle size={14} /> {picked.medicalInfo}
+        </div>
       )}
 
       <div className="eom-field"><label>Complaint / symptoms</label>

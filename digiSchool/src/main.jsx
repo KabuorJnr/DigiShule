@@ -35,9 +35,9 @@ if ('serviceWorker' in navigator && !isNative()) {
         // Create a floating toast notification asking the user to refresh
         const toast = document.createElement('div');
         toast.innerHTML = `
-          <div style="position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 16px 20px; border-radius: 12px; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 20px; font-family: system-ui, sans-serif; animation: slideUp 0.3s ease-out;">
+          <div style="position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 16px 20px; border-radius: 12px; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 20px; font-family: 'Poppins', sans-serif; animation: slideUp 0.3s ease-out;">
             <div>
-              <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">Update Available 🚀</div>
+              <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">Update Available</div>
               <div style="font-size: 13px; opacity: 0.8;">A new version of DigiSchool is ready.</div>
             </div>
             <div style="display: flex; gap: 8px;">

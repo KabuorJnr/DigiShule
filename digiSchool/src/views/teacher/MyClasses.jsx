@@ -1,6 +1,6 @@
 import { useOutletContext } from 'react-router-dom';
 import { useState } from 'react';
-import { Printer, Users, Award, FileText } from 'lucide-react';
+import { Printer, Users, Award, FileText, X } from 'lucide-react';
 import Modal from '../../components/Modal';
 import PrintHeader from '../../components/PrintHeader';
 import ReportCardModal from '../../components/ReportCardModal';
@@ -178,7 +178,7 @@ export default function MyClasses() {
               <h3>{assignedClass} - Class List</h3>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} style={{ marginRight: 6 }}/> Print PDF</button>
-                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)}>✕</button>
+                <button className="btn btn-icon btn-sm" onClick={() => setPrintModalOpen(false)} aria-label="Close"><X size={16} /></button>
               </div>
             </div>
             <div className="print-area" style={{ padding: 24, background: '#fff' }}>

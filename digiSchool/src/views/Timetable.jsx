@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Modal from '../components/Modal';
 import { PageHeader } from '../components/widgets';
 import { Icon } from '../components/icons';
+import { AlertTriangle, Check, X } from 'lucide-react';
 import { SUBJECTS, DEPARTMENTS, getSubjectMeta, expandClassesWithStreams, getDynamicClasses, CLASSES, getDeptColor, DEFAULT_DEPARTMENTS } from '../data/seed';
 import { downloadExcel, exportTimetableLandscapePDF, exportAllTimetablesPDF } from '../utils/exporters';
 import {
@@ -631,11 +632,11 @@ export default function Timetable({ store, user }) {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {constraints.mathInMorning && <Chip>Math in morning</Chip>}
-                {constraints.engKisNotFollow && <Chip>Eng ✕ Kis</Chip>}
-                {constraints.mathSciNotFollow && <Chip>Math ✕ Science</Chip>}
+                {constraints.engKisNotFollow && <Chip>Eng ≠ Kis</Chip>}
+                {constraints.mathSciNotFollow && <Chip>Math ≠ Science</Chip>}
                 {constraints.freeAfternoonOnly && <Chip>Free = afternoon</Chip>}
                 <Chip>Max {constraints.maxPerDay || '∞'}/day</Chip>
-                {(constraints.customPairs || []).map((p, i) => <Chip key={i}>{getSubjectMeta(p[0], schoolSubjectsRaw).initials} ✕ {getSubjectMeta(p[1], schoolSubjectsRaw).initials}</Chip>)}
+                {(constraints.customPairs || []).map((p, i) => <Chip key={i}>{getSubjectMeta(p[0], schoolSubjectsRaw).initials} ≠ {getSubjectMeta(p[1], schoolSubjectsRaw).initials}</Chip>)}
                 {Object.values(constraints.teacherTimeOff || {}).some((a) => a.length) && <Chip>Teacher time-off</Chip>}
               </div>
               <button className="btn btn-outline" style={{ width: '100%', marginTop: 14, color: '#7c3aed', borderColor: '#ddd6fe', background: '#fff' }} onClick={() => setConstraintsModal(true)}>
@@ -714,8 +715,8 @@ export default function Timetable({ store, user }) {
                     return (
                       <span title="Subjects offered · this class's total weekly lessons vs available teaching slots"
                         style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 14, whiteSpace: 'nowrap',
-                          background: ok ? '#f0fdf4' : '#fef2f2', color: ok ? '#15803d' : '#b91c1c', border: `1px solid ${ok ? '#bbf7d0' : '#fecaca'}` }}>
-                        {offered} subjects · {total}/{avail} {ok ? '✓ fits' : `over by ${total - avail}`}
+                          background: ok ? '#f0fdf4' : '#fef2f2', color: ok ? '#15803d' : '#b91c1c', border: `1px solid ${ok ? '#bbf7d0' : '#fecaca'}`, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {offered} subjects · {total}/{avail} {ok ? <><Check size={12} /> fits</> : `over by ${total - avail}`}
                       </span>
                     );
                   })()}
@@ -1222,8 +1223,8 @@ function TimeslotsModal({ timeslots, schedule, onClose, onSave }) {
       </div>
       <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={addRow}><Icon name="plus" size={14} /> Add slot</button>
       {rows.filter((r) => r.type === 'LunchBreak').length > 1 && (
-        <p style={{ fontSize: 12, marginTop: 10, padding: '8px 12px', borderRadius: 6, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
-          ⚠ You have <strong>{rows.filter((r) => r.type === 'LunchBreak').length} Lunch slots</strong>. Most schools use a single lunch — delete the extra rows above unless this is intentional.
+        <p style={{ fontSize: 12, marginTop: 10, padding: '8px 12px', borderRadius: 6, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <AlertTriangle size={14} style={{ flexShrink: 0 }} /> You have <strong>{rows.filter((r) => r.type === 'LunchBreak').length} Lunch slots</strong>. Most schools use a single lunch — delete the extra rows above unless this is intentional.
         </p>
       )}
       <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>Only <strong>Normal</strong> slots hold lessons. Breaks, Lunch, Preps and Games are shown as fixed rows.</p>
@@ -1279,14 +1280,14 @@ function ConstraintsModal({ constraints, teachers, teachingSlots, days, onClose,
           <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#475569' }}>Custom "not to follow" pairs</h4>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
             <select className="select" value={pairA} onChange={(e) => setPairA(e.target.value)} style={{ width: 150 }}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
-            <span className="muted">✕</span>
+            <span className="muted" style={{ fontWeight: 700 }}>≠</span>
             <select className="select" value={pairB} onChange={(e) => setPairB(e.target.value)} style={{ width: 150 }}>{subjects.map((s) => <option key={s}>{s}</option>)}</select>
             <button className="btn btn-outline" onClick={addPair}><Icon name="plus" size={14} /> Add</button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {form.customPairs.map((p, i) => (
               <span key={i} style={{ fontSize: 12, background: '#f1f5f9', borderRadius: 12, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {p[0]} ✕ {p[1]} <button className="btn" style={{ padding: 0, background: 'none', color: '#dc2626' }} onClick={() => delPair(i)}><Icon name="close" size={12} /></button>
+                {p[0]} ≠ {p[1]} <button className="btn" style={{ padding: 0, background: 'none', color: '#dc2626' }} onClick={() => delPair(i)}><Icon name="close" size={12} /></button>
               </span>
             ))}
             {form.customPairs.length === 0 && <span className="muted" style={{ fontSize: 12 }}>None</span>}

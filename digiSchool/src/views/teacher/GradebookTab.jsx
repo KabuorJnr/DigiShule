@@ -5,6 +5,7 @@ import { Badge } from '../../components/widgets';
 import ReportCardEntrySheet from '../../components/ReportCardEntrySheet';
 import ClassSubjectAnalysis from '../../components/ClassSubjectAnalysis';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../../utils/exporters';
+import { SUBJECTS } from '../../data/seed';
 import { 
   BarChart3, 
   FileText, 
@@ -19,7 +20,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Check
+  Check,
+  Lightbulb
 } from 'lucide-react';
 
 const EXAM_OPTIONS = ['End Term Assessment', 'Mid Term Assessment', 'Opening Assessment', 'Continuous Assessment (CAT)'];
@@ -220,7 +222,7 @@ export default function GradebookTab() {
       school: settings,
       gradeBoundaries,
       students: chosen,
-      subjects: [subject],
+      subjects: SUBJECTS,
       examTitle: `${term} ${examTitle}`,
       termName: term,
       filename: `report-cards-${subject}-${selectedStream}.pdf`,
@@ -481,9 +483,9 @@ export default function GradebookTab() {
             borderRadius: 6,
             border: '1px solid #e2e8f0'
           }}>
-            {viewMode === 'grid' && `📊 Grading ${filteredStudents.length} students in ${subject}`}
-            {viewMode === 'report' && '📄 Kenyan Academic Report Form 1:1 view'}
-            {viewMode === 'analysis' && `📈 ${subject} performance across streams`}
+            {viewMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BarChart3 size={13} /> Grading {filteredStudents.length} students in {subject}</span>}
+            {viewMode === 'report' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={13} /> Kenyan Academic Report Form 1:1 view</span>}
+            {viewMode === 'analysis' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><TrendingUp size={13} /> {subject} performance across streams</span>}
           </span>
         </div>
       </div>
@@ -786,19 +788,15 @@ export default function GradebookTab() {
               totalStudents={filteredStudents.length}
               schoolSettings={settings}
               onUpdateSettings={store.setSettings}
-              onPublishResults={() => {
-                const nextState = !settings?.results_published;
-                store.setSettings?.({ results_published: nextState });
-                store.notify?.(nextState ? 'Results published' : 'Results unpublished', 'success');
-              }}
+              onPublishResults={null}
               teachers={teachers}
-              currentUser={user}
+              currentUser={store.user}
               gradeBoundaries={gradeBoundaries}
               examTitle={examTitle}
               termName={term}
               year={examYear}
               outOf={outOf}
-              canEditAll={user?.role === 'admin' || user?.role === 'dos' || user?.role === 'deputy_academic'}
+              canEditAll={false}
               allowedSubjects={[subject]}
             />
           ) : (
@@ -861,8 +859,8 @@ export default function GradebookTab() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 11.5, color: '#64748b' }}>
-                💡 Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save & jump to next student
+              <span style={{ fontSize: 11.5, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Lightbulb size={13} color="#d97706" /> Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save &amp; jump to next student
               </span>
               <button 
                 className="btn btn-primary btn-sm" 

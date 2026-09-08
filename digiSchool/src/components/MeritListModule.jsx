@@ -4,11 +4,16 @@ import {
   is844Class, calculateStandardDeviation, CBC_SUBJECTS, KCSE_844_SUBJECTS 
 } from '../utils/grading';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
+import { poppinsRegular } from '../utils/Poppins-Regular';
+import { poppinsBold } from '../utils/Poppins-Bold';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Badge, ProgressBar } from './widgets';
 import { 
   Award, Download, Filter, Search, ArrowUp, ArrowDown, 
   TrendingUp, FileSpreadsheet, CheckCircle2, Lock, Unlock, Edit3, Save,
-  CheckCircle, AlertTriangle, ShieldCheck, RefreshCw, BookOpen, ChevronRight
+  CheckCircle, AlertTriangle, ShieldCheck, RefreshCw, BookOpen, ChevronRight,
+  Trophy, Medal, Users, Layers
 } from 'lucide-react';
 
 export default function MeritListModule({ 
@@ -46,6 +51,7 @@ export default function MeritListModule({
 
   // ── CONTROLS STATE ──
   const [modelMode, setModelMode] = useState('auto'); // 'auto' | 'cbc' | '844'
+  const [viewScope, setViewScope] = useState('overall'); // 'overall' | 'stream'
   const [selectedClass, setSelectedClass] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [passThreshold, setPassThreshold] = useState(50); // Pass mark threshold %
@@ -83,28 +89,13 @@ export default function MeritListModule({
   }, [activeCurriculum]);
 
   // Filter & Evaluate Students with Live Score Overrides
-  const evaluatedStudents = useMemo(() => {
+  const allEvaluatedStudents = useMemo(() => {
     let list = students.filter(s => 
       s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending'
     );
 
-    if (selectedClass !== 'All') {
-      list = list.filter(s => s.class === selectedClass);
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(s => 
-        (s.name || '').toLowerCase().includes(q) || 
-        (s.adm || s.admission_no || '').toLowerCase().includes(q)
-      );
-    }
-
-    // Evaluate scores for active subjects
     const evaluated = list.map(s => {
       const is844 = activeCurriculum === '844' || is844Class(s.class);
-      
-      // Build effective score map with live overrides
       const effectiveScores = { ...(s.scores || {}) };
       activeSubjects.forEach(sub => {
         const overrideKey = `${s.id}_${sub}`;
@@ -146,21 +137,51 @@ export default function MeritListModule({
       };
     });
 
-    // Initial Descending Sort by Total Marks for Rank Assignment
     evaluated.sort((a, b) => b.totalMarks - a.totalMarks);
 
-    // Assign Positions / Ranks
-    let currentRank = 1;
-    const ranked = evaluated.map((s, idx, arr) => {
-      if (idx > 0 && Math.abs(s.totalMarks - arr[idx - 1].totalMarks) < 0.1) {
-        return { ...s, rank: arr[idx - 1].rank };
-      } else {
-        currentRank = idx + 1;
-        return { ...s, rank: currentRank };
-      }
+    evaluated.forEach((s, idx) => {
+      s.overallRank = idx + 1;
+      s.rank = idx + 1; // Default
     });
 
-    // Custom Sorting based on user selection
+    const streamGroups = {};
+    evaluated.forEach(s => {
+      const c = s.class || 'Unknown';
+      if (!streamGroups[c]) streamGroups[c] = [];
+      streamGroups[c].push(s);
+    });
+
+    Object.values(streamGroups).forEach(group => {
+      group.forEach((s, idx) => {
+        s.streamRank = idx + 1;
+        s.streamTotal = group.length;
+      });
+    });
+
+    return evaluated;
+  }, [students, activeCurriculum, activeSubjects, passThreshold, schoolSettings, editedScores]);
+
+  const evaluatedStudents = useMemo(() => {
+    let list = allEvaluatedStudents;
+
+    if (selectedClass !== 'All') {
+      list = list.filter(s => s.class === selectedClass);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(s => 
+        (s.name || '').toLowerCase().includes(q) || 
+        (s.adm || s.admission_no || '').toLowerCase().includes(q)
+      );
+    }
+
+    let ranked = list.map(s => ({
+      ...s,
+      rank: viewScope === 'stream' ? s.streamRank : s.overallRank
+    }));
+    
+    // Maintain backwards compat with sorting
     if (sortField === 'rank') {
       ranked.sort((a, b) => sortDirection === 'asc' ? a.rank - b.rank : b.rank - a.rank);
     } else if (sortField === 'name') {
@@ -180,7 +201,7 @@ export default function MeritListModule({
     }
 
     return ranked;
-  }, [students, selectedClass, searchQuery, activeCurriculum, activeSubjects, passThreshold, schoolSettings, sortField, sortDirection, editedScores]);
+  }, [students, selectedClass, searchQuery, activeCurriculum, activeSubjects, passThreshold, schoolSettings, sortField, sortDirection, editedScores, viewScope]);
 
   // Handle Score Input Change (Exec Only)
   const handleScoreChange = (studentId, subject, val) => {
@@ -330,39 +351,263 @@ export default function MeritListModule({
   const handleExportPDF = () => {
     if (evaluatedStudents.length === 0) return notify('No students to export', 'warning');
 
-    const head = [
-      ['Rank', 'Adm No', 'Student Name', 'Class', ...activeSubjects, 'Total', 'Avg %', activeCurriculum === '844' ? 'Grade (Pts)' : 'Rating']
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a3' });
+    doc.addFileToVFS('Poppins-Regular.ttf', poppinsRegular);
+    doc.addFileToVFS('Poppins-Bold.ttf', poppinsBold);
+    doc.addFont('Poppins-Regular.ttf', 'Poppins', 'normal');
+    doc.addFont('Poppins-Bold.ttf', 'Poppins', 'bold');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+
+    // -- HEADER SECTION --
+    doc.setFont('Poppins', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(0);
+    doc.text((schoolSettings?.name || 'DIGISHULE ACADEMY').toUpperCase(), pageWidth / 2, 35, { align: 'center' });
+    
+    doc.setFontSize(11);
+    const subTitle = viewScope === 'stream' && selectedClass !== 'All'
+      ? `STREAM MERIT LIST - STREAM ${selectedClass.toUpperCase()} - TERM 2 2026`
+      : `OVERALL CLASS MERIT LIST - ALL STREAMS - TERM 2 2026`;
+    doc.text(subTitle, pageWidth / 2, 55, { align: 'center' });
+
+    // -- TABLE STRUCTURE --
+    const headTop = [
+      { content: 'SN', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } },
+      { content: "CANDIDATE'S NUMBER", rowSpan: 2, styles: { halign: 'left', valign: 'bottom' } },
+      { content: 'SEX', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } },
     ];
-
-    const body = evaluatedStudents.map(s => [
-      `#${s.rank}`,
-      s.adm,
-      s.name,
-      s.class,
-      ...activeSubjects.map(sub => s.scores[sub] || '-'),
-      s.totalMarks,
-      `${s.averagePct.toFixed(1)}%`,
-      activeCurriculum === '844' ? `${s.meanGrade} (${s.points}pts)` : s.meanGrade
-    ]);
-
-    const footerRow = [
-      'CLASS MEAN', '-', '-', '-',
-      ...activeSubjects.map(sub => subjectAnalysis[sub]?.mean || '-'),
-      '-',
-      `${classStats.meanScore}%`,
-      classStats.overallGrade
-    ];
-    body.push(footerRow);
-
-    exportTablePDF({
-      school: schoolSettings,
-      title: `OFFICIAL MERIT LIST — ${activeCurriculum === '844' ? '8-4-4 KCSE MODEL' : 'CBC COMPETENCY RATING'}`,
-      subtitle: `Status: ${isPublished ? 'PUBLISHED & OFFICIALLY VERIFIED' : 'DRAFT FOR MODERATION'} | Scope: ${selectedClass === 'All' ? 'All Classes & Streams' : selectedClass} | Ranked: ${evaluatedStudents.length} | Class Mean: ${classStats.meanScore}% (${classStats.overallGrade})`,
-      head,
-      body,
-      filename: `Merit_List_${activeCurriculum}_${selectedClass.replace(/\s+/g, '_')}.pdf`
+    activeSubjects.forEach(sub => {
+      headTop.push({ content: sub, colSpan: 2, styles: { halign: 'center', valign: 'middle' } });
     });
-    notify(`Merit list exported as PDF (${evaluatedStudents.length} students)`, 'success');
+    headTop.push({ content: 'AVERAGE', colSpan: 2, styles: { halign: 'center', valign: 'middle' } });
+    headTop.push({ content: 'AGGT POINTS', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } });
+    headTop.push({ content: 'DIVISION', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } });
+    headTop.push({ content: 'Stream Pos', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } });
+    headTop.push({ content: 'Overall Pos', rowSpan: 2, styles: { halign: 'center', valign: 'bottom' } });
+
+    const headBottom = [];
+    activeSubjects.forEach(() => {
+      headBottom.push({ content: 'Marks', styles: { halign: 'center' } });
+      headBottom.push({ content: 'Grade', styles: { halign: 'center' } });
+    });
+    headBottom.push({ content: 'Marks', styles: { halign: 'center' } });
+    headBottom.push({ content: 'Grade', styles: { halign: 'center' } });
+
+    const body = [];
+    
+    // Main Student Rows
+    evaluatedStudents.forEach((s, idx) => {
+      const row = [
+        idx + 1,
+        s.name.toUpperCase(),
+        (s.gender || 'M').charAt(0).toUpperCase()
+      ];
+      activeSubjects.forEach(sub => {
+        const score = s.scores[sub];
+        if (score > 0) {
+          row.push(score);
+          row.push(gradeFor(score, schoolSettings?.gradeBoundaries, is844Class(s.class) ? '844' : 'CBC'));
+        } else {
+          row.push('-');
+          row.push('-');
+        }
+      });
+      row.push(s.averagePct.toFixed(1));
+      row.push(s.meanGrade);
+      row.push(s.points);
+      row.push(s.meanGrade);
+      row.push(`${s.streamRank}/${s.streamTotal || evaluatedStudents.length}`);
+      row.push(`${s.overallRank}/${allEvaluatedStudents.length}`);
+      body.push(row);
+    });
+
+    // -- FOOTER STATS --
+    const gradeBuckets = [
+      { label: 'Grade A', match: (g) => g.startsWith('A') || g === 'EE' },
+      { label: 'Grade B', match: (g) => g.startsWith('B') || g === 'ME' },
+      { label: 'Grade C', match: (g) => g.startsWith('C') || g === 'AE' },
+      { label: 'Grade D', match: (g) => g.startsWith('D') },
+      { label: 'Grade F', match: (g) => g.startsWith('E') || g.startsWith('F') || g === 'BE' },
+    ];
+
+    const getGradeForStat = (score) => gradeFor(score, schoolSettings?.gradeBoundaries, activeCurriculum);
+
+    gradeBuckets.forEach((bucket, bIdx) => {
+      ['F', 'M'].forEach((sex, sexIdx) => {
+        const row = [];
+        if (sexIdx === 0) {
+          row.push({ content: '', rowSpan: 2 });
+          row.push({ content: bucket.label, rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontStyle: 'bold', textColor: [0,0,128] } });
+        }
+        row.push({ content: sex, styles: { halign: 'center', fontStyle: 'bold' } });
+
+        activeSubjects.forEach(sub => {
+          let count = 0;
+          evaluatedStudents.forEach(s => {
+            if ((s.gender || 'M').charAt(0).toUpperCase() === sex && s.scores[sub] > 0) {
+              const g = getGradeForStat(s.scores[sub]);
+              if (bucket.match(g)) count++;
+            }
+          });
+          row.push({ content: count < 10 ? `0${count}` : count, colSpan: 2, styles: { halign: 'center' } });
+        });
+
+        // Filler for remaining columns
+        row.push({ content: sexIdx === 0 ? bucket.label : '', colSpan: 6, rowSpan: sexIdx === 0 ? 2 : 1, styles: { halign: 'center', valign: 'middle' } });
+        body.push(row);
+      });
+    });
+
+    // TOTAL Row
+    const totalRow = ['', 'TOTAL', ''];
+    activeSubjects.forEach(sub => {
+      const sum = evaluatedStudents.reduce((acc, s) => acc + (s.scores[sub] || 0), 0);
+      totalRow.push({ content: sum, colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } });
+    });
+    totalRow.push({ content: 'TOTAL', colSpan: 6, styles: { halign: 'center', fontStyle: 'bold' } });
+    body.push(totalRow);
+
+    // High/Low/Range/GPA/Avg/Rank Rows
+    const statsRows = [
+      { label: 'Highest Score', fn: (sub) => {
+          let max = 0; evaluatedStudents.forEach(s => { if(s.scores[sub] > max) max = s.scores[sub]; });
+          return max;
+      }},
+      { label: 'Lowest Score', fn: (sub) => {
+          let min = 100; evaluatedStudents.forEach(s => { if(s.scores[sub] > 0 && s.scores[sub] < min) min = s.scores[sub]; });
+          return min === 100 ? 0 : min;
+      }},
+      { label: 'Subject Range', fn: (sub) => {
+          let max = 0, min = 100;
+          evaluatedStudents.forEach(s => { 
+            if(s.scores[sub] > max) max = s.scores[sub]; 
+            if(s.scores[sub] > 0 && s.scores[sub] < min) min = s.scores[sub]; 
+          });
+          return max - (min === 100 ? 0 : min);
+      }},
+      { label: 'Subject GPA', fn: (sub) => {
+          let sum = 0, count = 0;
+          evaluatedStudents.forEach(s => { if(s.scores[sub] > 0) { sum += pointsForGrade(getGradeForStat(s.scores[sub]), activeCurriculum); count++; } });
+          return count > 0 ? (sum/count).toFixed(3) : '0.000';
+      }},
+      { label: 'Subject Average', fn: (sub) => {
+          let sum = 0, count = 0;
+          evaluatedStudents.forEach(s => { if(s.scores[sub] > 0) { sum += s.scores[sub]; count++; } });
+          return count > 0 ? Math.round(sum/count) : 0;
+      }},
+      { label: 'Subject Rank', fn: (sub) => '-' }
+    ];
+
+    // Compute ranks for subjects based on average
+    const subAverages = activeSubjects.map(sub => {
+      let sum = 0, count = 0;
+      evaluatedStudents.forEach(s => { if(s.scores[sub] > 0) { sum += s.scores[sub]; count++; } });
+      return { sub, avg: count > 0 ? sum/count : 0 };
+    }).sort((a, b) => b.avg - a.avg);
+    subAverages.forEach((item, idx) => item.rank = idx + 1);
+
+    statsRows.forEach(stat => {
+      const row = ['', { content: stat.label, styles: { textColor: [0,0,128], fontStyle: 'italic', textDecoration: 'underline' } }, ''];
+      activeSubjects.forEach(sub => {
+        if (stat.label === 'Subject Rank') {
+          const rank = subAverages.find(x => x.sub === sub)?.rank || '-';
+          row.push({ content: `${rank}/${activeSubjects.length}`, colSpan: 2, styles: { halign: 'center' } });
+        } else if (stat.label === 'Subject Range' || stat.label === 'Subject GPA') {
+          row.push({ content: stat.fn(sub), colSpan: 2, styles: { halign: 'center' } });
+        } else {
+          const val = stat.fn(sub);
+          row.push({ content: val, styles: { halign: 'center' } });
+          row.push({ content: getGradeForStat(val), styles: { halign: 'center', fontStyle: 'bold' } });
+        }
+      });
+      row.push({ content: stat.label, colSpan: 6, styles: { halign: 'right' } });
+      body.push(row);
+    });
+
+    autoTable(doc, {
+      head: [headTop, headBottom],
+      body,
+      startY: 75,
+      theme: 'grid',
+      styles: { 
+        fontSize: 8, 
+        cellPadding: 3, 
+        font: 'Poppins',
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 1
+      },
+      headStyles: { 
+        fillColor: [255, 255, 224], // Pale yellow background
+        textColor: [0, 0, 0], 
+        fontStyle: 'bold' 
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 224]
+      },
+      margin: { left: margin, right: margin, bottom: 20 },
+      columnStyles: {
+        0: { cellWidth: 25, halign: 'center' }, // SN
+        1: { cellWidth: 150 }, // Name
+        2: { cellWidth: 25, halign: 'center' }, // Sex
+      },
+      willDrawCell: function(data) {
+        // Prepare headers for manual rotation
+        if (data.section === 'head') {
+          if (data.row.index === 0 && data.column.index >= 3 && data.column.index < 3 + activeSubjects.length * 2) {
+             // Subject name vertical
+             data.cell.styles.minCellHeight = 80;
+          }
+          if (data.row.index === 1 && data.cell.raw && (data.cell.raw.content === 'Marks' || data.cell.raw.content === 'Grade')) {
+             data.cell.styles.minCellHeight = 50;
+          }
+        }
+      },
+      didDrawCell: function(data) {
+        // Manually draw vertical text for headers
+        if (data.section === 'head') {
+          let text = '';
+          let isRotated = false;
+          
+          if (data.row.index === 0 && data.column.index >= 3 && data.column.index < 3 + activeSubjects.length * 2) {
+            // It's a subject header
+            // autoTable merges colSpan=2 into data.column.index (the first of the two)
+            // But we actually passed an object { content: sub }
+            if (data.cell.raw && data.cell.raw.content && activeSubjects.includes(data.cell.raw.content)) {
+               text = data.cell.raw.content;
+               isRotated = true;
+            }
+          } else if (data.row.index === 0 && data.column.index >= 3 + activeSubjects.length * 2) {
+             if (data.cell.raw && typeof data.cell.raw.content === 'string' && ['AVERAGE', 'AGGT POINTS', 'DIVISION', 'Position'].includes(data.cell.raw.content)) {
+                 text = data.cell.raw.content;
+                 isRotated = true;
+             }
+          }
+          
+          if (data.row.index === 1 && data.cell.raw && (data.cell.raw.content === 'Marks' || data.cell.raw.content === 'Grade')) {
+             text = data.cell.raw.content;
+             isRotated = true;
+          }
+
+          if (isRotated && text) {
+             // Blank out the default text rendering by filling over it (hacky but works since autoTable already drew it)
+             doc.setFillColor(255, 255, 224);
+             doc.rect(data.cell.x + 1, data.cell.y + 1, data.cell.width - 2, data.cell.height - 2, 'F');
+             
+             doc.setTextColor(0);
+             doc.setFontSize(9);
+             doc.setFont('Poppins', 'bold');
+             
+             // Rotate text 90 degrees CCW
+             doc.text(text, data.cell.x + data.cell.width / 2 + 3, data.cell.y + data.cell.height - 5, { angle: 90 });
+          }
+        }
+      }
+    });
+
+    doc.save(`Merit_List_Broadsheet_${selectedClass.replace(/\s+/g, '_')}.pdf`);
+    notify(`Broadsheet PDF downloaded for ${evaluatedStudents.length} student(s)`, 'success');
   };
 
   // ── NEMIS EXCEL EXPORT ──
@@ -426,7 +671,7 @@ export default function MeritListModule({
               </span>
               {isPublished && (
                 <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: '#dcfce7', color: '#166534', border: '1px solid #86efac', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {principalSig ? '✓ Principal Signature Certified & Stamped' : '✓ Official DoS Stamp Active'}
+                  <CheckCircle2 size={12} /> {principalSig ? 'Principal Signature Certified & Stamped' : 'Official DoS Stamp Active'}
                 </span>
               )}
             </div>
@@ -536,6 +781,68 @@ export default function MeritListModule({
         </div>
       </div>
 
+      {/* ── MERIT LIST SCOPE SWITCH (OVERALL VS STREAM MERIT LIST) ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+        <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <button
+            onClick={() => {
+              setViewScope('overall');
+              setSelectedClass('All');
+            }}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              background: viewScope === 'overall' ? '#047857' : 'transparent',
+              color: viewScope === 'overall' ? '#ffffff' : '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Users size={14} /> Overall Class Merit List
+          </button>
+          <button
+            onClick={() => {
+              setViewScope('stream');
+              if (selectedClass === 'All') {
+                const firstStream = classOptions.find(c => c !== 'All') || 'All';
+                setSelectedClass(firstStream);
+              }
+            }}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              background: viewScope === 'stream' ? '#047857' : 'transparent',
+              color: viewScope === 'stream' ? '#ffffff' : '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Layers size={14} /> Stream Merit List
+          </button>
+        </div>
+
+        <div style={{ fontSize: 12, color: '#047857', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <CheckCircle2 size={13} color="#047857" />
+          <span>
+            {viewScope === 'overall' 
+              ? `Overall Class Cohort Ranking (${evaluatedStudents.length} Students)` 
+              : `Stream Ranking for ${selectedClass === 'All' ? 'All' : selectedClass} (${evaluatedStudents.length} Students)`}
+          </span>
+        </div>
+      </div>
+
       {/* ── INTERACTIVE CONTROLS BAR ── */}
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '10px 14px', marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -637,26 +944,26 @@ export default function MeritListModule({
       </div>
 
       {/* ── MAIN MERIT RANKING TABLE ── */}
-      <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: 6, marginBottom: 16 }}>
-        <table className="table" style={{ width: '100%', margin: 0, borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-              <th onClick={() => handleSort('rank')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+      <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '65vh', border: '1px solid #e2e8f0', borderRadius: 6, marginBottom: 16 }}>
+        <table className="table" style={{ width: '100%', margin: 0, borderCollapse: 'separate', borderSpacing: 0 }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+            <tr style={{ background: '#f1f5f9' }}>
+              <th onClick={() => handleSort('rank')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  Rank {sortField === 'rank' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                  {viewScope === 'stream' ? 'Str / Ovr Rank' : 'Ovr / Str Rank'} {sortField === 'rank' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </div>
               </th>
-              <th onClick={() => handleSort('adm')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+              <th onClick={() => handleSort('adm')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   Adm No {sortField === 'adm' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </div>
               </th>
-              <th onClick={() => handleSort('name')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', minWidth: 160 }}>
+              <th onClick={() => handleSort('name')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', minWidth: 160, borderBottom: '2px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   Student Name {sortField === 'name' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </div>
               </th>
-              <th style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              <th style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 Stream
               </th>
 
@@ -667,33 +974,35 @@ export default function MeritListModule({
                   onClick={() => handleSort(sub)} 
                   style={{ 
                     padding: '10px 8px', 
-                    fontSize: 11, 
+                    fontSize: 10, 
                     textTransform: 'uppercase', 
                     textAlign: 'center', 
                     cursor: 'pointer', 
                     userSelect: 'none', 
                     whiteSpace: 'nowrap',
-                    background: sortField === sub ? '#e2e8f0' : 'transparent'
+                    background: sortField === sub ? '#e2e8f0' : '#f1f5f9',
+                    borderBottom: '2px solid #cbd5e1',
+                    minWidth: 50
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                    <span>{sub.length > 10 ? `${sub.substring(0, 8)}..` : sub}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                    <span title={sub}>{sub.substring(0, 3)}</span>
                     {sortField === sub && (sortDirection === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />)}
                   </div>
                 </th>
               ))}
 
-              <th onClick={() => handleSort('total')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+              <th onClick={() => handleSort('total')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                  Total Marks {sortField === 'total' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                  Total {sortField === 'total' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </div>
               </th>
-              <th onClick={() => handleSort('avg')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+              <th onClick={() => handleSort('avg')} style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
                   Mean % {sortField === 'avg' && (sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </div>
               </th>
-              <th style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'center', whiteSpace: 'nowrap' }}>
+              <th style={{ padding: '10px 12px', fontSize: 11, textTransform: 'uppercase', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '2px solid #cbd5e1' }}>
                 {activeCurriculum === '844' ? 'KCSE Grade (Pts)' : 'CBC Competency'}
               </th>
             </tr>
@@ -708,21 +1017,21 @@ export default function MeritListModule({
                 rowStyle.background = '#fffbeb';
                 rankBadge = (
                   <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    🥇 #1 Top
+                    <Trophy size={11} color="#b45309" /> #1 Top
                   </span>
                 );
               } else if (s.rank === 2) {
                 rowStyle.background = '#f8fafc';
                 rankBadge = (
                   <span style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    🥈 #2
+                    <Medal size={11} /> #2
                   </span>
                 );
               } else if (s.rank === 3) {
                 rowStyle.background = '#fff7ed';
                 rankBadge = (
                   <span style={{ background: '#ffedd5', color: '#c2410c', border: '1px solid #fed7aa', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    🥉 #3
+                    <Medal size={11} /> #3
                   </span>
                 );
               } else {
@@ -731,7 +1040,12 @@ export default function MeritListModule({
 
               return (
                 <tr key={s.id || s.adm} style={rowStyle}>
-                  <td style={{ padding: '10px 12px' }}>{rankBadge}</td>
+                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                    {rankBadge} 
+                    <span style={{ color: '#64748b', fontSize: 10, marginLeft: 6, fontWeight: 600 }}>
+                      {viewScope === 'stream' ? `(Ovr #${s.overallRank})` : `(${s.class} #${s.streamRank})`}
+                    </span>
+                  </td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 600, fontSize: 12 }}>{s.adm}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
                   <td style={{ padding: '10px 12px', fontSize: 12 }}>{s.class}</td>
@@ -801,7 +1115,6 @@ export default function MeritListModule({
               );
             })}
           </tbody>
-
           {/* ── FOOTER ROW: PER-SUBJECT CLASS MEANS & TOP PERFORMERS ── */}
           {userRole !== 'parent' && (
             <tfoot>

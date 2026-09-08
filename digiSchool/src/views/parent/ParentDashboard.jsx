@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { User, BookOpen, Clock, AlertTriangle, ShieldCheck, FileText, Bell, 
   BarChart3, Trophy, Wallet, Calendar, Mail, Heart, ClipboardList, 
-  CheckCircle2, XCircle, Send, Award, DollarSign } from 'lucide-react';
+  CheckCircle2, XCircle, Send, Award, DollarSign, Hospital } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { fetchTable } from '../../lib/api';
 import { KpiCard, ProgressBar, Badge } from '../../components/widgets';
@@ -754,9 +754,9 @@ export default function ParentDashboard() {
                       <span style={{ fontSize: 11, color: '#64748b', marginLeft: m.status === 'Unread' ? 4 : 0 }}>{(m.created_at || '').slice(0, 10)}</span>
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
                     From: <strong>{m.sender_name || m.sender_role || 'School'}</strong>
-                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && ' 🏥'}
+                    {(m.sender_role === 'nurse' || m.sender_role === 'clinic') && <Hospital size={13} color="#047857" />}
                   </div>
                   <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
                 </div>

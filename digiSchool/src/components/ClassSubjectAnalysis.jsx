@@ -26,7 +26,9 @@ import {
   ArrowUpDown,
   Sparkles,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  Medal
 } from 'lucide-react';
 import { 
   percentageToCbcGrade, 
@@ -292,23 +294,52 @@ export default function ClassSubjectAnalysis({
 
   // Export handlers
   const handleExportPDF = () => {
-    const head = ['# Rank', 'Class / Stream', 'Students', 'Mean Score (%)', 'CBC Points', 'Performance Level', 'Top Subject'];
-    const body = classAnalysisData.map((c, i) => [
-      i + 1,
-      c.name,
-      c.studentCount,
-      `${c.classMean}%`,
-      `${c.cbcPoints} pts`,
-      c.perfLevel,
-      c.topSub ? `${c.topSub.name} (${c.topSub.avg}%)` : '-'
-    ]);
+    const isWide = selectedSubjects.length > 7;
+    const head = [
+      '# Rank',
+      'Class / Stream',
+      'Students',
+      ...selectedSubjects.map(s => s.length > 12 ? s.substring(0, 11) + '…' : s),
+      'Mean Score (%)',
+      'CBC Points',
+      'Performance Level',
+      'Top Performing Subject'
+    ];
+    const body = classAnalysisData.map((c, i) => {
+      const subVals = selectedSubjects.map(s => c.subjectAverages[s] ? `${c.subjectAverages[s]}%` : '-');
+      return [
+        i + 1,
+        c.name,
+        c.studentCount,
+        ...subVals,
+        `${c.classMean}%`,
+        `${c.cbcPoints} pts`,
+        c.perfLevel,
+        c.topSub ? `${c.topSub.name} (${c.topSub.avg}%)` : '-'
+      ];
+    });
+
+    const foot = [
+      '',
+      'COHORT SUMMARY',
+      overallMetrics.totalStudents || '-',
+      ...selectedSubjects.map(s => `${overallMetrics.subjectMeans[s] || 0}%`),
+      `${overallMetrics.mean}%`,
+      `${overallMetrics.points} pts`,
+      percentageToCbcGrade(overallMetrics.mean, gradeBoundaries),
+      overallMetrics.topClass ? `${overallMetrics.topClass.name} (Top Class)` : '-'
+    ];
+
     exportTablePDF({
       school: schoolSettings,
       title: `Class Performance Analysis - Selected Subjects (${selectedSubjects.length})`,
-      subtitle: `Subjects: ${selectedSubjects.join(', ')}`,
+      subtitle: `Overall Cohort Mean: ${overallMetrics.mean}% · Cohort Size: ${overallMetrics.totalStudents || 0} Students · Curriculum Subjects: ${selectedSubjects.join(', ')}`,
       head,
       body,
-      filename: `class-performance-analysis.pdf`
+      foot,
+      filename: `class-subject-performance-analysis.pdf`,
+      orientation: 'landscape',
+      format: isWide ? 'a3' : 'a4'
     });
   };
 
@@ -713,7 +744,21 @@ export default function ClassSubjectAnalysis({
               {classAnalysisData.map((c, i) => (
                 <tr key={c.name} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ textAlign: 'center', fontWeight: 800, color: i === 0 ? '#d97706' : '#64748b' }}>
-                    {i === 0 ? '🥇 1' : (i === 1 ? '🥈 2' : (i === 2 ? '🥉 3' : i + 1))}
+                    {i === 0 ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#d97706' }}>
+                        <Trophy size={13} /> 1
+                      </span>
+                    ) : i === 1 ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#64748b' }}>
+                        <Medal size={13} /> 2
+                      </span>
+                    ) : i === 2 ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#b45309' }}>
+                        <Medal size={13} /> 3
+                      </span>
+                    ) : (
+                      i + 1
+                    )}
                   </td>
                   <td style={{ fontWeight: 700, color: '#0f172a' }}>
                     {c.name}

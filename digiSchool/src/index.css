@@ -9,7 +9,7 @@
 @import '@fontsource/poppins/800.css';
 
 :root {
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --primary: #047857;
   --primary-700: #065f46;
@@ -111,7 +111,7 @@ a:hover {
 
 /* ---------- Buttons ---------- */
 .btn {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
   font-weight: 500;
   font-size: 14px;
   padding: 9px 18px;
@@ -1309,5 +1309,39 @@ textarea:focus-visible,
   #report-card-capture-area,
   #report-card-capture-area * {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #report-card-capture-area, 
+  #report-card-capture-area * {
+    visibility: visible;
+  }
+  #report-card-capture-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+@media print {
+  /* Hide all generic app chrome when printing */
+  body > *:not(#modal-root, .modal-container) {
+    display: none !important;
+  }
+  
+  /* Reset modal restrictions so it can print the full A4 length */
+  .modal-container, 
+  .modal-content, 
+  [style*="maxHeight: '75vh'"], 
+  [style*="max-height: 75vh"] {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    box-shadow: none !important;
   }
 }
