@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
-import { Badge } from '../components/widgets';
+import { Badge, EmptyState } from '../components/widgets';
 import { CLASSES, SUBJECTS, getDynamicClasses, expandClassesWithStreams } from '../data/seed';
 import { computeRow, gradeFor, remarkFor, subjectAverage, is844Class, pointsForGrade } from '../utils/grading';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
@@ -1107,14 +1107,12 @@ export default function Gradebook({ store }) {
               allowedSubjects={allowedSubjects}
             />
           ) : (
-            <div className="card card-pad" style={{ textAlign: 'center', padding: '56px 24px', borderRadius: 12 }}>
-              <Users size={36} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>
-                No students found in {cls || 'this class'}
-              </div>
-              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                Please select another class or adjust your search filter above.
-              </p>
+            <div className="card">
+              <EmptyState
+                icon={<Users size={22} />}
+                title={`No students found in ${cls || 'this class'}`}
+                message="Please select another class or adjust your search filter above."
+              />
             </div>
           )}
         </div>
