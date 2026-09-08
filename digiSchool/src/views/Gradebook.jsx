@@ -580,76 +580,79 @@ export default function Gradebook({ store }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b' }}>
-      
+    <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b', maxWidth: 1160, margin: '0 auto' }}>
+
       {/* ── 1. HEADER & COMMAND BAR ── */}
       <div style={{
-        background: '#ffffff',
-        border: '1px solid #cbd5e1',
-        borderRadius: 12,
-        padding: '16px 20px',
+        background: 'linear-gradient(120deg, #065f46 0%, #047857 55%, #0f766e 100%)',
+        border: '1px solid #065f46',
+        borderRadius: 14,
+        padding: '18px 22px',
         marginBottom: 16,
-        boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+        boxShadow: '0 8px 24px rgba(4, 120, 87, 0.22)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: 14
+        gap: 14,
+        position: 'relative',
+        overflow: 'hidden'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: 10, 
-              background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.16)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               color: '#ffffff',
-              boxShadow: '0 2px 6px rgba(4, 120, 87, 0.25)'
+              flexShrink: 0
             }}>
-              <BookOpen size={18} />
+              <BookOpen size={20} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>
                   Gradebook & Academic Central
                 </h1>
                 {settings?.results_published && (
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4, 
-                    background: '#eff6ff', 
-                    color: '#1d4ed8', 
-                    border: '1px solid #bfdbfe', 
-                    padding: '2px 8px', 
-                    borderRadius: 12, 
-                    fontSize: 11, 
-                    fontWeight: 700 
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '3px 9px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700
                   }}>
                     <ShieldCheck size={13} /> Certified & Published
                   </span>
                 )}
                 {settings?.results_approved && !settings?.results_published && (
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4, 
-                    background: '#ecfdf5', 
-                    color: '#047857', 
-                    border: '1px solid #a7f3d0', 
-                    padding: '2px 8px', 
-                    borderRadius: 12, 
-                    fontSize: 11, 
-                    fontWeight: 700 
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '3px 9px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700
                   }}>
                     <Check size={13} /> Approved by Deputy
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}>
                 {term} · {examYear} Assessment Cycle · Official CBC & 8-4-4 Marks Engine
               </div>
             </div>
@@ -659,39 +662,59 @@ export default function Gradebook({ store }) {
         {/* Global Action Triggers */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {(['deputy_academic', 'dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
-            <button 
-              className={`btn btn-sm ${settings?.results_approved ? 'btn-danger' : 'btn-primary'}`} 
+            <button
+              type="button"
               onClick={handleApproveResults}
-              style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{
+                fontSize: 12, padding: '8px 14px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: settings?.results_approved ? 'rgba(254,226,226,0.16)' : 'rgba(255,255,255,0.14)',
+                color: '#ffffff'
+              }}
             >
-              {settings?.results_approved ? <X size={15} /> : <Check size={15} />} 
+              {settings?.results_approved ? <X size={15} /> : <Check size={15} />}
               {settings?.results_approved ? 'Revoke Approval' : 'Approve Results'}
             </button>
           )}
 
           {(['dos', 'principal', 'admin'].includes(user?.role || store.user?.role)) && (
-            <button 
-              className={`btn btn-sm ${settings?.results_published ? 'btn-danger' : 'btn-primary'}`} 
+            <button
+              type="button"
               onClick={handlePublishResults}
-              style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
               title={settings?.results_published ? 'Retract official publication' : 'Publish official results and stamp principal signature on all report cards'}
+              style={{
+                fontSize: 12, padding: '8px 14px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6, border: 'none',
+                background: settings?.results_published ? 'rgba(254,226,226,0.16)' : '#ffffff',
+                color: settings?.results_published ? '#ffffff' : '#047857',
+                boxShadow: settings?.results_published ? 'none' : '0 2px 8px rgba(0,0,0,0.15)'
+              }}
             >
-              <ShieldCheck size={15} /> 
+              <ShieldCheck size={15} />
               {settings?.results_published ? 'Unpublish Results (DoS)' : 'Publish & Stamp (DoS)'}
             </button>
           )}
 
-          <button 
-            className="btn btn-sm" 
+          <button
+            type="button"
             onClick={exportExcel}
-            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{
+              fontSize: 12, padding: '8px 13px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.14)', color: '#ffffff'
+            }}
           >
             <Download size={14} /> Excel
           </button>
-          <button 
-            className="btn btn-sm" 
+          <button
+            type="button"
             onClick={exportPDF}
-            style={{ fontSize: 12, padding: '6px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{
+              fontSize: 12, padding: '8px 13px', fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.14)', color: '#ffffff'
+            }}
           >
             <Printer size={14} /> PDF
           </button>
@@ -725,13 +748,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'report' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'report' ? '#ffffff' : 'transparent',
-              color: entryMode === 'report' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'report' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'report' ? '#047857' : 'transparent',
+              color: entryMode === 'report' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'report' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <FileText size={16} color={entryMode === 'report' ? '#047857' : '#64748b'} />
+            <FileText size={16} color={entryMode === 'report' ? '#ffffff' : '#64748b'} />
             Academic Report Form (Student)
           </button>
 
@@ -747,13 +770,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'grid' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'grid' ? '#ffffff' : 'transparent',
-              color: entryMode === 'grid' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'grid' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'grid' ? '#047857' : 'transparent',
+              color: entryMode === 'grid' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'grid' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <LayoutGrid size={16} color={entryMode === 'grid' ? '#047857' : '#64748b'} />
+            <LayoutGrid size={16} color={entryMode === 'grid' ? '#ffffff' : '#64748b'} />
             Class Subject Grid (Stream)
           </button>
 
@@ -769,13 +792,13 @@ export default function Gradebook({ store }) {
               fontWeight: entryMode === 'analysis' ? 700 : 500,
               cursor: 'pointer',
               border: 'none',
-              background: entryMode === 'analysis' ? '#ffffff' : 'transparent',
-              color: entryMode === 'analysis' ? '#047857' : '#475569',
-              boxShadow: entryMode === 'analysis' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+              background: entryMode === 'analysis' ? '#047857' : 'transparent',
+              color: entryMode === 'analysis' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'analysis' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <BarChart3 size={16} color={entryMode === 'analysis' ? '#047857' : '#64748b'} />
+            <BarChart3 size={16} color={entryMode === 'analysis' ? '#ffffff' : '#64748b'} />
             Class & Subject Analysis
           </button>
         </div>
