@@ -362,14 +362,27 @@ export default function MeritListModule({
     // -- HEADER SECTION --
     doc.setFont('Poppins', 'bold');
     doc.setFontSize(16);
-    doc.setTextColor(0);
-    doc.text((schoolSettings?.name || 'DIGISHULE ACADEMY').toUpperCase(), pageWidth / 2, 35, { align: 'center' });
-    
+    doc.setTextColor(4, 120, 87); // brand emerald
+    doc.text((schoolSettings?.name || 'School').toUpperCase(), pageWidth / 2, 32, { align: 'center' });
+
+    // School contact line (address · tel · email) pulled from settings.
+    doc.setFont('Poppins', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(90);
+    const contactParts = [schoolSettings?.address, schoolSettings?.phone || schoolSettings?.tel, schoolSettings?.email].filter(Boolean);
+    if (contactParts.length) doc.text(contactParts.join('   ·   '), pageWidth / 2, 47, { align: 'center' });
+
+    doc.setFont('Poppins', 'bold');
     doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
     const subTitle = viewScope === 'stream' && selectedClass !== 'All'
-      ? `STREAM MERIT LIST - STREAM ${selectedClass.toUpperCase()} - TERM 2 2026`
-      : `OVERALL CLASS MERIT LIST - ALL STREAMS - TERM 2 2026`;
-    doc.text(subTitle, pageWidth / 2, 55, { align: 'center' });
+      ? `STREAM MERIT LIST — ${selectedClass.toUpperCase()}`
+      : `OVERALL CLASS MERIT LIST — ALL STREAMS`;
+    doc.text(subTitle, pageWidth / 2, contactParts.length ? 62 : 55, { align: 'center' });
+    // Thin brand rule under the header.
+    doc.setDrawColor(4, 120, 87);
+    doc.setLineWidth(1);
+    doc.line(margin, 68, pageWidth - margin, 68);
 
     // -- TABLE STRUCTURE --
     const headTop = [
@@ -530,21 +543,26 @@ export default function MeritListModule({
       body,
       startY: 75,
       theme: 'grid',
-      styles: { 
-        fontSize: 8, 
-        cellPadding: 3, 
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
         font: 'Poppins',
-        textColor: [0, 0, 0],
-        lineColor: [0, 0, 0],
-        lineWidth: 1
+        textColor: [15, 23, 42],
+        lineColor: [203, 213, 225],
+        lineWidth: 0.5
       },
-      headStyles: { 
-        fillColor: [255, 255, 224], // Pale yellow background
-        textColor: [0, 0, 0], 
-        fontStyle: 'bold' 
+      headStyles: {
+        fillColor: [236, 253, 245], // light emerald
+        textColor: [6, 78, 59],
+        fontStyle: 'bold',
+        lineColor: [148, 163, 184],
+        lineWidth: 0.5
       },
       bodyStyles: {
-        fillColor: [255, 255, 224]
+        fillColor: [255, 255, 255]
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
       },
       margin: { left: margin, right: margin, bottom: 20 },
       columnStyles: {
@@ -592,10 +610,10 @@ export default function MeritListModule({
 
           if (isRotated && text) {
              // Blank out the default text rendering by filling over it (hacky but works since autoTable already drew it)
-             doc.setFillColor(255, 255, 224);
+             doc.setFillColor(236, 253, 245);
              doc.rect(data.cell.x + 1, data.cell.y + 1, data.cell.width - 2, data.cell.height - 2, 'F');
-             
-             doc.setTextColor(0);
+
+             doc.setTextColor(6, 78, 59);
              doc.setFontSize(9);
              doc.setFont('Poppins', 'bold');
              

@@ -9,7 +9,7 @@ import { getDynamicClasses, expandClassesWithStreams } from '../../data/seed';
 import RegistrationLoadingModal from '../../components/RegistrationLoadingModal';
 
 const EMPTY_FORM = {
-  name: '', adm: '', class: '', gender: 'Male',
+  name: '', adm: '', class: '', gender: 'Male', kcpe: '',
   dob: '', birthCertNo: '', guardianName: '', guardianPhone: '', guardianEmail: '',
   address: '', parentAddress: '', medicalNotes: '', previousSchool: '',
   admissionLetterFile: null, admissionLetterName: '',
@@ -44,6 +44,7 @@ export default function EnrollStudent() {
       name: adm.name || '',
       gender: adm.gender === 'M' ? 'Male' : adm.gender === 'F' ? 'Female' : (adm.gender || 'Other'),
       class: adm.form || adm.Grade || adm.grade || '',
+      kcpe: adm.kcpe != null ? adm.kcpe : (adm.kcpeMarks != null ? adm.kcpeMarks : ''),
       dob: adm.dob || '',
       guardianName: adm.parentName || adm.guardianName || '',
       guardianPhone: adm.parentPhone || adm.guardianPhone || '',
@@ -87,6 +88,7 @@ export default function EnrollStudent() {
         adm: captured.adm,
         class: captured.class,
         gender: captured.gender,
+        kcpe: captured.kcpe !== '' && captured.kcpe != null ? Number(captured.kcpe) : null,
         birthCertNo: captured.birthCertNo,
         flagged: false,
         scores: {},
@@ -269,6 +271,10 @@ export default function EnrollStudent() {
             </div>
           </div>
           <div className="grid grid-2">
+            <div>
+              <label className="field-label">KCPE Marks (if applicable)</label>
+              <input type="number" min="0" max="500" className="input" placeholder="e.g. 343" value={form.kcpe} onChange={e => upForm({ kcpe: e.target.value })} />
+            </div>
             <div>
               <label className="field-label">NEMIS UPI Number</label>
               <input className="input" placeholder="e.g. XXX-XXXX" value={form.nemisUpi} onChange={e => upForm({ nemisUpi: e.target.value })} />
