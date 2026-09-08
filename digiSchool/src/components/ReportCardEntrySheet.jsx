@@ -64,21 +64,15 @@ export default function ReportCardEntrySheet({
   canEditAll = true,
   allowedSubjects = []
 }) {
-  if (!student) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-        <h3 style={{ fontSize: 18, color: '#475569' }}>No student selected</h3>
-        <p className="muted">Please select a student from the gradebook to view or enter marks.</p>
-      </div>
-    );
-  }
-
+  // NOTE: the "no student" guard lives after all hooks (below) so hooks are
+  // never called conditionally (React rules-of-hooks). Hook bodies that read
+  // `student` use optional chaining to stay safe when it is null.
   const isSenior = useMemo(() => {
-    const cls = String(student.class || '').toLowerCase();
+    const cls = String(student?.class || '').toLowerCase();
     return cls.includes('10') || cls.includes('11') || cls.includes('12') || cls.includes('form');
-  }, [student.class]);
+  }, [student?.class]);
 
-  const is844 = useMemo(() => is844Class(student.class), [student.class]);
+  const is844 = useMemo(() => is844Class(student?.class), [student?.class]);
   const systemType = is844 ? '844' : 'CBC';
 
   // CRITICAL: Always force correct boundaries based on curriculum type.
@@ -90,7 +84,7 @@ export default function ReportCardEntrySheet({
   // Determine subjects list: start with existing student scores, union with default subjects
   const [subjectsList, setSubjectsList] = useState([]);
   const [scoresData, setScoresData] = useState({});
-  const [pathway, setPathway] = useState(student.pathway || 'STEM');
+  const [pathway, setPathway] = useState(student?.pathway || 'STEM');
   const [classTeacherRemarks, setClassTeacherRemarks] = useState('');
   const [principalRemarks, setPrincipalRemarks] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
@@ -517,6 +511,16 @@ export default function ReportCardEntrySheet({
   const schoolAddress = schoolSettings.address || 'P. O. Box 22- 40300 Homa Bay, Kenya';
   const schoolPhone = schoolSettings.phone || schoolSettings.tel || '0714556342';
   const schoolEmail = schoolSettings.email || 'homabayhomabay@gmail.com';
+
+  // Guard placed after all hooks so hooks are always called in the same order.
+  if (!student) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+        <h3 style={{ fontSize: 18, color: '#475569' }}>No student selected</h3>
+        <p className="muted">Please select a student from the gradebook to view or enter marks.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 940, margin: '0 auto', color: '#1e293b', fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif" }}>

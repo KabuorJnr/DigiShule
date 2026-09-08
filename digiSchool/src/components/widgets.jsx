@@ -71,5 +71,18 @@ export function PageHeader({ title, subtitle, actions }) {
   );
 }
 
+// Consistent empty state for any list/table/section that has no data yet.
+// Pairs with the .empty-state styles in index.css so every view reads the same.
+export function EmptyState({ icon, title = 'Nothing here yet', message, action }) {
+  return (
+    <div className="empty-state">
+      {icon && <div className="empty-icon">{icon}</div>}
+      <h4>{title}</h4>
+      {message && <p>{message}</p>}
+      {action && <div style={{ marginTop: 8 }}>{action}</div>}
+    </div>
+  );
+}
+
 
 

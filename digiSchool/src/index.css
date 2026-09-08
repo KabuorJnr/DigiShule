@@ -1188,6 +1188,87 @@ textarea.input {
 .stagger > *:nth-child(7) { animation-delay: 260ms; }
 .stagger > *:nth-child(8) { animation-delay: 300ms; }
 
+/* ════════════════════════════════════════════════════════════════════════
+   Design-system refinement pass — shared utilities that lift every view at
+   once. Additive only: fills gaps (focus, scrollbars, empty states, a
+   spacing scale) without overriding the existing token system above.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Consistent spacing scale for new/converted layouts. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --ring: rgba(4, 120, 87, 0.35);
+}
+
+/* Accessible, on-brand keyboard focus for every interactive element. Mouse
+   clicks stay clean (:focus-visible only fires for keyboard/AT navigation). */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Quieter, on-brand scrollbars instead of the heavy OS default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+
+/* Consistent empty-state block for lists/tables with no rows yet. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 48px 24px;
+  color: var(--muted);
+}
+.empty-state .empty-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(4, 120, 87, 0.08);
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.empty-state h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.empty-state p {
+  font-size: 13px;
+  max-width: 380px;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────────
    Respect the OS setting: keep opacity fades (they don't cause motion
    sickness) but strip transforms, and never let anything animate for long.
