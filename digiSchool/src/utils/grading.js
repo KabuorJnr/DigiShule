@@ -89,7 +89,7 @@ export function gradeFor(average, boundaries, systemType = 'CBC') {
   
   if (average === null || average === undefined || isNaN(average)) return '-';
   const num = Number(average);
-  const fallback = systemType === '844' ? 'E' : 'BE';
+  const fallback = systemType === '844' ? 'E' : 'BE2';
   if (num === 0) return fallback;
 
   if (systemType === 'CBC' || systemType === 'cbc') {
@@ -201,6 +201,15 @@ export function studentOverall(student, subjects) {
   return Math.round(overall * 10) / 10;
 }
 
+// True when a boundary set belongs to the given curriculum. CBC bands use codes
+// like EE1/ME2/AE1/BE2; KCSE bands use letter grades (A, B+, C-, E). This guards
+// against a KCSE boundary set being applied to a CBC class (or vice versa).
+export function boundariesMatchSystem(boundaries, systemType) {
+  if (!Array.isArray(boundaries) || boundaries.length === 0) return false;
+  const looksCBC = boundaries.some(b => /^(EE|ME|AE|BE)/.test(String(b.grade || '').toUpperCase()));
+  return systemType === '844' ? !looksCBC : looksCBC;
+}
+
 // Compute full detailed report card object for a given student (supports both CBC and 8-4-4)
 export function computeStudentReport({ student, students = [], subjects = [], examTitle = 'Term 1 Opening Exam', termName = 'Term 1', gradeBoundaries = [] }) {
   if (!student) return null;
@@ -212,7 +221,12 @@ export function computeStudentReport({ student, students = [], subjects = [], ex
   
   const systemType = is844Class(richStudent.class || student.class) ? '844' : 'CBC';
   const defaultBnds = systemType === '844' ? KCSE_BOUNDARIES : CBC_BOUNDARIES;
-  const targetBoundaries = gradeBoundaries && gradeBoundaries.length > 0 ? gradeBoundaries : defaultBnds;
+  // Only honour caller-supplied boundaries when they belong to this class's
+  // curriculum. A CBC class must grade on CBC bands (EE1..BE2), never KCSE
+  // letters — otherwise a 100 would show as "A"/"E" instead of "EE1".
+  const targetBoundaries = (gradeBoundaries && gradeBoundaries.length > 0 && boundariesMatchSystem(gradeBoundaries, systemType))
+    ? gradeBoundaries
+    : defaultBnds;
 
   const targetSubjects = (subjects && subjects.length > 0) ? subjects : REPORT_CARD_SUBJECTS;
   

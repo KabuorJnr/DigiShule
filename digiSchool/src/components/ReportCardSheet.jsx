@@ -90,29 +90,31 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, background: '#cbd5e1' }}></span> Class</span>
               </div>
             </div>
-            <div style={{ position: 'relative', height: 80, borderBottom: '1px solid #e2e8f0', borderLeft: '1px solid #e2e8f0' }}>
-              <svg viewBox={`0 0 ${subjectsGraphData.length * 40} 100`} preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+            <div style={{ position: 'relative', height: 92, borderBottom: '1px solid #e2e8f0', borderLeft: '1px solid #e2e8f0' }}>
+              <svg viewBox="0 0 300 90" preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                {/* Points sit in equal columns (centred), with 12px top/bottom
+                    padding so 0 and 100 never touch the axes. */}
                 {/* Class Average Line (Gray) */}
                 <polyline
                   fill="none"
                   stroke="#cbd5e1"
-                  strokeWidth="2"
-                  points={subjectsGraphData.map((d, i) => `${i * 40 + 20},${100 - d.classAvg}`).join(' ')}
+                  strokeWidth="1.5"
+                  points={subjectsGraphData.map((d, i) => `${(i + 0.5) * (300 / subjectsGraphData.length)},${12 + (100 - Math.max(0, Math.min(100, d.classAvg))) / 100 * 66}`).join(' ')}
                 />
                 {/* Student Score Line (Green) */}
                 <polyline
                   fill="none"
                   stroke="#22c55e"
-                  strokeWidth="2"
-                  points={subjectsGraphData.map((d, i) => `${i * 40 + 20},${100 - d.score}`).join(' ')}
+                  strokeWidth="1.5"
+                  points={subjectsGraphData.map((d, i) => `${(i + 0.5) * (300 / subjectsGraphData.length)},${12 + (100 - Math.max(0, Math.min(100, d.score))) / 100 * 66}`).join(' ')}
                 />
                 {subjectsGraphData.map((d, i) => (
-                  <circle key={i} cx={i * 40 + 20} cy={100 - d.score} r="3" fill="#166534" />
+                  <circle key={i} cx={(i + 0.5) * (300 / subjectsGraphData.length)} cy={12 + (100 - Math.max(0, Math.min(100, d.score))) / 100 * 66} r="2.5" fill="#166534" />
                 ))}
               </svg>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, width: '100%', paddingLeft: 4 }}>
+              <div style={{ display: 'flex', marginTop: 4, width: '100%' }}>
                 {subjectsGraphData.map((d, i) => (
-                  <div key={i} style={{ fontSize: 9, color: '#64748b' }}>{d.name}</div>
+                  <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 9, color: '#64748b' }}>{d.name}</div>
                 ))}
               </div>
             </div>
@@ -201,10 +203,22 @@ export default function ReportCardSheet({ report, student = {}, schoolSettings =
             </div>
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 13, color: '#64748b' }}>Signature:</span>
-              <div style={{ width: 140, borderBottom: '1px solid #334155', position: 'relative' }}>
-                <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
-                  <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
-                </svg>
+              <div style={{ width: 140, borderBottom: '1px solid #334155', position: 'relative', height: 40 }}>
+                {schoolSettings.stamp ? (
+                  // The scanned principal signature/stamp uploaded in Settings →
+                  // General. It appears on every published report automatically.
+                  <img
+                    src={schoolSettings.stamp}
+                    alt="Principal signature"
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer"
+                    style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%) rotate(-4deg)', maxHeight: 42, maxWidth: 132, opacity: 0.92, pointerEvents: 'none' }}
+                  />
+                ) : (
+                  <svg viewBox="0 0 100 30" style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 30 }} preserveAspectRatio="none">
+                    <path d="M5,20 Q40,5 60,25 T95,10" stroke="#1e3a8a" strokeWidth="2" fill="none"/>
+                  </svg>
+                )}
               </div>
             </div>
           </div>
