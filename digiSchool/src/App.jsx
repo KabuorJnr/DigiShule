@@ -5,6 +5,7 @@ import MobileLogin from './mobile/MobileLogin';
 import DevPreview from './mobile/DevPreview';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
+import VerifyReport from './views/VerifyReport';
 import SuperAdminPortal from './views/SuperAdminPortal';
 import PublicSchoolLanding from './views/PublicSchoolLanding';
 import Login from './views/Login';
@@ -93,6 +94,7 @@ export default function App() {
           and redirects everyone else to /login. The web keeps the landing page. */}
       <Route path="/" element={isNative() ? <Navigate to="/portal" replace /> : <LandingPage />} />
       <Route path="/book-demo" element={<BookDemo />} />
+      <Route path="/verify" element={<VerifyReport />} />
       <Route path="/admin" element={<SuperAdminPortal />} />
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
       <Route path="/login" element={<LoginRoute />} />
