@@ -965,7 +965,11 @@ export default function TeacherManagement({ store, user, params = {} }) {
                       )}
                       {qualifiedForSubject.length === 0 && (
                         <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>
+<<<<<<< HEAD
                           ⚠  No qualified teachers - showing all teachers. Add qualifications first.
+=======
+                          âš  No qualified teachers - showing all teachers. Add qualifications first.
+>>>>>>> origin/main
                         </div>
                       )}
                     </div>
