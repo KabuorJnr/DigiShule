@@ -7,6 +7,7 @@ import { fetchTable, upsertRow } from '../lib/api';
 import PrintHeader from '../components/PrintHeader';
 import EduOneWidget from '../components/EduOneWidget';
 import { reportError } from '../lib/errorReporter';
+import { canTeacherEnterMarksForSubjectAndClass } from '../utils/teacherPermissions';
 
 export default function TeacherPortal({ store, user }) {
   const { gradeBoundaries, navigate } = store;
@@ -32,12 +33,18 @@ export default function TeacherPortal({ store, user }) {
   const [loadedStudents, setLoadedStudents] = useState([]);
   
   const [subjectAssignments, setSubjectAssignments] = useState([]);
+  const [subjectsList, setSubjectsList] = useState([]);
 
   useEffect(() => {
     let active = true;
-    fetchTable('subjectAssignments').then(rows => {
+    Promise.allSettled([
+      fetchTable('subjectAssignments'),
+      fetchTable('subjects')
+    ]).then(([assignRes, subjRes]) => {
       if (!active) return;
-      const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
+      const rows = assignRes.status === 'fulfilled' ? (assignRes.value || []) : [];
+      if (subjRes.status === 'fulfilled') setSubjectsList(subjRes.value || []);
+      const myAssignments = rows.filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
       setSubjectAssignments(myAssignments);
     }).catch((e) => reportError(e, 'views.TeacherPortal'));
     return () => { active = false; };
@@ -284,6 +291,23 @@ export default function TeacherPortal({ store, user }) {
   function saveScore(id, field, value) {
     const target = loadedStudents.find((s) => s.id === id);
     if (!target) return;
+
+    // Strict Permission Enforcement
+    const perm = canTeacherEnterMarksForSubjectAndClass({
+      user,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject,
+      studentClass: target.class
+    });
+
+    if (!perm.allowed) {
+      store.notify?.(perm.message || `Access Denied: You cannot enter marks for ${subject} in ${target.class}.`, 'error');
+      setEditing(null);
+      return;
+    }
+
     let v;
     if (field === 'remarks') {
       v = value;
@@ -304,6 +328,26 @@ export default function TeacherPortal({ store, user }) {
   }
 
   const ScoreCell = ({ r, field, sortedRows }) => {
+    const perm = canTeacherEnterMarksForSubjectAndClass({
+      user,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject,
+      studentClass: r.class
+    });
+
+    if (!perm.allowed) {
+      return (
+        <td 
+          style={{ textAlign: 'center', color: '#94a3b8', fontSize: 12, cursor: 'not-allowed', padding: '6px 4px' }} 
+          title={perm.message || 'View only: Not assigned to teach this subject in this class'}
+        >
+          {r[field] !== undefined && r[field] !== null && r[field] !== '' ? `${r[field]}%` : '-'}
+        </td>
+      );
+    }
+
     const isEditing = editing && editing.id === r.id && editing.field === field;
     if (isEditing) {
       return (

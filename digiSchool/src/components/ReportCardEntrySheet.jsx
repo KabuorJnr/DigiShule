@@ -18,25 +18,33 @@ import { ChevronLeft, ChevronRight, Save, Printer, Download, Sparkles, Plus, Tra
 
 // Default subjects for CBC Senior School (Grade 10+) or Junior School
 const DEFAULT_SENIOR_SUBJECTS = [
+  'Mathematics',
   'English',
   'Kiswahili',
-  'Core Mathematics',
-  'Community Service Learning',
-  'Physics',
-  'Chemistry',
-  'Computer Studies',
   'Biology',
+  'Chemistry',
+  'Physics',
   'History',
-  'Geography'
+  'Geography',
+  'Christian Religious Education (CRE)',
+  'Islamic Religious Education (IRE)',
+  'Business Studies',
+  'Agriculture',
+  'Computer Studies',
+  'Home Science',
+  'Music',
+  'Art & Design',
+  'Community Service Learning'
 ];
 
 const DEFAULT_JUNIOR_SUBJECTS = [
+  'Mathematics',
   'English',
   'Kiswahili',
-  'Mathematics',
   'Integrated Science',
   'Social Studies',
   'Religious Education (CRE)',
+  'Islamic Religious Education (IRE)',
   'Pre-Technical Studies',
   'Creative Arts & Sports',
   'Agriculture & Nutrition'

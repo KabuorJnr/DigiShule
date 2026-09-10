@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { fetchStudents } from '../lib/api';
+import { fetchStudents, fetchTable } from '../lib/api';
+import { reportError } from '../lib/errorReporter';
+import { canTeacherEnterMarksForSubjectAndClass, getTeacherAssignedSubjects } from '../utils/teacherPermissions';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -10,6 +12,7 @@ import { computeRow, gradeFor, remarkFor, subjectAverage, is844Class, pointsForG
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../utils/exporters';
 import ReportCardEntrySheet from '../components/ReportCardEntrySheet';
 import ClassSubjectAnalysis from '../components/ClassSubjectAnalysis';
+import BulkMarksPasteModal from '../components/BulkMarksPasteModal';
 import { 
   FileText, 
   LayoutGrid, 
@@ -31,7 +34,10 @@ import {
   Filter,
   Trophy,
   Medal,
-  Lightbulb
+  Lightbulb,
+  FileSpreadsheet,
+  ArrowUpDown,
+  Zap
 } from 'lucide-react';
 
 const GRADE_COLORS = { 
@@ -50,8 +56,8 @@ const EXAM_OPTIONS = ['End Term Assessment', 'Mid Term Assessment', 'Opening Ass
 export default function Gradebook({ store }) {
   const { updateStudent, gradeBoundaries, settings, setSettings, notify, user, teachers = [] } = store;
   
-  // View mode: 'report' for official Kenyan Academic Report Form, 'grid' for class subject table, 'analysis' for comparative analytics
-  const [entryMode, setEntryMode] = useState('report');
+  // View mode: 'grid' for class list marks entry (primary default), 'report' for individual report form, 'analysis' for comparative analytics
+  const [entryMode, setEntryMode] = useState('grid');
   
   const [cls, setCls] = useState('');
   const [subject, setSubject] = useState('Mathematics');
@@ -66,6 +72,12 @@ export default function Gradebook({ store }) {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [showAssessEditor, setShowAssessEditor] = useState(false);
   const [assessDraft, setAssessDraft] = useState(null); // 4-string array while editing labels
+  
+  // Bulk Marks Entry & Class List Sorting State
+  const [sortBy, setSortBy] = useState('adm'); // 'adm' | 'name' | 'rank'
+  const [sortDir, setSortDir] = useState('asc');
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [directInputMode, setDirectInputMode] = useState(false);
   
   // Pagination State for high student count (e.g. 180 students)
   const [pageSize, setPageSize] = useState(25);
@@ -98,17 +110,65 @@ export default function Gradebook({ store }) {
            null;
   }, [teacherRecord, user]);
 
+  const [subjectAssignments, setSubjectAssignments] = useState([]);
+  const [subjectsList, setSubjectsList] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([
+      fetchTable('subjectAssignments'),
+      fetchTable('subjects')
+    ]).then(([assignRes, subjRes]) => {
+      if (!active) return;
+      if (assignRes.status === 'fulfilled') setSubjectAssignments(assignRes.value || []);
+      if (subjRes.status === 'fulfilled') setSubjectsList(subjRes.value || []);
+    }).catch((e) => reportError(e, 'Gradebook.fetchAssignments'));
+    return () => { active = false; };
+  }, []);
+
+  // Dynamic comprehensive subject options: combines system curriculum subjects, settings.subjects, database subjects, and student scores
+  const allSystemSubjects = useMemo(() => {
+    const list = new Set(SUBJECTS);
+
+    // 1. Add subjects from settings (configured by school admin)
+    if (settings?.subjects && Array.isArray(settings.subjects)) {
+      settings.subjects.forEach(s => {
+        const name = typeof s === 'string' ? s : s?.name;
+        if (name && name.trim()) list.add(name.trim());
+      });
+    }
+
+    // 2. Add subjects from database table
+    if (subjectsList && Array.isArray(subjectsList)) {
+      subjectsList.forEach(s => {
+        if (s?.name && s.name.trim()) list.add(s.name.trim());
+      });
+    }
+
+    // 3. Add any subjects present in student scores
+    if (store.students && Array.isArray(store.students)) {
+      store.students.forEach(st => {
+        if (st?.scores && typeof st.scores === 'object') {
+          Object.keys(st.scores).forEach(sub => {
+            if (sub && sub.trim()) list.add(sub.trim());
+          });
+        }
+      });
+    }
+
+    return Array.from(list);
+  }, [settings?.subjects, subjectsList, store.students]);
+
   const allowedSubjects = useMemo(() => {
-    if (!user || user.role !== 'teacher') return SUBJECTS;
-    const subjList = [];
-    if (user.subject) subjList.push(user.subject);
-    if (user.dept) subjList.push(user.dept);
-    if (teacherRecord?.subject) subjList.push(teacherRecord.subject);
-    if (teacherRecord?.dept) subjList.push(teacherRecord.dept);
-    if (teacherRecord?.subjects && Array.isArray(teacherRecord.subjects)) subjList.push(...teacherRecord.subjects);
-    const unique = [...new Set(subjList.filter(Boolean))];
-    return unique.length > 0 ? unique : SUBJECTS;
-  }, [user, teacherRecord]);
+    if (!user || user.role !== 'teacher') return allSystemSubjects;
+    const subs = getTeacherAssignedSubjects({
+      user,
+      teacherProfile: teacherRecord,
+      subjectAssignments,
+      subjects: subjectsList
+    });
+    return subs.length > 0 ? subs : allSystemSubjects;
+  }, [user, teacherRecord, subjectAssignments, subjectsList, allSystemSubjects]);
 
   const canEditAll = useMemo(() => {
     if (!user) return true;
@@ -117,29 +177,26 @@ export default function Gradebook({ store }) {
     return false;
   }, [user]);
 
+  const permissionCheck = useMemo(() => {
+    return canTeacherEnterMarksForSubjectAndClass({
+      user,
+      teacherProfile: teacherRecord,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject,
+      studentClass: cls
+    });
+  }, [user, teacherRecord, subjectAssignments, subjectsList, subject, cls]);
+
   const canEditCurrentSubject = useMemo(() => {
     if (!user) return true;
     if (user.role === 'principal' || user.role === 'parent' || user.role === 'student') return false;
     if (user.role === 'dos' || user.role === 'deputy_academic' || user.role === 'admin' || user.dept === 'dos') return true;
     if (user.role !== 'teacher') return true;
     
-    // Class teachers can edit their class
-    if (teacherAssignedClass && cls && (
-      teacherAssignedClass.toLowerCase() === cls.toLowerCase() ||
-      cls.toLowerCase().startsWith(teacherAssignedClass.toLowerCase()) ||
-      teacherAssignedClass.toLowerCase().startsWith(cls.toLowerCase())
-    )) {
-      return true;
-    }
-
-    // Flexible subject matching
-    const targetSub = subject.toLowerCase().trim();
-    const isMatched = allowedSubjects.some(s => {
-      const as = s.toLowerCase().trim();
-      return as === targetSub || as.includes(targetSub) || targetSub.includes(as);
-    });
-    return isMatched || allowedSubjects.length === SUBJECTS.length;
-  }, [user, allowedSubjects, subject, teacherAssignedClass, cls]);
+    // Strict enforcement: MUST be assigned to teach this subject in this specific class
+    return permissionCheck.allowed;
+  }, [user, permissionCheck]);
 
   // Custom assessment names, set by the Director of Studies (e.g. "Opener",
   // "Mid-Term", "End-Term"). Falls back to the generic Assessment 1-4 labels.
@@ -162,11 +219,11 @@ export default function Gradebook({ store }) {
 
   // Teachers only see the subjects they teach during entry; executives see all.
   const subjectOptions = useMemo(() => {
-    if (user?.role === 'teacher' && allowedSubjects.length > 0 && allowedSubjects.length < SUBJECTS.length) {
+    if (user?.role === 'teacher' && allowedSubjects.length > 0 && allowedSubjects.length < allSystemSubjects.length) {
       return allowedSubjects;
     }
-    return SUBJECTS;
-  }, [user, allowedSubjects]);
+    return allSystemSubjects;
+  }, [user, allowedSubjects, allSystemSubjects]);
 
   // Keep the selected subject within what a teacher is allowed to see.
   useEffect(() => {
@@ -296,15 +353,31 @@ export default function Gradebook({ store }) {
     setLoadedStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
   };
 
-  const rows = useMemo(() =>
-    classStudents.map((s) => {
+  const rows = useMemo(() => {
+    const list = classStudents.map((s) => {
       const r = computeRow(s.scores?.[subject]);
       const systemType = is844Class(s.class) ? '844' : 'CBC';
       const percentage = r.average <= 4 && r.average > 0 ? Math.round(r.average * 25) : r.average;
       const grade = gradeFor(percentage, gradeBoundaries, systemType);
       const points = pointsForGrade(grade, systemType);
       return { ...s, ...r, percentage, grade, points, systemType, remarks: r.remarks || remarkFor(grade, systemType) };
-    }), [classStudents, subject, gradeBoundaries]);
+    });
+
+    return list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'name') {
+        cmp = (a.name || '').localeCompare(b.name || '');
+      } else if (sortBy === 'rank') {
+        cmp = (b.average || 0) - (a.average || 0);
+      } else {
+        // 'adm' default
+        const aAdm = String(a.adm || '');
+        const bAdm = String(b.adm || '');
+        cmp = aAdm.localeCompare(bAdm, undefined, { numeric: true });
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [classStudents, subject, gradeBoundaries, sortBy, sortDir]);
 
   // Pagination slicing
   const totalStudents = rows.length;
@@ -367,7 +440,7 @@ export default function Gradebook({ store }) {
 
   function saveScore(id, field, value) {
     if (!canEditCurrentSubject) {
-      notify(`Access Restricted: You are assigned to teach ${allowedSubjects.join(', ')}. You cannot modify marks for ${subject}.`, 'warning', 'Subject Permission');
+      notify(permissionCheck.message || `Access Restricted: You are not assigned to teach ${subject} in ${cls}.`, 'warning', 'Permission Restriction');
       setEditing(null);
       return;
     }
@@ -406,6 +479,50 @@ export default function Gradebook({ store }) {
     setLoadedStudents(prev => prev.map(s => s.id === id ? updated : s));
     setEditing(null);
     notify(`Saved ${field.toUpperCase()} mark for ${target.name}: ${v}%`, 'success', 'Gradebook');
+  }
+
+  function handleApplyBulkMarks(marksMap) {
+    if (!canEditCurrentSubject) {
+      notify(permissionCheck.message || `Access Restricted: You are not assigned to teach ${subject} in ${cls}.`, 'warning', 'Permission Restriction');
+      return;
+    }
+    const field = assessment !== 'All' 
+      ? (assessLabels.indexOf(assessment) >= 0 ? `a${assessLabels.indexOf(assessment) + 1}` : 'a1')
+      : 'a1';
+
+    let count = 0;
+    let updatedList = [...loadedStudents];
+
+    Object.entries(marksMap).forEach(([id, rawVal]) => {
+      const target = updatedList.find(s => s.id === id) || store.students?.find(s => s.id === id);
+      if (!target) return;
+      let v;
+      if (rawVal === 'X') {
+        v = 'X';
+      } else if (rawVal === '' || rawVal == null) {
+        v = 0;
+      } else {
+        v = Math.max(0, Math.min(100, Number(rawVal) || 0));
+      }
+
+      const current = target.scores?.[subject] || {};
+      const base = typeof current === 'object' ? { ...current } : { average: current };
+      base[field] = v;
+      const computed = computeRow(base);
+      const updated = {
+        ...target,
+        scores: {
+          ...(target.scores || {}),
+          [subject]: { ...base, ...computed, score: computed.average, average: computed.average },
+        },
+      };
+      updateStudent(updated);
+      updatedList = updatedList.map(s => s.id === id ? updated : s);
+      count++;
+    });
+
+    setLoadedStudents(updatedList);
+    notify(`Bulk marks applied: Saved ${count} student marks in ${subject}!`, 'success', 'Bulk Marks Entry');
   }
 
   function flagStudent(id) {
@@ -488,11 +605,14 @@ export default function Gradebook({ store }) {
   };
 
   const ScoreCell = ({ r, field, editing, setEditing, saveScore }) => {
-    const isEditing = editing && editing.id === r.id && editing.field === field;
+    const isDirect = directInputMode && ['a1', 'a2', 'a3', 'a4'].includes(field) && canEditCurrentSubject;
+    const isEditing = (editing && editing.id === r.id && editing.field === field) || isDirect;
     if (isEditing) {
       return (
         <td style={{ padding: '4px 6px', textAlign: field === 'remarks' ? 'left' : 'center' }}>
           <input
+            key={`${r.id}-${field}-${r[field]}`}
+            data-cell={`${r.id}-${field}`}
             style={{
               width: field === 'remarks' ? '150px' : '62px',
               height: '34px',
@@ -506,16 +626,16 @@ export default function Gradebook({ store }) {
               fontFamily: "'Poppins', sans-serif",
               background: '#f0fdf4',
               color: '#064e3b',
-              boxShadow: '0 0 0 3px rgba(5, 150, 105, 0.18)'
+              boxShadow: isDirect ? 'none' : '0 0 0 3px rgba(5, 150, 105, 0.18)'
             }}
             type="text"
             inputMode={field === 'remarks' ? undefined : 'numeric'}
             enterKeyHint="next"
             placeholder={field === 'remarks' ? '' : `/${Math.max(1, Number(outOf) || 100)}`}
-            autoFocus
+            autoFocus={!isDirect}
             defaultValue={r[field] === 'X' ? 'X' : (r[field] || '')}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 saveScore(r.id, field, e.target.value);
                 if (field !== 'remarks') {
@@ -525,11 +645,39 @@ export default function Gradebook({ store }) {
                     if (pageSize !== 'all' && idx + 1 >= activePage * effectivePageSize) {
                       setCurrentPage(p => Math.min(totalPages, p + 1));
                     }
-                    setEditing({ id: next.id, field });
+                    if (isDirect) {
+                      setTimeout(() => {
+                        const el = document.querySelector(`input[data-cell="${next.id}-${field}"]`);
+                        if (el) { el.focus(); el.select?.(); }
+                      }, 20);
+                    } else {
+                      setEditing({ id: next.id, field });
+                    }
                   }
                 }
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                saveScore(r.id, field, e.target.value);
+                if (field !== 'remarks') {
+                  const idx = rows.findIndex((x) => x.id === r.id);
+                  const prev = rows[idx - 1];
+                  if (prev) {
+                    if (pageSize !== 'all' && idx - 1 < (activePage - 1) * effectivePageSize) {
+                      setCurrentPage(p => Math.max(1, p - 1));
+                    }
+                    if (isDirect) {
+                      setTimeout(() => {
+                        const el = document.querySelector(`input[data-cell="${prev.id}-${field}"]`);
+                        if (el) { el.focus(); el.select?.(); }
+                      }, 20);
+                    } else {
+                      setEditing({ id: prev.id, field });
+                    }
+                  }
+                }
+              } else if (e.key === 'Escape') {
+                if (!isDirect) setEditing(null);
               }
-              if (e.key === 'Escape') setEditing(null);
             }}
             onBlur={(e) => saveScore(r.id, field, e.target.value)}
           />
@@ -548,12 +696,12 @@ export default function Gradebook({ store }) {
         }} 
         onClick={() => {
           if (!canEditCurrentSubject) {
-            notify(`Access Restricted: You are assigned to teach ${allowedSubjects.join(', ')}. You cannot modify marks for ${subject}.`, 'warning', 'Subject Permission');
+            notify(permissionCheck.message || `Access Restricted: You cannot modify marks for ${subject} in ${cls}.`, 'warning', 'Permission Restriction');
             return;
           }
           setEditing({ id: r.id, field });
         }}
-        title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(Enter raw mark or %)'}` : `View only: Assigned to teach ${allowedSubjects.join(', ')}`}
+        title={canEditCurrentSubject ? `Click to edit ${field === 'remarks' ? 'remarks' : '(Enter raw mark or %)'}` : (permissionCheck.message || `View only: Assigned to teach ${allowedSubjects.join(', ')}`)}
       >
         <div style={{
           padding: field === 'remarks' ? '4px 8px' : '4px 8px',
@@ -737,28 +885,6 @@ export default function Gradebook({ store }) {
       }}>
         <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: 8 }}>
           <button
-            onClick={() => setEntryMode('report')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 7,
-              padding: '7px 16px',
-              borderRadius: 6,
-              fontSize: 13,
-              fontWeight: entryMode === 'report' ? 700 : 500,
-              cursor: 'pointer',
-              border: 'none',
-              background: entryMode === 'report' ? '#047857' : 'transparent',
-              color: entryMode === 'report' ? '#ffffff' : '#475569',
-              boxShadow: entryMode === 'report' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <FileText size={16} color={entryMode === 'report' ? '#ffffff' : '#64748b'} />
-            Academic Report Form (Student)
-          </button>
-
-          <button
             onClick={() => setEntryMode('grid')}
             style={{
               display: 'inline-flex',
@@ -777,7 +903,29 @@ export default function Gradebook({ store }) {
             }}
           >
             <LayoutGrid size={16} color={entryMode === 'grid' ? '#ffffff' : '#64748b'} />
-            Class Subject Grid (Stream)
+            Class List Marks Entry (Bulk)
+          </button>
+
+          <button
+            onClick={() => setEntryMode('report')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '7px 16px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: entryMode === 'report' ? 700 : 500,
+              cursor: 'pointer',
+              border: 'none',
+              background: entryMode === 'report' ? '#047857' : 'transparent',
+              color: entryMode === 'report' ? '#ffffff' : '#475569',
+              boxShadow: entryMode === 'report' ? '0 2px 8px rgba(4,120,87,0.35)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <FileText size={16} color={entryMode === 'report' ? '#ffffff' : '#64748b'} />
+            Individual Report Card Preview
           </button>
 
           <button
@@ -813,8 +961,8 @@ export default function Gradebook({ store }) {
             borderRadius: 6,
             border: '1px solid #e2e8f0'
           }}>
-            {entryMode === 'report' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={13} /> Official Kenyan Report Form 1:1 view</span>}
-            {entryMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BarChart3 size={13} /> Batch marks for {cls || 'selected stream'}</span>}
+            {entryMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><LayoutGrid size={13} color="#047857" /> Bulk marks entry for {cls || 'selected stream'}</span>}
+            {entryMode === 'report' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={13} /> Official Kenyan Report Form 1:1 view &amp; remarks</span>}
             {entryMode === 'analysis' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><TrendingUp size={13} /> Cross-stream &amp; department benchmarks</span>}
           </span>
         </div>
@@ -1225,7 +1373,7 @@ export default function Gradebook({ store }) {
         }}>
           <AlertTriangle size={18} color="#d97706" style={{ flexShrink: 0 }} />
           <div>
-            <strong>Subject Permission Restriction:</strong> You are logged in as a Subject Teacher for <strong>{allowedSubjects.join(', ')}</strong>. Marks for <strong>{subject}</strong> are in view-only mode.
+            <strong>Subject Permission Restriction:</strong> {permissionCheck.message || `You are assigned to teach ${allowedSubjects.join(', ')}. Marks for ${subject} in ${cls} are in view-only mode.`}
           </div>
         </div>
       )}
@@ -1291,34 +1439,104 @@ export default function Gradebook({ store }) {
               flexWrap: 'wrap',
               gap: 10
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input 
-                  type="checkbox" 
-                  checked={selected.length === rows.length && rows.length > 0}
-                  onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
-                  style={{ width: 16, height: 16, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
-                  {selected.length > 0 ? (
-                    <span style={{ color: '#047857' }}>{selected.length} of {rows.length} Students Selected</span>
-                  ) : (
-                    <span>All Students in {cls} ({rows.length})</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selected.length === rows.length && rows.length > 0}
+                    onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} 
+                    style={{ width: 16, height: 16, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                    {selected.length > 0 ? (
+                      <span style={{ color: '#047857' }}>{selected.length} of {rows.length} Students Selected</span>
+                    ) : (
+                      <span>All Students in {cls} ({rows.length})</span>
+                    )}
+                  </span>
+                  {selected.length > 0 && (
+                    <button 
+                      onClick={() => setSelected([])}
+                      style={{ fontSize: 11, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Clear
+                    </button>
                   )}
-                </span>
-                {selected.length > 0 && (
-                  <button 
-                    onClick={() => setSelected([])}
-                    style={{ fontSize: 11, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+                </div>
+
+                {/* Class List Sort Selector */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                  <span style={{ color: '#64748b', fontWeight: 600 }}>Sort:</span>
+                  <select
+                    className="select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={{ height: 32, fontSize: 12, padding: '2px 8px', fontWeight: 600 }}
                   >
-                    Clear
+                    <option value="adm">Adm No. (Roll)</option>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="rank">Rank / Mean</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                    title={`Sorted ${sortDir === 'asc' ? 'Ascending' : 'Descending'}. Click to toggle.`}
+                    style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, height: 32, padding: '0 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <ArrowUpDown size={14} color="#64748b" />
                   </button>
-                )}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11.5, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Lightbulb size={13} color="#d97706" /> Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save &amp; jump to next student
+                  <Lightbulb size={13} color="#d97706" /> <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> or <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>↓</kbd> next student
                 </span>
+
+                {/* Direct Input Mode Toggle */}
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => setDirectInputMode(v => !v)}
+                  style={{
+                    fontSize: 12,
+                    padding: '5px 12px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    background: directInputMode ? '#047857' : '#ffffff',
+                    color: directInputMode ? '#ffffff' : '#334155',
+                    border: directInputMode ? '1px solid #047857' : '1px solid #cbd5e1'
+                  }}
+                  title="Keep numeric input boxes active for quick typing without clicking each cell"
+                >
+                  <Zap size={14} color={directInputMode ? '#fef08a' : '#64748b'} />
+                  {directInputMode ? 'Direct Input: ON' : 'Direct Input: OFF'}
+                </button>
+
+                {/* Paste from Excel */}
+                <button 
+                  type="button"
+                  className="btn btn-sm" 
+                  onClick={() => setShowPasteModal(true)} 
+                  style={{ 
+                    fontSize: 12, 
+                    padding: '5px 12px', 
+                    fontWeight: 700, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 6,
+                    background: '#f0fdf4',
+                    color: '#047857',
+                    border: '1px solid #86efac'
+                  }}
+                  title="Bulk paste marks from Excel / Google Sheets directly down the class list"
+                >
+                  <FileSpreadsheet size={15} /> 
+                  Paste from Excel
+                </button>
+
                 <button 
                   className="btn btn-primary btn-sm" 
                   onClick={generateReportCards} 
@@ -1954,6 +2172,28 @@ export default function Gradebook({ store }) {
           />
         </div>
       )}
+
+      {/* ── BULK MARKS PASTE MODAL (EXCEL / SPREADSHEET) ── */}
+      <BulkMarksPasteModal
+        isOpen={showPasteModal}
+        onClose={() => setShowPasteModal(false)}
+        students={rows}
+        subject={subject}
+        className={cls}
+        assessmentField={
+          assessment !== 'All'
+            ? (assessLabels.indexOf(assessment) >= 0 ? `a${assessLabels.indexOf(assessment) + 1}` : 'a1')
+            : 'a1'
+        }
+        assessmentLabel={
+          assessment !== 'All'
+            ? assessment
+            : (assessLabels[0] || 'Assessment 1')
+        }
+        outOf={outOf}
+        gradeBoundaries={gradeBoundaries}
+        onApplyMarks={handleApplyBulkMarks}
+      />
 
     </div>
   );

@@ -81,26 +81,94 @@ export const reconcileClassesWithUsed = (settingsClasses = [], usedClasses = [])
 };
 
 export const DEPARTMENTS = {
-  Mathematics: 'Math',
-  English: 'Languages',
-  Kiswahili: 'Languages',
-  Biology: 'Sciences',
-  Chemistry: 'Sciences',
-  Physics: 'Sciences',
-  History: 'Humanities',
-  Geography: 'Humanities',
+  // Mathematics
+  'Mathematics': 'Math',
+  'Core Mathematics': 'Math',
+
+  // Languages
+  'English': 'Languages',
+  'Kiswahili': 'Languages',
+  'Kenya Sign Language (KSL)': 'Languages',
+  'French': 'Languages',
+  'German': 'Languages',
+  'Arabic': 'Languages',
+
+  // Sciences
+  'Biology': 'Sciences',
+  'Chemistry': 'Sciences',
+  'Physics': 'Sciences',
+  'Integrated Science': 'Sciences',
+  'General Science': 'Sciences',
+  'Health Education': 'Sciences',
+
+  // Humanities & Social Sciences
+  'History': 'Humanities',
+  'History and Government': 'Humanities',
+  'Geography': 'Humanities',
+  'Christian Religious Education (CRE)': 'Humanities',
+  'CRE': 'Humanities',
+  'Islamic Religious Education (IRE)': 'Humanities',
+  'IRE': 'Humanities',
+  'Hindu Religious Education (HRE)': 'Humanities',
+  'Social Studies': 'Humanities',
+
+  // Technical, Applied & Business
+  'Business Studies': 'Technical',
+  'Agriculture': 'Technical',
+  'Agriculture & Nutrition': 'Technical',
+  'Computer Studies': 'Technical',
+  'Pre-Technical Studies': 'Technical',
+  'Home Science': 'Technical',
+
+  // Creative Arts & Sports
+  'Creative Arts & Sports': 'Creative Arts',
+  'Creative Arts': 'Creative Arts',
+  'Music': 'Creative Arts',
+  'Art & Design': 'Creative Arts',
+  'Community Service Learning': 'Humanities',
+  'Physical Education': 'Creative Arts'
 };
 
-export const SUBJECTS = Object.keys(DEPARTMENTS);
+export const SUBJECTS = [
+  'Mathematics',
+  'English',
+  'Kiswahili',
+  'Biology',
+  'Chemistry',
+  'Physics',
+  'History',
+  'Geography',
+  'Christian Religious Education (CRE)',
+  'Islamic Religious Education (IRE)',
+  'Hindu Religious Education (HRE)',
+  'Social Studies',
+  'Business Studies',
+  'Agriculture',
+  'Agriculture & Nutrition',
+  'Computer Studies',
+  'Pre-Technical Studies',
+  'Creative Arts & Sports',
+  'Creative Arts',
+  'Home Science',
+  'Music',
+  'Art & Design',
+  'French',
+  'German',
+  'Arabic',
+  'Community Service Learning',
+  'General Science'
+];
 
 // Default departments that ship with the system.
-export const DEFAULT_DEPARTMENTS = ['Sciences', 'Humanities', 'Languages', 'Math'];
+export const DEFAULT_DEPARTMENTS = ['Sciences', 'Humanities', 'Languages', 'Math', 'Technical', 'Creative Arts'];
 
 export const DEPT_COLORS = {
   Sciences: '#3B82F6',
   Humanities: '#10B981',
   Languages: '#8B5CF6',
   Math: '#F59E0B',
+  Technical: '#06B6D4',
+  'Creative Arts': '#EC4899',
 };
 
 // Extra color pool for user-created departments (cycled through).
@@ -121,14 +189,41 @@ export const getDeptColor = (deptName) => {
 
 // Zeraki-style subject metadata: KNEC-ish code, short initials and a display colour.
 export const SUBJECT_META = {
-  Mathematics: { code: '121', initials: 'MAT', short: 'Maths', color: '#F59E0B' },
-  English:     { code: '101', initials: 'ENG', short: 'Eng',   color: '#8B5CF6' },
-  Kiswahili:   { code: '102', initials: 'KIS', short: 'Kisw',  color: '#A855F7' },
-  Biology:     { code: '231', initials: 'BIO', short: 'Bio',   color: '#3B82F6' },
-  Chemistry:   { code: '233', initials: 'CHE', short: 'Chem',  color: '#0EA5E9' },
-  Physics:     { code: '232', initials: 'PHY', short: 'Phys',  color: '#6366F1' },
-  History:     { code: '311', initials: 'HIS', short: 'Hist',  color: '#10B981' },
-  Geography:   { code: '312', initials: 'GEO', short: 'Geo',   color: '#14B8A6' },
+  'Mathematics': { code: '121', initials: 'MAT', short: 'Maths', color: '#F59E0B' },
+  'Core Mathematics': { code: '121', initials: 'MAT', short: 'Maths', color: '#F59E0B' },
+  'English':     { code: '101', initials: 'ENG', short: 'Eng',   color: '#8B5CF6' },
+  'Kiswahili':   { code: '102', initials: 'KIS', short: 'Kisw',  color: '#A855F7' },
+  'Biology':     { code: '231', initials: 'BIO', short: 'Bio',   color: '#3B82F6' },
+  'Chemistry':   { code: '233', initials: 'CHE', short: 'Chem',  color: '#0EA5E9' },
+  'Physics':     { code: '232', initials: 'PHY', short: 'Phys',  color: '#6366F1' },
+  'Integrated Science': { code: '234', initials: 'ISC', short: 'Int.Sci', color: '#0EA5E9' },
+  'General Science': { code: '235', initials: 'GSC', short: 'Gen.Sci', color: '#3B82F6' },
+  'Health Education': { code: '236', initials: 'HED', short: 'Health', color: '#10B981' },
+  'History':     { code: '311', initials: 'HIS', short: 'Hist',  color: '#10B981' },
+  'History and Government': { code: '311', initials: 'HIS', short: 'Hist', color: '#10B981' },
+  'Geography':   { code: '312', initials: 'GEO', short: 'Geo',   color: '#14B8A6' },
+  'Christian Religious Education (CRE)': { code: '313', initials: 'CRE', short: 'CRE', color: '#F59E0B' },
+  'CRE':         { code: '313', initials: 'CRE', short: 'CRE',   color: '#F59E0B' },
+  'Islamic Religious Education (IRE)': { code: '314', initials: 'IRE', short: 'IRE', color: '#10B981' },
+  'IRE':         { code: '314', initials: 'IRE', short: 'IRE',   color: '#10B981' },
+  'Hindu Religious Education (HRE)': { code: '315', initials: 'HRE', short: 'HRE', color: '#EC4899' },
+  'Social Studies': { code: '316', initials: 'SST', short: 'Soc.St', color: '#10B981' },
+  'Business Studies': { code: '565', initials: 'BST', short: 'B.Stud', color: '#6366F1' },
+  'Agriculture': { code: '443', initials: 'AGR', short: 'Agric', color: '#84CC16' },
+  'Agriculture & Nutrition': { code: '443', initials: 'AGR', short: 'Agric', color: '#84CC16' },
+  'Computer Studies': { code: '451', initials: 'CS', short: 'Comp', color: '#06B6D4' },
+  'Pre-Technical Studies': { code: '452', initials: 'PTS', short: 'Pre-Tech', color: '#06B6D4' },
+  'Home Science': { code: '441', initials: 'HSC', short: 'H.Sci', color: '#F43F5E' },
+  'Creative Arts & Sports': { code: '601', initials: 'CAS', short: 'Arts', color: '#EC4899' },
+  'Creative Arts': { code: '602', initials: 'ART', short: 'Art', color: '#EC4899' },
+  'Music':       { code: '511', initials: 'MUS', short: 'Music', color: '#D946EF' },
+  'Art & Design': { code: '512', initials: 'ART', short: 'Art', color: '#EC4899' },
+  'French':      { code: '501', initials: 'FRE', short: 'French', color: '#3B82F6' },
+  'German':      { code: '502', initials: 'GER', short: 'German', color: '#F97316' },
+  'Arabic':      { code: '503', initials: 'ARA', short: 'Arabic', color: '#14B8A6' },
+  'Kenya Sign Language (KSL)': { code: '504', initials: 'KSL', short: 'KSL', color: '#8B5CF6' },
+  'Community Service Learning': { code: '701', initials: 'CSL', short: 'CSL', color: '#8B5CF6' },
+  'Physical Education': { code: '702', initials: 'PE', short: 'PE', color: '#10B981' }
 };
 
 // Metadata for any subject, deriving sensible defaults for ones not in SUBJECT_META.

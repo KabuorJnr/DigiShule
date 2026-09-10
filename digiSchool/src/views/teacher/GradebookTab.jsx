@@ -4,6 +4,7 @@ import { computeRow, gradeFor, remarkFor, is844Class, pointsForGrade } from '../
 import { Badge } from '../../components/widgets';
 import ReportCardEntrySheet from '../../components/ReportCardEntrySheet';
 import ClassSubjectAnalysis from '../../components/ClassSubjectAnalysis';
+import BulkMarksPasteModal from '../../components/BulkMarksPasteModal';
 import { exportTablePDF, downloadExcel, exportReportCardsPDF } from '../../utils/exporters';
 import { SUBJECTS } from '../../data/seed';
 import { 
@@ -21,23 +22,54 @@ import {
   ChevronRight,
   Sparkles,
   Check,
-  Lightbulb
+  Lightbulb,
+  FileSpreadsheet,
+  ArrowUpDown,
+  Zap,
+  Lock
 } from 'lucide-react';
+import { 
+  canTeacherEnterMarksForSubjectAndClass, 
+  getTeacherAssignedClassesForSubject, 
+  isSubjectMatch, 
+  matchesClass 
+} from '../../utils/teacherPermissions';
 
 const EXAM_OPTIONS = ['End Term Assessment', 'Mid Term Assessment', 'Opening Assessment', 'Continuous Assessment (CAT)'];
 
 export default function GradebookTab() {
   const { 
     store, 
-    subject = 'Mathematics', 
+    subject: defaultSubject = 'Mathematics', 
     loadedStudents = [], 
     setLoadedStudents, 
     subjectClasses = [], 
     assignedClass, 
-    teacherName = 'Teacher' 
+    teacherName = 'Teacher',
+    teacherProfile = {},
+    user: contextUser,
+    subjectAssignments = [],
+    subjectsList = [],
+    assignedSubjects = []
   } = useOutletContext();
   
   const { gradeBoundaries, settings, user, teachers = [] } = store;
+  const effectiveUser = contextUser || user;
+
+  // Selected active subject for teachers who teach multiple subjects
+  const [selectedSubject, setSelectedSubject] = useState(() => {
+    return (assignedSubjects && assignedSubjects.length > 0) ? assignedSubjects[0] : defaultSubject;
+  });
+
+  useEffect(() => {
+    if (assignedSubjects && assignedSubjects.length > 0) {
+      if (!assignedSubjects.some(s => isSubjectMatch(s, selectedSubject))) {
+        setSelectedSubject(assignedSubjects[0]);
+      }
+    }
+  }, [assignedSubjects, selectedSubject]);
+
+  const activeSubject = selectedSubject || defaultSubject || 'Mathematics';
   
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'report' | 'analysis'
   const [selectedStream, setSelectedStream] = useState('All');
@@ -50,36 +82,63 @@ export default function GradebookTab() {
   const [examYear, setExamYear] = useState('2026');
   const [selected, setSelected] = useState([]);
 
+  // Bulk marks entry & sorting state
+  const [sortBy, setSortBy] = useState('adm'); // 'adm' | 'name' | 'rank'
+  const [sortDir, setSortDir] = useState('asc');
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [directInputMode, setDirectInputMode] = useState(false);
+
   // Pagination State for 180+ student cohorts
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Available classes for this teacher
+  // STRICT AVAILABLE CLASSES: Only classes where teacher is assigned to teach THIS activeSubject
   const availableClasses = useMemo(() => {
+    const assigned = getTeacherAssignedClassesForSubject({
+      user: effectiveUser,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject: activeSubject
+    });
+    if (assigned.length > 0) return assigned;
+
+    // Fallback only if no specific table assignments exist
     const set = new Set();
     if (assignedClass) set.add(assignedClass);
     (subjectClasses || []).forEach(c => set.add(c));
-    (loadedStudents || []).forEach(s => { if (s.class) set.add(s.class); });
     return Array.from(set);
-  }, [assignedClass, subjectClasses, loadedStudents]);
+  }, [effectiveUser, teacherProfile, subjectAssignments, subjectsList, activeSubject, assignedClass, subjectClasses]);
+
+  // Keep selectedStream valid for the active subject
+  useEffect(() => {
+    if (selectedStream !== 'All' && availableClasses.length > 0 && !availableClasses.some(c => matchesClass(c, selectedStream))) {
+      setSelectedStream('All');
+    }
+  }, [availableClasses, selectedStream]);
 
   // Reset pagination on stream, search, subject, or pageSize change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedStream, search, subject, pageSize]);
+  }, [selectedStream, search, activeSubject, pageSize]);
 
-  // Filter students by selected stream and search query
+  // Filter students by selected stream, search query, AND STRICT ASSIGNED CLASS PERMISSION
   const filteredStudents = useMemo(() => {
     return (loadedStudents || []).filter((s) => {
-      const matchStream = selectedStream === 'All' || s.class === selectedStream;
+      if (!s.class) return false;
+      // Must belong to an assigned class for this subject
+      const isAssigned = availableClasses.length === 0 || availableClasses.some(c => matchesClass(c, s.class));
+      if (!isAssigned) return false;
+
+      const matchStream = selectedStream === 'All' || matchesClass(selectedStream, s.class);
       const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(search.toLowerCase()));
       return matchStream && matchSearch;
     });
-  }, [loadedStudents, selectedStream, search]);
+  }, [loadedStudents, availableClasses, selectedStream, search]);
 
   const rows = useMemo(() => {
     return filteredStudents.map((s) => {
-      const scores = s.scores?.[subject];
+      const scores = s.scores?.[activeSubject];
       const row = computeRow(scores);
       const systemType = is844Class(s.class) ? '844' : 'CBC';
       const percentage = row.average <= 4 && row.average > 0 ? Math.round(row.average * 25) : row.average;
@@ -87,9 +146,23 @@ export default function GradebookTab() {
       const points = pointsForGrade(grade, systemType);
       return { ...s, ...row, percentage, grade, points, systemType, remarks: row.remarks || remarkFor(grade, systemType) };
     });
-  }, [filteredStudents, gradeBoundaries, subject]);
+  }, [filteredStudents, gradeBoundaries, activeSubject]);
 
-  const sortedRows = useMemo(() => [...rows].sort((a, b) => b.average - a.average), [rows]);
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'name') {
+        cmp = (a.name || '').localeCompare(b.name || '');
+      } else if (sortBy === 'rank') {
+        cmp = (b.average || 0) - (a.average || 0);
+      } else {
+        const aAdm = String(a.adm || '');
+        const bAdm = String(b.adm || '');
+        cmp = aAdm.localeCompare(bAdm, undefined, { numeric: true });
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [rows, sortBy, sortDir]);
   const topPerformer = sortedRows[0]?.average > 0 ? sortedRows[0] : null;
 
   // Pagination Engine
@@ -156,6 +229,23 @@ export default function GradebookTab() {
   function saveScore(id, field, value) {
     const target = (loadedStudents || []).find((s) => s.id === id) || (store.students || []).find((s) => s.id === id);
     if (!target) return;
+
+    // STRICT PERMISSION ENFORCEMENT: Only assigned subjects in assigned classes
+    const perm = canTeacherEnterMarksForSubjectAndClass({
+      user: effectiveUser,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject: activeSubject,
+      studentClass: target.class
+    });
+
+    if (!perm.allowed) {
+      store.notify?.(perm.message || `Access Denied: You cannot enter marks for ${activeSubject} in ${target.class}.`, 'error', 'Permission Restriction');
+      setEditing(null);
+      return;
+    }
+
     let v;
     if (field === 'remarks') {
       v = value;
@@ -175,7 +265,7 @@ export default function GradebookTab() {
       v = Math.min(100, normalizedScore);
     }
     const currentScores = target.scores || {};
-    const currentSubj = currentScores[subject] || {};
+    const currentSubj = currentScores[activeSubject] || {};
     const base = typeof currentSubj === 'object' ? { ...currentSubj } : { average: currentSubj };
     base[field] = v;
     const computed = computeRow(base);
@@ -183,7 +273,7 @@ export default function GradebookTab() {
       ...target,
       scores: {
         ...currentScores,
-        [subject]: { ...base, ...computed, score: computed.average, average: computed.average },
+        [activeSubject]: { ...base, ...computed, score: computed.average, average: computed.average },
       },
     };
     store.updateStudent(updated);
@@ -192,17 +282,71 @@ export default function GradebookTab() {
     store.notify?.(`Saved ${field.toUpperCase()} mark for ${target.name}: ${v}%`, 'success', 'Gradebook');
   }
 
+  const handleApplyBulkMarks = (marksMap) => {
+    const field = 'a1';
+    let count = 0;
+    let skippedUnauthorized = 0;
+    let updatedList = [...loadedStudents];
+
+    Object.entries(marksMap).forEach(([id, rawVal]) => {
+      const target = updatedList.find(s => s.id === id);
+      if (!target) return;
+
+      // STRICT PERMISSION CHECK FOR BULK ENTRY
+      const perm = canTeacherEnterMarksForSubjectAndClass({
+        user: effectiveUser,
+        teacherProfile,
+        subjectAssignments,
+        subjects: subjectsList,
+        subject: activeSubject,
+        studentClass: target.class
+      });
+
+      if (!perm.allowed) {
+        skippedUnauthorized++;
+        return;
+      }
+
+      let v;
+      if (rawVal === 'X') v = 'X';
+      else if (rawVal === '' || rawVal == null) v = 0;
+      else v = Math.max(0, Math.min(100, Number(rawVal) || 0));
+
+      const currentScores = target.scores || {};
+      const currentSubj = currentScores[activeSubject] || {};
+      const base = typeof currentSubj === 'object' ? { ...currentSubj } : { average: currentSubj };
+      base[field] = v;
+      const computed = computeRow(base);
+      const updated = {
+        ...target,
+        scores: {
+          ...currentScores,
+          [activeSubject]: { ...base, ...computed, score: computed.average, average: computed.average },
+        },
+      };
+      store.updateStudent?.(updated);
+      updatedList = updatedList.map(s => s.id === id ? updated : s);
+      count++;
+    });
+
+    setLoadedStudents(updatedList);
+    if (skippedUnauthorized > 0) {
+      store.notify?.(`Skipped ${skippedUnauthorized} student(s): Not in your assigned classes for ${activeSubject}.`, 'warning', 'Permission Check');
+    }
+    store.notify?.(`Bulk marks applied: Saved ${count} student marks in ${activeSubject}!`, 'success', 'Gradebook');
+  };
+
   // Export handlers for teacher
   const exportPDF = () => {
     const head = ['#', 'Student', 'Adm No.', 'Class', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade', 'Remarks'];
     const body = rows.map((r, i) => [i + 1, r.name, r.adm, r.class, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]);
     exportTablePDF({ 
       school: settings, 
-      title: `${subject} Mark Sheet - ${selectedStream === 'All' ? 'All Classes' : selectedStream}`, 
+      title: `${activeSubject} Mark Sheet - ${selectedStream === 'All' ? 'All Classes' : selectedStream}`, 
       subtitle: `Teacher: ${teacherName}  |  ${term} ${examYear}`, 
       head, 
       body, 
-      filename: `teacher-gradebook-${subject}-${selectedStream}.pdf` 
+      filename: `teacher-gradebook-${activeSubject}-${selectedStream}.pdf` 
     });
     store.notify?.('Teacher Gradebook exported as PDF', 'success');
   };
@@ -210,7 +354,7 @@ export default function GradebookTab() {
   const exportExcel = () => {
     const aoa = [['#', 'Student', 'Adm No.', 'Class', 'Ass. 1 (%)', 'Ass. 2 (%)', 'Ass. 3 (%)', 'Ass. 4 (%)', 'Avg (%)', 'CBC Points', 'Grade', 'Remarks']];
     rows.forEach((r, i) => aoa.push([i + 1, r.name, r.adm, r.class, r.a1, r.a2, r.a3, r.a4, `${r.average}%`, `${r.points} pts`, r.grade, r.remarks]));
-    downloadExcel(`teacher-gradebook-${subject}-${selectedStream}.xlsx`, [{ name: `${subject}`.slice(0, 31), aoa }]);
+    downloadExcel(`teacher-gradebook-${activeSubject}-${selectedStream}.xlsx`, [{ name: `${activeSubject}`.slice(0, 31), aoa }]);
     store.notify?.('Teacher Gradebook exported as Excel', 'success');
   };
 
@@ -225,7 +369,7 @@ export default function GradebookTab() {
       subjects: SUBJECTS,
       examTitle: `${term} ${examTitle}`,
       termName: term,
-      filename: `report-cards-${subject}-${selectedStream}.pdf`,
+      filename: `report-cards-${activeSubject}-${selectedStream}.pdf`,
     });
     store.notify?.(`Generated ${chosen.length} report card(s)`, 'success');
   };
@@ -246,11 +390,49 @@ export default function GradebookTab() {
   };
 
   const ScoreCell = ({ r, field, editing, setEditing, saveScore, sortedRows, effectivePageSize, activePage, setCurrentPage, pageSize }) => {
-    const isEditing = editing && editing.id === r.id && editing.field === field;
+    // STRICT PERMISSION CHECK FOR THIS STUDENT & SUBJECT
+    const perm = canTeacherEnterMarksForSubjectAndClass({
+      user: effectiveUser,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList,
+      subject: activeSubject,
+      studentClass: r.class
+    });
+    const isLocked = !perm.allowed;
+
+    if (isLocked) {
+      return (
+        <td style={{ padding: '6px 4px', textAlign: field === 'remarks' ? 'left' : 'center' }} title={perm.message || 'View only: Not assigned to teach this subject in this class'}>
+          <div style={{
+            padding: '4px 8px',
+            borderRadius: 6,
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            color: '#94a3b8',
+            fontSize: 12,
+            minWidth: field === 'remarks' ? 'auto' : 38,
+            cursor: 'not-allowed'
+          }}>
+            <Lock size={11} color="#94a3b8" />
+            <span>{r[field] !== undefined && r[field] !== null && r[field] !== '' ? `${r[field]}%` : '—'}</span>
+          </div>
+        </td>
+      );
+    }
+
+    const isDirect = directInputMode && ['a1', 'a2', 'a3', 'a4'].includes(field);
+    const isEditing = (editing && editing.id === r.id && editing.field === field) || isDirect;
     if (isEditing) {
       return (
         <td style={{ padding: '4px 6px', textAlign: field === 'remarks' ? 'left' : 'center' }}>
           <input
+            key={`${r.id}-${field}-${r[field]}`}
+            data-cell={`${r.id}-${field}`}
             style={{ 
               width: field === 'remarks' ? '150px' : '62px', 
               height: '34px', 
@@ -259,21 +441,21 @@ export default function GradebookTab() {
               borderRadius: '6px', 
               outline: 'none', 
               textAlign: field === 'remarks' ? 'left' : 'center', 
-              fontWeight: 700,
-              fontSize: 13,
-              fontFamily: "'Poppins', sans-serif",
-              background: '#f0fdf4',
-              color: '#064e3b',
-              boxShadow: '0 0 0 3px rgba(5, 150, 105, 0.18)'
+              fontWeight: 700, 
+              fontSize: 13, 
+              fontFamily: "'Poppins', sans-serif", 
+              background: '#f0fdf4', 
+              color: '#064e3b', 
+              boxShadow: isDirect ? 'none' : '0 0 0 3px rgba(5, 150, 105, 0.18)' 
             }}
             type="text"
             inputMode={field === 'remarks' ? undefined : 'numeric'}
             enterKeyHint="next"
             placeholder={field === 'remarks' ? '' : `/${Math.max(1, Number(outOf) || 100)}`}
-            autoFocus
+            autoFocus={!isDirect}
             defaultValue={r[field] === 'X' ? 'X' : (r[field] || '')}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 saveScore(r.id, field, e.target.value);
                 if (field !== 'remarks' && sortedRows) {
@@ -285,11 +467,41 @@ export default function GradebookTab() {
                     if (pageSize !== 'all' && targetPage !== activePage && setCurrentPage) {
                       setCurrentPage(targetPage);
                     }
-                    setEditing({ id: next.id, field });
+                    if (isDirect) {
+                      setTimeout(() => {
+                        const el = document.querySelector(`input[data-cell="${next.id}-${field}"]`);
+                        if (el) { el.focus(); el.select?.(); }
+                      }, 20);
+                    } else {
+                      setEditing({ id: next.id, field });
+                    }
                   }
                 }
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                saveScore(r.id, field, e.target.value);
+                if (field !== 'remarks' && sortedRows) {
+                  const idx = sortedRows.findIndex(x => x.id === r.id);
+                  const prev = sortedRows[idx - 1];
+                  if (prev) {
+                    const prevIdx = idx - 1;
+                    const targetPage = Math.floor(prevIdx / effectivePageSize) + 1;
+                    if (pageSize !== 'all' && targetPage !== activePage && setCurrentPage) {
+                      setCurrentPage(targetPage);
+                    }
+                    if (isDirect) {
+                      setTimeout(() => {
+                        const el = document.querySelector(`input[data-cell="${prev.id}-${field}"]`);
+                        if (el) { el.focus(); el.select?.(); }
+                      }, 20);
+                    } else {
+                      setEditing({ id: prev.id, field });
+                    }
+                  }
+                }
+              } else if (e.key === 'Escape') {
+                if (!isDirect) setEditing(null);
               }
-              if (e.key === 'Escape') setEditing(null);
             }}
             onBlur={(e) => saveScore(r.id, field, e.target.value)}
           />
@@ -335,7 +547,6 @@ export default function GradebookTab() {
   return (
     <div style={{ fontFamily: "'Poppins', sans-serif", color: '#1e293b' }}>
       
-      {/* ── 1. HEADER & COMMAND BAR ── */}
       <div style={{
         background: '#ffffff',
         border: '1px solid #cbd5e1',
@@ -365,7 +576,7 @@ export default function GradebookTab() {
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              {subject} Marks Entry & Gradebook
+              {activeSubject} Marks Entry & Gradebook
             </h1>
             <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
               Assigned Teacher: <strong>{teacherName}</strong> · {term} {examYear}
@@ -425,7 +636,7 @@ export default function GradebookTab() {
             }}
           >
             <LayoutGrid size={16} color={viewMode === 'grid' ? '#047857' : '#64748b'} />
-            Class Subject Grid (Stream)
+            Class List Marks Entry (Bulk)
           </button>
 
           <button
@@ -447,7 +658,7 @@ export default function GradebookTab() {
             }}
           >
             <FileText size={16} color={viewMode === 'report' ? '#047857' : '#64748b'} />
-            Academic Report Form (Student)
+            Individual Report Card Preview
           </button>
 
           <button
@@ -483,9 +694,9 @@ export default function GradebookTab() {
             borderRadius: 6,
             border: '1px solid #e2e8f0'
           }}>
-            {viewMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BarChart3 size={13} /> Grading {filteredStudents.length} students in {subject}</span>}
+            {viewMode === 'grid' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><BarChart3 size={13} /> Grading {filteredStudents.length} students in {activeSubject}</span>}
             {viewMode === 'report' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><FileText size={13} /> Kenyan Academic Report Form 1:1 view</span>}
-            {viewMode === 'analysis' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><TrendingUp size={13} /> {subject} performance across streams</span>}
+            {viewMode === 'analysis' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><TrendingUp size={13} /> {activeSubject} performance across streams</span>}
           </span>
         </div>
       </div>
@@ -501,6 +712,42 @@ export default function GradebookTab() {
           boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)'
         }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}>
+            {/* Subject Selector (for teachers teaching 1+ subjects) */}
+            <div style={{ minWidth: 150 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: 4 }}>
+                Subject
+              </label>
+              {assignedSubjects.length > 1 ? (
+                <select 
+                  className="select" 
+                  value={activeSubject} 
+                  onChange={(e) => {
+                    setSelectedSubject(e.target.value);
+                    setSelectedStream('All');
+                    setSelectedStudentId(null);
+                  }}
+                  style={{ width: '100%', height: 36, fontSize: 13, fontWeight: 700, color: '#047857', border: '1.5px solid #059669' }}
+                >
+                  {assignedSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <div style={{ 
+                  height: 36, 
+                  padding: '0 12px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  background: '#f0fdf4', 
+                  border: '1.5px solid #bbf7d0', 
+                  borderRadius: 6, 
+                  fontSize: 13, 
+                  fontWeight: 700, 
+                  color: '#065f46' 
+                }}>
+                  {activeSubject}
+                </div>
+              )}
+            </div>
+
             {/* Stream Filter */}
             {availableClasses.length > 1 && (
               <div style={{ minWidth: 140 }}>
@@ -797,7 +1044,7 @@ export default function GradebookTab() {
               year={examYear}
               outOf={outOf}
               canEditAll={false}
-              allowedSubjects={[subject]}
+              allowedSubjects={[activeSubject]}
             />
           ) : (
             <div className="card card-pad" style={{ textAlign: 'center', padding: '56px 24px', borderRadius: 12 }}>
@@ -834,34 +1081,104 @@ export default function GradebookTab() {
             flexWrap: 'wrap',
             gap: 10
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input 
-                type="checkbox" 
-                checked={selected.length === paginatedRows.length && paginatedRows.length > 0}
-                onChange={(e) => setSelected(e.target.checked ? paginatedRows.map((r) => r.id) : [])} 
-                style={{ width: 16, height: 16, cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
-                {selected.length > 0 ? (
-                  <span style={{ color: '#047857' }}>{selected.length} of {paginatedRows.length} on page Selected</span>
-                ) : (
-                  <span>Students ({totalStudents})</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input 
+                  type="checkbox" 
+                  checked={selected.length === paginatedRows.length && paginatedRows.length > 0}
+                  onChange={(e) => setSelected(e.target.checked ? paginatedRows.map((r) => r.id) : [])} 
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                  {selected.length > 0 ? (
+                    <span style={{ color: '#047857' }}>{selected.length} of {paginatedRows.length} on page Selected</span>
+                  ) : (
+                    <span>Students ({totalStudents})</span>
+                  )}
+                </span>
+                {selected.length > 0 && (
+                  <button 
+                    onClick={() => setSelected([])}
+                    style={{ fontSize: 11, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Clear
+                  </button>
                 )}
-              </span>
-              {selected.length > 0 && (
-                <button 
-                  onClick={() => setSelected([])}
-                  style={{ fontSize: 11, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+              </div>
+
+              {/* Class List Sort Selector */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                <span style={{ color: '#64748b', fontWeight: 600 }}>Sort:</span>
+                <select
+                  className="select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ height: 32, fontSize: 12, padding: '2px 8px', fontWeight: 600 }}
                 >
-                  Clear
+                  <option value="adm">Adm No. (Roll)</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="rank">Rank / Mean</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                  title={`Sorted ${sortDir === 'asc' ? 'Ascending' : 'Descending'}. Click to toggle.`}
+                  style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, height: 32, padding: '0 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <ArrowUpDown size={14} color="#64748b" />
                 </button>
-              )}
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11.5, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Lightbulb size={13} color="#d97706" /> Tip: Press <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> to save &amp; jump to next student
+                <Lightbulb size={13} color="#d97706" /> <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>Enter</kbd> or <kbd style={{ background: '#e2e8f0', padding: '2px 5px', borderRadius: 4, fontWeight: 700 }}>↓</kbd> next student
               </span>
+
+              {/* Direct Input Mode Toggle */}
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setDirectInputMode(v => !v)}
+                style={{
+                  fontSize: 12,
+                  padding: '5px 12px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  background: directInputMode ? '#047857' : '#ffffff',
+                  color: directInputMode ? '#ffffff' : '#334155',
+                  border: directInputMode ? '1px solid #047857' : '1px solid #cbd5e1'
+                }}
+                title="Keep numeric input boxes active for quick typing without clicking each cell"
+              >
+                <Zap size={14} color={directInputMode ? '#fef08a' : '#64748b'} />
+                {directInputMode ? 'Direct Input: ON' : 'Direct Input: OFF'}
+              </button>
+
+              {/* Paste from Excel */}
+              <button 
+                type="button"
+                className="btn btn-sm" 
+                onClick={() => setShowPasteModal(true)} 
+                style={{ 
+                  fontSize: 12, 
+                  padding: '5px 12px', 
+                  fontWeight: 700, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  background: '#f0fdf4',
+                  color: '#047857',
+                  border: '1px solid #86efac'
+                }}
+                title="Bulk paste marks from Excel / Google Sheets directly down the class list"
+              >
+                <FileSpreadsheet size={15} /> 
+                Paste from Excel
+              </button>
+
               <button 
                 className="btn btn-primary btn-sm" 
                 onClick={generateReportCards} 
@@ -1216,6 +1533,20 @@ export default function GradebookTab() {
           />
         </div>
       )}
+
+      {/* ── BULK MARKS PASTE MODAL (EXCEL / SPREADSHEET) ── */}
+      <BulkMarksPasteModal
+        isOpen={showPasteModal}
+        onClose={() => setShowPasteModal(false)}
+        students={sortedRows}
+        subject={activeSubject}
+        className={selectedStream}
+        assessmentField="a1"
+        assessmentLabel={examTitle || 'Assessment 1'}
+        outOf={outOf}
+        gradeBoundaries={gradeBoundaries}
+        onApplyMarks={handleApplyBulkMarks}
+      />
 
     </div>
   );

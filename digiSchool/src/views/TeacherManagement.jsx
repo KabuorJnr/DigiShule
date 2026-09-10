@@ -134,9 +134,25 @@ const DEFAULT_SUBJECTS = [
   { code: 'PHY', name: 'Physics', is_core: true, department: 'Sciences', periods_per_week: 5 },
   { code: 'HIS', name: 'History', is_core: false, department: 'Humanities', periods_per_week: 4 },
   { code: 'GEO', name: 'Geography', is_core: false, department: 'Humanities', periods_per_week: 4 },
+  { code: 'CRE', name: 'Christian Religious Education (CRE)', is_core: false, department: 'Humanities', periods_per_week: 4 },
+  { code: 'IRE', name: 'Islamic Religious Education (IRE)', is_core: false, department: 'Humanities', periods_per_week: 4 },
+  { code: 'SST', name: 'Social Studies', is_core: false, department: 'Humanities', periods_per_week: 4 },
+  { code: 'BST', name: 'Business Studies', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'AGR', name: 'Agriculture', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'AGN', name: 'Agriculture & Nutrition', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'CSC', name: 'Computer Studies', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'PTS', name: 'Pre-Technical Studies', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'ISC', name: 'Integrated Science', is_core: false, department: 'Sciences', periods_per_week: 4 },
+  { code: 'HSC', name: 'Home Science', is_core: false, department: 'Technical', periods_per_week: 4 },
+  { code: 'CAS', name: 'Creative Arts & Sports', is_core: false, department: 'Creative Arts', periods_per_week: 3 },
+  { code: 'MUS', name: 'Music', is_core: false, department: 'Creative Arts', periods_per_week: 3 },
+  { code: 'FRE', name: 'French', is_core: false, department: 'Languages', periods_per_week: 4 },
+  { code: 'GER', name: 'German', is_core: false, department: 'Languages', periods_per_week: 4 },
+  { code: 'ARA', name: 'Arabic', is_core: false, department: 'Languages', periods_per_week: 4 },
+  { code: 'CSL', name: 'Community Service Learning', is_core: false, department: 'Humanities', periods_per_week: 2 },
 ];
 
-const DEFAULT_DEPARTMENTS = ['Mathematics', 'Languages', 'Sciences', 'Humanities'];
+const DEFAULT_DEPARTMENTS = ['Mathematics', 'Languages', 'Sciences', 'Humanities', 'Technical', 'Creative Arts'];
 
 // â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | â | 
 // MAIN COMPONENT

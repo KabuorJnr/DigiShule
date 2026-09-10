@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, useOutletContext } from 'react-router
 import { PlaneTakeoff, MessageSquare, FolderOpen, Bell, Calendar, ClipboardList, BarChart3 } from 'lucide-react';
 import { fetchTable } from '../../lib/api';
 import { reportError } from '../../lib/errorReporter';
+import { getTeacherAssignments, getTeacherAssignedSubjects } from '../../utils/teacherPermissions';
 
 export default function TeacherLayout() {
   const { store, user, params } = useOutletContext();
@@ -41,21 +42,69 @@ export default function TeacherLayout() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [meetingRequests, setMeetingRequests] = useState([]);
 
+  const [subjectsList, setSubjectsList] = useState([]);
   const [subjectAssignments, setSubjectAssignments] = useState([]);
 
   useEffect(() => {
     let active = true;
-    fetchTable('subjectAssignments').then(rows => {
+    Promise.allSettled([
+      fetchTable('subjectAssignments'),
+      fetchTable('subjects')
+    ]).then(([assignRes, subjRes]) => {
       if (!active) return;
-      const myAssignments = (rows || []).filter(a => a.teacher_id === teacherProfile.id || a.teacher_id === user?.id);
+      const allAssignments = assignRes.status === 'fulfilled' ? (assignRes.value || []) : [];
+      const allSubjects = subjRes.status === 'fulfilled' ? (subjRes.value || []) : [];
+      setSubjectsList(allSubjects);
+
+      const teacherId = teacherProfile?.id || user?.teacher_id || user?.id;
+      const teacherEmpId = teacherProfile?.emp_id || user?.emp_id;
+      const teacherName = (teacherProfile?.name || teacherProfile?.full_name || user?.name || '').trim().toLowerCase();
+
+      const myAssignments = allAssignments.filter(a => {
+        if (a.status && a.status !== 'assigned') return false;
+        if (teacherId && (a.teacher_id === teacherId || String(a.teacher_id) === String(teacherId))) return true;
+        if (user?.id && (a.teacher_id === user.id || String(a.teacher_id) === String(user.id))) return true;
+        if (user?.teacher_id && (a.teacher_id === user.teacher_id || String(a.teacher_id) === String(user.teacher_id))) return true;
+        if (teacherEmpId && (a.teacher_id === teacherEmpId || String(a.teacher_id) === String(teacherEmpId))) return true;
+        if (teacherName && a.teacher_name && a.teacher_name.toLowerCase().trim() === teacherName) return true;
+        return false;
+      });
       setSubjectAssignments(myAssignments);
     }).catch((e) => reportError(e, 'teacher.layout.fetch'));
     return () => { active = false; };
-  }, [teacherProfile.id, user?.id]);
+  }, [teacherProfile, user]);
+
+  const teacherSubjectAssignments = useMemo(() => {
+    return getTeacherAssignments({
+      user,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList
+    });
+  }, [user, teacherProfile, subjectAssignments, subjectsList]);
+
+  const assignedSubjects = useMemo(() => {
+    const list = getTeacherAssignedSubjects({
+      user,
+      teacherProfile,
+      subjectAssignments,
+      subjects: subjectsList
+    });
+    if (list.length > 0) return list;
+    if (subject) return [subject];
+    return ['Mathematics'];
+  }, [user, teacherProfile, subjectAssignments, subjectsList, subject]);
 
   const subjectClasses = useMemo(() => {
-    return subjectAssignments.map(a => a.stream_name ? `${a.class_name} ${a.stream_name}` : a.class_name);
-  }, [subjectAssignments]);
+    const clsSet = new Set();
+    subjectAssignments.forEach(a => {
+      clsSet.add(a.stream_name ? `${a.class_name} ${a.stream_name}` : a.class_name);
+    });
+    teacherSubjectAssignments.forEach(a => {
+      if (a.className) clsSet.add(a.className);
+    });
+    return Array.from(clsSet);
+  }, [subjectAssignments, teacherSubjectAssignments]);
 
   useEffect(() => {
     let active = true;
@@ -79,10 +128,9 @@ export default function TeacherLayout() {
           }
           return false;
         });
-        setLoadedStudents(matched.length > 0 ? matched : activeStudents);
+        setLoadedStudents(matched);
       } else {
-        // Fallback: If no class has been explicitly configured for this teacher, show active students so teacher can view & grade their students!
-        setLoadedStudents(activeStudents);
+        setLoadedStudents([]);
       }
     }
     return () => { active = false; };
@@ -151,7 +199,8 @@ export default function TeacherLayout() {
         messages, setMessages,
         leaveRequests, setLeaveRequests,
         meetingRequests, setMeetingRequests,
-        subjectAssignments, subjectClasses
+        subjectAssignments, subjectClasses,
+        subjectsList, assignedSubjects, teacherSubjectAssignments
       }} />
     </div>
   );
