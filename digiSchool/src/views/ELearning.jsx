@@ -5,11 +5,10 @@ import { Icon } from '../components/icons';
 import { Video, ExternalLink, Folder, Calendar, ClipboardCheck } from 'lucide-react';
 import { SUBJECTS, getSubjectMeta, expandClassesWithStreams } from '../data/seed';
 import * as elearning from '../lib/elearningStore';
-
-const MANAGER_ROLES = ['teacher', 'principal', 'deputy_academic', 'dos'];
+import { isManager } from '../lib/elearningAccess';
 
 export default function ELearning({ store, user }) {
-  const canManage = MANAGER_ROLES.includes(user?.role);
+  const canManage = isManager(user);
   const schoolId = store?.schoolId || store?.settings?.school_id || 'default';
   const notify = store?.notify || (() => {});
 
@@ -35,14 +34,17 @@ export default function ELearning({ store, user }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [attendanceClass, setAttendanceClass] = useState(null); // Which liveClass to mark attendance for
 
-  useEffect(() => {
-    setCatalog(elearning.loadCatalog(schoolId));
-  }, [schoolId]);
+  const [loading, setLoading] = useState(true);
 
-  const persist = (next) => {
-    setCatalog(next);
-    elearning.saveCatalog(schoolId, next);
-  };
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    elearning.loadCatalog(schoolId)
+      .then((list) => { if (!cancelled) setCatalog(list); })
+      .catch(() => { if (!cancelled) notify('Could not load live classes', 'error', 'Live Classes'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [schoolId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -63,20 +65,26 @@ export default function ELearning({ store, user }) {
     return ['All', ...SUBJECTS.filter((sub) => s.has(sub))];
   }, [catalog]);
 
-  function handleScheduleClass(liveClass) {
-    persist([liveClass, ...catalog]);
-    setScheduleOpen(false);
-    notify('Live class scheduled', 'success', 'Live Classes');
+  async function handleScheduleClass(liveClass) {
+    try {
+      const { catalog: updated } = await elearning.scheduleClass(liveClass, schoolId);
+      setCatalog(updated);
+      setScheduleOpen(false);
+      notify('Live class scheduled', 'success', 'Live Classes');
+    } catch (e) {
+      notify(e.message || 'Could not schedule class', 'error', 'Live Classes');
+    }
   }
 
+  // Cancel, not delete: students who already joined keep their attendance record.
   async function handleDelete(liveClass) {
-    if (!window.confirm(`Delete the scheduled class "${liveClass.title}"?`)) return;
+    if (!window.confirm(`Cancel the scheduled class "${liveClass.title}"?`)) return;
     try {
-      const updated = await elearning.deleteClass(liveClass.id, schoolId);
+      const updated = await elearning.cancelClass(liveClass.id, schoolId);
       setCatalog(updated);
-      notify('Class deleted', 'success', 'Live Classes');
+      notify('Class cancelled', 'success', 'Live Classes');
     } catch (e) {
-      notify('Delete failed', 'error', 'Live Classes');
+      notify(e.message || 'Could not cancel class', 'error', 'Live Classes');
     }
   }
 
@@ -128,7 +136,11 @@ export default function ELearning({ store, user }) {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="card card-pad" style={{ textAlign: 'center', color: 'var(--muted)' }}>
+          Loading live classes…
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="card card-pad" style={{ textAlign: 'center', color: 'var(--muted)' }}>
           {catalog.length === 0
             ? (canManage ? <>No classes scheduled yet. Click <strong>Schedule Class</strong> to add your first one.</> : <>No live classes are currently scheduled. Check back soon.</>)
@@ -161,6 +173,7 @@ export default function ELearning({ store, user }) {
         <LiveClassAttendanceModal
           liveClass={attendanceClass}
           store={store}
+          user={user}
           onClose={() => setAttendanceClass(null)}
         />
       )}
@@ -218,7 +231,7 @@ function LiveClassCard({ liveClass, canManage, onDelete, onMarkAttendance }) {
             </button>
           )}
           {canManage && (
-            <button className="btn" style={{ padding: '6px 10px', fontSize: 13, color: '#dc2626' }} onClick={onDelete} title="Delete class">
+            <button className="btn" style={{ padding: '6px 10px', fontSize: 13, color: '#dc2626' }} onClick={onDelete} title="Cancel class">
               <Icon name="warning" size={14} />
             </button>
           )}
@@ -306,30 +319,44 @@ function ScheduleModal({ user, classes, onClose, onSave }) {
   );
 }
 
-function LiveClassAttendanceModal({ liveClass, store, onClose }) {
+function LiveClassAttendanceModal({ liveClass, store, user, onClose }) {
   const schoolId = store?.schoolId || store?.settings?.school_id || 'default';
-  
+
   const targetStudents = useMemo(() => {
     const all = store.students || [];
     if (liveClass.klass === 'All' || !liveClass.klass) return all;
     return all.filter((s) => s.class === liveClass.klass);
   }, [store.students, liveClass.klass]);
 
+  // Keyed by students.id — that is what elearning_live_attendance.student_id
+  // holds, and what my_student_ids() checks when a parent reads the row back.
   const [attendance, setAttendance] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setAttendance(elearning.getLiveAttendance(schoolId, liveClass.id));
+    let cancelled = false;
+    elearning.getLiveAttendance(schoolId, liveClass.id)
+      .then((map) => { if (!cancelled) setAttendance(map); })
+      .catch(() => { /* start from an empty roster */ });
+    return () => { cancelled = true; };
   }, [schoolId, liveClass.id]);
 
-  function handleSave() {
-    elearning.saveLiveAttendance(schoolId, liveClass.id, attendance);
-    if (store.notify) store.notify('Attendance saved!', 'success');
-    onClose();
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await elearning.saveLiveAttendance(schoolId, liveClass.id, attendance, user?.id || null);
+      if (store.notify) store.notify('Attendance saved!', 'success');
+      onClose();
+    } catch (e) {
+      if (store.notify) store.notify(e.message || 'Could not save attendance', 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   function markAll(status) {
     const next = { ...attendance };
-    targetStudents.forEach((s) => { next[s.adm] = status; });
+    targetStudents.forEach((s) => { next[s.id] = status; });
     setAttendance(next);
   }
 
@@ -337,7 +364,9 @@ function LiveClassAttendanceModal({ liveClass, store, onClose }) {
     <Modal title={`Attendance: ${liveClass.title}`} onClose={onClose} wide footer={
       <>
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" onClick={handleSave}>Save Attendance</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving…' : 'Save Attendance'}
+        </button>
       </>
     }>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -366,15 +395,15 @@ function LiveClassAttendanceModal({ liveClass, store, onClose }) {
             </thead>
             <tbody>
               {targetStudents.map((s) => {
-                const status = attendance[s.adm];
+                const status = attendance[s.id];
                 return (
-                  <tr key={s.adm}>
+                  <tr key={s.id}>
                     <td className="muted" style={{ fontSize: 13 }}>{s.adm}</td>
                     <td style={{ fontWeight: 500, fontSize: 14 }}>{s.name}</td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 20, padding: 4, gap: 4 }}>
                         <button
-                          onClick={() => setAttendance({ ...attendance, [s.adm]: 'Present' })}
+                          onClick={() => setAttendance({ ...attendance, [s.id]: 'Present' })}
                           style={{
                             border: 'none', background: status === 'Present' ? '#10b981' : 'transparent',
                             color: status === 'Present' ? '#fff' : '#64748b', borderRadius: 16, padding: '4px 12px',
@@ -384,7 +413,7 @@ function LiveClassAttendanceModal({ liveClass, store, onClose }) {
                           Present
                         </button>
                         <button
-                          onClick={() => setAttendance({ ...attendance, [s.adm]: 'Absent' })}
+                          onClick={() => setAttendance({ ...attendance, [s.id]: 'Absent' })}
                           style={{
                             border: 'none', background: status === 'Absent' ? '#ef4444' : 'transparent',
                             color: status === 'Absent' ? '#fff' : '#64748b', borderRadius: 16, padding: '4px 12px',
