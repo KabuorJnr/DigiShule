@@ -30,6 +30,15 @@ export default function Settings({ store, user }) {
   // actionable. Streams inherit their level's target.
   const [targetYear, setTargetYear] = useState(() => getAcademicYear(settings));
   const [classMeans, setClassMeans] = useState(() => settings?.targets?.classMeans || {});
+
+  // How many students the school expects each term (vs the general capacity).
+  const [expectedEnrolment, setExpectedEnrolment] = useState(() => settings?.targets?.expectedEnrolment || {});
+  const enrolRowsForYear = expectedEnrolment[targetYear] || {};
+  const upExpected = (term, value) =>
+    setExpectedEnrolment((prev) => ({
+      ...prev,
+      [targetYear]: { ...(prev[targetYear] || {}), [term]: value === '' ? '' : Number(value) },
+    }));
   const meanRowsForYear = classMeans[targetYear] || {};
   const upClassMean = (level, value) =>
     setClassMeans((prev) => ({
@@ -220,7 +229,16 @@ export default function Settings({ store, user }) {
       });
       if (Object.keys(kept).length) cleanedMeans[yr] = kept;
     });
-    setSettings((s) => ({ ...s, targets: { ...targetForm, classMeans: cleanedMeans } }));
+    const cleanedEnrol = {};
+    Object.entries(expectedEnrolment).forEach(([yr, rows]) => {
+      const kept = {};
+      Object.entries(rows || {}).forEach(([term, v]) => {
+        const n = Number(v);
+        if (v !== '' && Number.isFinite(n) && n > 0) kept[term] = n;
+      });
+      if (Object.keys(kept).length) cleanedEnrol[yr] = kept;
+    });
+    setSettings((s) => ({ ...s, targets: { ...targetForm, classMeans: cleanedMeans, expectedEnrolment: cleanedEnrol } }));
     notify('Performance targets saved — dashboards will measure against these', 'success', 'Settings');
   }
   function resetTargets() {
@@ -697,6 +715,57 @@ export default function Settings({ store, user }) {
               </div>
             </div>
           ))}
+
+          {/* ── Expected students per term ─────────────────────────────── */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
+              color: '#047857', marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid var(--border-light)',
+            }}>
+              Expected students per term
+            </div>
+            <p className="muted" style={{ fontSize: 12, margin: '0 0 12px' }}>
+              How many students the school <strong>should</strong> have each term, against how many it
+              actually has. This is the plan; <em>Enrolment capacity</em> above is the ceiling.
+              Dashboards show actual vs expected and flag a shortfall.
+            </p>
+            <table className="table" style={{ width: '100%', maxWidth: 560, margin: 0 }}>
+              <thead>
+                <tr>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Term</th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase', width: 190 }}>
+                    Expected students ({targetYear})
+                  </th>
+                  <th style={{ fontSize: 11, textTransform: 'uppercase', width: 110 }}>In use</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TERMS.map((term) => {
+                  const raw = enrolRowsForYear[term];
+                  const isSet = raw !== undefined && raw !== '' && Number(raw) > 0;
+                  return (
+                    <tr key={term}>
+                      <td style={{ fontWeight: 600 }}>{term}</td>
+                      <td>
+                        <input
+                          className="input"
+                          type="number"
+                          min="0"
+                          placeholder={`${targetForm.enrolmentCapacity || 0} (capacity)`}
+                          value={raw ?? ''}
+                          onChange={(e) => upExpected(term, e.target.value)}
+                          style={{ height: 34 }}
+                        />
+                      </td>
+                      <td className="muted" style={{ fontSize: 12 }}>
+                        {isSet ? `${raw}` : `${targetForm.enrolmentCapacity || 0} (capacity)`}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {/* ── Per-class, per-year mean targets ───────────────────────── */}
           <div style={{ marginBottom: 22 }}>

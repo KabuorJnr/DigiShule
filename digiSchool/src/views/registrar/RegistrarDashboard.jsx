@@ -14,7 +14,7 @@ import {
   ArrowLeftRight, PieChart as PieIcon, ClipboardList,
 } from 'lucide-react';
 import { expandClassesWithStreams } from '../../data/seed';
-import { computeTargetMetrics, getTargets } from '../../lib/targets';
+import { computeTargetMetrics, getTargets, computeEnrolmentMetrics } from '../../lib/targets';
 import { fetchTable } from '../../lib/api';
 import { reportError } from '../../lib/errorReporter';
 import {
@@ -102,6 +102,11 @@ export default function RegistrarDashboard() {
     .sort((a, b) => new Date(b.date || b.created_at || 0) - new Date(a.date || a.created_at || 0))
     .slice(0, 6), [admissions]);
 
+  const enrolment = useMemo(
+    () => computeEnrolmentMetrics(settings, activeStudents.length),
+    [settings, activeStudents.length]
+  );
+
   const goal = targets.admissionTarget > 0 ? targets.admissionTarget : targets.enrolmentCapacity;
 
   return (
@@ -160,7 +165,17 @@ export default function RegistrarDashboard() {
 
       {/* Register composition */}
       <Grid cols={4}>
-        <MetricCard label="Total students" value={activeStudents.length} icon={<Users />} tone="primary" foot="Active register" />
+        <MetricCard
+          label="Students enrolled"
+          value={enrolment.expected > 0 ? `${enrolment.actual} / ${enrolment.expected}` : String(enrolment.actual)}
+          icon={<Users />} tone={enrolment.status}
+          foot={
+            enrolment.expected > 0
+              ? `${enrolment.term} plan${enrolment.variance < 0 ? ` · ${Math.abs(enrolment.variance)} short` : enrolment.variance > 0 ? ` · ${enrolment.variance} over` : ' · on plan'}`
+              : 'No term target set'
+          }
+          progress={enrolment.expected > 0 ? { value: enrolment.pct, max: 100, tone: enrolment.status } : undefined}
+        />
         <MetricCard label="Male" value={male} icon={<UserCheck />} tone="info"
           foot={activeStudents.length ? `${((male / activeStudents.length) * 100).toFixed(0)}% of roll` : '—'} />
         <MetricCard label="Female" value={female} icon={<UserCheck />} tone="secondary"

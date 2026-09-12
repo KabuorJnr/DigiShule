@@ -190,6 +190,87 @@ export function computeClassMeanMetrics(settings, actuals = [], year) {
   };
 }
 
+/* ─────────────────────── Expected enrolment (termly) ─────────────────────
+ * How many students the school SHOULD have, against how many it actually
+ * has. Two figures matter and they answer different questions:
+ *
+ *   · general  — settings.targets.enrolmentCapacity: the most the school can
+ *                hold. A ceiling; exceeding it is a problem.
+ *   · termly   — settings.targets.expectedEnrolment[year][term]: how many it
+ *                planned for THIS term. A plan; falling short is a problem.
+ *
+ * Shape: expectedEnrolment = { "2026": { "Term 1": 820, "Term 2": 835, ... } }
+ * ------------------------------------------------------------------------ */
+
+export const TERMS = ['Term 1', 'Term 2', 'Term 3'];
+
+/** The term targets are keyed by. Falls back to the school's current term. */
+export function getCurrentTerm(settings) {
+  const t = settings?.currentTerm;
+  return TERMS.includes(t) ? t : TERMS[0];
+}
+
+/** All termly expected figures for a year: { 'Term 1': n, … }. */
+export function getExpectedEnrolmentTable(settings, year) {
+  const y = year || getAcademicYear(settings);
+  return { ...((settings?.targets?.expectedEnrolment || {})[y] || {}) };
+}
+
+/**
+ * Expected students for one term, falling back to the general capacity and
+ * then to 0 (meaning "not set").
+ */
+export function getExpectedEnrolment(settings, year, term) {
+  const table = getExpectedEnrolmentTable(settings, year);
+  const v = Number(table[term || getCurrentTerm(settings)]);
+  if (Number.isFinite(v) && v > 0) return v;
+  return Number(getTargets(settings).enrolmentCapacity) || 0;
+}
+
+/**
+ * Actual enrolment against what was planned for the term, plus the general
+ * capacity picture.
+ *
+ * @returns {{ actual, expected, term, year, variance, pct, status, capacity,
+ *             capacityPct, overCapacity, rollup }}
+ */
+export function computeEnrolmentMetrics(settings, actualCount, year, term) {
+  const y = year || getAcademicYear(settings);
+  const t = term || getCurrentTerm(settings);
+  const actual = Number(actualCount) || 0;
+  const expected = getExpectedEnrolment(settings, y, t);
+  const capacity = Number(getTargets(settings).enrolmentCapacity) || 0;
+
+  const variance = actual - expected;               // negative = short
+  const pct = expected > 0 ? clampPct((actual / expected) * 100) : 0;
+  const capacityPct = capacity > 0 ? clampPct((actual / capacity) * 100) : 0;
+  const overCapacity = capacity > 0 && actual > capacity;
+
+  // Being short is the problem this metric exists to surface; being over
+  // capacity is a different problem and is flagged separately.
+  let status = 'success';
+  if (expected > 0) {
+    if (pct >= 100) status = 'success';
+    else if (pct >= 95) status = 'primary';
+    else if (pct >= 85) status = 'warning';
+    else status = 'danger';
+  } else {
+    status = 'secondary';
+  }
+  if (overCapacity) status = 'danger';
+
+  return {
+    actual, expected, capacity, term: t, year: y,
+    variance, pct, capacityPct, overCapacity, status,
+    rollup: metric('Students enrolled', actual, expected, {
+      unit: 'students',
+      caption: expected > 0
+        ? `${actual} of ${expected} expected for ${t}${variance < 0 ? ` · ${Math.abs(variance)} short` : variance > 0 ? ` · ${variance} over plan` : ''}`
+        : `${actual} enrolled — no ${t} target set`,
+    }),
+  };
+}
+
 /** Merge a school's saved targets over the defaults. */
 export function getTargets(settings) {
   const saved = settings?.targets || {};

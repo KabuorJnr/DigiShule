@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { expandClassesWithStreams, SUBJECTS } from '../data/seed';
-import { computeTargetMetrics } from '../lib/targets';
+import { computeTargetMetrics, computeEnrolmentMetrics } from '../lib/targets';
 import {
   SneatPage, Grid, Card, CardHead, CardBody, MetricCard, TargetCard, Spotlight,
   ChartCard, SnLine, SnDonut, RankList, ProgressMetric, SnBadge, SnButton, ClassMeanChart,
   SnEmpty, SNEAT,
 } from '../components/sneat';
 import Modal from '../components/Modal';
+import StaffMeetingModal, { canCallStaffMeeting } from '../components/StaffMeetingModal';
 import { Icon } from '../components/icons';
 import { computeRow } from '../utils/grading';
 import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, UserCheck, Building, FileText, Megaphone, CalendarDays, CreditCard, AlertCircle, Award, Target, UserPlus, BookOpen } from 'lucide-react';
@@ -21,10 +22,11 @@ const ALERT_ICON_MAP = {
   'finance': DollarSign,
 };
 
+// Admissions were removed from here — enrolment is the Registrar's job and
+// lives on their dashboard, not the principal's quick actions.
 const QUICK_ACTIONS = [
-  { icon: FileText, label: 'New Admission', desc: 'Enroll a new student', view: 'admissions' },
   { icon: Megaphone, label: 'Send Mass Broadcast', desc: 'SMS/Email to staff & parents', view: 'overview', action: 'broadcast' },
-  { icon: CalendarDays, label: 'Schedule a Meeting', desc: 'Staff or parent meeting', view: 'school_calendar' },
+  { icon: CalendarDays, label: 'Schedule Staff Meeting', desc: 'Alerts every teacher', action: 'staffMeeting' },
   { icon: CreditCard, label: 'Fee Structure', desc: 'Update school fees', view: 'finance' },
 ];
 
@@ -33,6 +35,7 @@ export default function Overview({ store }) {
   const fullTrend = [];
   const [alertModal, setAlertModal] = useState(null);
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
+  const [staffMeetingOpen, setStaffMeetingOpen] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ audience: 'All Parents', message: '', type: 'SMS & Email' });
 
   // Real data state for metrics
@@ -251,6 +254,12 @@ export default function Overview({ store }) {
     metrics.subjectAllocation, metrics.meanScore, metrics.attendance, metrics.staffAttendance,
   ].filter((m) => m && m.target > 0), [metrics]);
 
+  // How many students the school should have this term, vs how many it has.
+  const enrolment = useMemo(
+    () => computeEnrolmentMetrics(store.settings, totalStudents),
+    [store.settings, totalStudents]
+  );
+
   const targetsMet = trackedTargets.filter((m) => m.met).length;
   const offTrack = trackedTargets.filter((m) => !m.met).sort((a, b) => a.pct - b.pct);
   const overallProgress = trackedTargets.length
@@ -337,7 +346,18 @@ export default function Overview({ store }) {
 
       {/* Headline operating numbers */}
       <Grid cols={4}>
-        <MetricCard label="Total students" value={totalStudents} icon={<GraduationCap />} tone="primary" foot="Enrolled" />
+        <MetricCard
+          label="Students enrolled"
+          value={enrolment.expected > 0 ? `${enrolment.actual} / ${enrolment.expected}` : String(enrolment.actual)}
+          icon={<GraduationCap />}
+          tone={enrolment.status}
+          foot={
+            enrolment.expected > 0
+              ? `${enrolment.term} plan${enrolment.variance < 0 ? ` · ${Math.abs(enrolment.variance)} short` : enrolment.variance > 0 ? ` · ${enrolment.variance} over` : ' · on plan'}`
+              : 'No term target set'
+          }
+          progress={enrolment.expected > 0 ? { value: enrolment.pct, max: 100, tone: enrolment.status } : undefined}
+        />
         <MetricCard label="Teaching staff" value={totalTeachers} icon={<Users />} tone="info"
           foot={`${activeTeachers} active · ${onLeave} on leave`} />
         <MetricCard label="Total revenue" value={`KES ${revStr}`} icon={<DollarSign />} tone="success"
@@ -471,7 +491,7 @@ export default function Overview({ store }) {
           <CardHead title="Quick actions" />
           <CardBody>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {QUICK_ACTIONS.map((qa) => {
+              {QUICK_ACTIONS.filter((qa) => qa.action !== 'staffMeeting' || canCallStaffMeeting(store.user?.role || store.role)).map((qa) => {
                 const QaIcon = qa.icon;
                 return (
                   <SnButton
@@ -480,6 +500,8 @@ export default function Overview({ store }) {
                     onClick={() => {
                       if (qa.action === 'broadcast') {
                         setBroadcastModalOpen(true);
+                      } else if (qa.action === 'staffMeeting') {
+                        setStaffMeetingOpen(true);
                       } else {
                         navigate(qa.view);
                         notify(`Opening ${qa.label}`, 'info', 'Navigation');
@@ -495,6 +517,15 @@ export default function Overview({ store }) {
           </CardBody>
         </Card>
       </Grid>
+      {staffMeetingOpen && (
+        <StaffMeetingModal
+          user={store.user || { role: store.role, name: store.settings?.principal }}
+          settings={store.settings}
+          notify={notify}
+          onClose={() => setStaffMeetingOpen(false)}
+        />
+      )}
+
       {alertModal && (
         <Modal
           title="Alert Details"

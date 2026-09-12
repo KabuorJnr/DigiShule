@@ -256,117 +256,121 @@
    and progress toward it. Uses the brand gradient so it reads as the subject
    of the page rather than just another tile. */
 
+/* The headline metric reads as a page header, not a hero banner: a plain
+   white card in the same family as every other card, distinguished by scale
+   and a single hairline accent rather than by a gradient. */
 .sn-spotlight {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  background:
-    radial-gradient(120% 160% at 88% -30%, rgba(52, 211, 153, 0.45) 0%, rgba(52, 211, 153, 0) 55%),
-    radial-gradient(90% 140% at 8% 120%, rgba(6, 78, 59, 0.65) 0%, rgba(6, 78, 59, 0) 60%),
-    linear-gradient(101deg, var(--sn-primary-deep) 0%, var(--sn-primary) 52%, var(--sn-primary-light) 100%);
-  color: #fff;
+  background: var(--sn-card);
+  color: var(--sn-body);
   border-radius: var(--sn-radius);
-  box-shadow: 0 10px 24px -8px rgba(4, 78, 59, 0.55), 0 2px 6px 0 rgba(67, 89, 113, 0.12);
-  padding: 1.75rem 1.9rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 1.75rem;
-  align-items: center;
+  box-shadow: var(--sn-shadow);
+  border-top: 3px solid var(--sn-primary);
+  padding: 1.4rem 1.6rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
-/* Faint concentric rings in the corner — depth without noise. */
-.sn-spotlight::after {
-  content: '';
-  position: absolute;
-  right: -90px;
-  top: -110px;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 0 0 34px rgba(255, 255, 255, 0.05), 0 0 0 40px rgba(255, 255, 255, 0.04);
-  pointer-events: none;
-  z-index: -1;
+.sn-spotlight-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
-
-@media (max-width: 900px) {
-  .sn-spotlight { grid-template-columns: minmax(0, 1fr); padding: 1.35rem; }
-  .sn-spotlight::after { display: none; }
-}
-
 .sn-spotlight-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
+  margin: 0;
   font-size: 0.6875rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin: 0;
-  padding: 0.28rem 0.7rem;
-  border-radius: var(--sn-radius-pill);
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(2px);
+  letter-spacing: 0.1em;
+  color: var(--sn-muted);
+}
+.sn-spotlight-meta { font-size: 0.75rem; color: var(--sn-muted); }
+
+/* Number + status sit on one baseline; the number carries the emphasis. */
+.sn-spotlight-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex-wrap: wrap;
 }
 .sn-spotlight-value {
-  font-size: 3rem;
+  font-size: 2.75rem;
   font-weight: 700;
-  margin: 0.7rem 0 0;
+  margin: 0;
   line-height: 1;
   letter-spacing: -0.035em;
+  color: var(--sn-heading);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 .sn-spotlight-caption {
-  margin: 0.6rem 0 0;
+  margin: 0;
   font-size: 0.875rem;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.86);
-  max-width: 56ch;
+  color: var(--sn-body);
+  max-width: 70ch;
 }
 
-/* Right-hand panel: frosted, so the stats read as a distinct block. */
-.sn-spotlight-side {
+/* A hairline progress rule, with the target stated in words beside it. */
+.sn-spotlight-progress {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--sn-radius);
-  padding: 1rem 1.1rem;
-  backdrop-filter: blur(6px);
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+.sn-spotlight-progress .sn-progress-track { flex: 1 1 200px; height: 0.3rem; }
+.sn-spotlight-progress .sn-progress-bar { background: var(--sn-primary); box-shadow: none; }
+.sn-spotlight-readout {
+  font-size: 0.75rem;
+  color: var(--sn-muted);
+  white-space: nowrap;
+}
+.sn-spotlight-readout b { color: var(--sn-heading); font-weight: 600; }
+
+/* Supporting figures as a divided row, not a floating panel. */
+.sn-spotlight-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid var(--sn-border);
+  padding-top: 0.9rem;
+  margin-top: 0.1rem;
 }
 .sn-spotlight-stat {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.75rem;
-  font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.82);
-  padding: 0.3rem 0;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 1.25rem;
+  min-width: 0;
 }
-.sn-spotlight-stat + .sn-spotlight-stat { border-top: 1px solid rgba(255, 255, 255, 0.12); }
-.sn-spotlight-stat b { font-size: 0.9375rem; font-weight: 600; color: #fff; }
+.sn-spotlight-stat:first-child { padding-left: 0; }
+.sn-spotlight-stat + .sn-spotlight-stat { border-left: 1px solid var(--sn-border); }
+.sn-spotlight-stat span {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sn-muted);
+  white-space: nowrap;
+}
+.sn-spotlight-stat b {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+  font-variant-numeric: tabular-nums;
+}
 
-.sn-spotlight .sn-progress-track { background: rgba(255, 255, 255, 0.22); height: 0.4rem; }
-.sn-spotlight .sn-progress-bar {
-  background: linear-gradient(90deg, #A7F3D0 0%, #ffffff 100%);
-  box-shadow: 0 0 10px rgba(167, 243, 208, 0.7);
+@media (max-width: 640px) {
+  .sn-spotlight { padding: 1.15rem 1.15rem 1rem; }
+  .sn-spotlight-value { font-size: 2.25rem; }
+  .sn-spotlight-stat { padding: 0.5rem 0.9rem; }
+  .sn-spotlight-stat:first-child { padding-left: 0; }
 }
-
-/* Progress ring — the "against target" read, at a glance. */
-.sn-ring { display: flex; align-items: center; gap: 1rem; }
-.sn-ring-svg { transform: rotate(-90deg); flex: 0 0 auto; }
-.sn-ring-track { stroke: rgba(255, 255, 255, 0.22); }
-.sn-ring-bar {
-  stroke: #fff;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 700ms cubic-bezier(0.22, 1, 0.36, 1);
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
-}
-.sn-ring-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.85); margin: 0; }
-.sn-ring-value { font-size: 1.15rem; font-weight: 700; margin: 0; }
 
 /* ============================= Progress ================================= */
 

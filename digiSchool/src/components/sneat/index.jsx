@@ -225,65 +225,50 @@ export function MetricCard({
  * progress — 0–100 completion toward target
  * stats    — [{ label, value }] two or three supporting figures
  */
-export function Spotlight({ eyebrow, value, caption, progress, stats = [], target, icon, ring = true }) {
+export function Spotlight({ eyebrow, value, caption, progress, stats = [], target, icon, meta, status }) {
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
+  const met = target && pct >= 100;
+
   return (
-    <div className="sn-spotlight">
-      <div>
+    <section className="sn-spotlight">
+      <div className="sn-spotlight-head">
         <p className="sn-spotlight-eyebrow">{icon}{eyebrow}</p>
+        {meta && <span className="sn-spotlight-meta">{meta}</span>}
+      </div>
+
+      <div className="sn-spotlight-figure">
         <p className="sn-spotlight-value">{value}</p>
-        {caption && <p className="sn-spotlight-caption">{caption}</p>}
-
-        {/* The ring restates progress-to-target next to the headline number. */}
-        {ring && target && (
-          <div className="sn-ring" style={{ marginTop: '1.1rem' }}>
-            <ProgressRing pct={pct} />
-            <div>
-              <p className="sn-ring-value">{Math.round(pct)}% of target</p>
-              <p className="sn-ring-label">{target.label || 'Target'}: {target.value}</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="sn-spotlight-side">
         {target && (
-          <>
-            <div className="sn-spotlight-stat">
-              <span>{target.label || 'Target'}</span>
-              <b>{target.value}</b>
-            </div>
-            <div className="sn-progress-track" aria-label={`${Math.round(pct)}% of target`}>
-              <div className="sn-progress-bar" style={{ width: `${pct}%` }} />
-            </div>
-          </>
+          <SnBadge tone={status || (met ? 'success' : pct >= 80 ? 'warning' : 'danger')}>
+            {met ? 'On target' : `${Math.round(pct)}% of target`}
+          </SnBadge>
         )}
-        {stats.map((s) => (
-          <div className="sn-spotlight-stat" key={s.label}>
-            <span>{s.label}</span>
-            <b>{s.value}</b>
-          </div>
-        ))}
       </div>
-    </div>
-  );
-}
 
-/** Circular progress indicator used by the spotlight. */
-export function ProgressRing({ pct = 0, size = 62, stroke = 6 }) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const p = Math.max(0, Math.min(100, Number(pct) || 0));
-  return (
-    <svg className="sn-ring-svg" width={size} height={size} aria-hidden="true">
-      <circle className="sn-ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} />
-      <circle
-        className="sn-ring-bar"
-        cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke}
-        strokeDasharray={c}
-        strokeDashoffset={c - (c * p) / 100}
-      />
-    </svg>
+      {caption && <p className="sn-spotlight-caption">{caption}</p>}
+
+      {target && (
+        <div className="sn-spotlight-progress">
+          <div className="sn-progress-track" aria-label={`${Math.round(pct)}% of target`}>
+            <div className="sn-progress-bar" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="sn-spotlight-readout">
+            {target.label || 'Target'}: <b>{target.value}</b>
+          </span>
+        </div>
+      )}
+
+      {stats.length > 0 && (
+        <div className="sn-spotlight-stats">
+          {stats.map((s) => (
+            <div className="sn-spotlight-stat" key={s.label}>
+              <span>{s.label}</span>
+              <b>{s.value}</b>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
