@@ -370,6 +370,28 @@ export function Tabs({ items = [], value, onChange }) {
   );
 }
 
+/**
+ * Segmented control — two or three mutually exclusive views of the same data
+ * (by stream / by grade level). Lighter than tabs, which imply navigation.
+ */
+export function SegmentedControl({ value, onChange, options = [] }) {
+  return (
+    <div className="sn-segmented" role="group">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          className={`sn-segment ${value === o.id ? 'is-active' : ''}`}
+          aria-pressed={value === o.id}
+          onClick={() => onChange(o.id)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ── charts ──────────────────────────────────────────────────────────────── */
 
 const axisProps = {

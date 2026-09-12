@@ -65,8 +65,10 @@
 
 /* Dark mode: viewers on a dark system theme get Sneat's dark surfaces rather
    than a blinding white card grid. Tokens only — no layout changes. */
+/* Only follow the device when the user has not chosen explicitly
+   (lib/theme.js removes [data-theme] from <html> for "system"). */
 @media (prefers-color-scheme: dark) {
-  .sneat:not([data-sn-theme='light']) {
+  html:not([data-theme='light']) .sneat:not([data-sn-theme='light']) {
     --sn-bg: #232333;
     --sn-card: #2B2C40;
     --sn-heading: #E7E7F1;
@@ -78,6 +80,8 @@
     --sn-shadow-lg: 0 4px 18px 0 rgba(0, 0, 0, 0.38);
   }
 }
+/* An explicit dark choice, from the toggle or a per-page override. */
+html[data-theme='dark'] .sneat:not([data-sn-theme='light']),
 .sneat[data-sn-theme='dark'] {
   --sn-bg: #232333;
   --sn-card: #2B2C40;
@@ -552,6 +556,36 @@
 .sn-tab.is-active .sn-tab-count {
   background: var(--sn-primary-soft);
   color: var(--sn-primary);
+}
+
+/* ========================= Segmented control ============================ */
+
+.sn-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--sn-radius-sm);
+  background: var(--sn-track);
+}
+.sn-segment {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sn-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms, color 150ms;
+}
+.sn-segment:hover { color: var(--sn-primary); }
+.sn-segment.is-active {
+  background: var(--sn-card);
+  color: var(--sn-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(67, 89, 113, 0.14);
 }
 
 /* ============================ Divider / misc ============================ */

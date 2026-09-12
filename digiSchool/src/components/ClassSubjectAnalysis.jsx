@@ -12,6 +12,10 @@ import {
   LineChart,
   Line
 } from 'recharts';
+import {
+  Card, CardHead, CardBody, Grid, MetricCard, SegmentedControl,
+  SnButton, SnBadge,
+} from './sneat';
 import { 
   BarChart3, 
   Layers, 
@@ -375,76 +379,39 @@ export default function ClassSubjectAnalysis({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, color: '#1e293b', fontFamily: "'Poppins', sans-serif" }}>
-      
+    <div className="sneat" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sn-gap)', background: 'transparent' }}>
+
       {/* ── 1. HEADER & GLOBAL CONTROLS ── */}
-      <div style={{ 
-        background: '#ffffff', 
-        border: '1px solid #cbd5e1', 
-        borderRadius: 10, 
-        padding: '18px 20px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)' 
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 8, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Layers size={18} color="#0284c7" />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
-                  Class Performance Analysis by Subject
-                </h3>
-                <div style={{ fontSize: 12, color: '#64748b' }}>
-                  Group results by class or stream and choose which curriculum subjects to analyze
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            {/* Group mode selector */}
-            <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
-              <button 
-                className={`btn btn-sm ${groupMode === 'stream' ? 'btn-primary' : ''}`}
-                onClick={() => setGroupMode('stream')}
-                style={{ fontSize: 12, padding: '4px 10px', fontWeight: 600 }}
-              >
-                By Stream
-              </button>
-              <button 
-                className={`btn btn-sm ${groupMode === 'level' ? 'btn-primary' : ''}`}
-                onClick={() => setGroupMode('level')}
-                style={{ fontSize: 12, padding: '4px 10px', fontWeight: 600 }}
-              >
-                By Grade Level
-              </button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Sort:</span>
-              <select 
-                className="select" 
-                value={sortBy} 
+      <Card>
+        <CardHead
+          title="Class performance by subject"
+          subtitle="Group by class or stream, and choose which subjects to analyse"
+          action={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <SegmentedControl
+                value={groupMode}
+                onChange={setGroupMode}
+                options={[
+                  { id: 'stream', label: 'By stream' },
+                  { id: 'level', label: 'By grade level' },
+                ]}
+              />
+              <select
+                className="select"
+                value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                style={{ height: 32, fontSize: 12, padding: '0 8px', width: 140 }}
+                style={{ height: 34, fontSize: 13, padding: '0 10px' }}
               >
-                <option value="mean_desc">Highest Mean</option>
-                <option value="mean_asc">Lowest Mean</option>
-                <option value="name">Class Name</option>
+                <option value="mean_desc">Highest mean</option>
+                <option value="mean_asc">Lowest mean</option>
+                <option value="name">Class name</option>
               </select>
+              <SnButton variant="ghost" onClick={handleExportExcel}><Download size={14} /> Excel</SnButton>
+              <SnButton variant="outline" onClick={handleExportPDF}><Printer size={14} /> PDF</SnButton>
             </div>
-
-            {/* Export buttons */}
-            <button className="btn btn-sm" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Download size={14} /> Excel
-            </button>
-            <button className="btn btn-sm" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Printer size={14} /> PDF
-            </button>
-          </div>
-        </div>
+          }
+        />
+        <CardBody>
 
         {/* ── 2. SUBJECT SELECTION BAR ("One can choose the subjects to analyze") ── */}
         <div style={{ 
@@ -578,62 +545,43 @@ export default function ClassSubjectAnalysis({
             })}
           </div>
         </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* ── 3. TOP KPI CARDS FOR SELECTED SUBJECTS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Top Class / Stream</span>
-            <Award size={16} color="#d97706" />
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#1e3a8a', marginTop: 4 }}>
-            {overallMetrics.topClass ? overallMetrics.topClass.name : '—'}
-          </div>
-          <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginTop: 2 }}>
-            {overallMetrics.topClass ? `${overallMetrics.topClass.classMean}% (${overallMetrics.topClass.perfLevel})` : 'No data'}
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Selected Subjects Mean</span>
-            <TrendingUp size={16} color="#0284c7" />
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
-            {overallMetrics.mean}%
-          </div>
-          <div style={{ fontSize: 12, color: '#0284c7', fontWeight: 700, marginTop: 2 }}>
-            {overallMetrics.points} CBC Points · {percentageToCbcGrade(overallMetrics.mean, gradeBoundaries)}
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Performance Spread</span>
-            <BarChart3 size={16} color="#8b5cf6" />
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
-            {overallMetrics.gap}% Gap
-          </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            Between Top & Lowest Class
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Total Cohort Evaluated</span>
-            <BookOpen size={16} color="#10b981" />
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
-            {overallMetrics.totalStudents || 0} Students
-          </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            Across {classAnalysisData.length} Classes
-          </div>
-        </div>
-      </div>
+      <Grid cols={4}>
+        <MetricCard
+          label="Top class / stream"
+          value={overallMetrics.topClass ? overallMetrics.topClass.name : '—'}
+          icon={<Award />}
+          tone="success"
+          foot={overallMetrics.topClass
+            ? `${overallMetrics.topClass.classMean}% · ${overallMetrics.topClass.perfLevel}`
+            : 'No data'}
+        />
+        <MetricCard
+          label="Selected subjects mean"
+          value={`${overallMetrics.mean}%`}
+          icon={<TrendingUp />}
+          tone="primary"
+          foot={`${overallMetrics.points} CBC points · ${percentageToCbcGrade(overallMetrics.mean, gradeBoundaries)}`}
+          progress={{ value: overallMetrics.mean, max: 100 }}
+        />
+        <MetricCard
+          label="Performance spread"
+          value={`${overallMetrics.gap}%`}
+          icon={<BarChart3 />}
+          tone={overallMetrics.gap > 20 ? 'danger' : overallMetrics.gap > 10 ? 'warning' : 'success'}
+          foot="Gap between top and lowest class"
+        />
+        <MetricCard
+          label="Cohort evaluated"
+          value={overallMetrics.totalStudents || 0}
+          icon={<BookOpen />}
+          tone="info"
+          foot={`Across ${classAnalysisData.length} class${classAnalysisData.length === 1 ? '' : 'es'}`}
+        />
+      </Grid>
 
       {/* ── 4. CLASS COMPARISON VISUAL CHARTS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
@@ -711,20 +659,12 @@ export default function ClassSubjectAnalysis({
       </div>
 
       {/* ── 5. DETAILED CLASS COMPARISON TABLE ── */}
-      <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
-              Class Performance Leaderboard & Breakdown
-            </span>
-            <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>
-              (Evaluating {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''})
-            </span>
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#0284c7' }}>
-            Overall School Mean: <strong>{overallMetrics.mean}%</strong>
-          </div>
-        </div>
+      <Card>
+        <CardHead
+          title="Class leaderboard & breakdown"
+          subtitle={`Evaluating ${selectedSubjects.length} subject${selectedSubjects.length === 1 ? '' : 's'}`}
+          action={<SnBadge tone="primary">School mean {overallMetrics.mean}%</SnBadge>}
+        />
 
         <div style={{ overflowX: 'auto' }}>
           <table className="table" style={{ width: '100%', fontSize: 12 }}>
@@ -878,7 +818,7 @@ export default function ClassSubjectAnalysis({
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
     </div>
   );

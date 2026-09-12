@@ -1065,14 +1065,27 @@ export default function MeritListModule({
   };
 
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 18, marginBottom: 20 }}>
-      
+    // `.sneat` scope so this module inherits the design tokens — and therefore
+    // dark mode — rather than carrying its own hardcoded white.
+    <div
+      className="sneat"
+      style={{
+        background: 'var(--sn-card)',
+        borderRadius: 'var(--sn-radius)',
+        boxShadow: 'var(--sn-shadow)',
+        color: 'var(--sn-body)',
+        padding: 18,
+        marginBottom: 20,
+      }}
+    >
+
       {/* ── EXECUTIVE APPROVAL & PUBLICATION BANNER ── */}
-      <div 
-        style={{ 
-          background: isPublished ? '#f0fdf4' : '#fffbeb',
-          border: `1px solid ${isPublished ? '#bbf7d0' : '#fde68a'}`,
-          borderRadius: 8,
+      <div
+        style={{
+          background: isPublished ? 'var(--sn-success-soft)' : 'var(--sn-warning-soft)',
+          border: '1px solid transparent',
+          borderLeft: `3px solid ${isPublished ? 'var(--sn-success)' : 'var(--sn-warning)'}`,
+          borderRadius: 'var(--sn-radius-sm)',
           padding: '12px 16px',
           marginBottom: 16,
           display: 'flex',

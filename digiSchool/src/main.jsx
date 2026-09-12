@@ -1,3 +1,4 @@
+import { initTheme } from './lib/theme';
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/inter/400.css'
@@ -79,6 +80,8 @@ if (import.meta.env.VITE_POSTHOG_KEY) {
 }
 
 const queryClient = new QueryClient();
+
+initTheme();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

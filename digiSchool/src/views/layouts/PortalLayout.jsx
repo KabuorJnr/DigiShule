@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import '../../App.css';
+import ThemeToggle from '../../components/ThemeToggle';
 import { supabase, signOutAll } from '../../lib/supabaseClient';
 import SelectProfile from '../SelectProfile';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
@@ -1004,6 +1005,10 @@ export default function PortalLayout() {
             </div>
           </div>
           <div className="topbar-actions">
+            {/* Light / dark / follow-device. Persists per browser. */}
+            <div className="hide-mobile" style={{ marginRight: 12 }}>
+              <ThemeToggle compact />
+            </div>
             {activeRoleOverride && (
               <button 
                 className="btn btn-secondary" 
