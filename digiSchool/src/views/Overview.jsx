@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
+import { expandClassesWithStreams, SUBJECTS } from '../data/seed';
+import { computeTargetMetrics } from '../lib/targets';
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  PieChart, Pie, Cell,
-} from 'recharts';
-import { KpiCard, Sparkline, Badge } from '../components/widgets';
+  SneatPage, Grid, Card, CardHead, CardBody, MetricCard, TargetCard, Spotlight,
+  ChartCard, SnLine, SnDonut, RankList, ProgressMetric, SnBadge, SnButton, ClassMeanTable,
+  SnEmpty, SNEAT,
+} from '../components/sneat';
 import Modal from '../components/Modal';
 import { Icon } from '../components/icons';
 import { computeRow } from '../utils/grading';
-import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, UserCheck, Building, FileText, Megaphone, CalendarDays, CreditCard, AlertCircle, Award } from 'lucide-react';
+import { GraduationCap, Users, CheckCircle2, DollarSign, TrendingDown, Clock, UserCheck, Building, FileText, Megaphone, CalendarDays, CreditCard, AlertCircle, Award, Target, UserPlus, BookOpen } from 'lucide-react';
 
 
 const ALERT_ICON_MAP = {
@@ -161,10 +163,10 @@ export default function Overview({ store }) {
     const assessed = studentAverages.length;
     const mean = assessed ? studentAverages.reduce((a, b) => a + b, 0) / assessed : 0;
     const bands = [
-      { key: 'Exceeding', color: '#047857', count: 0 },
-      { key: 'Meeting', color: '#0EA5E9', count: 0 },
-      { key: 'Approaching', color: '#F59E0B', count: 0 },
-      { key: 'Below', color: '#EF4444', count: 0 },
+      { key: 'Exceeding', tone: 'success', count: 0 },
+      { key: 'Meeting', tone: 'primary', count: 0 },
+      { key: 'Approaching', tone: 'warning', count: 0 },
+      { key: 'Below', tone: 'danger', count: 0 },
     ];
     studentAverages.forEach(avg => {
       if (avg >= 75) bands[0].count++;
@@ -174,6 +176,86 @@ export default function Overview({ store }) {
     });
     return { assessed, mean, bands };
   }, [activeStudents]);
+
+  /**
+   * Mean per class — the unit mean targets are actually set against. A
+   * school-wide mean hides that Form 1 and Form 4 are different problems.
+   */
+  const classMeanRows = useMemo(() => {
+    const rows = {};
+    activeStudents.forEach((st) => {
+      const subjPercents = [];
+      Object.keys(st.scores || {}).forEach((sub) => {
+        const row = computeRow(st.scores[sub]);
+        if (row.average > 0) {
+          subjPercents.push(row.average <= 4 ? Math.round(row.average * 25) : row.average);
+        }
+      });
+      if (!subjPercents.length) return;
+      const avg = subjPercents.reduce((a, b) => a + b, 0) / subjPercents.length;
+      const k = st.class || 'Unassigned';
+      rows[k] ||= { name: k, total: 0, students: 0 };
+      rows[k].total += avg;
+      rows[k].students += 1;
+    });
+    return Object.values(rows)
+      .map((r) => ({ name: r.name, mean: r.students ? r.total / r.students : 0, students: r.students }))
+      .sort((a, b) => b.mean - a.mean);
+  }, [activeStudents]);
+
+  // ── Targets ──────────────────────────────────────────────────────────────
+  // Every goal the school set in Settings → Targets, resolved against live
+  // data. This is what the principal's dashboard is accountable to.
+  const schoolClasses = useMemo(
+    () => expandClassesWithStreams(store.settings?.classes || []),
+    [store.settings]
+  );
+
+  const admittedThisYear = useMemo(() => {
+    const year = new Date().getFullYear();
+    const fromStudents = (store.students || []).filter((s) => {
+      const d = s.admission_date || s.created_at || s.date_joined;
+      return d && new Date(d).getFullYear() === year;
+    }).length;
+    const fromAdmissions = dbAdmissions.filter((a) => {
+      const d = a.date || a.created_at;
+      return d && new Date(d).getFullYear() === year;
+    }).length;
+    return Math.max(fromStudents, fromAdmissions);
+  }, [store.students, dbAdmissions]);
+
+  const staffPresentPct = activeStaffList.length
+    ? (activeStaffList.filter((s) => ['Present', 'Active', 'active'].includes(s.status)).length / activeStaffList.length) * 100
+    : 0;
+
+  const metrics = useMemo(() => computeTargetMetrics({
+    settings: store.settings,
+    students: activeStudents,
+    teachers: (store.teachers && store.teachers.length ? store.teachers : dbStaff),
+    classes: schoolClasses,
+    timetables: store.timetables || {},
+    subjects: store.settings?.subjects?.length ? store.settings.subjects : SUBJECTS,
+    collected: totalRevenue,
+    billed: totalInvoiced,
+    admittedThisYear,
+    classMeans: classMeanRows,
+    attendancePct: attRate !== null ? Number(attRate) : 0,
+    staffPresentPct,
+  }), [store.settings, store.teachers, store.timetables, activeStudents, dbStaff,
+       schoolClasses, totalRevenue, totalInvoiced, admittedThisYear, classMeanRows,
+       attRate, staffPresentPct]);
+
+  // The eight targets shown on this dashboard, and how many are being met.
+  const trackedTargets = useMemo(() => [
+    metrics.fees, metrics.admissions, metrics.timetables, metrics.classTeachers,
+    metrics.subjectAllocation, metrics.meanScore, metrics.attendance, metrics.staffAttendance,
+  ].filter((m) => m && m.target > 0), [metrics]);
+
+  const targetsMet = trackedTargets.filter((m) => m.met).length;
+  const offTrack = trackedTargets.filter((m) => !m.met).sort((a, b) => a.pct - b.pct);
+  const overallProgress = trackedTargets.length
+    ? trackedTargets.reduce((sum, m) => sum + m.pct, 0) / trackedTargets.length
+    : 0;
 
   const displayClassDist = totalStudents > 0 ? classDistData : [];
   const displayAlerts = [];
@@ -187,205 +269,232 @@ export default function Overview({ store }) {
   }, [dbEvents]);
 
   return (
-    <div>
-      <h2 style={{ fontSize: 22, marginBottom: 4 }}>Overview</h2>
-      <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>
-        Welcome back, {store.settings.principal}. Here's what's happening today.
-      </p>
+    <SneatPage
+      flush
+      title="School overview"
+      subtitle={`Welcome back, ${store.settings.principal || 'Principal'}. Here's where the school stands against its targets.`}
+      actions={
+        <>
+          <SnButton variant="outline" onClick={() => setBroadcastModalOpen(true)}>
+            <Megaphone size={15} /> Broadcast
+          </SnButton>
+          <SnButton variant="primary" onClick={() => navigate('settings')}>
+            <Target size={15} /> Set targets
+          </SnButton>
+        </>
+      }
+    >
+      {/* THE metric: how much of the school's target set is being met. */}
+      <Spotlight
+        icon={<Target size={13} />}
+        eyebrow={`School targets — ${store.settings.currentTerm || 'this term'}`}
+        value={`${targetsMet} / ${trackedTargets.length}`}
+        caption={
+          trackedTargets.length === 0
+            ? 'No targets configured yet. Set them in Settings → Targets.'
+            : targetsMet === trackedTargets.length
+              ? 'Every target the school set is currently being met.'
+              : `${trackedTargets.length - targetsMet} target${trackedTargets.length - targetsMet === 1 ? '' : 's'} still short — ` +
+                `${offTrack.map((m) => m.label.toLowerCase()).slice(0, 3).join(', ')}` +
+                `${offTrack.length > 3 ? ` and ${offTrack.length - 3} more` : ''}.`
+        }
+        progress={overallProgress}
+        target={{ label: 'Targets met', value: `${targetsMet} of ${trackedTargets.length}` }}
+        stats={[
+          { label: 'Students enrolled', value: totalStudents },
+          { label: 'Fee collection', value: `${metrics.fees.current.toFixed(0)}%` },
+          { label: "Today's attendance", value: attRate !== null ? `${attRate}%` : '—' },
+        ]}
+      />
 
-      {/* KPI Row 1 */}
-      <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <KpiCard iconComponent={<GraduationCap size={20} />} label="Total Students" value={totalStudents.toString()} sub="Enrolled">
-          <Sparkline data={sparkData} color="#047857" />
-        </KpiCard>
-        <KpiCard iconComponent={<Users size={20} />} label="Teaching Staff" value={totalTeachers.toString()} sub={`${activeTeachers} active, ${onLeave} on leave`} />
-        <KpiCard iconComponent={<CheckCircle2 size={20} />} label="Today's Attendance" value={attRate !== null ? `${attRate}%` : '—'} accent="#047857" sub={attRate !== null ? `${presentToday}/${todaysAtt.length} present` : 'No records today'} />
-        <div style={{ cursor: 'pointer' }} onClick={() => navigate('finance', { tab: 'payments' })} title="Click to open Payments & Collections">
-          <KpiCard iconComponent={<DollarSign size={20} />} label="Total Revenue" value={`KES ${revStr}`} accent="#0EA5E9" sub="Click to view payments →" />
-        </div>
-      </div>
+      {/* Every target the school set, each against its own goal. */}
+      <Card>
+        <CardHead
+          title="Targets"
+          subtitle="Set in Settings → Targets. Each tile shows progress toward the school's own goal."
+          action={<SnButton variant="ghost" onClick={() => navigate('settings')}>Edit targets</SnButton>}
+        />
+        <CardBody>
+          <Grid cols={4}>
+            <TargetCard metric={metrics.fees} icon={<DollarSign />}
+              onClick={() => navigate('finance')} />
+            <TargetCard metric={metrics.admissions} icon={<UserPlus />}
+              onClick={() => navigate('admissions')} />
+            <TargetCard metric={metrics.timetables} icon={<CalendarDays />}
+              onClick={() => navigate('timetable')} />
+            <TargetCard metric={metrics.classTeachers} icon={<UserCheck />}
+              onClick={() => navigate('class_teachers')} />
+            <TargetCard metric={metrics.subjectAllocation} icon={<BookOpen />}
+              onClick={() => navigate('class_teachers')} />
+            <TargetCard metric={metrics.meanScore} icon={<Award />}
+              onClick={() => navigate('gradebook')} />
+            <TargetCard metric={metrics.attendance} icon={<CheckCircle2 />} />
+            <TargetCard metric={metrics.staffAttendance} icon={<Users />}
+              onClick={() => navigate('staff_attendance')} />
+          </Grid>
+        </CardBody>
+      </Card>
 
-      {/* KPI Row 2 */}
-      <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <div style={{ cursor: 'pointer' }} onClick={() => navigate('finance', { tab: 'defaulters' })} title="Click to open Defaulters List">
-          <KpiCard iconComponent={<TrendingDown size={20} />} label="Outstanding Fees" value={`KES ${outStr}`} sub={outstandingFees > 0 ? <Badge color="amber">View Defaulters →</Badge> : 'All clear'} />
-        </div>
-        <KpiCard iconComponent={<Clock size={20} />} label="Pending Applications" value={pendingApps.toString()} sub="Admissions portal" />
-        <KpiCard iconComponent={<UserCheck size={20} />} label="Gender Ratio" value={`${malePct}% M • ${femalePct}% F`} sub={totalStudents > 0 ? "Actual Ratio" : "N/A"} />
-        <KpiCard iconComponent={<Building size={20} />} label="Boarding / Day" value={`${boardingCount} / ${dayCount}`} sub={totalStudents > 0 ? "Enrolled Type" : "N/A"} />
-      </div>
+      {/* Headline operating numbers */}
+      <Grid cols={4}>
+        <MetricCard label="Total students" value={totalStudents} icon={<GraduationCap />} tone="primary" foot="Enrolled" />
+        <MetricCard label="Teaching staff" value={totalTeachers} icon={<Users />} tone="info"
+          foot={`${activeTeachers} active · ${onLeave} on leave`} />
+        <MetricCard label="Total revenue" value={`KES ${revStr}`} icon={<DollarSign />} tone="success"
+          foot="Collected to date" onClick={() => navigate('finance', { tab: 'payments' })} />
+        <MetricCard label="Outstanding fees" value={`KES ${outStr}`} icon={<TrendingDown />}
+          tone={outstandingFees > 0 ? 'warning' : 'success'}
+          foot={outstandingFees > 0 ? 'View defaulters →' : 'All clear'}
+          onClick={() => navigate('finance', { tab: 'defaulters' })} />
+      </Grid>
 
-      {/* Charts */}
-      <div className="grid grid-2" style={{ marginBottom: 24 }}>
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Monthly Revenue Trend</h3>
-          </div>
+      <Grid cols={4}>
+        <MetricCard label="Pending applications" value={pendingApps} icon={<Clock />}
+          tone={pendingApps > 0 ? 'warning' : 'success'} foot="Admissions portal" />
+        <MetricCard label="Gender ratio" value={`${malePct}% M · ${femalePct}% F`} icon={<UserCheck />}
+          tone="secondary" foot={totalStudents > 0 ? 'Active register' : 'N/A'} />
+        <MetricCard label="Boarding / day" value={`${boardingCount} / ${dayCount}`} icon={<Building />}
+          tone="secondary" foot={totalStudents > 0 ? 'Enrolment type' : 'N/A'} />
+        <MetricCard label="Classes" value={schoolClasses.length} icon={<CalendarDays />} tone="primary"
+          foot={`${metrics.raw.classesWithTimetable} with a timetable`} />
+      </Grid>
+
+      {/* Trends */}
+      <Grid cols="8-4">
+        <ChartCard title="Monthly revenue" subtitle="Payments received, last 12 months" height={300}>
           {displayTrend.length > 0 ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={displayTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip formatter={(v) => `KES ${v.toLocaleString()}`} />
-                <Legend />
-                <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#0078D4" strokeWidth={2} dot={true} />
-              </LineChart>
-            </ResponsiveContainer>
+            <SnLine data={displayTrend} xKey="month" series={[{ key: 'revenue', name: 'Revenue' }]} />
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: '#64748b', fontSize: 14 }}>
-              No revenue data available
-            </div>
+            <SnLine data={[{ month: 'No data', revenue: 0 }]} xKey="month" series={[{ key: 'revenue', name: 'Revenue' }]} />
           )}
-        </div>
+        </ChartCard>
 
-        <div className="card card-pad">
-          <h3 className="section-title">Class Distribution</h3>
+        <ChartCard title="Class distribution" subtitle="Students per class" height={300} raw>
           {displayClassDist.length > 0 ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie data={displayClassDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                  {displayClassDist.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#0078D4', '#0EA5E9', '#107C10', '#FFB900'][index % 4]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <SnDonut data={displayClassDist} centerValue={String(totalStudents)} centerLabel="students" />
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: '#64748b', fontSize: 14 }}>
-              No students enrolled
-            </div>
+            <SnDonut data={[{ name: 'No students', value: 1 }]} centerValue="0" centerLabel="students" />
           )}
-        </div>
-      </div>
+        </ChartCard>
+      </Grid>
 
-      {/* ── Academic Performance — key school indicator ── */}
-      <div className="card card-pad" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Award size={18} color="#7C3AED" /> Academic Performance
-          </h3>
-          <button className="btn btn-sm" onClick={() => navigate('gradebook')}>Open Gradebook →</button>
-        </div>
+      {/* Academic performance */}
+      <Card>
+        <CardHead
+          title="Mean score by class"
+          subtitle={`Each class against its own ${metrics.classMeans.year} target — ${metrics.classMeans.met} of ${metrics.classMeans.total} meeting it`}
+          action={<SnButton variant="ghost" onClick={() => navigate('gradebook')}>Open gradebook</SnButton>}
+        />
+        <CardBody>
+          {metrics.classMeans.total > 0 ? (
+            <Grid cols={2}>
+              <ClassMeanTable rows={metrics.classMeans.rows} />
 
-        {academic.assessed > 0 ? (
-          <div className="grid grid-2" style={{ gap: 24, alignItems: 'center' }}>
-            {/* School mean */}
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 40, fontWeight: 800, color: '#7C3AED', lineHeight: 1 }}>{academic.mean.toFixed(1)}%</div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>School Mean Score</div>
-              </div>
-              <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 24 }}>
-                <div style={{ fontSize: 22, fontWeight: 700 }}>{academic.assessed}</div>
-                <div className="muted" style={{ fontSize: 12 }}>Students assessed</div>
-                <div style={{ fontSize: 13, marginTop: 8 }}>
-                  {academic.mean >= 75 ? 'Exceeding Expectations' : academic.mean >= 50 ? 'Meeting Expectations' : academic.mean >= 30 ? 'Approaching Expectations' : 'Below Expectations'}
+              <div>
+                <div className="sn-muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                  Performance distribution · {academic.assessed} student{academic.assessed === 1 ? '' : 's'} assessed
                 </div>
-              </div>
-            </div>
+                {academic.bands.map((b) => {
+                  const pct = academic.assessed ? Math.round((b.count / academic.assessed) * 100) : 0;
+                  return (
+                    <div key={b.key} style={{ marginBottom: 10 }}>
+                      <ProgressMetric
+                        label={b.key}
+                        value={pct}
+                        max={100}
+                        valueLabel={`${b.count} (${pct}%)`}
+                        tone={b.tone}
+                      />
+                    </div>
+                  );
+                })}
 
-            {/* Grade band distribution */}
-            <div>
-              <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Performance Distribution</div>
-              {academic.bands.map(b => {
-                const pct = academic.assessed ? Math.round((b.count / academic.assessed) * 100) : 0;
-                return (
-                  <div key={b.key} style={{ marginBottom: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
-                      <span>{b.key}</span>
-                      <span className="muted">{b.count} ({pct}%)</span>
-                    </div>
-                    <div style={{ height: 8, background: 'var(--border-light, #eef2f7)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: b.color, borderRadius: 4 }} />
-                    </div>
+                {metrics.classMeans.worst && !metrics.classMeans.worst.met && (
+                  <div style={{ marginTop: 16, fontSize: 13 }}>
+                    <SnBadge tone="danger">Furthest behind</SnBadge>{' '}
+                    <span className="sn-strong">{metrics.classMeans.worst.name}</span>{' '}
+                    <span className="sn-muted">
+                      {metrics.classMeans.worst.mean.toFixed(1)}% vs {metrics.classMeans.worst.target}% target
+                      ({metrics.classMeans.worst.gap.toFixed(1)})
+                    </span>
                   </div>
+                )}
+              </div>
+            </Grid>
+          ) : (
+            <SnEmpty icon={<Award />} title="No graded assessments yet"
+              message="Class means appear here once teachers enter scores." />
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Attention + events + actions */}
+      <Grid cols={3}>
+        <Card>
+          <CardHead title="Needs attention" subtitle="Targets currently short of goal" />
+          <CardBody>
+            <RankList
+              empty={<SnEmpty icon={<CheckCircle2 />} title="Everything on target"
+                message="No target is currently behind." />}
+              items={offTrack.slice(0, 5).map((m) => ({
+                id: m.label,
+                title: m.label,
+                sub: m.caption || `${m.current.toFixed(0)}${m.unit === '%' ? '%' : ''} of ${m.target}${m.unit === '%' ? '%' : ''}`,
+                value: `${Math.round(m.pct)}%`,
+                tone: m.status,
+                icon: <AlertCircle />,
+                progress: m.pct,
+              }))}
+            />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHead title="Upcoming events" subtitle="From the school calendar"
+            action={<SnButton variant="ghost" onClick={() => navigate('school_calendar')}>Calendar</SnButton>} />
+          <CardBody>
+            <RankList
+              empty={<SnEmpty icon={<CalendarDays />} title="No upcoming events"
+                message="Scheduled events will appear here." />}
+              items={displayEvents.map((e) => ({
+                id: e.id,
+                title: e.title,
+                sub: `${e.date}${e.desc ? ` · ${e.desc}` : ''}`,
+                icon: <CalendarDays />,
+                tone: 'info',
+              }))}
+            />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHead title="Quick actions" />
+          <CardBody>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {QUICK_ACTIONS.map((qa) => {
+                const QaIcon = qa.icon;
+                return (
+                  <SnButton
+                    key={qa.label}
+                    variant="ghost"
+                    onClick={() => {
+                      if (qa.action === 'broadcast') {
+                        setBroadcastModalOpen(true);
+                      } else {
+                        navigate(qa.view);
+                        notify(`Opening ${qa.label}`, 'info', 'Navigation');
+                      }
+                    }}
+                    style={{ justifyContent: 'flex-start', width: '100%' }}
+                  >
+                    <QaIcon size={16} /> {qa.label}
+                  </SnButton>
                 );
               })}
             </div>
-          </div>
-        ) : (
-          <div style={{ padding: '24px 0', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
-            No graded assessments recorded yet. Performance appears once teachers enter scores.
-          </div>
-        )}
-      </div>
-
-      {/* Alerts + Quick actions */}
-      <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="card card-pad">
-          <h3 className="section-title">Recent Activity & Alerts</h3>
-          {displayAlerts.length > 0 ? displayAlerts.map((a) => {
-            const AlertIcon = ALERT_ICON_MAP[a.icon] || AlertCircle;
-            return (
-              <div key={a.id} className="alert-row">
-                <div className="alert-icon"><AlertIcon size={16} /></div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{a.message}</div>
-                  <div className="muted" style={{ fontSize: 11 }}>{a.time}</div>
-                </div>
-              </div>
-            );
-          }) : (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
-              No recent activity to display.
-            </div>
-          )}
-        </div>
-
-        <div className="card card-pad">
-          <h3 className="section-title">Upcoming Events</h3>
-          {displayEvents.length > 0 ? displayEvents.map((e) => (
-            <div key={e.id} className="alert-row">
-              <div className="alert-icon" style={{ background: '#e8f0fe', color: '#0078D4' }}><CalendarDays size={16} /></div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{e.title}</div>
-                <div className="muted" style={{ fontSize: 11 }}>{e.date}  |  {e.desc}</div>
-              </div>
-            </div>
-          )) : (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
-              No upcoming events scheduled.
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h3 className="section-title">Quick Actions</h3>
-          <div className="list-flex">
-            {QUICK_ACTIONS.map((qa) => {
-              const QaIcon = qa.icon;
-              return (
-                <button
-                  key={qa.label}
-                  className="qa-tile"
-                  onClick={() => {
-                    if (qa.action === 'broadcast') {
-                      setBroadcastModalOpen(true);
-                    } else {
-                      navigate(qa.view);
-                      notify(`Opening ${qa.label}`, 'info', 'Navigation');
-                    }
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span className="qa-icon" style={{ display: 'flex', alignItems: 'center', color: '#0078D4' }}><QaIcon size={20} /></span>
-                    <div style={{ textAlign: 'left' }}>
-                      <div className="qa-label">{qa.label}</div>
-                      <div className="qa-desc">{qa.desc}</div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-
-
+          </CardBody>
+        </Card>
+      </Grid>
       {alertModal && (
         <Modal
           title="Alert Details"
@@ -456,7 +565,7 @@ export default function Overview({ store }) {
           </div>
         </Modal>
       )}
-    </div>
+    </SneatPage>
   );
 }
 

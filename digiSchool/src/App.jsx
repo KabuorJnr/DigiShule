@@ -3,6 +3,8 @@ import { isNative } from './lib/native';
 import { useIsMobile } from './mobile/useIsMobile';
 import MobileLogin from './mobile/MobileLogin';
 import DevPreview from './mobile/DevPreview';
+import SneatDevPreview from './views/SneatDevPreview';
+import DashboardDevPreview from './views/DashboardDevPreview';
 import LandingPage from './views/LandingPage';
 import BookDemo from './views/BookDemo';
 import VerifyReport from './views/VerifyReport';
@@ -20,6 +22,7 @@ import EduOneDashboard from './views/EduOneDashboard';
 
 import RegistrarLayout from './views/registrar/RegistrarLayout';
 import StudentList from './views/registrar/StudentList';
+import RegistrarDashboard from './views/registrar/RegistrarDashboard';
 import EnrollStudent from './views/registrar/EnrollStudent';
 import Transfers from './views/registrar/Transfers';
 
@@ -99,6 +102,8 @@ export default function App() {
       <Route path="/school/:school_id" element={<PublicSchoolLanding />} />
       <Route path="/login" element={<LoginRoute />} />
       {import.meta.env.DEV && <Route path="/m-dev" element={<DevPreview />} />}
+      {import.meta.env.DEV && <Route path="/sneat-dev" element={<SneatDevPreview />} />}
+      {import.meta.env.DEV && <Route path="/dash-dev/*" element={<DashboardDevPreview />} />}
       <Route path="/apply" element={<PublicApplication />} />
       <Route path="/signup" element={<SignupWizard />} />
       <Route path="/parent-signup" element={<ParentSignupWizard />} />
@@ -116,7 +121,8 @@ export default function App() {
         
         {/* Refactored Layouts */}
         <Route path="registrar" element={<RegistrarLayout />}>
-          <Route index element={<StudentList />} />
+          <Route index element={<RegistrarDashboard />} />
+          <Route path="students" element={<StudentList />} />
           <Route path="enroll" element={<EnrollStudent />} />
           <Route path="transfers" element={<Transfers />} />
         </Route>

@@ -1,11 +1,12 @@
 import { Outlet, NavLink, useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../components/widgets';
-import { Users, UserPlus, FileText } from 'lucide-react';
+import { Users, UserPlus, FileText, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 
 const TABS = [
-  { id: '', label: 'Student Register', icon: Users },
+  { id: '', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'students', label: 'Student Register', icon: Users },
   { id: 'enroll', label: 'New Enrolment', icon: UserPlus },
   { id: 'transfers', label: 'Transfers & Exits', icon: FileText },
 ];
@@ -32,34 +33,42 @@ export default function RegistrarLayout() {
   const female = activeStudents.filter(s => s.gender === 'Female').length;
   const flagged = activeStudents.filter(s => s.flagged).length;
 
+  // The dashboard route renders its own header and its own metric tiles, so
+  // the layout's header + KPI bar would duplicate them.
+  const isDashboard = /^\/portal\/registrar\/?$/.test(location.pathname);
+
   return (
     <div>
-      <PageHeader
-        title="Registrar Office"
-        subtitle="Student registration, enrolment, and records management"
-        actions={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => navigate('enroll')}>
-              <UserPlus size={15} /> New Enrolment
-            </button>
-          </div>
-        }
-      />
+      {!isDashboard && (
+        <>
+          <PageHeader
+            title="Registrar Office"
+            subtitle="Student registration, enrolment, and records management"
+            actions={
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => navigate('enroll')}>
+                  <UserPlus size={15} /> New Enrolment
+                </button>
+              </div>
+            }
+          />
 
-      {/* KPI Bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
-        {[
-          { label: 'Total Students', value: total_active, color: '#047857' },
-          { label: 'Male', value: male, color: '#047857' },
-          { label: 'Female', value: female, color: '#047857' },
-          { label: 'Flagged', value: flagged, color: '#D13438' },
-        ].map(k => (
-          <div key={k.label} className="card card-pad" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#0F172A' }}>{k.value}</div>
-            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{k.label}</div>
+          {/* KPI Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+            {[
+              { label: 'Total Students', value: total_active, color: '#047857' },
+              { label: 'Male', value: male, color: '#047857' },
+              { label: 'Female', value: female, color: '#047857' },
+              { label: 'Flagged', value: flagged, color: '#D13438' },
+            ].map(k => (
+              <div key={k.label} className="card card-pad" style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#0F172A' }}>{k.value}</div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{k.label}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* Tab Content Area */}
       <Outlet context={context} />

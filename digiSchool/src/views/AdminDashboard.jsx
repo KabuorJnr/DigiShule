@@ -1,25 +1,35 @@
+/**
+ * Deputy Admin dashboard — Sneat design system.
+ *
+ * THE METRIC THIS DASHBOARD IS ACCOUNTABLE TO: open administrative actions.
+ * The deputy's job is a queue — discipline cases, expense approvals, parent
+ * meeting requests, leave. The <Spotlight> states how many items are waiting
+ * and what share of the workload has been cleared; a clear queue is the goal,
+ * so the target is zero. Everything below is that queue, broken out by source.
+ *
+ * All handlers, data fetching and modals are unchanged; only the presentation
+ * layer was rebuilt.
+ */
+
 import { useState, useEffect } from 'react';
-import { Badge, ProgressBar } from '../components/widgets';
 import { fmtKES } from '../data/modules';
 
 import Modal from '../components/Modal';
 import { fetchTable, upsertRow, fetchStudentByQuery } from '../lib/api';
 import { exportTablePDF } from '../utils/exporters';
 import MediaManager from '../components/MediaManager';
-import { Download, UserPlus, Shield, CheckCircle2, Key, Mail } from 'lucide-react';
+import {
+  Download, UserPlus, Shield, CheckCircle2, Key, Mail, Users, Building2,
+  CalendarClock, Receipt, AlertTriangle, Image as ImageIcon, Megaphone,
+} from 'lucide-react';
 import { secondaryAuthClient, supabase } from '../lib/supabaseClient';
 import { reportError } from '../lib/errorReporter';
 import { apiUrl } from '../lib/apiBase';
-
-function Stat({ label, value, color, sub }) {
-  return (
-    <div className="card card-pad">
-      <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: color || '#0f172a', marginBottom: 2 }}>{value}</div>
-      {sub && <div className="muted" style={{ fontSize: 12 }}>{sub}</div>}
-    </div>
-  );
-}
+import { getTargets } from '../lib/targets';
+import {
+  SneatPage, Grid, Card, CardHead, CardBody, MetricCard, Spotlight,
+  TableCard, RankList, SnBadge, SnButton, SnEmpty,
+} from '../components/sneat';
 
 export default function AdminDashboard({ store, user }) {
   const { navigate, notify, students } = store;
@@ -90,6 +100,22 @@ export default function AdminDashboard({ store, user }) {
   const operationalFac = dbFacilities.filter(f => f.status === 'Operational').length;
   const pendingLeave = 0;
   const openDiscipline = dbDiscipline.filter(d => d.status === 'Open').length;
+
+  // ── the queue this dashboard is accountable to ──────────────────────────
+  const pendingExpenses = expenses.filter(e => e.status === 'Pending');
+  const pendingMeetings = meetingRequests.filter(m => m.status === 'Pending');
+  const scheduledMeetings = meetingRequests.filter(m => m.status === 'Scheduled');
+  const openActions = openDiscipline + pendingExpenses.length + pendingMeetings.length + pendingLeave;
+  // Total decisions this term = still open + already settled.
+  const settledActions =
+    dbDiscipline.filter(d => d.status !== 'Open').length +
+    expenses.filter(e => e.status !== 'Pending').length +
+    meetingRequests.filter(m => m.status !== 'Pending').length;
+  const totalActions = openActions + settledActions;
+  const clearedPct = totalActions > 0 ? (settledActions / totalActions) * 100 : 100;
+  // Ceiling for the queue, set in Settings → Targets (default 0 = clear it).
+  const actionCeiling = getTargets(store?.settings).openActionsCeiling;
+  const withinCeiling = openActions <= actionCeiling;
 
   const handleLeaveAction = (id, action) => {
     setLeaveActions(prev => ({ ...prev, [id]: action }));
@@ -290,250 +316,269 @@ export default function AdminDashboard({ store, user }) {
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22 }}>Deputy Admin Dashboard</h2>
-          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>Administration overview - student affairs, facilities, staff welfare</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn" onClick={() => setShowMediaManager(!showMediaManager)}>
-            {showMediaManager ? 'Back to dashboard' : 'Media gallery manager'}
-          </button>
-          <button className="btn btn-primary" onClick={() => navigate('notices')}>Post notice</button>
-        </div>
-      </div>
-
+    <SneatPage
+      flush
+      title="Administration"
+      subtitle="Student affairs, facilities and staff welfare"
+      actions={
+        <>
+          <SnButton variant="outline" onClick={() => setShowMediaManager(!showMediaManager)}>
+            <ImageIcon size={15} /> {showMediaManager ? 'Back to dashboard' : 'Media gallery'}
+          </SnButton>
+          <SnButton variant="primary" onClick={() => navigate('notices')}>
+            <Megaphone size={15} /> Post notice
+          </SnButton>
+        </>
+      }
+    >
       {showMediaManager ? (
         <MediaManager notify={notify} user={user} />
       ) : (
         <>
-          <div style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#fff',
-            padding: '24px 32px',
-            borderRadius: 16,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 32,
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            {/* Decorative background glow */}
-            <div style={{
-              position: 'absolute',
-              top: '-50%',
-              right: '-5%',
-              width: 350,
-              height: 350,
-              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(0,0,0,0) 70%)',
-              borderRadius: '50%',
-              pointerEvents: 'none'
-            }} />
-            
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Shield size={24} color="#047857" />
-                Administration Office
-              </h3>
-              <p style={{ margin: '8px 0 0', fontSize: 14, color: '#94a3b8', fontWeight: 400 }}>
-                Managing discipline, boarding, facilities, and staff welfare
-              </p>
-            </div>
-            
-            <div style={{ textAlign: 'right', position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#f8fafc' }}>
-                {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </div>
-              <div style={{ fontSize: 13, color: '#38bdf8', marginTop: 6, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: 20 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
-                Term 2 · Academic Year 2026
-              </div>
-            </div>
-          </div>
+          {/* THE metric: the decision queue. Target is an empty queue. */}
+          <Spotlight
+            eyebrow={`Open administrative actions — ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`}
+            value={openActions}
+            caption={
+              openActions === 0
+                ? 'Queue is clear. Nothing is waiting on an administrative decision.'
+                : `${openDiscipline} discipline case${openDiscipline === 1 ? '' : 's'}, ` +
+                  `${pendingExpenses.length} expense approval${pendingExpenses.length === 1 ? '' : 's'} and ` +
+                  `${pendingMeetings.length} parent meeting request${pendingMeetings.length === 1 ? '' : 's'} need a decision.`
+            }
+            progress={clearedPct}
+            target={{
+              label: 'Queue ceiling',
+              value: withinCeiling ? `${actionCeiling} — met` : `${actionCeiling}`,
+            }}
+            stats={[
+              { label: 'Discipline cases', value: openDiscipline },
+              { label: 'Expense approvals', value: pendingExpenses.length },
+              { label: 'Meeting requests', value: pendingMeetings.length },
+            ]}
+          />
 
-      <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <Stat label="Total Students" value={activeStudentsList.length} color="#047857" />
-        <Stat label="Active Staff" value={activeStaffList.length} color="#047857" sub={`${presentStaff} Present Today`} />
-        <Stat label="Facilities" value={dbFacilities.length} color="#047857" sub={`${operationalFac} Operational`} />
-        <Stat label="Pending Leaves" value={pendingLeave} color="#F59E0B" />
-      </div>
+          <Grid cols={4}>
+            <MetricCard label="Total students" value={activeStudentsList.length}
+              icon={<Users />} tone="primary" foot="Active registry" />
+            <MetricCard label="Active staff" value={activeStaffList.length}
+              icon={<Shield />} tone="info" foot={`${presentStaff} present today`} />
+            <MetricCard label="Facilities" value={dbFacilities.length}
+              icon={<Building2 />} tone="secondary" foot={`${operationalFac} operational`}
+              progress={dbFacilities.length ? { value: operationalFac, max: dbFacilities.length, tone: 'success' } : undefined} />
+            <MetricCard label="Pending leave" value={pendingLeave}
+              icon={<CalendarClock />} tone={pendingLeave > 0 ? 'warning' : 'success'} foot="Awaiting approval" />
+          </Grid>
 
-      <div className="card card-pad" style={{ marginBottom: 24 }}>
-        <h3 className="section-title">Principal Quick Actions</h3>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setReportDisciplineOpen(true)}>
-            <Shield size={18} /> File Disciplinary Report
-          </button>
-          <button className="btn btn-primary" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setCommissionModalOpen(true)}>
-            <UserPlus size={18} /> Commission Staff
-          </button>
-          <button className="btn" style={{ justifyContent: 'flex-start', gap: 8 }} onClick={() => setResetPasswordOpen(true)}>
-            <Key size={18} /> Reset Staff Password
-          </button>
-        </div>
-      </div>
+          <Card>
+            <CardHead title="Principal actions" subtitle="Privileged operations" />
+            <CardBody>
+              <Grid cols={3}>
+                <SnButton variant="outline" onClick={() => setReportDisciplineOpen(true)}>
+                  <Shield size={16} /> File disciplinary report
+                </SnButton>
+                <SnButton variant="primary" onClick={() => setCommissionModalOpen(true)}>
+                  <UserPlus size={16} /> Commission staff
+                </SnButton>
+                <SnButton variant="outline" onClick={() => setResetPasswordOpen(true)}>
+                  <Key size={16} /> Reset staff password
+                </SnButton>
+              </Grid>
+            </CardBody>
+          </Card>
 
-      <div className="card card-pad" style={{ marginBottom: 24 }}>
-        <h3 className="section-title">Quick Actions</h3>
-        <div className="grid grid-4" style={{ gap: 10 }}>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('staff_attendance')}>Staff Attendance</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('facilities')}>Facilities Management</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('admissions')}>Student Records</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('notices')}>Post Notice</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('finance')}>Finance Overview</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('clinic')}>Health / Clinic</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('library')}>Library</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('class_teachers')}>Class Teachers</button>
-          <button className="btn" style={{ height: 48, justifyContent: 'flex-start' }} onClick={() => navigate('settings')}>Settings</button>
-        </div>
-      </div>
+          <Card>
+            <CardHead title="Quick actions" subtitle="Jump to a module" />
+            <CardBody>
+              <Grid cols={3}>
+                {[
+                  ['staff_attendance', 'Staff attendance'],
+                  ['facilities', 'Facilities management'],
+                  ['admissions', 'Student records'],
+                  ['notices', 'Post notice'],
+                  ['finance', 'Finance overview'],
+                  ['clinic', 'Health / clinic'],
+                  ['library', 'Library'],
+                  ['class_teachers', 'Class teachers'],
+                  ['settings', 'Settings'],
+                ].map(([route, label]) => (
+                  <SnButton key={route} variant="ghost" onClick={() => navigate(route)}>{label}</SnButton>
+                ))}
+              </Grid>
+            </CardBody>
+          </Card>
 
-      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ color: '#000000', margin: 0 }}>Discipline Cases</h3>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-sm" onClick={handleDownloadDiscipline} title="Download Records">
-                <Download size={14} />
-              </button>
-              <button className="btn btn-sm btn-primary" onClick={() => setReportDisciplineOpen(true)}>File Report</button>
-            </div>
-          </div>
-          {dbDiscipline.slice(0, 5).map(d => (
-            <div key={d.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setDisciplineModal(d)}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{d.student} - {d.category}</div>
-                <div className="muted" style={{ fontSize: 12 }}>{d.description}</div>
-                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{d.date} · {d.class}</div>
-              </div>
-              <Badge color={d.status === 'Open' ? 'red' : 'green'}>{d.status}</Badge>
-            </div>
-          ))}
-          {dbDiscipline.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No discipline cases recorded.</div>}
-        </div>
-
-        <div className="card card-pad">
-          <h3 className="section-title" style={{ color: '#000000' }}>Facilities Overview</h3>
-          {dbFacilities.slice(0, 5).map(f => (
-            <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{f.name}</div>
-                <div className="muted" style={{ fontSize: 11 }}>{f.type} · Capacity: {f.capacity}</div>
-              </div>
-              <Badge color={f.status === 'Operational' ? 'green' : 'amber'}>{f.status}</Badge>
-            </div>
-          ))}
-          {dbFacilities.length === 0 && <div className="muted" style={{ fontSize: 13, padding: '10px 0' }}>No facilities added.</div>}
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => navigate('facilities')}>
-            Manage Facilities
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Pending Leave Requests</h3>
-            <button className="btn btn-sm" onClick={() => navigate('staff/leave')}>Manage Leave</button>
-          </div>
-          <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending requests</p>
-        </div>
-
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#dc2626' }}>Pending Expense Approvals</h3>
-            <button className="btn btn-sm" onClick={() => navigate('finance')}>Finance Module</button>
-          </div>
-          {expenses.filter(e => e.status === 'Pending').map(e => (
-            <div key={e.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{e.category} <span className="muted" style={{ fontWeight: 400 }}>via {e.requested_by}</span></div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{fmtKES(e.amount)}</div>
-                <div className="muted" style={{ fontSize: 12 }}>{e.description}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <button className="btn btn-sm btn-success" onClick={() => handleExpenseAction(e, 'Approved')}>Approve</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleExpenseAction(e, 'Rejected')}>Reject</button>
-              </div>
-            </div>
-          ))}
-          {expenses.filter(e => e.status === 'Pending').length === 0 && (
-            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending expenses</p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-2" style={{ gap: 24, marginBottom: 24 }}>
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Parent Meeting Requests</h3>
-          </div>
-          {meetingRequests.filter(m => m.status === 'Pending').map(m => (
-            <div key={m.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.parent_name} <span className="muted" style={{ fontWeight: 400 }}>(Student: {m.student_name})</span></div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Requested Staff: {m.teacher_name}</div>
-                <div style={{ fontSize: 13, marginTop: 4 }}>"{m.reason}"</div>
-                <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Requested on: {new Date(m.created_at).toLocaleDateString()}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <button className="btn btn-sm btn-primary" onClick={() => { setSelectedMeeting(m); setScheduleForm({ date: '', time: '', teacher_name: m.teacher_name }); setScheduleMeetingOpen(true); }}>Schedule</button>
-                <button className="btn btn-sm" onClick={() => handleRejectMeeting(m)}>Reject</button>
-              </div>
-            </div>
-          ))}
-          {meetingRequests.filter(m => m.status === 'Pending').length === 0 && (
-            <p className="muted" style={{ textAlign: 'center', padding: 16 }}>No pending meeting requests</p>
-          )}
-        </div>
-
-        <div className="card card-pad">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 className="section-title" style={{ margin: 0, color: '#000000' }}>Upcoming Events</h3>
-            <button className="btn btn-sm" onClick={() => navigate('school_calendar')}>View Global Calendar</button>
-          </div>
-          <div className="scroll-x" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {(() => {
-              const scheduled = meetingRequests.filter(m => m.status === 'Scheduled');
-              if (scheduled.length === 0) return <p className="muted" style={{ padding: 16 }}>No scheduled meetings.</p>;
-              
-              const grouped = scheduled.reduce((acc, m) => {
-                const date = new Date(m.scheduled_date);
-                const month = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-                if (!acc[month]) acc[month] = [];
-                acc[month].push(m);
-                return acc;
-              }, {});
-
-              return Object.entries(grouped).map(([month, meetings]) => (
-                <div key={month} style={{ marginBottom: 16 }}>
-                  <div style={{ background: '#f8fafc', padding: '6px 12px', fontWeight: 600, color: '#334155', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-                    {month}
+          <Grid cols={2}>
+            <Card>
+              <CardHead
+                title="Discipline cases"
+                subtitle={`${openDiscipline} open`}
+                action={
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <SnButton variant="ghost" onClick={handleDownloadDiscipline} title="Download records">
+                      <Download size={14} />
+                    </SnButton>
+                    <SnButton variant="primary" onClick={() => setReportDisciplineOpen(true)}>File report</SnButton>
                   </div>
-                  <table className="table" style={{ marginTop: 0 }}>
-                    <thead style={{ display: 'none' }}><tr><th></th><th></th><th></th></tr></thead>
-                    <tbody>
-                      {meetings.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)).map(m => (
-                        <tr key={m.id}>
-                          <td style={{ whiteSpace: 'nowrap', width: '20%' }}>{new Date(m.scheduled_date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>Meeting: {m.parent_name}</div>
-                            <div className="muted" style={{ fontSize: 12 }}>With: {m.teacher_name}</div>
-                          </td>
-                          <td style={{ textAlign: 'right' }}><Badge color="green">Scheduled</Badge></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ));
-            })()}
-          </div>
-        </div>
-      </div>
+                }
+              />
+              <CardBody>
+                {dbDiscipline.length === 0 ? (
+                  <SnEmpty icon={<Shield />} title="No discipline cases" message="Filed reports will appear here." />
+                ) : (
+                  <div className="sn-list">
+                    {dbDiscipline.slice(0, 5).map(d => (
+                      <div
+                        key={d.id}
+                        className="sn-list-item"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setDisciplineModal(d)}
+                      >
+                        <span className={`sn-icon sn-icon-${d.status === 'Open' ? 'danger' : 'success'}`}><Shield /></span>
+                        <div className="sn-list-main">
+                          <p className="sn-list-title">{d.student} — {d.category}</p>
+                          <p className="sn-list-sub">{d.description}</p>
+                          <p className="sn-list-sub">{d.date} · {d.class}</p>
+                        </div>
+                        <SnBadge tone={d.status === 'Open' ? 'danger' : 'success'}>{d.status}</SnBadge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHead
+                title="Facilities"
+                subtitle={`${operationalFac} of ${dbFacilities.length} operational`}
+                action={<SnButton variant="ghost" onClick={() => navigate('facilities')}>Manage</SnButton>}
+              />
+              <CardBody>
+                <RankList
+                  empty={<SnEmpty icon={<Building2 />} title="No facilities" message="Add facilities to track their status." />}
+                  items={dbFacilities.slice(0, 5).map(f => ({
+                    id: f.id,
+                    title: f.name,
+                    sub: `${f.type} · capacity ${f.capacity}`,
+                    icon: <Building2 />,
+                    tone: f.status === 'Operational' ? 'success' : 'warning',
+                    value: f.status,
+                  }))}
+                />
+              </CardBody>
+            </Card>
+          </Grid>
+
+          <Grid cols={2}>
+            <Card>
+              <CardHead
+                title="Pending leave requests"
+                subtitle={`${pendingLeave} awaiting decision`}
+                action={<SnButton variant="ghost" onClick={() => navigate('staff/leave')}>Manage leave</SnButton>}
+              />
+              <CardBody>
+                <SnEmpty icon={<CalendarClock />} title="No pending requests" message="Staff leave awaiting approval will appear here." />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHead
+                title="Expense approvals"
+                subtitle={`${pendingExpenses.length} awaiting decision`}
+                action={<SnButton variant="ghost" onClick={() => navigate('finance')}>Finance module</SnButton>}
+              />
+              <CardBody>
+                {pendingExpenses.length === 0 ? (
+                  <SnEmpty icon={<Receipt />} title="No pending expenses" message="Claims awaiting sign-off will appear here." />
+                ) : (
+                  <div className="sn-list">
+                    {pendingExpenses.map(e => (
+                      <div key={e.id} className="sn-list-item">
+                        <span className="sn-icon sn-icon-warning"><Receipt /></span>
+                        <div className="sn-list-main">
+                          <p className="sn-list-title">
+                            {e.category} <span className="sn-muted" style={{ fontWeight: 400 }}>via {e.requested_by}</span>
+                          </p>
+                          <p className="sn-list-title" style={{ fontSize: '1rem' }}>{fmtKES(e.amount)}</p>
+                          <p className="sn-list-sub">{e.description}</p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <SnButton variant="primary" onClick={() => handleExpenseAction(e, 'Approved')}>Approve</SnButton>
+                          <SnButton variant="ghost" onClick={() => handleExpenseAction(e, 'Rejected')}>Reject</SnButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          </Grid>
+
+          <Grid cols={2}>
+            <Card>
+              <CardHead title="Parent meeting requests" subtitle={`${pendingMeetings.length} awaiting decision`} />
+              <CardBody>
+                {pendingMeetings.length === 0 ? (
+                  <SnEmpty icon={<CalendarClock />} title="No pending requests" message="Parent meeting requests will appear here." />
+                ) : (
+                  <div className="sn-list">
+                    {pendingMeetings.map(m => (
+                      <div key={m.id} className="sn-list-item" style={{ alignItems: 'flex-start' }}>
+                        <div className="sn-list-main">
+                          <p className="sn-list-title">
+                            {m.parent_name} <span className="sn-muted" style={{ fontWeight: 400 }}>(student: {m.student_name})</span>
+                          </p>
+                          <p className="sn-list-sub">Requested staff: {m.teacher_name}</p>
+                          <p style={{ fontSize: 13, margin: '4px 0 0' }}>&ldquo;{m.reason}&rdquo;</p>
+                          <p className="sn-list-sub">Requested {new Date(m.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <SnButton
+                            variant="primary"
+                            onClick={() => {
+                              setSelectedMeeting(m);
+                              setScheduleForm({ date: '', time: '', teacher_name: m.teacher_name });
+                              setScheduleMeetingOpen(true);
+                            }}
+                          >
+                            Schedule
+                          </SnButton>
+                          <SnButton variant="ghost" onClick={() => handleRejectMeeting(m)}>Reject</SnButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            <TableCard
+              title="Upcoming meetings"
+              subtitle={`${scheduledMeetings.length} scheduled`}
+              action={<SnButton variant="ghost" onClick={() => navigate('school_calendar')}>Calendar</SnButton>}
+              rows={[...scheduledMeetings].sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))}
+              rowKey={(m) => m.id}
+              empty={<SnEmpty icon={<CalendarClock />} title="No scheduled meetings" message="Confirmed parent meetings will appear here." />}
+              columns={[
+                {
+                  key: 'when', header: 'When',
+                  render: (m) => new Date(m.scheduled_date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }),
+                },
+                {
+                  key: 'who', header: 'Meeting',
+                  render: (m) => (
+                    <>
+                      <span className="sn-td-strong">{m.parent_name}</span>
+                      <br />
+                      <span className="sn-muted" style={{ fontSize: 12 }}>with {m.teacher_name}</span>
+                    </>
+                  ),
+                },
+                { key: 'status', header: 'Status', render: () => <SnBadge tone="success">Scheduled</SnBadge> },
+              ]}
+            />
+          </Grid>
       </>
       )}
 
@@ -750,7 +795,7 @@ export default function AdminDashboard({ store, user }) {
           )}
         </Modal>
       )}
-    </div>
+    </SneatPage>
   );
 }
 

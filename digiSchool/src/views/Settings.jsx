@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/widgets';
 import { SUBJECTS, DEPARTMENTS, DEFAULT_DEPARTMENTS, getDeptColor } from '../data/seed';
 import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
-import { MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertTriangle, Target } from 'lucide-react';
+import {
+  TARGET_FIELDS, DEFAULT_TARGETS, getTargets,
+  getClassLevels, getClassMeanTargets, getAcademicYear, getTargetYears,
+} from '../lib/targets';
 
-const ALL_TABS = ['General', 'Academic', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];
+const ALL_TABS = ['General', 'Academic', 'Targets', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];
 
 export default function Settings({ store, user }) {
   const { settings, setSettings, feeStructure, setFeeStructure, gradeBoundaries, setGradeBoundaries, notifToggles, setNotifToggles, notify } = store;
@@ -17,6 +21,29 @@ export default function Settings({ store, user }) {
     principal: settings.principal || user?.name || ''
   });
   
+  // Performance targets the whole system measures against (lib/targets.js).
+  const [targetForm, setTargetForm] = useState(() => getTargets(settings));
+  const upTarget = (key, value) =>
+    setTargetForm((t) => ({ ...t, [key]: value === '' ? '' : Number(value) }));
+
+  // Mean-score targets are per CLASS and per YEAR — a school-wide mean is not
+  // actionable. Streams inherit their level's target.
+  const [targetYear, setTargetYear] = useState(() => getAcademicYear(settings));
+  const [classMeans, setClassMeans] = useState(() => settings?.targets?.classMeans || {});
+  const meanRowsForYear = classMeans[targetYear] || {};
+  const upClassMean = (level, value) =>
+    setClassMeans((prev) => ({
+      ...prev,
+      [targetYear]: { ...(prev[targetYear] || {}), [level]: value === '' ? '' : Number(value) },
+    }));
+  /** Copy the previous year's targets into the selected year. */
+  const copyPrevYear = () => {
+    const prev = String(Number(targetYear) - 1);
+    if (!classMeans[prev]) return notify(`No targets saved for ${prev}`, 'warning', 'Targets');
+    setClassMeans((c) => ({ ...c, [targetYear]: { ...classMeans[prev] } }));
+    notify(`Copied ${prev} targets into ${targetYear} — remember to save`, 'info', 'Targets');
+  };
+
   // Payment Gateway State
   const [gatewayConfigured, setGatewayConfigured] = useState(false);
   const [gatewayForm, setGatewayForm] = useState({
@@ -180,6 +207,28 @@ export default function Settings({ store, user }) {
     setSettings((s) => ({ ...s, currentTerm: form.currentTerm, termStart: form.termStart, termEnd: form.termEnd, classes: classList, subjects: subjList, departments: deptList, block_departments: blockDepts }));
     notify('Academic settings saved successfully', 'success', 'Settings');
   }
+  function saveTargets() {
+    // Persisted under settings.targets — lib/targets.js is the only reader, so
+    // every dashboard picks these up without further wiring. Blank class-mean
+    // cells are dropped so those classes fall back to the default.
+    const cleanedMeans = {};
+    Object.entries(classMeans).forEach(([yr, rows]) => {
+      const kept = {};
+      Object.entries(rows || {}).forEach(([lvl, v]) => {
+        const n = Number(v);
+        if (v !== '' && Number.isFinite(n) && n > 0) kept[lvl] = n;
+      });
+      if (Object.keys(kept).length) cleanedMeans[yr] = kept;
+    });
+    setSettings((s) => ({ ...s, targets: { ...targetForm, classMeans: cleanedMeans } }));
+    notify('Performance targets saved — dashboards will measure against these', 'success', 'Settings');
+  }
+  function resetTargets() {
+    setTargetForm({ ...DEFAULT_TARGETS });
+    setClassMeans({});
+    notify('Targets reset to defaults — remember to save', 'warning', 'Settings');
+  }
+
   function saveFees() {
     setFeeStructure(fees);
     notify('Fee structure saved', 'success', 'Settings');
@@ -598,6 +647,142 @@ export default function Settings({ store, user }) {
           </div>
           
           <button className="btn btn-primary" onClick={saveAcademic} style={{ alignSelf: 'flex-start' }}>Save Academic Settings</button>
+        </div>
+      )}
+
+      {tab === 'Targets' && (
+        <div className="card card-pad" style={{ maxWidth: 900 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
+            <span style={{
+              width: 40, height: 40, borderRadius: 8, flex: '0 0 auto',
+              background: 'rgba(4,120,87,0.12)', color: '#047857',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Target size={20} />
+            </span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Performance targets</h3>
+              <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+                Every dashboard measures itself against these. Set what this school is aiming for —
+                fee collection, admissions, timetable and teacher coverage, academics and operations.
+              </p>
+            </div>
+          </div>
+
+          {[...new Set(TARGET_FIELDS.map((f) => f.group))].map((group) => (
+            <div key={group} style={{ marginBottom: 22 }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
+                color: '#047857', marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid var(--border-light)',
+              }}>
+                {group}
+              </div>
+              <div className="grid grid-2" style={{ gap: 14 }}>
+                {TARGET_FIELDS.filter((f) => f.group === group).map((f) => (
+                  <div key={f.key}>
+                    <label className="field-label">
+                      {f.label} <span className="muted" style={{ fontWeight: 400 }}>({f.unit})</span>
+                    </label>
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      max={f.unit === '%' ? 100 : undefined}
+                      value={targetForm[f.key] ?? ''}
+                      onChange={(e) => upTarget(f.key, e.target.value)}
+                    />
+                    <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>{f.help}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* ── Per-class, per-year mean targets ───────────────────────── */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
+              color: '#047857', marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid var(--border-light)',
+            }}>
+              Mean score targets by class
+            </div>
+            <p className="muted" style={{ fontSize: 12, margin: '0 0 12px' }}>
+              A single school-wide mean is not actionable — Form 1 and Form 4 are judged differently.
+              Set a mean target for each class, for each year. Streams inherit their class's target
+              (so "Form 2 East" is measured against "Form 2"). Leave blank to use the default above.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+              <label className="field-label" style={{ margin: 0 }}>Academic year</label>
+              <select
+                className="select"
+                value={targetYear}
+                onChange={(e) => setTargetYear(e.target.value)}
+                style={{ height: 34, padding: '0 10px', fontSize: 13 }}
+              >
+                {[...new Set([
+                  ...getTargetYears(settings),
+                  ...Object.keys(classMeans),
+                  String(new Date().getFullYear()),
+                  String(new Date().getFullYear() + 1),
+                ])].sort((a, b) => Number(b) - Number(a)).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <button className="btn btn-sm" onClick={copyPrevYear}>
+                Copy {String(Number(targetYear) - 1)} targets
+              </button>
+            </div>
+
+            {getClassLevels(settings).length === 0 ? (
+              <div className="muted" style={{ fontSize: 13, padding: '12px 0' }}>
+                No classes defined yet. Add them under Settings → Academic first.
+              </div>
+            ) : (
+              <table className="table" style={{ width: '100%', maxWidth: 560, margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class</th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase', width: 170 }}>
+                      Mean target ({targetYear})
+                    </th>
+                    <th style={{ fontSize: 11, textTransform: 'uppercase', width: 110 }}>In use</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getClassLevels(settings).map((level) => {
+                    const raw = meanRowsForYear[level];
+                    const isSet = raw !== undefined && raw !== '' && Number(raw) > 0;
+                    return (
+                      <tr key={level}>
+                        <td style={{ fontWeight: 600 }}>{level}</td>
+                        <td>
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder={`${targetForm.defaultClassMean ?? 60} (default)`}
+                            value={raw ?? ''}
+                            onChange={(e) => upClassMean(level, e.target.value)}
+                            style={{ height: 34 }}
+                          />
+                        </td>
+                        <td className="muted" style={{ fontSize: 12 }}>
+                          {isSet ? `${raw}%` : `${targetForm.defaultClassMean ?? 60}% (default)`}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn btn-primary" onClick={saveTargets}>Save targets</button>
+            <button className="btn" onClick={resetTargets}>Reset to defaults</button>
+          </div>
         </div>
       )}
 

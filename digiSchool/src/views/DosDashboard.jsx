@@ -1,7 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { fetchStudents } from '../lib/api';
-import { Badge, ProgressBar } from '../components/widgets';
+import { computeClassMeanMetrics } from '../lib/targets';
+import { studentOverall } from '../utils/grading';
+import {
+  SneatPage, Grid, Card, CardHead, CardBody, MetricCard, Spotlight, Tabs,
+  ClassMeanTable, SnBadge as Badge, ProgressMetric as ProgressBar, SnButton, SnEmpty,
+} from '../components/sneat';
 import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
 import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
@@ -14,32 +19,23 @@ import {
   Layers, ArrowUpRight, CheckCircle2, UserCheck, ChevronRight, Calendar, Grid3x3, Zap
 } from 'lucide-react';
 
-// Clean, flat stat card — no gradients, no coloured strip, muted icon.
+// Delegates to the Sneat MetricCard so every existing <Stat> on this page
+// picks up the house style without rewriting each call site.
 function Stat({ label, value, color, sub, icon: IconComp }) {
-  const accent = color || '#334155';
+  const tone =
+    color === '#d97706' || color === '#F59E0B' ? 'warning'
+      : color === '#dc2626' || color === '#D13438' || color === '#EF4444' ? 'danger'
+      : color === '#0EA5E9' ? 'info'
+      : color === '#64748B' ? 'secondary'
+      : 'primary';
   return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 10,
-        padding: '16px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        minHeight: 96,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: '#6b7280' }}>{label}</span>
-        {IconComp && <IconComp size={16} color="#9ca3af" strokeWidth={1.75} />}
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', letterSpacing: '-0.5px', lineHeight: 1 }}>
-        {value}
-      </div>
-      {sub && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 'auto' }}>{sub}</div>}
-      <div style={{ display: 'none' }}>{accent}</div>
-    </div>
+    <MetricCard
+      label={label}
+      value={value}
+      tone={tone}
+      foot={sub}
+      icon={IconComp ? <IconComp /> : undefined}
+    />
   );
 }
 
@@ -235,6 +231,28 @@ export default function DosDashboard({ store, user }) {
     return results;
   }, [dynamicClasses, activeStudents]);
 
+  /**
+   * Mean per class, then each class against ITS OWN yearly target. A single
+   * school-wide mean would hide that Form 1 and Form 4 are judged differently.
+   */
+  const meanByClass = useMemo(() => {
+    const rows = {};
+    activeStudents.forEach((st) => {
+      const k = st.class || 'Unassigned';
+      rows[k] ||= { name: k, total: 0, n: 0 };
+      rows[k].total += studentOverall(st, SUBJECTS);
+      rows[k].n += 1;
+    });
+    return Object.values(rows)
+      .map((r) => ({ name: r.name, mean: r.n ? Number((r.total / r.n).toFixed(1)) : 0, students: r.n }))
+      .sort((a, b) => b.mean - a.mean);
+  }, [activeStudents]);
+
+  const classMeanMetrics = useMemo(
+    () => computeClassMeanMetrics(settings, meanByClass),
+    [settings, meanByClass]
+  );
+
   const overallMarksPct = useMemo(() => {
     const totalEntered = marksAudit.reduce((a, b) => a + b.entered, 0);
     const totalPossible = marksAudit.reduce((a, b) => a + b.total, 0);
@@ -322,37 +340,42 @@ export default function DosDashboard({ store, user }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
-      {/* ── PAGE HEADER ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#6b7280', marginBottom: 4 }}>
-            {settings?.name || 'School'} · Term 2 · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#111827', letterSpacing: '-0.4px' }}>
-            Director of Studies
-          </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
-            Academic oversight, exam office management &amp; curriculum quality assurance.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={fetchAllDosData}
-            disabled={loading}
-            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#ffffff', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, color: '#374151', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            <RefreshCw size={14} className={loading ? 'spin' : ''} strokeWidth={1.75} /> Refresh
-          </button>
-          <button
-            onClick={handleExportTermlyReport}
-            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#111827', border: '1px solid #111827', fontSize: 13, fontWeight: 500, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            <Download size={14} strokeWidth={1.75} /> Export Report
-          </button>
-        </div>
-      </div>
+    <SneatPage
+      flush
+      title="Director of Studies"
+      subtitle={`${settings?.name || 'School'} · Academic oversight, exam office & curriculum quality assurance`}
+      actions={
+        <>
+          <SnButton variant="outline" onClick={fetchAllDosData} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
+          </SnButton>
+          <SnButton variant="primary" onClick={handleExportTermlyReport}>
+            <Download size={14} /> Export report
+          </SnButton>
+        </>
+      }
+    >
+      {/* THE metric: classes meeting their own yearly mean target. */}
+      <Spotlight
+        icon={<Award size={13} />}
+        eyebrow={`Classes meeting their mean target — ${classMeanMetrics.year}`}
+        value={`${classMeanMetrics.met} / ${classMeanMetrics.total}`}
+        caption={
+          classMeanMetrics.total === 0
+            ? 'No class means yet — they appear once marks are entered. Set per-class targets in Settings → Targets.'
+            : (classMeanMetrics.worst && !classMeanMetrics.worst.met
+                ? `${classMeanMetrics.worst.name} is furthest behind at ${classMeanMetrics.worst.mean.toFixed(1)}% against a ${classMeanMetrics.worst.target}% target. `
+                : 'Every class is at or above its target. ') +
+              `${overallMarksPct}% of marks are in across ${dynamicClasses.length} class${dynamicClasses.length === 1 ? '' : 'es'}.`
+        }
+        progress={classMeanMetrics.pct}
+        target={{ label: 'Classes on target', value: `${classMeanMetrics.met} of ${classMeanMetrics.total}` }}
+        stats={[
+          { label: 'Marks completion', value: `${overallMarksPct}%` },
+          { label: 'Pending approvals', value: totalPendingActionCount },
+          { label: 'Timetables published', value: `${Object.keys(timetables || {}).length} / ${dynamicClasses.length}` },
+        ]}
+      />
 
       {/* ── TIMETABLE STUDIO QUICK ACCESS ── */}
       <div
@@ -398,53 +421,18 @@ export default function DosDashboard({ store, user }) {
         <BenchmarkCard user={user} />
       </div>
 
-      {/* ── TAB NAVIGATION ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, gap: 4, flexWrap: 'wrap' }}>
-        {[
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
           { id: 'overview', label: 'Overview' },
           { id: 'merit', label: 'Merit list' },
           { id: 'registry', label: 'Students' },
           { id: 'staff', label: 'Faculty' },
-          { id: 'marks', label: 'Marks audit', badge: `${overallMarksPct}%` },
-          { id: 'moderation', label: 'Approvals', badge: totalPendingActionCount, alert: totalPendingActionCount > 0 },
-        ].map(t => {
-          const isActive = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '10px 14px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: isActive ? '2px solid #111827' : '2px solid transparent',
-                color: isActive ? '#111827' : '#6b7280',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: 13,
-                cursor: 'pointer',
-                marginBottom: -1,
-              }}
-            >
-              <span>{t.label}</span>
-              {t.badge !== undefined && t.badge !== 0 && (
-                <span style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  padding: '1px 6px',
-                  borderRadius: 10,
-                  background: t.alert ? '#fef2f2' : '#f3f4f6',
-                  color: t.alert ? '#b91c1c' : '#4b5563',
-                }}>
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+          { id: 'marks', label: 'Marks audit', count: `${overallMarksPct}%` },
+          { id: 'moderation', label: 'Approvals', count: totalPendingActionCount },
+        ]}
+      />
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
@@ -504,6 +492,22 @@ export default function DosDashboard({ store, user }) {
             <Stat icon={FileText} label="Papers to Moderate" value={pendingPapersCount} sub="Exam Papers Pending" color={pendingPapersCount > 0 ? '#d97706' : '#047857'} />
             <Stat icon={AlertTriangle} label="Overloaded Staff" value={teacherWorkload.filter(t => t.isOverload).length} sub="> 27 Periods / Week" color="#d13438" />
           </div>
+
+          {/* Each class against its own yearly mean target. */}
+          <Card>
+            <CardHead
+              title="Mean score by class"
+              subtitle={`Each class against its own ${classMeanMetrics.year} target — ${classMeanMetrics.met} of ${classMeanMetrics.total} meeting it`}
+              action={<SnButton variant="ghost" onClick={() => navigate && navigate('settings')}>Set targets</SnButton>}
+            />
+            <CardBody>
+              <ClassMeanTable
+                rows={classMeanMetrics.rows}
+                empty={<SnEmpty icon={<Award />} title="No class means yet"
+                  message="Means appear here once teachers enter marks." />}
+              />
+            </CardBody>
+          </Card>
 
           {/* Quick Management Hub */}
           <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, marginBottom: 16 }}>
@@ -867,6 +871,6 @@ export default function DosDashboard({ store, user }) {
           </div>
         </div>
       )}
-    </div>
+    </SneatPage>
   );
 }
