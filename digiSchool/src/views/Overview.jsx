@@ -3,7 +3,7 @@ import { expandClassesWithStreams, SUBJECTS } from '../data/seed';
 import { computeTargetMetrics } from '../lib/targets';
 import {
   SneatPage, Grid, Card, CardHead, CardBody, MetricCard, TargetCard, Spotlight,
-  ChartCard, SnLine, SnDonut, RankList, ProgressMetric, SnBadge, SnButton, ClassMeanTable,
+  ChartCard, SnLine, SnDonut, RankList, ProgressMetric, SnBadge, SnButton, ClassMeanChart,
   SnEmpty, SNEAT,
 } from '../components/sneat';
 import Modal from '../components/Modal';
@@ -388,7 +388,7 @@ export default function Overview({ store }) {
         <CardBody>
           {metrics.classMeans.total > 0 ? (
             <Grid cols={2}>
-              <ClassMeanTable rows={metrics.classMeans.rows} />
+              <ClassMeanChart rows={metrics.classMeans.rows} />
 
               <div>
                 <div className="sn-muted" style={{ fontSize: 12, marginBottom: 10 }}>

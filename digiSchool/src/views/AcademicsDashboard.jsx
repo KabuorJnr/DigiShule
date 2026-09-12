@@ -33,7 +33,7 @@ import { computeClassMeanMetrics } from '../lib/targets';
 import {
   SneatPage, Grid, Card, CardHead, CardBody, MetricCard, Spotlight,
   ChartCard, SnBar, TableCard, Tabs, ProgressMetric,
-  SnBadge, SnButton, SnEmpty, SNEAT, ClassMeanTable,
+  SnBadge, SnButton, SnEmpty, SNEAT, ClassMeanChart,
 } from '../components/sneat';
 
 export default function AcademicsDashboard({ store = {}, user = {} }) {
@@ -364,7 +364,7 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
                 action={<SnButton variant="ghost" onClick={() => navigate('settings')}>Set targets</SnButton>}
               />
               <CardBody>
-                <ClassMeanTable
+                <ClassMeanChart
                   rows={classMeanMetrics.rows}
                   empty={<SnEmpty icon={<Award />} title="No class means yet"
                     message="Means appear here once teachers enter marks." />}

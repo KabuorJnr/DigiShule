@@ -17,7 +17,7 @@
 import { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
-  PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ComposedChart, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import '../../styles/sneat.css';
 
@@ -765,11 +765,87 @@ export function TableCard({ title, subtitle, action, columns = [], rows = [], em
 }
 
 /**
- * Per-class mean against each class's own yearly target.
+ * Per-class mean against each class's own yearly target, as a chart.
  *
- * Takes the `rows` from lib/targets.js → computeClassMeanMetrics(). Shared by
- * the Principal, DoS and Deputy Academic dashboards so the same numbers are
- * presented the same way everywhere.
+ * Bars are the actual mean, coloured by whether the class is meeting its
+ * target; the dashed line is the target itself, so the gap is the vertical
+ * distance between them. This is the default presentation on the Principal,
+ * DoS and Deputy Academic dashboards — a chart lets you compare classes at a
+ * glance in a way a stack of progress bars does not.
+ *
+ * Takes the `rows` from lib/targets.js → computeClassMeanMetrics().
+ */
+export function ClassMeanChart({ rows = [], empty, height = 300 }) {
+  if (!rows.length) {
+    return empty || <SnEmpty title="No class means yet" message="Means appear once marks are entered." />;
+  }
+
+  // Head-room above the tallest of (mean, target) so the target line is never
+  // clipped, capped at 100 since these are percentages.
+  const peak = Math.max(...rows.map((r) => Math.max(r.mean, r.target)));
+  const top = Math.min(100, Math.ceil((peak + 8) / 10) * 10);
+
+  const barColor = (r) => (r.met ? SNEAT.success : r.pct >= 90 ? SNEAT.warning : SNEAT.danger);
+
+  return (
+    <div>
+      <div className="sn-chart" style={{ height }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={rows} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="4 4" stroke={SNEAT.border} vertical={false} />
+            <XAxis dataKey="name" {...axisProps} interval={0} />
+            <YAxis domain={[0, top]} {...axisProps} />
+            <Tooltip
+              {...tooltipProps}
+              formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name]}
+            />
+            <Bar dataKey="mean" name="Actual mean" radius={[6, 6, 0, 0]} maxBarSize={44}>
+              {rows.map((r) => <Cell key={r.name} fill={barColor(r)} />)}
+            </Bar>
+            <Line
+              type="monotone"
+              dataKey="target"
+              name="Target"
+              stroke={SNEAT.primaryDeep}
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              dot={{ r: 3, strokeWidth: 0, fill: SNEAT.primaryDeep }}
+              activeDot={{ r: 5 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Custom legend: recharts cannot infer one swatch colour for a bar whose
+          cells are individually coloured (it renders a black dot), and the
+          colours carry meaning here, so spell them out. */}
+      <div style={{
+        display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center',
+        fontSize: 12, color: SNEAT.body, marginTop: 4,
+      }}>
+        {[
+          ['On target', SNEAT.success],
+          ['Just below', SNEAT.warning],
+          ['Behind', SNEAT.danger],
+        ].map(([label, color]) => (
+          <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: color }} />
+            {label}
+          </span>
+        ))}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 16, height: 0, borderTop: `2px dashed ${SNEAT.primaryDeep}` }} />
+          Target
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The same data as a dense list of progress bars. Kept for narrow columns and
+ * print/PDF contexts where a chart does not fit; <ClassMeanChart> is the
+ * default on dashboards.
  */
 export function ClassMeanTable({ rows = [], empty, showStudents = true }) {
   if (!rows.length) {

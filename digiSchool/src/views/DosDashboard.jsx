@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import {
   SneatPage, Grid, Card, CardHead, CardBody, MetricCard, TargetCard,
-  Spotlight, ChartCard, SnBar, SnDonut, ClassMeanTable, RankList,
+  Spotlight, ChartCard, SnBar, SnDonut, ClassMeanChart, RankList,
   SnButton, SnEmpty, SNEAT,
 } from '../components/sneat';
 
@@ -363,7 +363,7 @@ export default function DosDashboard({ store, user }) {
             action={<SnButton variant="ghost" onClick={() => navigate && navigate('settings')}>Set targets</SnButton>}
           />
           <CardBody>
-            <ClassMeanTable
+            <ClassMeanChart
               rows={classMeanMetrics.rows}
               empty={<SnEmpty icon={<Award />} title="No class means yet"
                 message="Means appear here once teachers enter marks." />}
