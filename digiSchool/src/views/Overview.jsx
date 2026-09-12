@@ -30,8 +30,11 @@ const QUICK_ACTIONS = [
   { icon: CreditCard, label: 'Fee Structure', desc: 'Update school fees', view: 'finance' },
 ];
 
-export default function Overview({ store }) {
+// `user` comes from LegacyViewLoader alongside `store`; it carries the role
+// that gates who may call a staff meeting.
+export default function Overview({ store, user }) {
   const { navigate, notify } = store;
+  const currentUser = user || store.user || { role: store.role, name: store.settings?.principal };
   const fullTrend = [];
   const [alertModal, setAlertModal] = useState(null);
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
@@ -491,7 +494,7 @@ export default function Overview({ store }) {
           <CardHead title="Quick actions" />
           <CardBody>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {QUICK_ACTIONS.filter((qa) => qa.action !== 'staffMeeting' || canCallStaffMeeting(store.user?.role || store.role)).map((qa) => {
+              {QUICK_ACTIONS.filter((qa) => qa.action !== 'staffMeeting' || canCallStaffMeeting(currentUser?.role)).map((qa) => {
                 const QaIcon = qa.icon;
                 return (
                   <SnButton
@@ -519,7 +522,7 @@ export default function Overview({ store }) {
       </Grid>
       {staffMeetingOpen && (
         <StaffMeetingModal
-          user={store.user || { role: store.role, name: store.settings?.principal }}
+          user={currentUser}
           settings={store.settings}
           notify={notify}
           onClose={() => setStaffMeetingOpen(false)}

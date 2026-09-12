@@ -232,7 +232,7 @@ export default function DashboardDevPreview() {
       )}
 
       <div className="content" style={{ padding: 24, maxWidth: 1320, margin: '0 auto' }}>
-        {role === 'principal' && <Overview store={store} />}
+        {role === 'principal' && <Overview store={store} user={{ ...user, role: 'principal' }} />}
         {role === 'dos' && <DosDashboard store={store} user={user} />}
         {role === 'academics' && <AcademicsDashboard store={store} user={user} />}
         {role === 'admin' && <AdminDashboard store={store} user={user} />}
