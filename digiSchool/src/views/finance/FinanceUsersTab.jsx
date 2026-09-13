@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Badge } from '../../components/widgets';
 import Modal from '../../components/Modal';

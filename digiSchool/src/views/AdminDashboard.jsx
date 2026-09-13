@@ -653,11 +653,11 @@ export default function AdminDashboard({ store, user }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div><span className="field-label">Student</span><div style={{ fontWeight: 600 }}>{disciplineModal.student}</div></div>
             <div><span className="field-label">Class</span><div>{disciplineModal.class}</div></div>
-            <div><span className="field-label">Category</span><div><Badge color="red">{disciplineModal.category}</Badge></div></div>
+            <div><span className="field-label">Category</span><div><SnBadge tone="danger">{disciplineModal.category}</SnBadge></div></div>
             <div><span className="field-label">Date</span><div>{disciplineModal.date}</div></div>
             <div><span className="field-label">Description</span><div style={{ lineHeight: 1.5 }}>{disciplineModal.description}</div></div>
             <div><span className="field-label">Action Taken</span><div>{disciplineModal.action || 'Pending review'}</div></div>
-            <div><span className="field-label">Status</span><div><Badge color={disciplineModal.status === 'Open' ? 'red' : 'green'}>{disciplineModal.status}</Badge></div></div>
+            <div><span className="field-label">Status</span><div><SnBadge tone={disciplineModal.status === 'Open' ? 'danger' : 'success'}>{disciplineModal.status}</SnBadge></div></div>
           </div>
         </Modal>
       )}

@@ -19,7 +19,11 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': 'off',
-      'no-undef': 'off',
+      // KEEP THIS ON. It is the only thing that catches a component or helper
+      // that is used but never imported — a runtime ReferenceError that the
+      // Vite build does NOT fail on. It shipped exactly that bug to main
+      // (Settings -> Targets crashed on an unimported TERMS).
+      'no-undef': 'error',
       'react-refresh/only-export-components': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-hooks/set-state-in-effect': 'off',

@@ -5,7 +5,7 @@ import { CBC_BOUNDARIES, KCSE_BOUNDARIES } from '../utils/grading';
 import { MapPin, CheckCircle2, AlertTriangle, Target } from 'lucide-react';
 import {
   TARGET_FIELDS, DEFAULT_TARGETS, getTargets,
-  getClassLevels, getClassMeanTargets, getAcademicYear, getTargetYears,
+  getClassLevels, getAcademicYear, getTargetYears, TERMS,
 } from '../lib/targets';
 
 const ALL_TABS = ['General', 'Academic', 'Targets', 'Fee Structure', 'Grade Boundaries', 'Notifications', 'Calendar', 'Payment Gateways', 'AI Assistant'];

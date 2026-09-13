@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, LogOut, Loader } from 'lucide-react';
 import { fetchTable, upsertRow } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 import { reportError } from '../lib/errorReporter';
 
 export default function EduOneWidget({ user, notify, settings, store }) {
