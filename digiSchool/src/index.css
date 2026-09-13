@@ -1345,3 +1345,91 @@ textarea:focus-visible,
     box-shadow: none !important;
   }
 }
+
+/* ============================================================================
+   Dark theme
+   ----------------------------------------------------------------------------
+   lib/theme.js sets html[data-theme="light"|"dark"], or removes the attribute
+   for "system" so the media query below decides.
+
+   These override the :root tokens the whole app already uses, so every screen
+   that reads --card/--surface/--text follows along. Screens that hardcode
+   white backgrounds will still be light — those are listed as known gaps
+   rather than patched blindly here.
+   ========================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) { color-scheme: dark; }
+}
+
+html[data-theme='dark'] { color-scheme: dark; }
+
+html[data-theme='dark'] {
+  --surface: #1B1C2A;
+  --card: #232434;
+  --text: #E7E7F1;
+  --text-secondary: #C3C4DA;
+  --muted: #8E90AC;
+  --border: #33354B;
+  --border-light: #2B2D40;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.30), 0 6px 16px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.30), 0 16px 40px rgba(0, 0, 0, 0.44);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) {
+    --surface: #1B1C2A;
+    --card: #232434;
+    --text: #E7E7F1;
+    --text-secondary: #C3C4DA;
+    --muted: #8E90AC;
+    --border: #33354B;
+    --border-light: #2B2D40;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.24);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.30), 0 6px 16px rgba(0, 0, 0, 0.34);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.30), 0 16px 40px rgba(0, 0, 0, 0.44);
+  }
+}
+
+/* Surfaces that were painted a literal white need the token instead. */
+html[data-theme='dark'] body,
+html:not([data-theme='light']) body { background: var(--surface); color: var(--text); }
+html[data-theme='dark'] .card,
+html[data-theme='dark'] .table,
+html[data-theme='dark'] .input,
+html[data-theme='dark'] .select { background: var(--card); color: var(--text); border-color: var(--border); }
+html[data-theme='dark'] .table thead th { background: var(--border-light); color: var(--text-secondary); }
+html[data-theme='dark'] .muted { color: var(--muted); }
+
+/* ---------- Theme toggle ---------- */
+.eo-theme-toggle {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 8px;
+  background: var(--border-light);
+  border: 1px solid var(--border);
+}
+.eo-theme-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+.eo-theme-opt:hover { color: var(--primary); }
+.eo-theme-opt.is-active {
+  background: var(--card);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}

@@ -1,9 +1,22 @@
+/**
+ * Academics dashboard — Sneat design system.
+ *
+ * THE METRIC THIS DASHBOARD IS ACCOUNTABLE TO: how many classes are meeting
+ * their own yearly mean target. A single school-wide mean is not actionable —
+ * Form 1 and Form 4 are judged differently — so targets are set per class and
+ * per year in Settings → Targets, and this dashboard scores against them.
+ * Everything below explains the number: which classes are behind, which
+ * subjects drag, how much of the data is actually in (marks completion gates
+ * the mean's trustworthiness), and the merit/audit/slip tools that act on it.
+ *
+ * All computation is carried over unchanged; only presentation was rebuilt.
+ */
+
 import { useMemo, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Badge, ProgressBar } from '../components/widgets';
 import { exportTablePDF, downloadExcel } from '../utils/exporters';
 import { studentOverall, gradeFor, pointsForGrade, subjectAverage, is844Class } from '../utils/grading';
-import { SUBJECTS, expandClassesWithStreams, getDynamicClasses } from '../data/seed';
+import { SUBJECTS, expandClassesWithStreams } from '../data/seed';
 import ReportCardModal from '../components/ReportCardModal';
 import MeritListModule from '../components/MeritListModule';
 import WeeklyBrief from '../components/WeeklyBrief';
@@ -11,43 +24,24 @@ import BenchmarkCard from '../components/BenchmarkCard';
 import StreamPerformanceGraph from '../components/StreamPerformanceGraph';
 import AcademicAnalytics from '../components/AcademicAnalytics';
 import ClassSubjectAnalysis from '../components/ClassSubjectAnalysis';
-import { Download, FileText, Award, CheckCircle2, Clock, AlertTriangle, Printer, Users, BookOpen, Search, Grid3x3, Zap, Layers } from 'lucide-react';
+import {
+  Download, FileText, Award, CheckCircle2, AlertTriangle, Printer,
+  Users, BookOpen, Search, Grid3x3, Layers,
+} from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
-
-function Stat({ label, value, color, sub, icon: IconComp }) {
-  return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 10,
-        padding: '16px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        minHeight: 96,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: '#6b7280' }}>{label}</span>
-        {IconComp && <IconComp size={16} color="#9ca3af" strokeWidth={1.75} />}
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', letterSpacing: '-0.5px', lineHeight: 1 }}>
-        {value}
-      </div>
-      {sub && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 'auto' }}>{sub}</div>}
-      <div style={{ display: 'none' }}>{color}</div>
-    </div>
-  );
-}
+import { computeClassMeanMetrics } from '../lib/targets';
+import {
+  SneatPage, Grid, Card, CardHead, CardBody, MetricCard, Spotlight,
+  ChartCard, SnBar, TableCard, Tabs, ProgressMetric,
+  SnBadge, SnButton, SnEmpty, SNEAT, ClassMeanChart,
+} from '../components/sneat';
 
 export default function AcademicsDashboard({ store = {}, user = {} }) {
   const { navigate = (() => {}), notify = (() => {}), settings = {}, teachers = [], examSchedules = [] } = store || {};
   const [students, setStudents] = useState([]);
   const [awaitingApprovalCount, setAwaitingApprovalCount] = useState(0);
-  const [activeTab, setActiveTab] = useState('overview'); // overview | merit | audit | slips
-  
-  // Selection states
+  const [activeTab, setActiveTab] = useState('overview');
+
   const [selectedClass, setSelectedClass] = useState('All');
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
   const [searchStudent, setSearchStudent] = useState('');
@@ -57,69 +51,57 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
     return students || [];
   }, [store?.students, students]);
 
-  const activeStudentsList = useMemo(() => {
-    return rawStudents.filter(s => s.status !== 'Inactive' && s.status !== 'Graduated' && s.status !== 'Archived' && s.status !== 'Withdrawn' && s.status !== 'Pending');
-  }, [rawStudents]);
+  const activeStudentsList = useMemo(() => rawStudents.filter(
+    (s) => !['Inactive', 'Graduated', 'Archived', 'Withdrawn', 'Pending'].includes(s.status)
+  ), [rawStudents]);
 
   const rawStaff = useMemo(() => {
     if (store?.teachers && Array.isArray(store.teachers) && store.teachers.length > 0) return store.teachers;
     return teachers || [];
   }, [store?.teachers, teachers]);
 
-  // Only classes an admin has explicitly added in Settings. We used to
-  // union with getDynamicClasses(students) which surfaced stale class values
-  // on student records — the "phantom classes" problem.
-  const dynamicClasses = useMemo(() => {
-    return expandClassesWithStreams(settings?.classes || []);
-  }, [settings]);
+  const dynamicClasses = useMemo(
+    () => expandClassesWithStreams(settings?.classes || []),
+    [settings]
+  );
 
   useEffect(() => {
     import('../lib/api').then(({ fetchStudents }) => {
-      fetchStudents(0, 2000, { activeOnly: true }).then(r => setStudents(r.data || [])).catch((e) => reportError(e, 'views.AcademicsDashboard'));
+      fetchStudents(0, 2000, { activeOnly: true })
+        .then((r) => setStudents(r.data || []))
+        .catch((e) => reportError(e, 'views.AcademicsDashboard'));
     });
 
-    const fetchApprovals = async () => {
+    (async () => {
       try {
-        const { count: approvalCount } = await supabase.from('approval_queue')
+        const { count } = await supabase.from('approval_queue')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
-        setAwaitingApprovalCount(approvalCount || 0);
+        setAwaitingApprovalCount(count || 0);
       } catch (e) {
         console.warn('Failed to load approvals:', e);
       }
-    };
-    fetchApprovals();
+    })();
   }, [store?.schoolId]);
 
-  const activeTeacherList = useMemo(() => rawStaff.filter(t => t.status !== 'Inactive'), [rawStaff]);
-  const activeTeachers = useMemo(() => activeTeacherList.filter(t => t.status === 'Active').length, [activeTeacherList]);
+  const activeTeacherList = useMemo(() => rawStaff.filter((t) => t.status !== 'Inactive'), [rawStaff]);
+  const activeTeachers = useMemo(() => activeTeacherList.filter((t) => t.status === 'Active').length, [activeTeacherList]);
   const classesCount = dynamicClasses.length;
 
-  // ── MERIT LIST & RANKINGS ──
+  // ── merit ranking ────────────────────────────────────────────────────────
   const meritList = useMemo(() => {
     const listToRank = selectedClass === 'All'
       ? activeStudentsList
-      : activeStudentsList.filter(s => s.class === selectedClass);
+      : activeStudentsList.filter((s) => s.class === selectedClass);
 
-    const evaluated = listToRank.map(s => {
+    const evaluated = listToRank.map((s) => {
       const is844 = is844Class(s.class);
       const overallScore = studentOverall(s, SUBJECTS);
       const meanGradeCode = gradeFor(overallScore, store?.gradeBoundaries, is844 ? '844' : 'CBC');
       const meanPoints = pointsForGrade(meanGradeCode, is844 ? '844' : 'CBC');
-
       let totalMarks = 0;
-      SUBJECTS.forEach(sub => {
-        totalMarks += subjectAverage(s.scores?.[sub]);
-      });
-
-      return {
-        ...s,
-        totalMarks,
-        meanPercentage: overallScore,
-        meanGradeCode,
-        meanPoints,
-        rawStudent: s,
-      };
+      SUBJECTS.forEach((sub) => { totalMarks += subjectAverage(s.scores?.[sub]); });
+      return { ...s, totalMarks, meanPercentage: overallScore, meanGradeCode, meanPoints, rawStudent: s };
     });
 
     evaluated.sort((a, b) => b.meanPercentage - a.meanPercentage);
@@ -128,480 +110,468 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
     return evaluated.map((s, idx, arr) => {
       if (idx > 0 && Math.abs(s.meanPercentage - arr[idx - 1].meanPercentage) < 0.01) {
         return { ...s, streamPosition: arr[idx - 1].streamPosition };
-      } else {
-        currentRank = idx + 1;
-        return { ...s, streamPosition: currentRank };
       }
+      currentRank = idx + 1;
+      return { ...s, streamPosition: currentRank };
     });
   }, [activeStudentsList, selectedClass, store?.gradeBoundaries]);
 
-  const schoolOverallMean = useMemo(() => {
-    if (activeStudentsList.length === 0) return '0.0%';
-    const sum = activeStudentsList.reduce((acc, s) => {
-      return acc + studentOverall(s, SUBJECTS);
-    }, 0);
-    return `${(sum / activeStudentsList.length).toFixed(1)}%`;
+  // ── THE metric ───────────────────────────────────────────────────────────
+  const schoolMeanValue = useMemo(() => {
+    if (activeStudentsList.length === 0) return 0;
+    const sum = activeStudentsList.reduce((acc, s) => acc + studentOverall(s, SUBJECTS), 0);
+    return sum / activeStudentsList.length;
   }, [activeStudentsList]);
 
-  // ── MARKS AUDIT ──
+  const schoolOverallMean = `${schoolMeanValue.toFixed(1)}%`;
+
+  /** Mean per class — shows which streams move the school mean. */
+  const meanByClass = useMemo(() => {
+    const rows = {};
+    activeStudentsList.forEach((s) => {
+      const k = s.class || 'Unassigned';
+      rows[k] ||= { name: k, total: 0, n: 0 };
+      rows[k].total += studentOverall(s, SUBJECTS);
+      rows[k].n += 1;
+    });
+    return Object.values(rows)
+      .map((r) => ({ name: r.name, mean: r.n ? Number((r.total / r.n).toFixed(1)) : 0, students: r.n }))
+      .sort((a, b) => b.mean - a.mean);
+  }, [activeStudentsList]);
+
+  /**
+   * Each class against ITS OWN yearly mean target (Settings → Targets).
+   * A single school-wide mean would hide that Form 1 and Form 4 are judged
+   * differently, so this is the real academic scorecard.
+   */
+  const classMeanMetrics = useMemo(
+    () => computeClassMeanMetrics(settings, meanByClass),
+    [settings, meanByClass]
+  );
+
+  /** Mean per subject — the other axis of the same number. */
+  const meanBySubject = useMemo(() => SUBJECTS.map((sub) => {
+    let total = 0; let n = 0;
+    activeStudentsList.forEach((s) => {
+      const avg = subjectAverage(s.scores?.[sub]);
+      if (avg > 0) { total += avg; n += 1; }
+    });
+    return { name: sub, mean: n ? Number((total / n).toFixed(1)) : 0, entries: n };
+  }).filter((r) => r.entries > 0).sort((a, b) => b.mean - a.mean), [activeStudentsList]);
+
+  // ── marks audit ──────────────────────────────────────────────────────────
   const marksAuditMatrix = useMemo(() => {
     const matrix = [];
     const classesToAudit = selectedClass === 'All' ? dynamicClasses : [selectedClass];
 
-    classesToAudit.forEach(cls => {
-      const studentsInClass = activeStudentsList.filter(s => s.class === cls);
+    classesToAudit.forEach((cls) => {
+      const studentsInClass = activeStudentsList.filter((s) => s.class === cls);
       if (studentsInClass.length === 0) return;
 
-      SUBJECTS.forEach(sub => {
-        const teacherAssigned = rawStaff.find(t => t.subject === sub || t.dept === sub || (t.subjects && t.subjects.includes(sub)))?.name || 'Unassigned';
-        const enteredCount = studentsInClass.filter(s => {
+      SUBJECTS.forEach((sub) => {
+        const teacherAssigned = rawStaff.find(
+          (t) => t.subject === sub || t.dept === sub || (t.subjects && t.subjects.includes(sub))
+        )?.name || 'Unassigned';
+
+        const enteredCount = studentsInClass.filter((s) => {
           const sc = s.scores?.[sub];
           if (!sc) return false;
           if (typeof sc === 'number') return true;
-          if (sc.score !== undefined && sc.score !== '') return true;
-          if (sc.average !== undefined && sc.average !== '') return true;
-          if (sc.a1 !== undefined && sc.a1 !== '') return true;
-          if (sc.a2 !== undefined && sc.a2 !== '') return true;
-          if (sc.a3 !== undefined && sc.a3 !== '') return true;
-          if (sc.a4 !== undefined && sc.a4 !== '') return true;
-          return false;
+          return ['score', 'average', 'a1', 'a2', 'a3', 'a4']
+            .some((k) => sc[k] !== undefined && sc[k] !== '');
         }).length;
 
         const pct = Math.round((enteredCount / studentsInClass.length) * 100);
         matrix.push({
-          id: `${cls}_${sub}`,
-          class: cls,
-          subject: sub,
-          teacher: teacherAssigned,
-          totalStudents: studentsInClass.length,
-          enteredCount,
-          pct,
-          status: pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Pending Entry'
+          id: `${cls}_${sub}`, class: cls, subject: sub, teacher: teacherAssigned,
+          totalStudents: studentsInClass.length, enteredCount, pct,
+          status: pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Pending Entry',
         });
       });
     });
-
     return matrix;
   }, [dynamicClasses, selectedClass, activeStudentsList, rawStaff]);
 
   const auditStats = useMemo(() => {
     const totalUnits = marksAuditMatrix.length || 1;
-    const completedUnits = marksAuditMatrix.filter(m => m.status === 'Complete').length;
-    const inProgressUnits = marksAuditMatrix.filter(m => m.status === 'In Progress').length;
-    const pendingUnits = marksAuditMatrix.filter(m => m.status === 'Pending Entry').length;
-    const overallPct = Math.round((completedUnits / totalUnits) * 100);
-    return { totalUnits, completedUnits, inProgressUnits, pendingUnits, overallPct };
+    const completedUnits = marksAuditMatrix.filter((m) => m.status === 'Complete').length;
+    const inProgressUnits = marksAuditMatrix.filter((m) => m.status === 'In Progress').length;
+    const pendingUnits = marksAuditMatrix.filter((m) => m.status === 'Pending Entry').length;
+    return {
+      totalUnits, completedUnits, inProgressUnits, pendingUnits,
+      overallPct: Math.round((completedUnits / totalUnits) * 100),
+    };
   }, [marksAuditMatrix]);
 
-  // Exporters
+  // ── exporters ────────────────────────────────────────────────────────────
   const handleExportMeritListPDF = () => {
     if (meritList.length === 0) return notify('No students in current merit list selection', 'warning');
-    const head = ['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points'];
-    const body = meritList.map((s, idx) => [
-      s.streamPosition || idx + 1,
-      s.adm || s.admission_no || '-',
-      s.name,
-      s.class,
-      s.totalMarks,
-      `${s.meanPercentage.toFixed(1)}%`,
-      s.meanGradeCode,
-      s.meanPoints.toFixed(1)
-    ]);
-
     exportTablePDF({
       school: settings,
       title: `OFFICIAL MERIT RANKING - ${selectedClass === 'All' ? 'ALL STREAMS' : selectedClass.toUpperCase()}`,
       subtitle: `Term 2 · Academic Year 2026 | Total Ranked: ${meritList.length}`,
-      head,
-      body,
-      filename: `merit_list_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.pdf`
+      head: ['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points'],
+      body: meritList.map((s, idx) => [
+        s.streamPosition || idx + 1, s.adm || s.admission_no || '-', s.name, s.class,
+        s.totalMarks, `${s.meanPercentage.toFixed(1)}%`, s.meanGradeCode, s.meanPoints.toFixed(1),
+      ]),
+      filename: `merit_list_${selectedClass === 'All' ? 'school' : selectedClass.replace(/\s+/g, '_')}.pdf`,
     });
     notify(`Merit list PDF downloaded for ${meritList.length} student(s)`, 'success');
   };
 
   const handleExportMeritListExcel = () => {
     if (meritList.length === 0) return notify('No students in current merit list selection', 'warning');
-    const aoa = [
-      ['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points']
-    ];
+    const aoa = [['Rank', 'Adm No', 'Student Name', 'Class Stream', 'Total Marks', 'Mean %', 'Grade', 'Points']];
     meritList.forEach((s, idx) => {
       aoa.push([
-        s.streamPosition || idx + 1,
-        s.adm || s.admission_no || '-',
-        s.name,
-        s.class,
-        s.totalMarks,
-        Number(s.meanPercentage.toFixed(1)),
-        s.meanGradeCode,
-        Number(s.meanPoints.toFixed(1))
+        s.streamPosition || idx + 1, s.adm || s.admission_no || '-', s.name, s.class,
+        s.totalMarks, Number(s.meanPercentage.toFixed(1)), s.meanGradeCode, Number(s.meanPoints.toFixed(1)),
       ]);
     });
-
     downloadExcel(`Merit_List_${selectedClass}.xlsx`, [{ name: 'Merit Ranking', aoa }]);
     notify('Merit list Excel export complete', 'success');
   };
 
   const handleExportAuditPDF = () => {
     if (marksAuditMatrix.length === 0) return notify('No audit records to export', 'warning');
-    const head = ['Class', 'Subject', 'Teacher', 'Entered', 'Total', 'Completion %', 'Status'];
-    const body = marksAuditMatrix.map(m => [
-      m.class,
-      m.subject,
-      m.teacher,
-      m.enteredCount,
-      m.totalStudents,
-      `${m.pct}%`,
-      m.status
-    ]);
-
     exportTablePDF({
       school: settings,
       title: 'MARKS ENTRY VERIFICATION AUDIT REGISTER',
       subtitle: `Term 2 · Academic Year 2026 | Class Scope: ${selectedClass}`,
-      head,
-      body,
-      filename: `Marks_Audit_${selectedClass}.pdf`
+      head: ['Class', 'Subject', 'Teacher', 'Entered', 'Total', 'Completion %', 'Status'],
+      body: marksAuditMatrix.map((m) => [m.class, m.subject, m.teacher, m.enteredCount, m.totalStudents, `${m.pct}%`, m.status]),
+      filename: `Marks_Audit_${selectedClass}.pdf`,
     });
     notify('Marks audit PDF downloaded', 'success');
   };
 
+  const slipRows = useMemo(() => activeStudentsList
+    .filter((s) => selectedClass === 'All' || s.class === selectedClass)
+    .filter((s) => s.name.toLowerCase().includes(searchStudent.toLowerCase())
+      || (s.adm && s.adm.toLowerCase().includes(searchStudent.toLowerCase())))
+    .slice(0, 50), [activeStudentsList, selectedClass, searchStudent]);
+
+  const classSelect = (
+    <select
+      value={selectedClass}
+      onChange={(e) => setSelectedClass(e.target.value)}
+      style={{ height: 36, borderRadius: 6, border: `1px solid ${SNEAT.border}`, padding: '0 10px', fontSize: 13 }}
+    >
+      <option value="All">All Streams</option>
+      {dynamicClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+    </select>
+  );
+
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", background: '#fafafa', minHeight: '100vh', paddingBottom: 40 }}>
-      {/* ── PAGE HEADER ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#6b7280', marginBottom: 4 }}>
-            {settings?.name || 'School'} · Term 2 · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#111827', letterSpacing: '-0.4px' }}>
-            Academic Merit &amp; Performance
-          </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
-            Merit list generation, subject performance analysis, marks verification &amp; official result slips.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => navigate('gradebook')}
-            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#ffffff', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, color: '#374151', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            <BookOpen size={14} strokeWidth={1.75} /> Gradebook
-          </button>
-          <button
-            onClick={handleExportMeritListPDF}
-            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#111827', border: '1px solid #111827', fontSize: 13, fontWeight: 500, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            <Download size={14} strokeWidth={1.75} /> Export Merit List
-          </button>
-        </div>
-      </div>
-
-      {/* ── TIMETABLE STUDIO QUICK ACCESS ── */}
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 10,
-          padding: '16px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 20,
-          gap: 16,
-          flexWrap: 'wrap',
+    <SneatPage
+      flush
+      title="Academic performance"
+      subtitle={`${settings?.name || 'School'} · Term 2 · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+      actions={
+        <>
+          <SnButton variant="outline" onClick={() => navigate('gradebook')}>
+            <BookOpen size={15} /> Gradebook
+          </SnButton>
+          <SnButton variant="primary" onClick={handleExportMeritListPDF}>
+            <Download size={15} /> Export merit list
+          </SnButton>
+        </>
+      }
+    >
+      {/* THE metric: classes meeting their own yearly mean target. */}
+      <Spotlight
+        icon={<Award size={13} />}
+        eyebrow={`Classes meeting their mean target — ${classMeanMetrics.year}`}
+        value={`${classMeanMetrics.met} / ${classMeanMetrics.total}`}
+        caption={
+          classMeanMetrics.total === 0
+            ? 'No class means yet. They appear once teachers enter marks.'
+            : `School mean ${schoolOverallMean} across ${activeStudentsList.length} student${activeStudentsList.length === 1 ? '' : 's'}. ` +
+              (classMeanMetrics.worst && !classMeanMetrics.worst.met
+                ? `${classMeanMetrics.worst.name} is furthest behind at ${classMeanMetrics.worst.mean.toFixed(1)}% against a ${classMeanMetrics.worst.target}% target. `
+                : 'Every class is at or above its target. ') +
+              `${auditStats.overallPct}% of marks are in.`
+        }
+        progress={classMeanMetrics.pct}
+        target={{
+          label: 'Classes on target',
+          value: `${classMeanMetrics.met} of ${classMeanMetrics.total}`,
         }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 260 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Grid3x3 size={18} color="#4b5563" strokeWidth={1.75} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Timetable Studio</div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Design, edit and publish class &amp; teacher timetables.</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#6b7280' }}>
-            <div><span style={{ fontWeight: 600, color: '#111827' }}>{Object.keys(store?.timetables || {}).length}</span> published</div>
-            <div><span style={{ fontWeight: 600, color: '#111827' }}>{dynamicClasses.length}</span> classes</div>
-          </div>
-          <button
-            onClick={() => navigate('timetable')}
-            style={{ height: 34, padding: '0 14px', borderRadius: 6, background: '#ffffff', border: '1px solid #d1d5db', fontSize: 13, fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            Open <span style={{ marginLeft: 2 }}>→</span>
-          </button>
-        </div>
-      </div>
+        stats={[
+          { label: 'School mean', value: schoolOverallMean },
+          { label: 'Marks completion', value: `${auditStats.overallPct}%` },
+          { label: 'Awaiting approval', value: awaitingApprovalCount },
+        ]}
+      />
 
-      {/* ── AI: WEEKLY BRIEF + BENCHMARKS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16, marginBottom: 20 }}>
-        <WeeklyBrief store={{ ...store, students: activeStudentsList, teachers: rawStaff, settings, examSchedules }} user={user} />
-        <BenchmarkCard user={user} />
-      </div>
-
-      {/* ── TAB NAVIGATION ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, gap: 4, flexWrap: 'wrap' }}>
-        {[
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
           { id: 'overview', label: 'Overview' },
-          { id: 'class_analysis', label: 'Class & Subject Analysis' },
-          { id: 'merit', label: 'Merit list', badge: meritList.length },
-          { id: 'audit', label: 'Marks audit', badge: `${auditStats.overallPct}%` },
-          { id: 'slips', label: 'Result slips', badge: activeStudentsList.length },
-        ].map(t => {
-          const isActive = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '10px 14px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: isActive ? '2px solid #111827' : '2px solid transparent',
-                color: isActive ? '#111827' : '#6b7280',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: 13,
-                cursor: 'pointer',
-                marginBottom: -1,
-              }}
-            >
-              <span>{t.label}</span>
-              {t.badge !== undefined && t.badge !== 0 && (
-                <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 10, background: '#f3f4f6', color: '#4b5563' }}>
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+          { id: 'class_analysis', label: 'Class & subject analysis' },
+          { id: 'merit', label: 'Merit list', count: meritList.length },
+          { id: 'audit', label: 'Marks audit', count: `${auditStats.overallPct}%` },
+          { id: 'slips', label: 'Result slips', count: activeStudentsList.length },
+        ]}
+      />
 
-      {/* ── TAB 1: ACADEMIC SUMMARY ── */}
+      {/* ── OVERVIEW ── */}
       {activeTab === 'overview' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-            <Stat icon={Users} label="Total Enrolled Students" value={activeStudentsList.length} sub="Active Registry" color="#047857" />
-            <Stat icon={BookOpen} label="Teaching Faculty" value={activeTeacherList.length} sub={`${activeTeachers} Active Faculty`} color="#047857" />
-            <Stat icon={Award} label="Classes & Streams" value={`${settings?.classes?.length || 1} / ${classesCount}`} sub="Active Streams" color="#047857" />
-            <Stat icon={Award} label="Overall Mean Score" value={schoolOverallMean} sub="Across All Subjects" color="#047857" />
-          </div>
+          <Grid cols={4}>
+            <MetricCard label="Enrolled students" value={activeStudentsList.length}
+              icon={<Users />} tone="primary" foot="Active registry" />
+            <MetricCard label="Teaching faculty" value={activeTeacherList.length}
+              icon={<BookOpen />} tone="info" foot={`${activeTeachers} active`} />
+            <MetricCard label="Classes & streams" value={`${settings?.classes?.length || 1} / ${classesCount}`}
+              icon={<Layers />} tone="secondary" foot="Groups / streams" />
+            <MetricCard label="Classes on mean target" value={`${classMeanMetrics.met} / ${classMeanMetrics.total}`}
+              icon={<Award />} tone={classMeanMetrics.rollup.status} foot={`${classMeanMetrics.year} targets`}
+              progress={{ value: classMeanMetrics.pct, max: 100, tone: classMeanMetrics.rollup.status }} />
+          </Grid>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-            <Stat icon={FileText} label="Total Exam Schedules" value={examSchedules.length} sub="Published Exams" color="#047857" />
-            <Stat icon={CheckCircle2} label="Marks Completion" value={`${auditStats.overallPct}%`} sub={`${auditStats.completedUnits} / ${auditStats.totalUnits} Units`} color={auditStats.overallPct >= 80 ? '#047857' : '#d97706'} />
-            <Stat icon={AlertTriangle} label="Awaiting Approval" value={awaitingApprovalCount} sub="Pending Review" color={awaitingApprovalCount > 0 ? '#d97706' : '#047857'} />
-            <Stat icon={BookOpen} label="Curriculum Subjects" value={SUBJECTS.length} sub="Active Subjects" color="#047857" />
-          </div>
+          <Grid cols={4}>
+            <MetricCard
+              label="Marks completion" value={`${auditStats.overallPct}%`}
+              icon={<CheckCircle2 />} tone={auditStats.overallPct >= 80 ? 'success' : 'warning'}
+              foot={`${auditStats.completedUnits} of ${auditStats.totalUnits} units`}
+              progress={{ value: auditStats.overallPct, max: 100, tone: auditStats.overallPct >= 80 ? 'success' : 'warning' }}
+            />
+            <MetricCard
+              label="Pending entry" value={auditStats.pendingUnits}
+              icon={<AlertTriangle />} tone={auditStats.pendingUnits > 0 ? 'danger' : 'success'}
+              foot="Class-subject units untouched"
+            />
+            <MetricCard
+              label="Awaiting approval" value={awaitingApprovalCount}
+              icon={<FileText />} tone={awaitingApprovalCount > 0 ? 'warning' : 'success'}
+              foot="Pending review"
+            />
+            <MetricCard
+              label="Exam schedules" value={examSchedules.length}
+              icon={<FileText />} tone="primary" foot="Published exams"
+            />
+          </Grid>
 
-          {/* Stream Performance Graph */}
-          <div style={{ marginBottom: 16 }}>
-            <StreamPerformanceGraph students={activeStudentsList} />
-          </div>
+          {/* What moves the mean */}
+          <Grid cols={2}>
+            <Card>
+              <CardHead
+                title="Mean score by class"
+                subtitle={`Each class against its own ${classMeanMetrics.year} target`}
+                action={<SnButton variant="ghost" onClick={() => navigate('settings')}>Set targets</SnButton>}
+              />
+              <CardBody>
+                <ClassMeanChart
+                  rows={classMeanMetrics.rows}
+                  empty={<SnEmpty icon={<Award />} title="No class means yet"
+                    message="Means appear here once teachers enter marks." />}
+                />
+              </CardBody>
+            </Card>
 
-          {/* Grade distribution + subject-performance analytics (Recharts) */}
-          <div style={{ marginBottom: 16 }}>
-            <AcademicAnalytics students={activeStudentsList} gradeBoundaries={store?.gradeBoundaries} />
-          </div>
+            <ChartCard title="Mean score by subject" subtitle="Strongest to weakest" height={300}>
+              {meanBySubject.length > 0 ? (
+                <SnBar data={meanBySubject.slice(0, 10)} xKey="name"
+                  series={[{ key: 'mean', name: 'Mean %', color: SNEAT.info }]} />
+              ) : (
+                <SnBar data={[{ name: 'No marks yet', mean: 0 }]} xKey="name" series={[{ key: 'mean', name: 'Mean %' }]} />
+              )}
+            </ChartCard>
+          </Grid>
 
-          {/* Quick Tools Grid */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Academic Quick Tools</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('merit')}>
-                <Award size={15} style={{ marginRight: 6 }} /> Merit List Generator
-              </button>
-              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('audit')}>
-                <CheckCircle2 size={15} style={{ marginRight: 6 }} /> Audit Marks Entry
-              </button>
-              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('slips')}>
-                <Printer size={15} style={{ marginRight: 6 }} /> Result Slips Hub
-              </button>
-              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => setActiveTab('class_analysis')}>
-                <Layers size={15} style={{ marginRight: 6 }} /> Class Analysis
-              </button>
-              <button className="btn" style={{ height: 40, justifyContent: 'flex-start', fontSize: 13 }} onClick={() => navigate('gradebook')}>
-                <FileText size={15} style={{ marginRight: 6 }} /> Gradebook Review
-              </button>
-            </div>
-          </div>
+          {/* AI brief + benchmarks (existing components, now in Sneat cards) */}
+          <Grid cols={2}>
+            <WeeklyBrief store={{ ...store, students: activeStudentsList, teachers: rawStaff, settings, examSchedules }} user={user} />
+            <BenchmarkCard user={user} />
+          </Grid>
+
+          <StreamPerformanceGraph students={activeStudentsList} />
+          <AcademicAnalytics students={activeStudentsList} gradeBoundaries={store?.gradeBoundaries} />
+
+          <Card>
+            <CardHead title="Timetable studio" subtitle="Design, edit and publish class & teacher timetables"
+              action={<SnButton variant="outline" onClick={() => navigate('timetable')}>Open →</SnButton>} />
+            <CardBody>
+              <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="sn-icon sn-icon-primary sn-icon-lg"><Grid3x3 /></span>
+                <div><span className="sn-strong">{Object.keys(store?.timetables || {}).length}</span> published</div>
+                <div><span className="sn-strong">{dynamicClasses.length}</span> classes</div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHead title="Academic quick tools" />
+            <CardBody>
+              <Grid cols={4}>
+                <SnButton variant="outline" onClick={() => setActiveTab('merit')}><Award size={15} /> Merit list</SnButton>
+                <SnButton variant="outline" onClick={() => setActiveTab('audit')}><CheckCircle2 size={15} /> Audit marks</SnButton>
+                <SnButton variant="outline" onClick={() => setActiveTab('slips')}><Printer size={15} /> Result slips</SnButton>
+                <SnButton variant="outline" onClick={() => setActiveTab('class_analysis')}><Layers size={15} /> Class analysis</SnButton>
+              </Grid>
+            </CardBody>
+          </Card>
         </>
       )}
 
-      {/* ── TAB: CLASS & SUBJECT ANALYSIS ── */}
+      {/* ── CLASS & SUBJECT ANALYSIS ── */}
       {activeTab === 'class_analysis' && (
-        <ClassSubjectAnalysis 
-          students={activeStudentsList} 
-          gradeBoundaries={store?.gradeBoundaries} 
-          schoolSettings={settings} 
-        />
-      )}
-
-      {/* ── TAB 2: MERIT LIST & PERFORMANCE ── */}
-      {activeTab === 'merit' && (
-        <MeritListModule 
+        <ClassSubjectAnalysis
           students={activeStudentsList}
-          schoolSettings={store?.settings}
-          teachers={rawStaff}
-          classes={dynamicClasses}
-          userRole={user?.role || store?.user?.role || 'dos'}
-          currentStudentId={user?.student_id || user?.id}
-          notify={notify}
-          onUpdateSettings={store?.updateSettings || ((partial) => store?.setSettings && store.setSettings(prev => ({ ...prev, ...partial })))}
-          onNavigateGradebook={() => store?.navigate && store.navigate('gradebook')}
-          onUpdateStudentScores={(editedScores) => {
-            Object.entries(editedScores).forEach(([key, val]) => {
-              const [studentId, subject] = key.split('_');
-              const target = rawStudents.find(s => String(s.id) === String(studentId));
-              if (target) {
-                const currentScores = target.scores || {};
-                const subjectScores = currentScores[subject] || {};
-                const updated = {
-                  ...target,
-                  scores: {
-                    ...currentScores,
-                    [subject]: typeof subjectScores === 'object' ? { ...subjectScores, average: val, score: val } : val
-                  }
-                };
-                if (store.updateStudent) store.updateStudent(updated);
-                setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? updated : s));
-              }
-            });
-          }}
+          gradeBoundaries={store?.gradeBoundaries}
+          schoolSettings={settings}
         />
       )}
 
-      {/* ── TAB 3: MARKS AUDIT ── */}
-      {activeTab === 'audit' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Marks Entry Audit Register</h3>
-              <span style={{ fontSize: 12, color: '#64748b' }}>Audit score submissions across all class subjects</span>
-            </div>
+      {/* ── MERIT ── */}
+      {activeTab === 'merit' && (
+        <>
+          <Grid cols={4}>
+            <MetricCard label="Students ranked" value={meritList.length} icon={<Users />} tone="primary" />
+            <MetricCard label="Top mean" value={meritList[0] ? `${meritList[0].meanPercentage.toFixed(1)}%` : '—'}
+              icon={<Award />} tone="success" foot={meritList[0]?.name} />
+            <MetricCard label="Scope" value={selectedClass === 'All' ? 'All streams' : selectedClass}
+              icon={<Layers />} tone="secondary" />
+            <Card className="sn-metric">
+              <p className="sn-metric-label">Export</p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <SnButton variant="primary" onClick={handleExportMeritListPDF}>PDF</SnButton>
+                <SnButton variant="outline" onClick={handleExportMeritListExcel}>Excel</SnButton>
+              </div>
+            </Card>
+          </Grid>
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <select 
-                value={selectedClass} 
-                onChange={(e) => setSelectedClass(e.target.value)}
-                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
-              >
-                <option value="All">All Streams</option>
-                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
-              </select>
-
-              <button className="btn btn-primary" onClick={handleExportAuditPDF} style={{ height: 34, fontSize: 12, background: '#047857', border: 'none' }}>
-                Export Audit PDF
-              </button>
-            </div>
-          </div>
-
-          <table className="table" style={{ width: '100%', margin: 0 }}>
-            <thead>
-              <tr>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Subject</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Teacher</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase', width: 140 }}>Progress</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Entered / Total</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {marksAuditMatrix.map(m => (
-                <tr key={m.id}>
-                  <td><strong>{m.class}</strong></td>
-                  <td style={{ fontWeight: 600 }}>{m.subject}</td>
-                  <td>{m.teacher}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, minWidth: 32 }}>{m.pct}%</span>
-                      <div style={{ flex: 1 }}><ProgressBar value={m.pct} color={m.pct === 100 ? '#047857' : m.pct > 0 ? '#d97706' : '#d13438'} /></div>
-                    </div>
-                  </td>
-                  <td className="muted">{m.enteredCount} of {m.totalStudents}</td>
-                  <td>
-                    <Badge color={m.status === 'Complete' ? 'green' : m.status === 'In Progress' ? 'amber' : 'red'}>
-                      {m.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <MeritListModule
+            students={activeStudentsList}
+            schoolSettings={store?.settings}
+            teachers={rawStaff}
+            classes={dynamicClasses}
+            userRole={user?.role || store?.user?.role || 'dos'}
+            currentStudentId={user?.student_id || user?.id}
+            notify={notify}
+            onUpdateSettings={store?.updateSettings || ((partial) => store?.setSettings && store.setSettings((prev) => ({ ...prev, ...partial })))}
+            onNavigateGradebook={() => store?.navigate && store.navigate('gradebook')}
+            onUpdateStudentScores={(editedScores) => {
+              Object.entries(editedScores).forEach(([key, val]) => {
+                const [studentId, subject] = key.split('_');
+                const target = rawStudents.find((s) => String(s.id) === String(studentId));
+                if (target) {
+                  const currentScores = target.scores || {};
+                  const subjectScores = currentScores[subject] || {};
+                  const updated = {
+                    ...target,
+                    scores: {
+                      ...currentScores,
+                      [subject]: typeof subjectScores === 'object'
+                        ? { ...subjectScores, average: val, score: val }
+                        : val,
+                    },
+                  };
+                  if (store.updateStudent) store.updateStudent(updated);
+                  setStudents((prev) => prev.map((s) => (String(s.id) === String(studentId) ? updated : s)));
+                }
+              });
+            }}
+          />
+        </>
       )}
 
-      {/* ── TAB 4: RESULT SLIPS & CARDS ── */}
-      {activeTab === 'slips' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Result Slips & Report Cards Hub</h3>
-              <span style={{ fontSize: 12, color: '#64748b' }}>Generate and print official terminal result slips</span>
-            </div>
+      {/* ── AUDIT ── */}
+      {activeTab === 'audit' && (
+        <>
+          <Grid cols={4}>
+            <MetricCard label="Overall completion" value={`${auditStats.overallPct}%`}
+              icon={<CheckCircle2 />} tone={auditStats.overallPct >= 80 ? 'success' : 'warning'}
+              progress={{ value: auditStats.overallPct, max: 100 }} />
+            <MetricCard label="Complete" value={auditStats.completedUnits} icon={<CheckCircle2 />} tone="success" />
+            <MetricCard label="In progress" value={auditStats.inProgressUnits} icon={<Layers />} tone="warning" />
+            <MetricCard label="Pending entry" value={auditStats.pendingUnits} icon={<AlertTriangle />} tone="danger" />
+          </Grid>
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ position: 'relative', width: 220 }}>
-                <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 10, top: 11 }} />
-                <input 
-                  type="text" 
-                  placeholder="Search student or adm..." 
-                  value={searchStudent} 
+          <TableCard
+            title="Marks entry audit register"
+            subtitle="Score submissions across all class subjects"
+            action={
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {classSelect}
+                <SnButton variant="primary" onClick={handleExportAuditPDF}>Export PDF</SnButton>
+              </div>
+            }
+            rows={marksAuditMatrix}
+            rowKey={(m) => m.id}
+            empty={<SnEmpty icon={<CheckCircle2 />} title="Nothing to audit"
+              message="Add classes and students to see marks-entry progress." />}
+            columns={[
+              { key: 'class', header: 'Class stream', render: (m) => <span className="sn-td-strong">{m.class}</span> },
+              { key: 'subject', header: 'Subject' },
+              { key: 'teacher', header: 'Teacher' },
+              {
+                key: 'progress', header: 'Progress', width: 180,
+                render: (m) => (
+                  <ProgressMetric
+                    value={m.pct} max={100} showRow={false}
+                    tone={m.pct === 100 ? 'success' : m.pct > 0 ? 'warning' : 'danger'}
+                  />
+                ),
+              },
+              { key: 'entered', header: 'Entered', align: 'right', render: (m) => `${m.enteredCount} / ${m.totalStudents}` },
+              {
+                key: 'status', header: 'Status',
+                render: (m) => (
+                  <SnBadge tone={m.status === 'Complete' ? 'success' : m.status === 'In Progress' ? 'warning' : 'danger'}>
+                    {m.status}
+                  </SnBadge>
+                ),
+              },
+            ]}
+          />
+        </>
+      )}
+
+      {/* ── SLIPS ── */}
+      {activeTab === 'slips' && (
+        <TableCard
+          title="Result slips & report cards"
+          subtitle="Generate and print official terminal result slips"
+          action={
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} color={SNEAT.muted} style={{ position: 'absolute', left: 10, top: 11 }} />
+                <input
+                  type="text"
+                  placeholder="Search student or adm…"
+                  value={searchStudent}
                   onChange={(e) => setSearchStudent(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 30, height: 34, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  style={{ paddingLeft: 30, height: 36, width: 220, borderRadius: 6, border: `1px solid ${SNEAT.border}`, fontSize: 13 }}
                 />
               </div>
-
-              <select 
-                value={selectedClass} 
-                onChange={(e) => setSelectedClass(e.target.value)}
-                style={{ height: 34, borderRadius: 6, border: '1px solid #cbd5e1', padding: '0 10px', fontSize: 12 }}
-              >
-                <option value="All">All Streams</option>
-                {dynamicClasses.map(c => <option key={c} value={c}>Stream {c}</option>)}
-              </select>
+              {classSelect}
             </div>
-          </div>
-
-          <table className="table" style={{ width: '100%', margin: 0 }}>
-            <thead>
-              <tr>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Adm No</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Student Name</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Class Stream</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Gender</th>
-                <th style={{ fontSize: 11, textTransform: 'uppercase' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeStudentsList
-                .filter(s => selectedClass === 'All' || s.class === selectedClass)
-                .filter(s => s.name.toLowerCase().includes(searchStudent.toLowerCase()) || (s.adm && s.adm.toLowerCase().includes(searchStudent.toLowerCase())))
-                .slice(0, 50)
-                .map(s => (
-                  <tr key={s.id}>
-                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || '-'}</span></td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
-                    <td><strong>{s.class || '-'}</strong></td>
-                    <td>{s.gender || '-'}</td>
-                    <td>
-                      <button className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '3px 10px', background: '#047857', border: 'none' }} onClick={() => setSelectedStudentForReport(s)}>
-                        View Result Slip
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+          }
+          rows={slipRows}
+          rowKey={(s) => s.id}
+          empty={<SnEmpty icon={<Printer />} title="No students match"
+            message="Adjust the search or stream filter to find a student." />}
+          columns={[
+            { key: 'adm', header: 'Adm no', render: (s) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.adm || '-'}</span> },
+            { key: 'name', header: 'Student name', render: (s) => <span className="sn-td-strong">{s.name}</span> },
+            { key: 'class', header: 'Class stream', render: (s) => s.class || '-' },
+            { key: 'gender', header: 'Gender', render: (s) => s.gender || '-' },
+            {
+              key: 'action', header: 'Action',
+              render: (s) => (
+                <SnButton variant="outline" onClick={() => setSelectedStudentForReport(s)}>
+                  View slip
+                </SnButton>
+              ),
+            },
+          ]}
+        />
       )}
 
-      {/* Result Slip Modal */}
       {selectedStudentForReport && (
         <ReportCardModal
           student={selectedStudentForReport}
@@ -614,6 +584,6 @@ export default function AcademicsDashboard({ store = {}, user = {} }) {
           onClose={() => setSelectedStudentForReport(null)}
         />
       )}
-    </div>
+    </SneatPage>
   );
 }

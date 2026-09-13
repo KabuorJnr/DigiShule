@@ -20,6 +20,7 @@ import SelectProfile from '../SelectProfile';
 import SchemeOfWork from '../SchemeOfWork';
 import LessonPlans from '../LessonPlans';
 import StaffAttendance from '../StaffAttendance';
+import DutyRoster from '../DutyRoster';
 import TeacherManagement from '../TeacherManagement';
 import MyProfile from '../MyProfile';
 import DosDashboard from '../DosDashboard';
@@ -50,6 +51,7 @@ const VIEW_MAP = {
   scheme_of_work: SchemeOfWork,
   lesson_plans: LessonPlans,
   staff_attendance: StaffAttendance,
+  duty_roster: DutyRoster,
   teacher_management: TeacherManagement,
   my_profile: MyProfile,
   dos_dashboard: DosDashboard,

@@ -1,0 +1,604 @@
+/* ============================================================================
+   sneat.css — EduOne dashboard design system, modelled on the Sneat admin
+   template (themeselection/sneat-*).
+
+   WHY IT IS SCOPED: the rest of EduOne runs on a green primary (#047857) and
+   Poppins. Redefining those globally would restyle every button and form in
+   the app. Everything here therefore lives under `.sneat`, which the
+   <SneatPage> wrapper puts on the dashboard root. Nothing outside a dashboard
+   changes.
+
+   TO GO ALL-IN LATER: move the token block from `.sneat` to `:root` and map
+   --primary/--accent onto --sn-primary. That one edit flips the whole app.
+   ========================================================================== */
+
+.sneat {
+  /* ── Brand palette — EduOne dark green, in Sneat's token structure ────
+     Primary matches the app's existing --primary (#047857) so the converted
+     dashboards sit naturally beside unconverted screens. Info is teal rather
+     than Sneat's cyan so it reads as a cousin of the green, and success is a
+     brighter emerald so it stays distinguishable from primary. */
+  --sn-primary: #047857;
+  --sn-primary-light: #059669;
+  --sn-primary-dark: #065F46;
+  --sn-primary-deep: #064E3B;     /* gradient floor / spotlight base */
+  --sn-secondary: #64748B;
+
+  --sn-success: #10B981;
+  --sn-success-dark: #059669;
+  --sn-warning: #F59E0B;
+  --sn-danger: #DC2626;
+  --sn-info: #0891B2;
+
+  /* Soft tints — Sneat's signature icon tiles and label chips. */
+  --sn-primary-soft: rgba(4, 120, 87, 0.14);
+  --sn-success-soft: rgba(16, 185, 129, 0.16);
+  --sn-warning-soft: rgba(245, 158, 11, 0.16);
+  --sn-danger-soft: rgba(220, 38, 38, 0.14);
+  --sn-info-soft: rgba(8, 145, 178, 0.14);
+  --sn-secondary-soft: rgba(100, 116, 139, 0.14);
+
+  /* ── Neutrals ────────────────────────────────────────────────────────── */
+  --sn-bg: #F5F5F9;          /* page ground */
+  --sn-card: #FFFFFF;
+  --sn-heading: #32475C;     /* headings + metric values */
+  --sn-body: #697A8D;        /* body copy */
+  --sn-muted: #A1ACB8;       /* captions, axis labels */
+  --sn-border: #E7E7F1;
+  --sn-track: #EBEEF0;       /* progress track */
+
+  /* ── Elevation: Sneat's soft, wide, low-opacity shadow ───────────────── */
+  --sn-shadow: 0 2px 6px 0 rgba(67, 89, 113, 0.12);
+  --sn-shadow-lg: 0 4px 18px 0 rgba(67, 89, 113, 0.16);
+
+  --sn-radius: 10px;
+  --sn-radius-sm: 6px;
+  --sn-radius-pill: 999px;
+
+  --sn-gap: 1.5rem;
+
+  /* Poppins — matches the rest of EduOne (--font-family in index.css). */
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--sn-body);
+  background: var(--sn-bg);
+}
+
+/* Dark mode: viewers on a dark system theme get Sneat's dark surfaces rather
+   than a blinding white card grid. Tokens only — no layout changes. */
+/* Only follow the device when the user has not chosen explicitly
+   (lib/theme.js removes [data-theme] from <html> for "system"). */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .sneat:not([data-sn-theme='light']) {
+    --sn-bg: #232333;
+    --sn-card: #2B2C40;
+    --sn-heading: #E7E7F1;
+    --sn-body: #B8B9D1;
+    --sn-muted: #7E7F97;
+    --sn-border: #3A3B54;
+    --sn-track: #3A3B54;
+    --sn-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.30);
+    --sn-shadow-lg: 0 4px 18px 0 rgba(0, 0, 0, 0.38);
+  }
+}
+/* An explicit dark choice, from the toggle or a per-page override. */
+html[data-theme='dark'] .sneat:not([data-sn-theme='light']),
+.sneat[data-sn-theme='dark'] {
+  --sn-bg: #232333;
+  --sn-card: #2B2C40;
+  --sn-heading: #E7E7F1;
+  --sn-body: #B8B9D1;
+  --sn-muted: #7E7F97;
+  --sn-border: #3A3B54;
+  --sn-track: #3A3B54;
+  --sn-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.30);
+  --sn-shadow-lg: 0 4px 18px 0 rgba(0, 0, 0, 0.38);
+}
+
+/* ============================ Page scaffold ============================== */
+
+.sn-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-gap);
+  padding: 1.5rem;
+  background: var(--sn-bg);
+  min-height: 100%;
+}
+
+/* For dashboards mounted inside an already-padded shell (.content). */
+.sn-page-flush { padding: 0; background: transparent; }
+
+.sn-page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.sn-page-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+  letter-spacing: -0.01em;
+}
+.sn-page-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--sn-body);
+}
+.sn-page-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ============================== Grid ==================================== */
+
+.sn-grid { display: grid; gap: var(--sn-gap); }
+.sn-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sn-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sn-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* 2/3 + 1/3 split — Sneat's most-used dashboard row. */
+.sn-grid-8-4 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.sn-grid-4-8 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+
+@media (max-width: 1200px) {
+  .sn-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sn-grid-8-4, .sn-grid-4-8 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  .sn-grid-4, .sn-grid-3, .sn-grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .sn-page { padding: 1rem; }
+}
+
+/* ============================== Card ==================================== */
+
+.sn-card {
+  background: var(--sn-card);
+  border-radius: var(--sn-radius);
+  box-shadow: var(--sn-shadow);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;               /* lets charts/tables shrink instead of overflow */
+  transition: box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sn-card-hover:hover { box-shadow: var(--sn-shadow-lg); }
+
+.sn-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 0;
+}
+.sn-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+}
+.sn-card-sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--sn-muted);
+}
+.sn-card-body { padding: 1.25rem; }
+.sn-card-body-tight { padding: 0.75rem 1.25rem 1.25rem; }
+.sn-card-flush { padding: 0; }
+
+/* ========================= Metric (stat) card =========================== */
+
+.sn-metric { padding: 1.25rem; gap: 0.5rem; }
+.sn-metric-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.sn-metric-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sn-body);
+  margin: 0;
+}
+.sn-metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+  margin: 0.35rem 0 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  /* Long values (KES 12,345,678) shrink instead of breaking the card. */
+  overflow-wrap: anywhere;
+}
+.sn-metric-value.is-long { font-size: 1.25rem; }
+.sn-metric-value.is-xlong { font-size: 1.05rem; }
+.sn-metric-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--sn-muted);
+  flex-wrap: wrap;
+}
+
+/* The soft-tinted rounded icon tile — Sneat's most recognisable motif. */
+.sn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border-radius: var(--sn-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sn-icon svg { width: 1.25rem; height: 1.25rem; }
+.sn-icon-lg { width: 3rem; height: 3rem; }
+.sn-icon-lg svg { width: 1.5rem; height: 1.5rem; }
+
+.sn-icon-primary   { background: var(--sn-primary-soft);   color: var(--sn-primary); }
+.sn-icon-success   { background: var(--sn-success-soft);   color: var(--sn-success-dark); }
+.sn-icon-warning   { background: var(--sn-warning-soft);   color: var(--sn-warning); }
+.sn-icon-danger    { background: var(--sn-danger-soft);    color: var(--sn-danger); }
+.sn-icon-info      { background: var(--sn-info-soft);      color: var(--sn-info); }
+.sn-icon-secondary { background: var(--sn-secondary-soft); color: var(--sn-secondary); }
+
+/* ============================ Trend delta =============================== */
+
+.sn-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.sn-trend-up   { color: var(--sn-success-dark); }
+.sn-trend-down { color: var(--sn-danger); }
+.sn-trend-flat { color: var(--sn-muted); }
+
+/* ========================= Spotlight (hero) card =======================.
+   The "dashboard against a metric" anchor: one headline number, its target,
+   and progress toward it. Uses the brand gradient so it reads as the subject
+   of the page rather than just another tile. */
+
+/* The headline metric reads as a page header, not a hero banner: a plain
+   white card in the same family as every other card, distinguished by scale
+   and a single hairline accent rather than by a gradient. */
+.sn-spotlight {
+  position: relative;
+  background: var(--sn-card);
+  color: var(--sn-body);
+  border-radius: var(--sn-radius);
+  box-shadow: var(--sn-shadow);
+  border-top: 3px solid var(--sn-primary);
+  padding: 1.4rem 1.6rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.sn-spotlight-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.sn-spotlight-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sn-muted);
+}
+.sn-spotlight-meta { font-size: 0.75rem; color: var(--sn-muted); }
+
+/* Number + status sit on one baseline; the number carries the emphasis. */
+.sn-spotlight-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+.sn-spotlight-value {
+  font-size: 2.75rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--sn-heading);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.sn-spotlight-caption {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--sn-body);
+  max-width: 70ch;
+}
+
+/* A hairline progress rule, with the target stated in words beside it. */
+.sn-spotlight-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+.sn-spotlight-progress .sn-progress-track { flex: 1 1 200px; height: 0.3rem; }
+.sn-spotlight-progress .sn-progress-bar { background: var(--sn-primary); box-shadow: none; }
+.sn-spotlight-readout {
+  font-size: 0.75rem;
+  color: var(--sn-muted);
+  white-space: nowrap;
+}
+.sn-spotlight-readout b { color: var(--sn-heading); font-weight: 600; }
+
+/* Supporting figures as a divided row, not a floating panel. */
+.sn-spotlight-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid var(--sn-border);
+  padding-top: 0.9rem;
+  margin-top: 0.1rem;
+}
+.sn-spotlight-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 1.25rem;
+  min-width: 0;
+}
+.sn-spotlight-stat:first-child { padding-left: 0; }
+.sn-spotlight-stat + .sn-spotlight-stat { border-left: 1px solid var(--sn-border); }
+.sn-spotlight-stat span {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sn-muted);
+  white-space: nowrap;
+}
+.sn-spotlight-stat b {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .sn-spotlight { padding: 1.15rem 1.15rem 1rem; }
+  .sn-spotlight-value { font-size: 2.25rem; }
+  .sn-spotlight-stat { padding: 0.5rem 0.9rem; }
+  .sn-spotlight-stat:first-child { padding-left: 0; }
+}
+
+/* ============================= Progress ================================= */
+
+.sn-progress-track {
+  height: 0.5rem;
+  border-radius: var(--sn-radius-pill);
+  background: var(--sn-track);
+  overflow: hidden;
+  width: 100%;
+}
+.sn-progress-bar {
+  height: 100%;
+  border-radius: var(--sn-radius-pill);
+  background: var(--sn-primary);
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sn-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  margin-bottom: 0.35rem;
+  color: var(--sn-body);
+}
+.sn-progress-row b { color: var(--sn-heading); font-weight: 600; }
+
+/* ============================== Badge =================================== */
+
+.sn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--sn-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.sn-badge-primary   { background: var(--sn-primary-soft);   color: var(--sn-primary); }
+.sn-badge-success   { background: var(--sn-success-soft);   color: var(--sn-success-dark); }
+.sn-badge-warning   { background: var(--sn-warning-soft);   color: #B87A00; }
+.sn-badge-danger    { background: var(--sn-danger-soft);    color: var(--sn-danger); }
+.sn-badge-info      { background: var(--sn-info-soft);      color: #0295B3; }
+.sn-badge-secondary { background: var(--sn-secondary-soft); color: var(--sn-secondary); }
+
+/* =============================== Table ================================== */
+
+.sn-table-wrap { overflow-x: auto; }
+.sn-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.sn-table thead th {
+  text-align: left;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sn-muted);
+  border-bottom: 1px solid var(--sn-border);
+  white-space: nowrap;
+}
+.sn-table tbody td {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--sn-border);
+  color: var(--sn-body);
+  vertical-align: middle;
+}
+.sn-table tbody tr:last-child td { border-bottom: none; }
+.sn-table tbody tr:hover td { background: rgba(105, 108, 255, 0.04); }
+.sn-table .sn-td-strong { color: var(--sn-heading); font-weight: 600; }
+.sn-table .sn-td-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ============================ Rank list ================================= */
+
+.sn-list { display: flex; flex-direction: column; gap: 1.1rem; }
+.sn-list-item { display: flex; align-items: center; gap: 0.85rem; }
+.sn-list-main { flex: 1; min-width: 0; }
+.sn-list-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sn-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sn-list-sub { margin: 0.1rem 0 0; font-size: 0.75rem; color: var(--sn-muted); }
+.sn-list-value { font-size: 0.875rem; font-weight: 600; color: var(--sn-heading); white-space: nowrap; }
+
+/* ============================ Empty state =============================== */
+
+.sn-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+  color: var(--sn-muted);
+}
+.sn-empty-icon {
+  width: 3rem; height: 3rem;
+  border-radius: var(--sn-radius-sm);
+  background: var(--sn-secondary-soft);
+  color: var(--sn-secondary);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.75rem;
+}
+.sn-empty h4 { margin: 0 0 0.25rem; font-size: 0.9375rem; font-weight: 600; color: var(--sn-heading); }
+.sn-empty p { margin: 0; font-size: 0.8125rem; max-width: 32ch; }
+
+/* ============================== Buttons ================================= */
+
+.sn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--sn-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 150ms, box-shadow 150ms, transform 80ms;
+  white-space: nowrap;
+}
+.sn-btn:active { transform: translateY(1px); }
+.sn-btn-primary { background: var(--sn-primary); color: #fff; box-shadow: 0 2px 4px rgba(105,108,255,0.4); }
+.sn-btn-primary:hover { background: var(--sn-primary-dark); }
+.sn-btn-outline {
+  background: transparent;
+  color: var(--sn-primary);
+  border-color: rgba(105, 108, 255, 0.5);
+}
+.sn-btn-outline:hover { background: var(--sn-primary-soft); }
+.sn-btn-ghost { background: transparent; color: var(--sn-body); }
+.sn-btn-ghost:hover { background: var(--sn-secondary-soft); }
+
+/* =============================== Tabs =================================== */
+
+.sn-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--sn-border);
+  flex-wrap: wrap;
+}
+.sn-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--sn-body);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+.sn-tab:hover { color: var(--sn-primary); }
+.sn-tab.is-active {
+  color: var(--sn-primary);
+  border-bottom-color: var(--sn-primary);
+  font-weight: 600;
+}
+.sn-tab-count {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--sn-radius-pill);
+  background: var(--sn-secondary-soft);
+  color: var(--sn-secondary);
+}
+.sn-tab.is-active .sn-tab-count {
+  background: var(--sn-primary-soft);
+  color: var(--sn-primary);
+}
+
+/* ========================= Segmented control ============================ */
+
+.sn-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--sn-radius-sm);
+  background: var(--sn-track);
+}
+.sn-segment {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sn-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms, color 150ms;
+}
+.sn-segment:hover { color: var(--sn-primary); }
+.sn-segment.is-active {
+  background: var(--sn-card);
+  color: var(--sn-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(67, 89, 113, 0.14);
+}
+
+/* ============================ Divider / misc ============================ */
+
+.sn-divider { height: 1px; background: var(--sn-border); border: none; margin: 0; }
+.sn-muted { color: var(--sn-muted); }
+.sn-strong { color: var(--sn-heading); font-weight: 600; }
+.sn-num { font-variant-numeric: tabular-nums; }
+
+/* Chart surfaces sit flush in the card body; recharts handles its own sizing. */
+.sn-chart { width: 100%; }
+
+/* Respect reduced-motion for the animated bars/entrances. */
+@media (prefers-reduced-motion: reduce) {
+  .sn-progress-bar, .sn-card { transition: none; }
+}
